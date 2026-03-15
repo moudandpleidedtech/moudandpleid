@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(where docker:*)",
+      "Read(//c/Program Files/Docker/Docker/resources/bin/**)",
+      "Bash(npm --version)",
+      "Bash(py --version)",
+      "Bash(psql --version)",
+      "Read(//usr/**)",
+      "Read(//usr/local/**)",
+      "Bash(uv --version)",
+      "Bash(/c/Users/Usuario/AppData/Roaming/uv/python/cpython-3.14.3-windows-x86_64-none/python.exe --version)",
+      "Bash(\"/c/Program Files/Docker/Docker/resources/bin/docker\" info)",
+      "Bash(\"/c/Program Files/Docker/Docker/resources/bin/docker\" ps)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
