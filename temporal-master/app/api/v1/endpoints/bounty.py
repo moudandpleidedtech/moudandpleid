@@ -133,13 +133,19 @@ async def generate_bounty(
     )
 
     # ── 2. Generar contenido con el LLM ──────────────────────────────────────
-    generated = await generate_dynamic_bounty(
-        user_level=payload.user_level,
-        target_concept=dda.adjusted_concept,
-        difficulty_modifier=dda.difficulty_modifier,
-        mode_hint=dda.mode if dda.mode != "standard" else None,
-        second_concept=dda.second_concept,
-    )
+    try:
+        generated = await generate_dynamic_bounty(
+            user_level=payload.user_level,
+            target_concept=dda.adjusted_concept,
+            difficulty_modifier=dda.difficulty_modifier,
+            mode_hint=dda.mode if dda.mode != "standard" else None,
+            second_concept=dda.second_concept,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
 
     # ── 3. Calcular recompensas dinámicas ─────────────────────────────────────
     tier = _tier_from_modifier(dda.difficulty_modifier)
@@ -181,11 +187,10 @@ async def get_bounty(
         )
 
     # Para un bounty ya existente construimos un DDAResult neutral
-    from app.services.dda_service import LOOT_TABLE, _loot_for_modifier  # local import ok
+    from app.services.dda_service import _loot_for_modifier  # local import ok
     modifier = 5.0  # default for display purposes
     loot = _loot_for_modifier(float(challenge.difficulty_tier.value) * 3)
 
-    from dataclasses import fields
     neutral_dda = DDAResult(
         adjusted_concept="",
         second_concept=None,

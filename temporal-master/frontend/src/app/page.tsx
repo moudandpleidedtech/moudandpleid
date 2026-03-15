@@ -84,7 +84,7 @@ export default function LoginPage() {
       setPhase('done')
 
       const seen = typeof window !== 'undefined' && localStorage.getItem('boot_seen')
-      setTimeout(() => router.push(seen ? '/misiones' : '/boot-sequence'), 900)
+      setTimeout(() => router.push(seen ? '/hub' : '/boot-sequence'), 900)
     } catch {
       setPhase('password')
       setAuthLine('')

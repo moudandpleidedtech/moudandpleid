@@ -23,21 +23,6 @@ logger = logging.getLogger(__name__)
 _MODEL = "claude-opus-4-6"
 _MAX_TOKENS = 1024
 
-# Schema JSON que Claude debe respetar
-_OUTPUT_SCHEMA = {
-    "type": "json_schema",
-    "schema": {
-        "type": "object",
-        "properties": {
-            "title": {"type": "string"},
-            "lore_description": {"type": "string"},
-            "initial_code": {"type": "string"},
-            "expected_output": {"type": "string"},
-        },
-        "required": ["title", "lore_description", "initial_code", "expected_output"],
-        "additionalProperties": False,
-    },
-}
 
 _FALLBACK_CHALLENGE = {
     "title": "PROTOCOLO DESCONOCIDO",
@@ -128,7 +113,6 @@ async def generate_dynamic_bounty(
             max_tokens=_MAX_TOKENS,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
-            output_config={"format": _OUTPUT_SCHEMA},
         )
 
         raw = next(
@@ -140,6 +124,12 @@ async def generate_dynamic_bounty(
     except (json.JSONDecodeError, KeyError, IndexError) as exc:
         logger.error("Error parseando JSON del LLM: %s", exc)
         return _FALLBACK_CHALLENGE
+    except anthropic.BadRequestError as exc:
+        # Errores conocidos: sin créditos, modelo inválido, etc.
+        body = exc.body if hasattr(exc, "body") else {}
+        msg = (body or {}).get("error", {}).get("message", str(exc))
+        logger.error("BadRequest Anthropic: %s", msg)
+        raise RuntimeError(msg) from exc
     except anthropic.APIError as exc:
         logger.error("Error de la API de Anthropic: %s", exc)
         return _FALLBACK_CHALLENGE

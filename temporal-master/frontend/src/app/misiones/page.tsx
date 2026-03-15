@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
-import LiveActivityFeed from '@/components/UI/LiveActivityFeed'
+import MissionBriefingModal from '@/components/Game/MissionBriefingModal'
+import HackingTransition from '@/components/Game/HackingTransition'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+
+// ─── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface Mission {
   id: string
@@ -21,286 +24,558 @@ interface Mission {
   phase: string | null
   concepts_taught: string[]
   challenge_type: string
+  lore_briefing: string | null
+  pedagogical_objective: string | null
+  syntax_hint: string | null
 }
 
-const TIER_LABEL: Record<number, string> = {
-  1: 'INICIANTE',
-  2: 'INTERMEDIO',
-  3: 'AVANZADO',
+// ─── Lore por level_order ──────────────────────────────────────────────────────
+
+const MISSION_LORE: Record<number, { lore: string; requires: string; chapter: string }> = {
+  1: {
+    lore: 'Establece un ping de respuesta para engañar a los radares del Área 51. El sistema espera una señal de confirmación. Si el protocolo falla, las alarmas se activarán.',
+    requires: 'Print y Variables',
+    chapter: 'Manual Cap. 1',
+  },
+  2: {
+    lore: 'Descifra las coordenadas de la puerta principal sumando los registros cifrados. Los valores están fragmentados — necesitas reconstruirlos mediante operaciones matemáticas precisas.',
+    requires: 'Operadores Matemáticos',
+    chapter: 'Manual Cap. 1',
+  },
+  3: {
+    lore: 'Invierte el flujo de datos del firewall para crear una puerta trasera. La secuencia enemiga debe leerse al revés para que el protocolo de bypass funcione.',
+    requires: 'Slicing de Strings',
+    chapter: 'Manual Cap. 2',
+  },
+  4: {
+    lore: 'Escanea el código fuente enemigo en busca de nodos de energía (vocales). Cada nodo activo amplifica la señal del dron. Localiza y cuenta todos los nodos antes del tiempo límite.',
+    requires: 'For Loops e If',
+    chapter: 'Manual Cap. 2',
+  },
+  5: {
+    lore: 'Sincroniza el motor de salto del dron con la frecuencia fractal de Fibonacci para evitar colisiones con los sensores del Área 51. Un solo error de sincronía activa la trampa.',
+    requires: 'Lógica Avanzada',
+    chapter: 'Manual Cap. 3',
+  },
 }
 
-const TIER_COLOR: Record<number, string> = {
-  1: '#00FF41',
-  2: '#FFD700',
-  3: '#FF4444',
+// ─── Constantes UI ─────────────────────────────────────────────────────────────
+
+const TIER_LABEL: Record<number, string> = { 1: 'INICIANTE', 2: 'INTERMEDIO', 3: 'AVANZADO' }
+const TIER_COLOR: Record<number, string> = { 1: '#00FF41', 2: '#FFD700', 3: '#FF4444' }
+
+// ─── Panel de Briefing (columna derecha) ───────────────────────────────────────
+
+function BriefingPanel({
+  mission,
+  onDeploy,
+}: {
+  mission: Mission | null
+  onDeploy: (m: Mission) => void
+}) {
+  if (!mission) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-12">
+        <motion.div
+          className="w-16 h-16 rounded-full border border-[#00FF41]/15 flex items-center justify-center mb-6"
+          animate={{ opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+        >
+          <span className="text-[#00FF41]/30 text-2xl">◈</span>
+        </motion.div>
+        <p className="text-[10px] tracking-[0.5em] text-[#00FF41]/20">
+          SELECCIONA UNA INCURSIÓN
+        </p>
+        <p className="text-[9px] tracking-widest text-[#00FF41]/12 mt-2">
+          PARA VER EL BRIEFING TÁCTICO
+        </p>
+      </div>
+    )
+  }
+
+  const order = mission.level_order ?? 0
+  const lore = MISSION_LORE[order]
+  const tierColor = TIER_COLOR[mission.difficulty_tier]
+  const isLocked = !mission.unlocked
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={mission.id}
+        className="flex-1 flex flex-col px-8 py-8 overflow-y-auto"
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -8 }}
+        transition={{ duration: 0.25 }}
+      >
+        {/* Tag de clasificación */}
+        <div className="flex items-center gap-3 mb-5">
+          <span className="text-[8px] tracking-[0.6em] text-[#00FF41]/25">
+            INCURSIÓN #{String(order).padStart(2, '0')} // ÁREA 51
+          </span>
+          {mission.completed && (
+            <span
+              className="text-[8px] tracking-widest text-[#00FF41] border border-[#00FF41]/30 px-2 py-0.5"
+              style={{ textShadow: '0 0 6px #00FF41' }}
+            >
+              ✓ COMPLETADA
+            </span>
+          )}
+        </div>
+
+        {/* Título */}
+        <h2
+          className="text-2xl font-black tracking-wider mb-1 drop-shadow-[0_0_12px_rgba(0,255,65,0.7)]"
+          style={{ color: '#00FF41' }}
+        >
+          {mission.title.toUpperCase()}
+        </h2>
+
+        {/* Dificultad + XP */}
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-[10px] tracking-widest font-bold" style={{ color: `${tierColor}90` }}>
+            {TIER_LABEL[mission.difficulty_tier]}
+          </span>
+          <span className="text-[#00FF41]/20">·</span>
+          <span
+            className="text-sm font-black text-[#FFD700]"
+            style={{ textShadow: '0 0 8px rgba(255,215,0,0.5)' }}
+          >
+            {mission.base_xp_reward} XP
+          </span>
+          {mission.attempts > 0 && !mission.completed && (
+            <>
+              <span className="text-[#00FF41]/20">·</span>
+              <span className="text-[10px] text-green-200/50">
+                {mission.attempts} intento{mission.attempts !== 1 ? 's' : ''}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Separador */}
+        <div className="h-px bg-gradient-to-r from-[#00FF41]/20 via-[#00FF41]/10 to-transparent mb-6" />
+
+        {/* Lore / Objetivo táctico */}
+        <div className="mb-5">
+          <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-3">◆ OBJETIVO TÁCTICO</p>
+          <div
+            className="border-l-2 border-[#00FF41]/30 pl-4 bg-black/40 backdrop-blur-sm py-3 pr-3"
+            style={{ boxShadow: 'inset 0 0 20px rgba(0,255,65,0.03)' }}
+          >
+            <p className="text-[12px] text-green-200/70 leading-relaxed">
+              {lore?.lore ?? mission.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Conocimiento requerido */}
+        {lore && (
+          <div
+            className="border border-[#00E5FF]/20 bg-black/40 backdrop-blur-sm px-4 py-3 mb-6"
+            style={{ boxShadow: '0 4px 20px rgba(0,229,255,0.06)' }}
+          >
+            <p className="text-[8px] tracking-[0.5em] text-[#00E5FF]/35 mb-2">CONOCIMIENTO REQUERIDO</p>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-[#00E5FF]/70 font-bold tracking-wider">
+                {lore.requires}
+              </span>
+              <span className="text-[#00E5FF]/20">·</span>
+              <span className="text-[9px] tracking-widest text-[#00E5FF]/35 border border-[#00E5FF]/15 px-2 py-0.5">
+                {lore.chapter}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Lore briefing si existe */}
+        {mission.lore_briefing && (
+          <div className="mb-6">
+            <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/25 mb-2">TRANSMISIÓN DE DAKI</p>
+            <p className="text-[11px] text-[#00FF41]/40 leading-relaxed italic">
+              &ldquo;{mission.lore_briefing}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Botón de despliegue */}
+        {isLocked ? (
+          <div
+            className="border border-[#00FF41]/10 bg-black/40 backdrop-blur-sm px-5 py-4 text-center"
+          >
+            <p className="text-[10px] tracking-[0.5em] text-[#00FF41]/25">
+              🔒 INCURSIÓN BLOQUEADA
+            </p>
+            <p className="text-[9px] text-[#00FF41]/12 mt-1 tracking-widest">
+              COMPLETA LAS MISIONES ANTERIORES PARA DESBLOQUEAR
+            </p>
+          </div>
+        ) : (
+          <motion.button
+            onClick={() => onDeploy(mission)}
+            className="w-full py-4 border-2 font-black text-sm tracking-[0.3em] transition-all duration-200 cursor-pointer"
+            style={{
+              borderColor: 'rgba(0,255,65,0.6)',
+              color: '#00FF41',
+              background: 'rgba(0,255,65,0.07)',
+              boxShadow: '0 0 20px rgba(0,255,65,0.1)',
+              textShadow: '0 0 8px rgba(0,255,65,0.6)',
+            }}
+            whileHover={{
+              background: 'rgba(0,255,65,0.14)',
+              boxShadow: '0 0 40px rgba(0,255,65,0.3), inset 0 0 20px rgba(0,255,65,0.05)',
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            ▶ INICIALIZAR ENLACE — ENTRAR A LA MISIÓN
+          </motion.button>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  )
 }
 
-const PHASE_LABEL: Record<string, string> = {
-  fase0:   'FASE 0 · DRONE',
-  basico:  'BÁSICO',
-  control: 'CONTROL',
-  bucles:  'BUCLES',
-}
+// ─── Página principal ──────────────────────────────────────────────────────────
 
 export default function MisionesPage() {
   const router = useRouter()
   const { userId, username, level, totalXp, streakDays } = useUserStore()
   const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const [selected, setSelected] = useState<Mission | null>(null)
+  const [briefingMission, setBriefingMission] = useState<Mission | null>(null)
+  const [isHacking, setIsHacking] = useState(false)
+  const [hackingTitle, setHackingTitle] = useState('')
 
   useEffect(() => {
-    if (!userId) {
-      router.replace('/')
-      return
-    }
+    if (!userId) { router.replace('/'); setLoading(false); return }
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
-      .then((r) => r.json())
-      .then((data) => setMissions(data))
+      .then(r => r.json())
+      .then(data => {
+        setMissions(data)
+        const first = (data as Mission[]).find(m => m.unlocked && !m.completed) ?? data[0]
+        if (first) setSelected(first)
+      })
+      .catch(err => { console.log('[Misiones] Error:', err); setFetchError(true) })
       .finally(() => setLoading(false))
   }, [userId, router])
 
-  const completadas = missions.filter((m) => m.completed).length
+  const completadas = missions.filter(m => m.completed).length
+
+  const handleDeploy = (mission: Mission) => {
+    if (!mission.unlocked) return
+    // Misiones drone no tienen transición de hackeo (van a /enigma directamente)
+    if (mission.challenge_type === 'drone') { router.push('/enigma'); return }
+    // Si tiene lore briefing, mostrarlo antes de la transición
+    if (mission.lore_briefing) { setBriefingMission(mission); return }
+    // Transición de hackeo → luego push
+    setHackingTitle(mission.title)
+    setIsHacking(true)
+    setTimeout(() => router.push(`/challenge/${mission.id}`), 1500)
+  }
+
+  const handleBriefingInitialize = () => {
+    if (!briefingMission) return
+    const mission = briefingMission
+    setBriefingMission(null)
+    setHackingTitle(mission.title)
+    setIsHacking(true)
+    setTimeout(() => router.push(`/challenge/${mission.id}`), 1500)
+  }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41]">
+    <div
+      className="h-screen flex flex-col font-mono text-[#00FF41] relative overflow-hidden"
+      style={{ background: 'radial-gradient(circle at 50% 40%, #001a0d 0%, #000000 60%)' }}
+    >
+      {/* Scanlines */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px)' }}
+      />
+      {/* Viñeta */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%)' }}
+      />
 
-      {/* Cabecera */}
-      <header className="flex items-center justify-between px-6 py-3 bg-[#0D0D0D] border-b border-[#00FF41]/20">
+      {/* Modal de briefing */}
+      <MissionBriefingModal
+        visible={briefingMission !== null}
+        title={briefingMission?.title ?? ''}
+        loreBriefing={briefingMission?.lore_briefing ?? ''}
+        pedagogicalObjective={briefingMission?.pedagogical_objective ?? ''}
+        syntaxHint={briefingMission?.syntax_hint ?? ''}
+        onInitialize={handleBriefingInitialize}
+        onClose={() => setBriefingMission(null)}
+      />
+
+      {/* Transición de hackeo — z-[9999] cubre todo */}
+      <HackingTransition isActive={isHacking} missionTitle={hackingTitle} />
+
+      {/* ── Header ── */}
+      <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/hub')}
+            className="text-[#00FF41]/40 hover:text-[#00FF41]/80 text-xs tracking-widest transition-colors border border-[#00FF41]/15 px-2.5 py-1 hover:border-[#00FF41]/35 cursor-pointer"
+          >
+            ← VOLVER A DAKI
+          </button>
           <span
-            className="font-black tracking-widest text-sm"
+            className="font-black tracking-widest text-sm hidden sm:block"
             style={{ textShadow: '0 0 8px #00FF41' }}
           >
             PYTHON QUEST
           </span>
-          <button
-            onClick={() => router.push('/enigma')}
-            className="text-[#00FF41]/35 hover:text-[#00FF41]/70 text-xs tracking-widest transition-colors border border-[#00FF41]/15 px-2.5 py-1 hover:border-[#00FF41]/30"
-          >
-            ENIGMA
-          </button>
         </div>
-        <div className="flex items-center gap-6 text-xs text-[#00FF41]/70">
-          <span className="text-[#00FF41]/50">{username}</span>
+        <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
+          <span className="text-[#00FF41]/30 hidden sm:block">{username}</span>
           <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
-          {streakDays > 0 && (
-            <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>
-          )}
+          {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
         </div>
       </header>
 
-      <main className="flex gap-0 max-w-5xl mx-auto px-4 py-10">
-        {/* ── Columna principal ── */}
-        <div className="flex-1 min-w-0 pr-6">
+      {/* ── Split screen ── */}
+      <main className="relative z-20 flex-1 flex overflow-hidden gap-px">
 
-        {/* Título de sección */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-black tracking-[0.15em] mb-1">MISIONES</h2>
-          <p className="text-[#00FF41]/40 text-xs tracking-widest">
-            {completadas}/{missions.length} COMPLETADAS
-          </p>
-          {/* Barra de progreso */}
-          <div className="mt-3 h-px bg-[#00FF41]/10 w-full relative overflow-hidden">
-            <motion.div
-              className="absolute left-0 top-0 h-full bg-[#00FF41]"
-              initial={{ width: 0 }}
-              animate={{ width: missions.length ? `${(completadas / missions.length) * 100}%` : '0%' }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
+        {/* ══════════════════════════════════════════
+            COLUMNA IZQUIERDA — Lista de incursiones
+        ══════════════════════════════════════════ */}
+        <div
+          className="w-[340px] shrink-0 flex flex-col overflow-hidden bg-black/40 backdrop-blur-md border-r border-green-500/20"
+          style={{ boxShadow: '4px 0 30px rgba(0,255,65,0.06)' }}
+        >
+
+          {/* Cabecera columna */}
+          <div className="shrink-0 px-5 py-4 border-b border-green-500/15 bg-black/30 backdrop-blur-sm">
+            <h2 className="text-xs font-black tracking-[0.4em] text-[#00FF41]/70 mb-1 drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]">
+              SELECTOR DE INCURSIONES
+            </h2>
+            {/* Barra de progreso */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex-1 h-px bg-[#00FF41]/10 relative overflow-hidden">
+                <motion.div
+                  className="absolute left-0 top-0 h-full bg-[#00FF41]"
+                  initial={{ width: 0 }}
+                  animate={{ width: missions.length ? `${(completadas / missions.length) * 100}%` : '0%' }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                  style={{ boxShadow: '0 0 6px #00FF41' }}
+                />
+              </div>
+              <span className="text-[9px] tracking-widest text-[#00FF41]/30 shrink-0">
+                {completadas}/{missions.length}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Lista de misiones */}
-        {loading ? (
-          <p className="text-[#00FF41]/30 text-xs tracking-widest animate-pulse">
-            CARGANDO MISIONES...
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {missions.map((mission, idx) => {
-              const tierColor = TIER_COLOR[mission.difficulty_tier]
-              const isLocked = !mission.unlocked
-              const isDrone = mission.challenge_type === 'drone'
-              const target = isDrone ? '/enigma' : `/challenge/${mission.id}`
-              return (
-                <motion.button
-                  key={mission.id}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.07 }}
-                  onClick={() => !isLocked && router.push(target)}
-                  disabled={isLocked}
-                  className={`w-full text-left px-5 py-4 border transition-all duration-150 ${
-                    isLocked
-                      ? 'border-[#00FF41]/10 opacity-35 cursor-not-allowed'
-                      : mission.completed
-                      ? 'border-[#00FF41]/40 bg-[#00FF41]/5 hover:bg-[#00FF41]/10'
-                      : 'border-[#00FF41]/25 bg-[#0D0D0D] hover:border-[#00FF41]/60 hover:bg-[#00FF41]/5'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        {/* Número de misión */}
-                        <span className="text-[#00FF41]/30 text-xs w-5 shrink-0">
-                          {String(mission.level_order ?? idx + 1).padStart(2, '0')}
+          {/* Lista scrollable */}
+          <div className="flex-1 overflow-y-auto py-2">
+            {loading ? (
+              <p className="text-[#00FF41]/25 text-[10px] tracking-widest animate-pulse px-5 py-6">
+                CARGANDO INCURSIONES...
+              </p>
+            ) : fetchError ? (
+              <p className="text-red-400/50 text-[10px] tracking-widest px-5 py-6">
+                ERROR DE CONEXIÓN
+              </p>
+            ) : (
+              <>
+                {missions.map((m, idx) => {
+                  const isLocked = !m.unlocked
+                  const isSelected = selected?.id === m.id
+                  const tierColor = TIER_COLOR[m.difficulty_tier]
+                  const isAvailable = m.unlocked && !m.completed
+
+                  return (
+                    <motion.button
+                      key={m.id}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.06 }}
+                      onClick={() => { if (!isLocked) setSelected(m) }}
+                      disabled={isLocked}
+                      className={[
+                        'w-full text-left px-5 py-3.5 border-b transition-all duration-200 relative',
+                        'border-l-4',
+                        isLocked
+                          ? 'opacity-40 grayscale cursor-not-allowed border-l-transparent border-b-green-500/5'
+                          : isSelected
+                          ? 'border-l-[#00FF41] border-b-green-500/10 cursor-pointer'
+                          : 'border-l-green-800/50 border-b-green-500/8 cursor-pointer hover:translate-x-1',
+                      ].join(' ')}
+                      style={
+                        isSelected
+                          ? {
+                              background: 'rgba(0,255,65,0.08)',
+                              boxShadow: 'inset 0 0 20px rgba(0,255,65,0.06), 0 0 10px rgba(0,255,65,0.05)',
+                            }
+                          : {}
+                      }
+                      onMouseEnter={e => {
+                        if (!isLocked && !isSelected) {
+                          e.currentTarget.style.background = 'rgba(0,255,65,0.05)'
+                          e.currentTarget.style.boxShadow = 'inset 0 0 20px rgba(0,255,65,0.08)'
+                          e.currentTarget.style.borderLeftColor = 'rgba(0,255,65,0.5)'
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!isSelected) {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.boxShadow = 'none'
+                          e.currentTarget.style.borderLeftColor = isLocked ? 'transparent' : 'rgba(0,100,30,0.5)'
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-[#00FF41]/25 text-[10px] w-4 shrink-0 tabular-nums">
+                            {String(m.level_order ?? idx + 1).padStart(2, '0')}
+                          </span>
+                          <span
+                            className={[
+                              'text-[11px] font-bold tracking-wide truncate',
+                              isLocked
+                                ? 'text-[#00FF41]/25'
+                                : isSelected
+                                ? 'text-[#00FF41] drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]'
+                                : 'text-green-400',
+                            ].join(' ')}
+                          >
+                            {m.title}
+                          </span>
+                        </div>
+                        <div className="shrink-0 text-[9px] flex items-center gap-1.5">
+                          {isLocked ? (
+                            <span className="text-[#00FF41]/20">🔒</span>
+                          ) : m.completed ? (
+                            <span className="text-[#00FF41]" style={{ textShadow: '0 0 6px #00FF41' }}>✓</span>
+                          ) : isAvailable ? (
+                            <>
+                              <span
+                                className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0"
+                                style={{ boxShadow: '0 0 4px #00FF41' }}
+                              />
+                              <span style={{ color: `${tierColor}70` }}>▶</span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Fila inferior: dificultad + intentos */}
+                      <div className="pl-7 mt-0.5 flex items-center gap-2">
+                        <span className="text-[8px] tracking-widest text-green-200/40" style={{ color: `${tierColor}40` }}>
+                          {TIER_LABEL[m.difficulty_tier]}
                         </span>
-                        <h3 className="text-sm font-bold truncate">{mission.title}</h3>
-                        {isDrone && (
-                          <span className="text-[10px] tracking-widest text-[#00BFFF]/70 border border-[#00BFFF]/30 px-1.5 shrink-0">
-                            DRONE
+                        {m.attempts > 0 && !m.completed && (
+                          <span className="text-[8px] text-green-200/30">
+                            · {m.attempts} intento{m.attempts !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 pl-8 text-xs text-[#00FF41]/40">
-                        {mission.phase && (
-                          <>
-                            <span className="text-[#00FF41]/30">
-                              {PHASE_LABEL[mission.phase] ?? mission.phase.toUpperCase()}
-                            </span>
-                            <span>·</span>
-                          </>
-                        )}
-                        <span style={{ color: `${tierColor}80` }}>
-                          {TIER_LABEL[mission.difficulty_tier]}
-                        </span>
-                        <span>·</span>
-                        <span>{mission.base_xp_reward} XP</span>
-                        {mission.attempts > 0 && !mission.completed && (
-                          <>
-                            <span>·</span>
-                            <span>{mission.attempts} intento{mission.attempts !== 1 ? 's' : ''}</span>
-                          </>
-                        )}
+                    </motion.button>
+                  )
+                })}
+
+                {/* ── Separadores especiales ── */}
+                {!loading && (
+                  <>
+                    {/* JEFE FINAL */}
+                    <div className="px-5 pt-5 pb-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-px flex-1 bg-red-500/20" />
+                        <span className="text-[8px] tracking-[0.4em] text-red-500/50">JEFE FINAL</span>
+                        <div className="h-px flex-1 bg-red-500/20" />
                       </div>
                     </div>
-
-                    {/* Estado */}
-                    <div className="shrink-0 text-xs tracking-widest pt-0.5">
-                      {isLocked ? (
-                        <span className="text-[#00FF41]/25">BLOQUEADA</span>
-                      ) : mission.completed ? (
-                        <span className="text-[#00FF41]" style={{ textShadow: '0 0 6px #00FF41' }}>
-                          ✓ COMPLETA
-                        </span>
-                      ) : (
-                        <span className="text-[#00FF41]/50">DISPONIBLE ▶</span>
-                      )}
-                    </div>
-                  </div>
-                </motion.button>
-              )
-            })}
-          </div>
-        )}
-
-        {/* ── Tarjeta de Boss Fight ───────────────────────────────────────── */}
-        {!loading && (
-          <motion.div
-            className="mt-10"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            {/* Separador */}
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-red-500/20" />
-              <span className="text-red-500/60 text-xs tracking-[0.3em] font-bold">JEFE FINAL</span>
-              <div className="h-px flex-1 bg-red-500/20" />
-            </div>
-
-            <motion.button
-              onClick={() => router.push('/boss')}
-              className="w-full text-left px-5 py-5 border-2 border-red-500/40 bg-red-950/20 hover:border-red-500/80 hover:bg-red-950/35 transition-all duration-200"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <motion.span
-                      className="text-red-500 font-black text-xl"
-                      animate={{ textShadow: ['0 0 10px #FF4444', '0 0 25px #FF4444', '0 0 10px #FF4444'] }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
+                    <button
+                      onClick={() => router.push('/boss')}
+                      className="w-full text-left px-5 py-3.5 border-b border-l-4 border-l-red-700/60 border-b-red-500/10 transition-all duration-200 cursor-pointer hover:translate-x-1"
+                      style={{ background: 'rgba(127,0,0,0.15)' }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(127,0,0,0.25)'
+                        e.currentTarget.style.boxShadow = '0 0 30px rgba(255,0,0,0.15), inset 0 0 20px rgba(255,0,0,0.08)'
+                        e.currentTarget.style.borderLeftColor = 'rgba(239,68,68,0.8)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(127,0,0,0.15)'
+                        e.currentTarget.style.boxShadow = 'none'
+                        e.currentTarget.style.borderLeftColor = 'rgba(185,28,28,0.6)'
+                      }}
                     >
-                      ∞
-                    </motion.span>
-                    <h3 className="text-base font-black text-red-400 tracking-wider">
-                      THE INFINITE LOOPER
-                    </h3>
-                    <span className="text-[10px] tracking-widest text-red-500/60 border border-red-500/30 px-1.5">
-                      BOSS
-                    </span>
-                  </div>
-                  <p className="text-xs text-red-400/50 leading-relaxed pl-8 mb-2">
-                    Módulo: Bucles · Detén el bucle infinito usando <code className="bg-red-900/40 px-1 rounded">for</code> acotado.
-                    Tienes 45 segundos antes de que el sistema colapse.
-                  </p>
-                  <div className="pl-8 flex items-center gap-3 text-xs text-red-500/40">
-                    <span>AVANZADO</span>
-                    <span>·</span>
-                    <span className="text-yellow-400/80 font-bold">1 500 XP</span>
-                    <span>·</span>
-                    <span>Tiempo límite: 45 s</span>
-                  </div>
-                </div>
-                <div className="shrink-0 text-xs tracking-widest text-red-400/60 pt-0.5">
-                  COMBATIR ▶
-                </div>
-              </div>
-            </motion.button>
-          </motion.div>
-        )}
-        {/* ── Tarjeta de Bounties ────────────────────────────────────────── */}
-        {!loading && (
-          <motion.div
-            className="mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75 }}
-          >
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-[#FFD700]/15" />
-              <span className="text-[#FFD700]/50 text-xs tracking-[0.3em] font-bold">BOUNTIES IA</span>
-              <div className="h-px flex-1 bg-[#FFD700]/15" />
-            </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <motion.span
+                            className="text-red-500/70 text-base"
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 1.8, repeat: Infinity }}
+                          >
+                            ∞
+                          </motion.span>
+                          <span className="text-[11px] font-bold tracking-wide text-red-400 drop-shadow-[0_0_8px_rgba(255,0,0,0.6)]">
+                            THE INFINITE LOOPER
+                          </span>
+                        </div>
+                        <span className="text-[8px] tracking-widest text-red-400/50 border border-red-500/30 px-1.5 py-0.5">
+                          BOSS
+                        </span>
+                      </div>
+                    </button>
 
-            <motion.button
-              onClick={() => router.push('/bounty')}
-              className="w-full text-left px-5 py-5 border border-[#FFD700]/30 bg-[#0A0A08] hover:border-[#FFD700]/70 hover:bg-[#FFD700]/5 transition-all duration-200"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[#FFD700] font-black text-xl">◆</span>
-                    <h3 className="text-base font-black text-[#FFD700]/80 tracking-wider">
-                      MISIONES BOUNTY
-                    </h3>
-                    <span className="text-[10px] tracking-widest text-[#FFD700]/50 border border-[#FFD700]/25 px-1.5">
-                      IA
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#FFD700]/40 leading-relaxed pl-8">
-                    Genera retos únicos con Claude Opus. Elige concepto y dificultad — misiones infinitas.
-                  </p>
-                </div>
-                <div className="shrink-0 text-xs tracking-widest text-[#FFD700]/40 pt-0.5">
-                  GENERAR ▶
-                </div>
-              </div>
-            </motion.button>
-          </motion.div>
-        )}
+                    {/* BOUNTIES IA */}
+                    <div className="px-5 pt-4 pb-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-px flex-1 bg-[#FFD700]/10" />
+                        <span className="text-[8px] tracking-[0.4em] text-[#FFD700]/30">BOUNTIES IA</span>
+                        <div className="h-px flex-1 bg-[#FFD700]/10" />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => router.push('/bounty')}
+                      className="w-full text-left px-5 py-3.5 border-l-4 border-l-yellow-800/40 transition-all duration-200 cursor-pointer hover:translate-x-1"
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255,215,0,0.05)'
+                        e.currentTarget.style.boxShadow = '0 0 16px rgba(255,215,0,0.08), inset 0 0 16px rgba(255,215,0,0.04)'
+                        e.currentTarget.style.borderLeftColor = 'rgba(234,179,8,0.5)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.boxShadow = 'none'
+                        e.currentTarget.style.borderLeftColor = 'rgba(133,77,14,0.4)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[#FFD700]/50">◆</span>
+                          <span className="text-[11px] font-bold tracking-wide text-[#FFD700]/65">
+                            MISIONES BOUNTY
+                          </span>
+                        </div>
+                        <span className="text-[8px] tracking-widest text-[#FFD700]/30 border border-[#FFD700]/15 px-1.5 py-0.5">IA</span>
+                      </div>
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
-        </div>{/* end columna principal */}
+        {/* ══════════════════════════════════════════
+            COLUMNA DERECHA — Panel de Briefing
+        ══════════════════════════════════════════ */}
+        <div
+          className="flex-1 bg-black/40 backdrop-blur-md overflow-hidden"
+          style={{ boxShadow: 'inset 4px 0 30px rgba(0,0,0,0.3)' }}
+        >
+          <BriefingPanel mission={selected} onDeploy={handleDeploy} />
+        </div>
 
-        {/* ── Sidebar Feed ── */}
-        <aside className="w-64 shrink-0 hidden lg:flex flex-col sticky top-8 self-start h-[calc(100vh-7rem)] border border-white/8 bg-[#080808]">
-          <LiveActivityFeed />
-        </aside>
       </main>
     </div>
   )

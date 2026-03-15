@@ -56,7 +56,7 @@ export default function BootSequencePage() {
 
   const handleEnter = () => {
     localStorage.setItem('boot_seen', '1')
-    router.push('/misiones')
+    router.push('/hub')
   }
 
   return (

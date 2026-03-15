@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
 
   // Usuario autenticado intenta acceder al login → Centro de Mando
   if (pathname === '/' && isAuthenticated) {
-    return NextResponse.redirect(new URL('/misiones', request.url))
+    return NextResponse.redirect(new URL('/hub', request.url))
   }
 
   return NextResponse.next()

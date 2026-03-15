@@ -44,6 +44,7 @@ async def init_db() -> None:
     import app.models.user_progress  # noqa: F401
     import app.models.concept_mastery  # noqa: F401
     import app.models.duel  # noqa: F401
+    import app.models.bitacora_read  # noqa: F401  — add_daki_bitacora_tracking
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -78,4 +79,18 @@ async def init_db() -> None:
         # Sistema PvP Elo (Prompt 20)
         await conn.execute(text(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS elo_rating INTEGER NOT NULL DEFAULT 1200"
+        ))
+        # Briefing de misión (Prompt B)
+        for stmt in [
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS lore_briefing TEXT",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS pedagogical_objective TEXT",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS syntax_hint TEXT",
+        ]:
+            await conn.execute(text(stmt))
+        # Bitácora DAKI — add_daki_bitacora_tracking
+        # La tabla user_bitacora_read se crea vía create_all (modelo registrado arriba).
+        # Este índice compuesto acelera la query GET /bitacora/unread?user_id=...
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_ubr_user_archivo "
+            "ON user_bitacora_read (user_id, archivo_id)"
         ))
