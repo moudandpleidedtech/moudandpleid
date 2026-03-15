@@ -1,0 +1,582 @@
+[
+  {
+    "level_id": 1,
+    "phase": "fase0",
+    "title": "Nivel 1 — Protocolo Alpha",
+    "lore_description": "El Dron Byte acaba de despertar en el Sector Alpha.\n\nEl camino al Núcleo de Datos está despejado — solo necesitas guiarlo en línea recta hasta el objetivo.\n\nUsa mover_derecha() y mover_abajo() para alcanzar el núcleo y luego recolectar() para completar la misión.",
+    "grid_map": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2
+      ]
+    ],
+    "initial_code": "# Comandos del Dron Byte:\n#   mover_arriba()     mover_abajo()\n#   mover_izquierda()  mover_derecha()\n#   recolectar()\n\n# Guia al dron desde (0,0) hasta el nucleo en (4,4)\n",
+    "expected_output": "MISION_COMPLETADA",
+    "test_inputs": [],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 50,
+    "concepts_taught": [
+      "secuencias",
+      "logica_espacial",
+      "movimiento_lineal"
+    ]
+  },
+  {
+    "level_id": 2,
+    "phase": "fase0",
+    "title": "Nivel 2 — Corredor Beta",
+    "lore_description": "Una pared de interferencia bloquea el acceso directo al Núcleo.\n\nEl Dron debe rodear el obstáculo. Analiza el mapa: hay una barrera vertical en la columna 2 que te impide avanzar en línea recta.\n\nEncuentra el camino alternativo por debajo de la barrera.",
+    "grid_map": [
+      [
+        3,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2
+      ]
+    ],
+    "initial_code": "# Hay una barrera vertical — debes rodearla por debajo\n# Pista: baja primero, luego cruza la barrera\n\n",
+    "expected_output": "MISION_COMPLETADA",
+    "test_inputs": [],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 80,
+    "concepts_taught": [
+      "secuencias",
+      "esquivar_obstaculos",
+      "planificacion_rutas"
+    ]
+  },
+  {
+    "level_id": 3,
+    "phase": "fase0",
+    "title": "Nivel 3 — Zona Restringida",
+    "lore_description": "El Sector Gamma está sembrado de zonas de alta radiación.\n\nLos muros representan campos de radiación que destruirán al Dron si los toca. Debes encontrar el único camino seguro entre los obstáculos dispersos.\n\nPlanifica cada movimiento antes de ejecutar.",
+    "grid_map": [
+      [
+        3,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        2
+      ]
+    ],
+    "initial_code": "# Zona minada — cada movimiento cuenta\n# Celdas con 1 = campo de radiacion = COLISION\n\n",
+    "expected_output": "MISION_COMPLETADA",
+    "test_inputs": [],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 120,
+    "concepts_taught": [
+      "secuencias",
+      "planificacion_rutas",
+      "lectura_de_mapas"
+    ]
+  },
+  {
+    "level_id": 4,
+    "phase": "fase0",
+    "title": "Nivel 4 — Laberinto Sigma",
+    "lore_description": "El sistema de seguridad del Sector Delta ha activado un laberinto de paredes electrificadas.\n\nSolo existe un camino: debes rodear las barreras horizontales que bloquean el paso. Observa que las paredes forman dos filas casi completas — cada una con un único hueco.\n\nZigzaguea con precisión.",
+    "grid_map": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2
+      ]
+    ],
+    "initial_code": "# Barreras horizontales con un hueco cada una\n# Fila 1: hueco en columna 4  |  Fila 3: hueco en columna 0\n\n",
+    "expected_output": "MISION_COMPLETADA",
+    "test_inputs": [],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 180,
+    "concepts_taught": [
+      "secuencias",
+      "laberintos",
+      "pensamiento_logico"
+    ]
+  },
+  {
+    "level_id": 5,
+    "phase": "fase0",
+    "title": "Nivel 5 — Núcleo Omega",
+    "lore_description": "ALERTA: Protocolo de seguridad máxima activado.\n\nEste es el nivel de acceso al núcleo central del sistema ENIGMA. El laberinto es denso y no hay margen de error — una sola colisión reinicia toda la secuencia.\n\nSolo los arquitectos más precisos llegan hasta aquí. Este es tu último obstáculo antes de acceder al lenguaje real del sistema.",
+    "grid_map": [
+      [
+        3,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        2
+      ]
+    ],
+    "initial_code": "# Laberinto de maxima seguridad\n# Analiza el mapa cuidadosamente antes de ejecutar\n\n",
+    "expected_output": "MISION_COMPLETADA",
+    "test_inputs": [],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 250,
+    "concepts_taught": [
+      "secuencias",
+      "laberintos_complejos",
+      "precision"
+    ]
+  },
+  {
+    "level_id": 6,
+    "phase": "basico",
+    "title": "Nivel 6 — Variables: Potencia del Reactor",
+    "lore_description": "El reactor del sistema requiere calibración.\n\nRecibirás dos enteros: la potencia base y el multiplicador de eficiencia. Tu código debe calcular la potencia total y mostrarla.\n\nEjemplo: potencia=120, multiplicador=3 → salida: 360",
+    "grid_map": null,
+    "initial_code": "# Lee dos enteros y muestra su producto\npotencia = int(input())\nmultiplicador = int(input())\n# Tu código aquí:\n",
+    "expected_output": "360",
+    "test_inputs": [
+      "120",
+      "3"
+    ],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 100,
+    "concepts_taught": [
+      "variables",
+      "int",
+      "input",
+      "operaciones_aritmeticas"
+    ]
+  },
+  {
+    "level_id": 7,
+    "phase": "basico",
+    "title": "Nivel 7 — Strings: Código de Acceso",
+    "lore_description": "El sistema de autenticación requiere concatenar fragmentos de código.\n\nRecibirás dos strings: un prefijo y un sufijo. Únelos con un guión en medio y muestra el resultado.\n\nEjemplo: prefijo='SECTOR', sufijo='7G' → salida: SECTOR-7G",
+    "grid_map": null,
+    "initial_code": "prefijo = input()\nsufijo = input()\n# Concatena con '-' en el medio y muestra el resultado\n",
+    "expected_output": "SECTOR-7G",
+    "test_inputs": [
+      "SECTOR",
+      "7G"
+    ],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 100,
+    "concepts_taught": [
+      "variables",
+      "strings",
+      "concatenacion"
+    ]
+  },
+  {
+    "level_id": 8,
+    "phase": "basico",
+    "title": "Nivel 8 — Matemáticas: XP Faltante",
+    "lore_description": "El motor de progresión necesita calcular cuánto XP le falta a un agente para subir de nivel.\n\nFórmula: XP_siguiente_nivel = (nivel_actual + 1)² × 100\nCalcula la diferencia entre ese valor y el XP actual del agente.\n\nEjemplo: xp=350, nivel=2 → siguiente nivel necesita 900 → falta 550",
+    "grid_map": null,
+    "initial_code": "xp_actual = int(input())\nnivel_actual = int(input())\n# Calcula: xp_necesario = (nivel_actual + 1) ** 2 * 100\n# Muestra la diferencia\n",
+    "expected_output": "550",
+    "test_inputs": [
+      "350",
+      "2"
+    ],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 150,
+    "concepts_taught": [
+      "variables",
+      "int",
+      "potencias",
+      "operaciones_aritmeticas"
+    ]
+  },
+  {
+    "level_id": 9,
+    "phase": "basico",
+    "title": "Nivel 9 — Float: Temperatura del Reactor",
+    "lore_description": "Los sensores del reactor reportan temperaturas en Celsius. El sistema interno trabaja en Kelvin.\n\nConvierte la lectura: Kelvin = Celsius + 273.15\nMuestra el resultado redondeado a 2 decimales.\n\nEjemplo: 36.6 → 309.75",
+    "grid_map": null,
+    "initial_code": "celsius = float(input())\n# Convierte a Kelvin y muestra con 2 decimales\n",
+    "expected_output": "309.75",
+    "test_inputs": [
+      "36.6"
+    ],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 150,
+    "concepts_taught": [
+      "variables",
+      "float",
+      "round",
+      "conversion_tipos"
+    ]
+  },
+  {
+    "level_id": 10,
+    "phase": "basico",
+    "title": "Nivel 10 — f-strings: ID de Agente",
+    "lore_description": "El sistema de identificación genera badges para cada agente.\n\nRecibirás el nombre (string) y el nivel (int). Genera el badge con este formato exacto: AGENTE {NOMBRE_EN_MAYUSCULAS} | NVL {nivel con 2 dígitos}\n\nEjemplo: nombre='neo', nivel=7 → AGENTE NEO | NVL 07",
+    "grid_map": null,
+    "initial_code": "nombre = input()\nnivel = int(input())\n# Genera el badge: AGENTE {NOMBRE} | NVL {nivel:02d}\n# Pista: usa .upper() y f-strings con formato {:02d}\n",
+    "expected_output": "AGENTE NEO | NVL 07",
+    "test_inputs": [
+      "neo",
+      "7"
+    ],
+    "difficulty_tier": "BEGINNER",
+    "base_xp_reward": 200,
+    "concepts_taught": [
+      "f_strings",
+      "string_methods",
+      "formato_numeros"
+    ]
+  },
+  {
+    "level_id": 11,
+    "phase": "control",
+    "title": "Nivel 11 — if/else: Escudo de Radiación",
+    "lore_description": "Los sensores de radiación del Sector Gamma están activos.\n\nSi el nivel de radiación supera 50, el escudo debe activarse automáticamente. De lo contrario, el sistema permanece en modo seguro.\n\nEntrada: un entero (nivel de radiación)\nSalida: 'ESCUDO ACTIVADO' si radiacion > 50, 'NIVEL SEGURO' si no.",
+    "grid_map": null,
+    "initial_code": "radiacion = int(input())\n# Si radiacion > 50: muestra 'ESCUDO ACTIVADO'\n# Si no: muestra 'NIVEL SEGURO'\n",
+    "expected_output": "ESCUDO ACTIVADO",
+    "test_inputs": [
+      "75"
+    ],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 250,
+    "concepts_taught": [
+      "if_else",
+      "condicionales",
+      "operadores_comparacion"
+    ]
+  },
+  {
+    "level_id": 12,
+    "phase": "control",
+    "title": "Nivel 12 — elif: Clasificación de Energía",
+    "lore_description": "El monitor de energía del sistema clasifica el estado del reactor en tres categorías.\n\nenergía >= 80 → 'OPTIMO'\nenergía >= 40 → 'ESTABLE'\nenergía < 40  → 'CRITICO'\n\nEntrada: un entero (nivel de energía 0-100)\nEjemplo: energia=55 → ESTABLE",
+    "grid_map": null,
+    "initial_code": "energia = int(input())\n# Clasifica el nivel de energia en OPTIMO / ESTABLE / CRITICO\n",
+    "expected_output": "ESTABLE",
+    "test_inputs": [
+      "55"
+    ],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 300,
+    "concepts_taught": [
+      "if_elif_else",
+      "condicionales_multiples",
+      "rangos"
+    ]
+  },
+  {
+    "level_id": 13,
+    "phase": "control",
+    "title": "Nivel 13 — and: Control de Acceso",
+    "lore_description": "El sistema de seguridad verifica dos condiciones simultáneamente: nivel de autorización Y clave de acceso.\n\nSolo se concede acceso si nivel >= 5 AND clave == 'ENIGMA'.\n\nEntrada: nivel (int) y clave (str)\nEjemplo: nivel=7, clave='ENIGMA' → ACCESO CONCEDIDO",
+    "grid_map": null,
+    "initial_code": "nivel = int(input())\nclave = input()\n# Verifica ambas condiciones con 'and'\n# 'ACCESO CONCEDIDO' o 'ACCESO DENEGADO'\n",
+    "expected_output": "ACCESO CONCEDIDO",
+    "test_inputs": [
+      "7",
+      "ENIGMA"
+    ],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 350,
+    "concepts_taught": [
+      "operador_and",
+      "condiciones_multiples",
+      "autenticacion"
+    ]
+  },
+  {
+    "level_id": 14,
+    "phase": "control",
+    "title": "Nivel 14 — Métodos string: Análisis de Mensajes",
+    "lore_description": "El interceptor de comunicaciones clasifica los mensajes entrantes según su contenido.\n\nSi empieza con 'ALERTA' → 'CRITICO'\nSi tiene más de 10 caracteres → 'LARGO'\nEn otro caso → 'NORMAL'\n\nEjemplo: 'ALERTA-SISTEMA' → CRITICO",
+    "grid_map": null,
+    "initial_code": "mensaje = input()\n# Usa startswith() y len() para clasificar\n",
+    "expected_output": "CRITICO",
+    "test_inputs": [
+      "ALERTA-SISTEMA"
+    ],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 400,
+    "concepts_taught": [
+      "string_methods",
+      "startswith",
+      "len",
+      "if_elif"
+    ]
+  },
+  {
+    "level_id": 15,
+    "phase": "control",
+    "title": "Nivel 15 — Condiciones compuestas: Reactor Seguro",
+    "lore_description": "El reactor central opera de forma segura solo cuando AMBOS parámetros están dentro del rango permitido.\n\ntemperatura < 100 AND presion < 200 → 'REACTOR OK'\nSi alguno excede el límite → 'REACTOR PELIGRO'\n\nEjemplo: temp=85, presion=150 → REACTOR OK",
+    "grid_map": null,
+    "initial_code": "temp = int(input())\npresion = int(input())\n# Verifica los dos limites simultaneamente\n",
+    "expected_output": "REACTOR OK",
+    "test_inputs": [
+      "85",
+      "150"
+    ],
+    "difficulty_tier": "INTERMEDIATE",
+    "base_xp_reward": 450,
+    "concepts_taught": [
+      "condiciones_compuestas",
+      "operador_and",
+      "umbrales"
+    ]
+  },
+  {
+    "level_id": 16,
+    "phase": "bucles",
+    "title": "Nivel 16 — for: Suma de Registros",
+    "lore_description": "Los sensores del sistema reportan N lecturas de energía.\n\nLa primera línea contiene N (cantidad de lecturas). Las siguientes N líneas contienen un entero cada una.\nCalcula y muestra la suma total.\n\nEjemplo: N=4, valores=10,20,30,40 → 100",
+    "grid_map": null,
+    "initial_code": "n = int(input())\ntotal = 0\n# Usa un bucle for range(n) para acumular\nprint(total)\n",
+    "expected_output": "100",
+    "test_inputs": [
+      "4",
+      "10",
+      "20",
+      "30",
+      "40"
+    ],
+    "difficulty_tier": "ADVANCED",
+    "base_xp_reward": 500,
+    "concepts_taught": [
+      "for_range",
+      "acumuladores",
+      "input_multiple"
+    ]
+  },
+  {
+    "level_id": 17,
+    "phase": "bucles",
+    "title": "Nivel 17 — for + lista: Pico de Amenaza",
+    "lore_description": "El sistema de detección registra N niveles de amenaza y necesita identificar el pico máximo para activar la respuesta adecuada.\n\nLee N enteros y muestra el mayor.\n\nEjemplo: N=5, valores=34,78,12,99,56 → 99",
+    "grid_map": null,
+    "initial_code": "n = int(input())\nlecturas = []\n# Llena la lista con n valores\n# Muestra el valor maximo\n",
+    "expected_output": "99",
+    "test_inputs": [
+      "5",
+      "34",
+      "78",
+      "12",
+      "99",
+      "56"
+    ],
+    "difficulty_tier": "ADVANCED",
+    "base_xp_reward": 550,
+    "concepts_taught": [
+      "for_range",
+      "listas",
+      "append",
+      "max"
+    ]
+  },
+  {
+    "level_id": 18,
+    "phase": "bucles",
+    "title": "Nivel 18 — while: Intentos de Acceso",
+    "lore_description": "El sistema registra cuántos intentos tarda en recibir la clave correcta 'SISTEMA'.\n\nUsa un bucle while que siga leyendo claves hasta obtener 'SISTEMA'. Cuenta y muestra el número de intentos totales (incluido el exitoso).\n\nEjemplo: intentos=['PRUEBA','FALLO','SISTEMA'] → 3",
+    "grid_map": null,
+    "initial_code": "intentos = 0\nclave = ''\n# Bucle while: lee hasta que clave == 'SISTEMA'\n# Cuenta cada intento\nprint(intentos)\n",
+    "expected_output": "3",
+    "test_inputs": [
+      "PRUEBA",
+      "FALLO",
+      "SISTEMA"
+    ],
+    "difficulty_tier": "ADVANCED",
+    "base_xp_reward": 600,
+    "concepts_taught": [
+      "while",
+      "break",
+      "contadores",
+      "condicion_salida"
+    ]
+  },
+  {
+    "level_id": 19,
+    "phase": "bucles",
+    "title": "Nivel 19 — for + string: Cifrado de Mensajes",
+    "lore_description": "El sistema de comunicaciones transforma los mensajes convirtiendo todas las letras a mayúsculas pero dejando los demás caracteres intactos.\n\nRecorre cada carácter del mensaje: si es letra → mayúscula, si no → igual.\n\nEjemplo: 'r3actor-7' → R3ACTOR-7",
+    "grid_map": null,
+    "initial_code": "texto = input()\nresultado = ''\n# Recorre cada caracter\n# Si es letra: convierte a mayuscula\n# Si no: mantener igual\nprint(resultado)\n",
+    "expected_output": "R3ACTOR-7",
+    "test_inputs": [
+      "r3actor-7"
+    ],
+    "difficulty_tier": "ADVANCED",
+    "base_xp_reward": 650,
+    "concepts_taught": [
+      "for_string",
+      "isalpha",
+      "upper",
+      "concatenacion"
+    ]
+  },
+  {
+    "level_id": 20,
+    "phase": "bucles",
+    "title": "Nivel 20 — Protocolo Final: Promedio del Sistema",
+    "lore_description": "El protocolo final del sistema requiere calcular el promedio de N lecturas de temperatura del núcleo.\n\nLee N valores float y calcula su promedio redondeado a 2 decimales.\n\nEjemplo: N=4, valores=10.5,20.0,15.5,14.0 → 15.0\n\nAl completar este nivel, habrás demostrado dominio de los fundamentos. El sistema ENIGMA te reconocerá como Arquitecto Certificado.",
+    "grid_map": null,
+    "initial_code": "n = int(input())\nsuma = 0.0\n# Lee n floats y acumula\n# Muestra round(suma / n, 2)\n",
+    "expected_output": "15.0",
+    "test_inputs": [
+      "4",
+      "10.5",
+      "20.0",
+      "15.5",
+      "14.0"
+    ],
+    "difficulty_tier": "ADVANCED",
+    "base_xp_reward": 800,
+    "concepts_taught": [
+      "for_range",
+      "float",
+      "promedio",
+      "round",
+      "acumuladores"
+    ]
+  }
+]
