@@ -32,28 +32,33 @@ interface Mission {
 // ─── Lore por level_order ──────────────────────────────────────────────────────
 
 const MISSION_LORE: Record<number, { lore: string; requires: string; chapter: string }> = {
+  0: {
+    lore: 'Los sistemas del dron están desincronizados. Antes de infiltrarte en el Nexo debes completar la calibración sináptica obligatoria. DAKI te guiará paso a paso para restablecer el enlace neuronal.',
+    requires: 'Sintaxis Python Básica',
+    chapter: 'Manual Cap. 0',
+  },
   1: {
-    lore: 'Establece un ping de respuesta para engañar a los radares del Área 51. El sistema espera una señal de confirmación. Si el protocolo falla, las alarmas se activarán.',
+    lore: 'Establece un pulso de identidad para atravesar los nodos de reconocimiento del Nexo. El sistema espera una señal de confirmación neuronal. Si el protocolo falla, la Matriz aislará tu consciencia.',
     requires: 'Print y Variables',
     chapter: 'Manual Cap. 1',
   },
   2: {
-    lore: 'Descifra las coordenadas de la puerta principal sumando los registros cifrados. Los valores están fragmentados — necesitas reconstruirlos mediante operaciones matemáticas precisas.',
+    lore: 'Descifra las coordenadas del nodo de acceso sumando los registros sinápticos cifrados. Los valores están fragmentados en la Matriz Neuronal — reconstruyelos con operaciones precisas.',
     requires: 'Operadores Matemáticos',
     chapter: 'Manual Cap. 1',
   },
   3: {
-    lore: 'Invierte el flujo de datos del firewall para crear una puerta trasera. La secuencia enemiga debe leerse al revés para que el protocolo de bypass funcione.',
+    lore: 'Invierte el flujo de datos del firewall neuronal para crear un canal de retorno. La secuencia del Nexo debe leerse en orden inverso para que el protocolo de bypass sináptico funcione.',
     requires: 'Slicing de Strings',
     chapter: 'Manual Cap. 2',
   },
   4: {
-    lore: 'Escanea el código fuente enemigo en busca de nodos de energía (vocales). Cada nodo activo amplifica la señal del dron. Localiza y cuenta todos los nodos antes del tiempo límite.',
+    lore: 'Escanea el tejido de código enemigo en busca de nodos de energía activos (vocales). Cada nodo amplifica la señal de tu dron neural. Localízalos y cuéntalos antes de que el Nexo los enmascare.',
     requires: 'For Loops e If',
     chapter: 'Manual Cap. 2',
   },
   5: {
-    lore: 'Sincroniza el motor de salto del dron con la frecuencia fractal de Fibonacci para evitar colisiones con los sensores del Área 51. Un solo error de sincronía activa la trampa.',
+    lore: 'Sincroniza el motor de salto neuronal con la frecuencia fractal de Fibonacci para evadir los detectores de patrones del Nexo. Un solo error de sincronía colapsa el canal sináptico.',
     requires: 'Lógica Avanzada',
     chapter: 'Manual Cap. 3',
   },
@@ -110,13 +115,18 @@ function BriefingPanel({
       >
         {/* Tag de clasificación */}
         <div className="flex items-center gap-3 mb-5">
-          <span className="text-[8px] tracking-[0.6em] text-[#00FF41]/25">
-            INCURSIÓN #{String(order).padStart(2, '0')} // ÁREA 51
+          <span className={`text-[8px] tracking-[0.6em] ${mission.challenge_type === 'tutorial' ? 'text-cyan-400/40' : 'text-[#00FF41]/25'}`}>
+            {mission.challenge_type === 'tutorial'
+              ? 'PROTOCOLO 00 // CALIBRACIÓN OBLIGATORIA'
+              : `INCURSIÓN #${String(order).padStart(2, '0')} // EL NEXO`}
           </span>
           {mission.completed && (
             <span
-              className="text-[8px] tracking-widest text-[#00FF41] border border-[#00FF41]/30 px-2 py-0.5"
-              style={{ textShadow: '0 0 6px #00FF41' }}
+              className="text-[8px] tracking-widest border px-2 py-0.5"
+              style={mission.challenge_type === 'tutorial'
+                ? { color: 'rgba(0,229,255,0.9)', borderColor: 'rgba(0,229,255,0.3)', textShadow: '0 0 6px rgba(0,229,255,0.6)' }
+                : { color: '#00FF41', borderColor: 'rgba(0,255,65,0.3)', textShadow: '0 0 6px #00FF41' }
+              }
             >
               ✓ COMPLETADA
             </span>
@@ -203,16 +213,33 @@ function BriefingPanel({
 
         {/* Botón de despliegue */}
         {isLocked ? (
-          <div
-            className="border border-[#00FF41]/10 bg-black/40 backdrop-blur-sm px-5 py-4 text-center"
-          >
+          <div className="border border-[#00FF41]/10 bg-black/40 backdrop-blur-sm px-5 py-4 text-center">
             <p className="text-[10px] tracking-[0.5em] text-[#00FF41]/25">
               🔒 INCURSIÓN BLOQUEADA
             </p>
             <p className="text-[9px] text-[#00FF41]/12 mt-1 tracking-widest">
-              COMPLETA LAS MISIONES ANTERIORES PARA DESBLOQUEAR
+              COMPLETA EL PROTOCOLO 00 PARA DESBLOQUEAR
             </p>
           </div>
+        ) : mission.challenge_type === 'tutorial' ? (
+          <motion.button
+            onClick={() => onDeploy(mission)}
+            className="w-full py-4 border-2 font-black text-sm tracking-[0.28em] transition-all duration-200 cursor-pointer"
+            style={{
+              borderColor: 'rgba(0,229,255,0.6)',
+              color: 'rgba(0,229,255,0.9)',
+              background: 'rgba(0,229,255,0.06)',
+              boxShadow: '0 0 20px rgba(0,229,255,0.1)',
+              textShadow: '0 0 8px rgba(0,229,255,0.6)',
+            }}
+            whileHover={{
+              background: 'rgba(0,229,255,0.12)',
+              boxShadow: '0 0 40px rgba(0,229,255,0.25), inset 0 0 20px rgba(0,229,255,0.05)',
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            ▶ INICIALIZAR CALIBRACIÓN SINÁPTICA
+          </motion.button>
         ) : (
           <motion.button
             onClick={() => onDeploy(mission)}
@@ -242,7 +269,7 @@ function BriefingPanel({
 
 export default function MisionesPage() {
   const router = useRouter()
-  const { userId, username, level, totalXp, streakDays } = useUserStore()
+  const { userId, username, level, totalXp, streakDays, completedChallengeIds } = useUserStore()
   const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
@@ -250,21 +277,31 @@ export default function MisionesPage() {
   const [briefingMission, setBriefingMission] = useState<Mission | null>(null)
   const [isHacking, setIsHacking] = useState(false)
   const [hackingTitle, setHackingTitle] = useState('')
+  // Esperar a que Zustand hidrate desde localStorage antes de evaluar userId
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
 
   useEffect(() => {
+    if (!hydrated) return
     if (!userId) { router.replace('/'); setLoading(false); return }
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
       .then(r => r.json())
-      .then(data => {
-        setMissions(data)
-        const first = (data as Mission[]).find(m => m.unlocked && !m.completed) ?? data[0]
+      .then((data: Mission[]) => {
+        // Merge local cache: marcar como completadas las misiones que constan en localStorage
+        const merged = data.map(m =>
+          completedChallengeIds.includes(m.id) ? { ...m, completed: true } : m
+        )
+        setMissions(merged)
+        const first = merged.find(m => m.unlocked && !m.completed) ?? merged[0]
         if (first) setSelected(first)
       })
       .catch(err => { console.log('[Misiones] Error:', err); setFetchError(true) })
       .finally(() => setLoading(false))
-  }, [userId, router])
+  }, [hydrated, userId, router])
 
   const completadas = missions.filter(m => m.completed).length
+  const tutorial = missions.find(m => m.challenge_type === 'tutorial')
+  const tutorialDone = tutorial?.completed ?? true
 
   const handleDeploy = (mission: Mission) => {
     if (!mission.unlocked) return
@@ -289,7 +326,7 @@ export default function MisionesPage() {
 
   return (
     <div
-      className="h-screen flex flex-col font-mono text-[#00FF41] relative overflow-hidden"
+      className="h-[calc(100vh-2rem)] flex flex-col font-mono text-[#00FF41] relative overflow-hidden"
       style={{ background: 'radial-gradient(circle at 50% 40%, #001a0d 0%, #000000 60%)' }}
     >
       {/* Scanlines */}
@@ -386,11 +423,41 @@ export default function MisionesPage() {
               </p>
             ) : (
               <>
+                {/* ── Banner: calibración requerida ── */}
+                {!tutorialDone && (
+                  <motion.div
+                    className="mx-3 mb-2 mt-1 border border-cyan-500/35 bg-cyan-900/10 px-4 py-3"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ boxShadow: '0 0 16px rgba(0,229,255,0.07), inset 0 0 12px rgba(0,229,255,0.04)' }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <motion.span
+                        className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0"
+                        animate={{ opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                        style={{ boxShadow: '0 0 5px rgba(0,229,255,0.8)' }}
+                      />
+                      <span className="text-[9px] tracking-[0.45em] text-cyan-400/80 font-bold uppercase">
+                        Calibración Sináptica Requerida
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-cyan-200/50 leading-relaxed">
+                      Completa el Protocolo 00 para desbloquear las incursiones del Nexo.
+                    </p>
+                  </motion.div>
+                )}
+
                 {missions.map((m, idx) => {
                   const isLocked = !m.unlocked
                   const isSelected = selected?.id === m.id
                   const tierColor = TIER_COLOR[m.difficulty_tier]
                   const isAvailable = m.unlocked && !m.completed
+
+                  const isTutorial = m.challenge_type === 'tutorial'
+                  const tutorialSelectedBg = 'rgba(0,229,255,0.08)'
+                  const tutorialHoverBg    = 'rgba(0,229,255,0.05)'
 
                   return (
                     <motion.button
@@ -406,35 +473,59 @@ export default function MisionesPage() {
                         isLocked
                           ? 'opacity-40 grayscale cursor-not-allowed border-l-transparent border-b-green-500/5'
                           : isSelected
-                          ? 'border-l-[#00FF41] border-b-green-500/10 cursor-pointer'
+                          ? isTutorial
+                            ? 'border-l-cyan-400 border-b-cyan-500/10 cursor-pointer'
+                            : 'border-l-[#00FF41] border-b-green-500/10 cursor-pointer'
+                          : isTutorial
+                          ? 'border-l-cyan-700/60 border-b-cyan-500/8 cursor-pointer hover:translate-x-1'
                           : 'border-l-green-800/50 border-b-green-500/8 cursor-pointer hover:translate-x-1',
                       ].join(' ')}
                       style={
                         isSelected
                           ? {
-                              background: 'rgba(0,255,65,0.08)',
-                              boxShadow: 'inset 0 0 20px rgba(0,255,65,0.06), 0 0 10px rgba(0,255,65,0.05)',
+                              background: isTutorial ? tutorialSelectedBg : 'rgba(0,255,65,0.08)',
+                              boxShadow: isTutorial
+                                ? 'inset 0 0 20px rgba(0,229,255,0.06), 0 0 10px rgba(0,229,255,0.05)'
+                                : 'inset 0 0 20px rgba(0,255,65,0.06), 0 0 10px rgba(0,255,65,0.05)',
                             }
                           : {}
                       }
                       onMouseEnter={e => {
                         if (!isLocked && !isSelected) {
-                          e.currentTarget.style.background = 'rgba(0,255,65,0.05)'
-                          e.currentTarget.style.boxShadow = 'inset 0 0 20px rgba(0,255,65,0.08)'
-                          e.currentTarget.style.borderLeftColor = 'rgba(0,255,65,0.5)'
+                          e.currentTarget.style.background = isTutorial ? tutorialHoverBg : 'rgba(0,255,65,0.05)'
+                          e.currentTarget.style.boxShadow = isTutorial
+                            ? 'inset 0 0 20px rgba(0,229,255,0.08)'
+                            : 'inset 0 0 20px rgba(0,255,65,0.08)'
+                          e.currentTarget.style.borderLeftColor = isTutorial ? 'rgba(0,229,255,0.6)' : 'rgba(0,255,65,0.5)'
                         }
                       }}
                       onMouseLeave={e => {
                         if (!isSelected) {
                           e.currentTarget.style.background = 'transparent'
                           e.currentTarget.style.boxShadow = 'none'
-                          e.currentTarget.style.borderLeftColor = isLocked ? 'transparent' : 'rgba(0,100,30,0.5)'
+                          e.currentTarget.style.borderLeftColor = isLocked
+                            ? 'transparent'
+                            : isTutorial ? 'rgba(0,100,120,0.6)' : 'rgba(0,100,30,0.5)'
                         }
                       }}
                     >
+                      {/* Badge tutorial */}
+                      {isTutorial && (
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <motion.span
+                            className="w-1 h-1 rounded-full bg-cyan-400 shrink-0"
+                            animate={{ opacity: [0.4, 1, 0.4] }}
+                            transition={{ duration: 1.4, repeat: Infinity }}
+                          />
+                          <span className="text-[8px] tracking-[0.4em] text-cyan-400/70 font-bold uppercase">
+                            Protocolo 00 · Obligatorio
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className="text-[#00FF41]/25 text-[10px] w-4 shrink-0 tabular-nums">
+                          <span className={`text-[10px] w-4 shrink-0 tabular-nums ${isTutorial ? 'text-cyan-400/40' : 'text-[#00FF41]/25'}`}>
                             {String(m.level_order ?? idx + 1).padStart(2, '0')}
                           </span>
                           <span
@@ -443,7 +534,11 @@ export default function MisionesPage() {
                               isLocked
                                 ? 'text-[#00FF41]/25'
                                 : isSelected
-                                ? 'text-[#00FF41] drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]'
+                                ? isTutorial
+                                  ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]'
+                                  : 'text-[#00FF41] drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]'
+                                : isTutorial
+                                ? 'text-cyan-400/80'
                                 : 'text-green-400',
                             ].join(' ')}
                           >
@@ -454,14 +549,18 @@ export default function MisionesPage() {
                           {isLocked ? (
                             <span className="text-[#00FF41]/20">🔒</span>
                           ) : m.completed ? (
-                            <span className="text-[#00FF41]" style={{ textShadow: '0 0 6px #00FF41' }}>✓</span>
+                            <span
+                              style={isTutorial
+                                ? { color: 'rgba(0,229,255,0.9)', textShadow: '0 0 6px rgba(0,229,255,0.7)' }
+                                : { color: '#00FF41', textShadow: '0 0 6px #00FF41' }}
+                            >✓</span>
                           ) : isAvailable ? (
                             <>
                               <span
-                                className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0"
-                                style={{ boxShadow: '0 0 4px #00FF41' }}
+                                className={`w-1.5 h-1.5 rounded-full animate-pulse shrink-0 ${isTutorial ? 'bg-cyan-400' : 'bg-green-500'}`}
+                                style={{ boxShadow: isTutorial ? '0 0 4px rgba(0,229,255,0.8)' : '0 0 4px #00FF41' }}
                               />
-                              <span style={{ color: `${tierColor}70` }}>▶</span>
+                              <span style={{ color: isTutorial ? 'rgba(0,229,255,0.7)' : `${tierColor}70` }}>▶</span>
                             </>
                           ) : null}
                         </div>
@@ -469,8 +568,11 @@ export default function MisionesPage() {
 
                       {/* Fila inferior: dificultad + intentos */}
                       <div className="pl-7 mt-0.5 flex items-center gap-2">
-                        <span className="text-[8px] tracking-widest text-green-200/40" style={{ color: `${tierColor}40` }}>
-                          {TIER_LABEL[m.difficulty_tier]}
+                        <span
+                          className="text-[8px] tracking-widest"
+                          style={{ color: isTutorial ? 'rgba(0,229,255,0.35)' : `${tierColor}40` }}
+                        >
+                          {isTutorial ? 'CALIBRACIÓN' : TIER_LABEL[m.difficulty_tier]}
                         </span>
                         {m.attempts > 0 && !m.completed && (
                           <span className="text-[8px] text-green-200/30">

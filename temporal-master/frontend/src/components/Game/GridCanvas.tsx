@@ -32,7 +32,7 @@ interface Props {
   cellSize?: number
   stepDelay?: number
   onComplete?: () => void
-  onCollision?: (coord: Coord) => void
+  onCollision?: (_coord: Coord) => void
   enemyEvents?: EnemyEvent[]
 }
 

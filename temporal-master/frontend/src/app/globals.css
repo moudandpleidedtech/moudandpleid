@@ -121,3 +121,43 @@ html, body {
   color: #FFB800;
   text-shadow: 0 0 6px #FFB80070;
 }
+
+/* ── Micro-interacciones (Game Feel) ─────────────────────────────────────── */
+
+@keyframes shake {
+  0%        { transform: translateX(0); }
+  12%       { transform: translateX(-7px); }
+  25%       { transform: translateX(7px); }
+  37%       { transform: translateX(-5px); }
+  50%       { transform: translateX(5px); }
+  62%       { transform: translateX(-3px); }
+  75%       { transform: translateX(3px); }
+  87%       { transform: translateX(-1px); }
+  100%      { transform: translateX(0); }
+}
+
+@keyframes victory-glow {
+  0%        { box-shadow: 0 0 0px rgba(0,255,65,0); border-color: rgba(0,255,65,0.2); }
+  30%       { box-shadow: 0 0 32px rgba(0,255,65,0.7), 0 0 64px rgba(0,255,65,0.35); border-color: #00FF41; }
+  60%       { box-shadow: 0 0 20px rgba(0,255,225,0.6), 0 0 48px rgba(0,255,225,0.25); border-color: #00FFE1; }
+  100%      { box-shadow: 0 0 0px rgba(0,255,65,0); border-color: rgba(0,255,65,0.2); }
+}
+
+@keyframes error-flash {
+  0%,100%   { box-shadow: none; border-color: rgba(0,255,65,0.2); }
+  25%       { box-shadow: 0 0 24px rgba(255,50,50,0.7); border-color: #FF4444; }
+  75%       { box-shadow: 0 0 12px rgba(255,50,50,0.4); border-color: #FF4444; }
+}
+
+/* Clases utilitarias — se aplican/quitan dinámicamente desde React */
+.anim-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.anim-victory-glow {
+  animation: victory-glow 1.4s ease-in-out;
+}
+
+.anim-error-flash {
+  animation: error-flash 0.5s ease-in-out;
+}

@@ -64,7 +64,14 @@ class GamificationEngine:
         progress = result.scalar_one_or_none()
 
         if progress is None:
-            progress = UserProgress(user_id=user_id, challenge_id=challenge_id)
+            progress = UserProgress(
+                user_id=user_id,
+                challenge_id=challenge_id,
+                attempts=0,
+                hints_used=0,
+                syntax_errors_total=0,
+                completed=False,
+            )
             db.add(progress)
 
         progress.attempts += 1

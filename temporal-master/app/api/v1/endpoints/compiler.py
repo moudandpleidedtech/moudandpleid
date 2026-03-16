@@ -1,11 +1,14 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.challenge import Challenge
+from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
 from app.services.execution_service import execute_python_code
 from app.services.gamification_service import gamification_engine
@@ -13,12 +16,27 @@ from app.services.gamification_service import gamification_engine
 router = APIRouter()
 
 
+def _normalize_output(text: str) -> str:
+    """
+    Normalización agresiva antes de comparar stdout con expected_output.
+
+    Pasos:
+    1. Unifica saltos de línea  (CRLF → LF, CR suelto → LF)
+    2. Recorta espacios al inicio/fin de cada línea
+    3. Elimina líneas vacías sobrantes al inicio y al final del bloque
+    """
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = [line.strip() for line in normalized.splitlines()]
+    return "\n".join(lines).strip()
+
+
 class CodeExecuteRequest(BaseModel):
     user_id: uuid.UUID
     challenge_id: uuid.UUID
     source_code: str
     test_inputs: list[str] = []
-    hints_used: int = 0  # pistas solicitadas a ENIGMA antes de este intento
+    hints_used: int = 0       # pistas solicitadas a ENIGMA antes de este intento
+    time_spent_ms: int = 0    # tiempo en ms desde que el usuario abrió el reto (opcional)
 
 
 class CodeExecuteResponse(BaseModel):
@@ -27,6 +45,49 @@ class CodeExecuteResponse(BaseModel):
     execution_time_ms: float
     output_matched: bool
     gamification: ChallengeAttemptResult
+
+
+async def _upsert_metric(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    challenge_id: uuid.UUID,
+    time_spent_ms: int,
+    success: bool,
+) -> None:
+    """
+    Inserta o actualiza la fila de telemetría para (user_id, challenge_id).
+    Si ya existe, incrementa attempts, acumula time_spent_ms y actualiza status.
+    Falla silenciosamente para no bloquear la respuesta al jugador.
+    """
+    try:
+        result = await db.execute(
+            select(UserMetric).where(
+                UserMetric.user_id == user_id,
+                UserMetric.challenge_id == challenge_id,
+            )
+        )
+        metric = result.scalar_one_or_none()
+        now = datetime.now(timezone.utc)
+
+        if metric is None:
+            db.add(UserMetric(
+                user_id=user_id,
+                challenge_id=challenge_id,
+                attempts=1,
+                time_spent_ms=time_spent_ms,
+                status="success" if success else "fail",
+                first_attempt_at=now,
+                last_attempt_at=now,
+            ))
+        else:
+            metric.attempts += 1
+            metric.time_spent_ms += time_spent_ms
+            metric.status = "success" if success else metric.status  # una vez exitoso, queda exitoso
+            metric.last_attempt_at = now
+
+        await db.flush()
+    except Exception:
+        pass  # telemetría no crítica
 
 
 @router.post(
@@ -56,7 +117,7 @@ async def execute_challenge_code(
     # Cuenta errores de sintaxis detectados en stderr de este intento
     syntax_errors_count = exec_result["stderr"].count("SyntaxError")
 
-    output_matched = exec_result["stdout"].strip() == challenge.expected_output.strip()
+    output_matched = _normalize_output(exec_result["stdout"]) == _normalize_output(challenge.expected_output)
     is_success = exec_result["success"] and output_matched
 
     try:
@@ -71,6 +132,15 @@ async def execute_challenge_code(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+    # ── Telemetría: upsert en user_metrics ───────────────────────────────────
+    await _upsert_metric(
+        db=db,
+        user_id=payload.user_id,
+        challenge_id=payload.challenge_id,
+        time_spent_ms=payload.time_spent_ms,
+        success=is_success,
+    )
 
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],

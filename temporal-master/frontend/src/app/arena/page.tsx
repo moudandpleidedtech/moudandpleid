@@ -133,7 +133,7 @@ function VSCard({ duel, myId }: { duel: DuelData; myId: string }) {
 
 // ─── Inbox row ───────────────────────────────────────────────────────────────
 
-function InboxRow({ item, onAccept }: { item: InboxItem; onAccept: (id: string) => void }) {
+function InboxRow({ item, onAccept }: { item: InboxItem; onAccept: (_id: string) => void }) {
   return (
     <motion.div
       className="flex items-center justify-between border border-[#7DF9FF]/15 px-4 py-3 hover:border-[#7DF9FF]/40 transition-colors"
@@ -225,7 +225,7 @@ function ResultScreen({
 
 export default function ArenaPage() {
   const router = useRouter()
-  const { userId, username, level } = useUserStore()
+  const { userId } = useUserStore()
 
   const [phase, setPhase] = useState<DuelPhase>('idle')
   const [duel, setDuel] = useState<DuelData | null>(null)

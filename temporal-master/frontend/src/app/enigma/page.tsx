@@ -8,6 +8,15 @@ import GlitchTransition from '@/components/Game/GlitchTransition'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
+// ─── Backgrounds por mapa ─────────────────────────────────────────────────────
+const MAP_BACKGROUNDS: Record<number, string> = {
+  0: '/assets/backgrounds/map1.png', // Mapa 1 — cyan/blue   · Iniciación
+  1: '/assets/backgrounds/map2.png', // Mapa 2 — yellow/orange · El Muro
+  2: '/assets/backgrounds/map3.png', // Mapa 3 — electric purple · Condicionales
+  3: '/assets/backgrounds/map4.png', // Mapa 4 — blood red    · El Enjambre
+  4: '/assets/backgrounds/map5.png', // Mapa 5 — magenta/green · Asedio Total
+}
+
 // ─── Mapas ────────────────────────────────────────────────────────────────────
 
 const MAPS: {
@@ -29,8 +38,8 @@ const MAPS: {
     hint: 'Navega al nucleo usando los comandos de movimiento.',
   },
   {
-    label: 'Mapa 2 — Protocolo Final',
-    level: 5,
+    label: 'Mapa 2 — Laberinto',
+    level: 2,
     grid: [
       [3, 1, 0, 0, 0],
       [0, 1, 0, 1, 0],
@@ -164,7 +173,13 @@ export default function EnigmaPage() {
   const [canvasKey, setCanvasKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [showAwakening, setShowAwakening] = useState(false)
+  const [boardAnim, setBoardAnim] = useState<'anim-shake' | 'anim-victory-glow' | 'anim-error-flash' | ''>('')
   const logRef = useRef<HTMLDivElement>(null)
+
+  const triggerBoardAnim = (cls: 'anim-shake' | 'anim-victory-glow' | 'anim-error-flash', ms = 500) => {
+    setBoardAnim(cls)
+    setTimeout(() => setBoardAnim(''), ms)
+  }
 
   const addLog = (line: string) => {
     setLog((prev) => {
@@ -226,6 +241,7 @@ export default function EnigmaPage() {
 
   const handleMissionComplete = () => {
     addLog('> Nucleo de datos alcanzado.')
+    triggerBoardAnim('anim-victory-glow', 1400)
     if (MAPS[mapIdx].level === 5) {
       setTimeout(() => setShowAwakening(true), 1200)
     } else {
@@ -248,7 +264,15 @@ export default function EnigmaPage() {
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41]">
+      <div
+        className="relative min-h-screen bg-[#0A0A0A] bg-cover bg-center font-mono text-[#00FF41] transition-all duration-700"
+        style={{ backgroundImage: `url('${MAP_BACKGROUNDS[mapIdx]}'), none` }}
+      >
+        {/* Overlay: oscurece 80% + blur sutil para no competir con el editor */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0 pointer-events-none" />
+
+        {/* Todo el contenido sobre el overlay */}
+        <div className="relative z-10 flex flex-col min-h-screen">
 
         {/* Cabecera */}
         <header className="flex items-center justify-between px-6 py-3 bg-[#0D0D0D] border-b border-[#00FF41]/20">
@@ -283,7 +307,7 @@ export default function EnigmaPage() {
               }`}>
               {m.label}
               {m.level === 5 && (
-                <span className="ml-2 text-red-400/60 text-xs">// FINAL</span>
+                <span className="ml-2 text-red-400/60 text-xs">{'// FINAL'}</span>
               )}
             </button>
           ))}
@@ -299,16 +323,21 @@ export default function EnigmaPage() {
               {currentMap.hint}
             </div>
 
-            <GridCanvas
-              key={canvasKey}
-              matrix={currentMap.grid}
-              path={activePath}
-              enemyEvents={activeEnemyEvents}
-              cellSize={64}
-              stepDelay={350}
-              onComplete={handleMissionComplete}
-              onCollision={(c) => addLog(`> COLISION en (${c.x}, ${c.y}) — ruta bloqueada.`)}
-            />
+            <div className={`border border-[#00FF41]/20 transition-all duration-300 ${boardAnim}`}>
+              <GridCanvas
+                key={canvasKey}
+                matrix={currentMap.grid}
+                path={activePath}
+                enemyEvents={activeEnemyEvents}
+                cellSize={64}
+                stepDelay={350}
+                onComplete={handleMissionComplete}
+                onCollision={(c) => {
+                  addLog(`> COLISION en (${c.x}, ${c.y}) — ruta bloqueada.`)
+                  triggerBoardAnim('anim-shake', 500)
+                }}
+              />
+            </div>
 
             {/* Leyenda */}
             <div className="flex flex-wrap gap-3">
@@ -402,6 +431,7 @@ export default function EnigmaPage() {
             </div>
           </div>
         </main>
+        </div> {/* end z-10 content wrapper */}
       </div>
     </>
   )

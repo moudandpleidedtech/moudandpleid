@@ -9,10 +9,10 @@ import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
 const DAKI_QUOTES = [
-  'Sistemas en línea. El Área 51 ha reforzado sus firewalls. Necesitaremos bucles más eficientes, Operador.',
-  'Recuerda: Un dron sin condicionales es un dron ciego. Usa if/else para escanear el entorno.',
-  'He interceptado transmisiones de los Syntax Swarms. Son vulnerables a los ataques de área (for loops).',
-  'La sintaxis es tu arma. Un error de indentación detonará las alarmas. Precisión absoluta, Adrián.',
+  'Alineación neuronal completada. El Nexo ha reforzado sus protocolos. Necesitaremos bucles más eficientes, Operador.',
+  'Recuerda: un nodo sin condicionales es un nodo ciego. Usa if/else para escanear la Matriz Neuronal.',
+  'He interceptado pulsos de los Syntax Swarms. Su capa sináptica es vulnerable a ataques de área — for loops.',
+  'La sintaxis es tu señal neural. Un error de indentación colapsa el canal. Precisión absoluta, Operador.',
 ]
 
 // ─── Typewriter ────────────────────────────────────────────────────────────────
@@ -170,7 +170,13 @@ function TacticButton({
 
 export default function HubPage() {
   const router = useRouter()
-  const { userId, username, level, totalXp, streakDays } = useUserStore()
+  const { userId, username, level, totalXp, streakDays, clearUser } = useUserStore()
+
+  const handleLogout = () => {
+    clearUser()
+    document.cookie = 'enigma_user=; path=/; max-age=0; SameSite=Lax'
+    router.push('/')
+  }
   const [quote] = useState(() => DAKI_QUOTES[Math.floor(Math.random() * DAKI_QUOTES.length)])
   const { displayed, done } = useTypewriter(quote)
   const [isBitacoraOpen, setIsBitacoraOpen] = useState(false)
@@ -229,6 +235,12 @@ export default function HubPage() {
           <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
           {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
+          <button
+            onClick={handleLogout}
+            className="ml-4 text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all"
+          >
+            [ ABORTAR CONEXIÓN ]
+          </button>
         </div>
       </header>
 

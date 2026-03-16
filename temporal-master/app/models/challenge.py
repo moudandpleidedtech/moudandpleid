@@ -39,3 +39,8 @@ class Challenge(Base):
 
     # ── Contenido teórico (Prompt 18) ─────────────────────────────────────────
     theory_content: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Briefing de misión (Prompt B) ─────────────────────────────────────────
+    lore_briefing: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pedagogical_objective: Mapped[str | None] = mapped_column(Text, nullable=True)
+    syntax_hint: Mapped[str | None] = mapped_column(Text, nullable=True)

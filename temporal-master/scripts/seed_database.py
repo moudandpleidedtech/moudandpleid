@@ -34,44 +34,46 @@ THEORY_M1 = """\
 Una **función** es un bloque de código reutilizable. Se define con `def`:
 
 ```python
-def nombre(parametro):
+def nombre(param1, param2):
     return resultado
 ```
 
 - `def` — declara la función
-- `return` — envía el valor al llamador
+- Los parámetros reciben los valores al invocarla
+- `return` — envía el valor de vuelta al llamador
 - Si no hay `return`, la función devuelve `None`
 
 ---
 
-## APLICACIÓN: f-strings
+## APLICACIÓN: Concatenación de Strings
 
-Para construir strings dinámicos usa **f-strings** (Python 3.6+):
+Para unir dos cadenas de texto usa el operador **`+`**:
 
 ```python
-nombre = "Ada"
-mensaje = f"Hola, {nombre}"
-print(mensaje)  # → Hola, Ada
+parte_a = "NEXO-"
+parte_b = "A99"
+token = parte_a + parte_b
+print(token)  # → NEXO-A99
 ```
 
-Todo lo que escribas dentro de `{}` se evalúa como código Python en el momento de la ejecución.
+El operador `+` **suelda** los strings tal cual — sin espacios extra ni modificaciones.
 
 ---
 
 ## EJEMPLO COMPLETO
 
 ```python
-def saludar(nombre):
-    return f"Hola, {nombre}"
+def fusionar(izq, der):
+    return izq + der
 
-resultado = saludar("Mundo")
-print(resultado)  # → Hola, Mundo
+resultado = fusionar("NEXO-", "A99")
+print(resultado)  # → NEXO-A99
 ```
 
 **Flujo:**
-- `saludar("Mundo")` invoca la función con `nombre = "Mundo"`
-- La función retorna el string construido
-- `print()` lo muestra en consola
+- `fusionar("NEXO-", "A99")` invoca la función con ambos parámetros
+- `izq + der` concatena los strings y `return` los envía de vuelta
+- `print()` muestra el token completo en consola
 """
 
 THEORY_M2 = """\
@@ -271,31 +273,74 @@ def fibonacci(n):
 # ─── Definición de retos ──────────────────────────────────────────────────────
 
 CHALLENGES = [
+    # ── TUTORIAL / PROTOCOLO 00 ───────────────────────────────────────────────
+    {
+        "title": "[ PROTOCOLO 00: CALIBRACIÓN SINÁPTICA ]",
+        "description": (
+            "Calibración sináptica obligatoria antes de infiltrarte en el Nexo.\n\n"
+            "Completa las 4 fases guiadas por DAKI: diagnostica el sistema, corrige "
+            "sintaxis rota, asigna memoria y aprende el retorno de señal.\n\n"
+            "Cada fase incrementa el enlace neuronal un 25%."
+        ),
+        "difficulty_tier": DifficultyTier.BEGINNER,
+        "base_xp_reward": 50,
+        # initial_code = Fase 1 (código ya correcto — el usuario solo ejecuta)
+        "initial_code": 'print("Iniciando enlace neuronal...")\n',
+        # expected_output = output de la Fase 4 correctamente resuelta
+        "expected_output": "Enlace Listo",
+        "test_inputs_json": json.dumps([]),
+        "level_order": 0,
+        "phase": "tutorial",
+        "concepts_taught_json": json.dumps(["print", "sintaxis", "variables", "return"]),
+        "challenge_type": "tutorial",
+        "theory_content": None,
+        "lore_briefing": None,
+        "pedagogical_objective": (
+            "Introducir los conceptos de print, SyntaxError, variables y return "
+            "mediante un tutorial guiado de 4 fases interactivas."
+        ),
+        "syntax_hint": (
+            'def finalizar_enlace():\n'
+            '    return "Enlace Listo"\n\n'
+            'print(finalizar_enlace())\n'
+        ),
+    },
     # ── Tier 1 / BÁSICO ───────────────────────────────────────────────────────
     {
-        "title": "Misión 1: El Eco del Sistema",
+        "title": "[ INCURSIÓN 01: FUSIÓN DE NODOS ]",
         "description": (
-            "El sistema necesita que implementes una función de saludo personalizado.\n\n"
-            "Completa `saludar(nombre)` para que retorne el string `'Hola, {nombre}'`.\n"
-            "El nombre llega por stdin — no lo modifiques."
+            "Los paquetes de memoria de este sector están fragmentados por el firewall. "
+            "Tu objetivo es tomar dos mitades de un token de seguridad y fusionarlas "
+            "para abrir la primera compuerta neuronal.\n\n"
+            "Completa `fusionar_token(parte_izq, parte_der)` para que retorne ambas "
+            "partes unidas en un solo string.\n"
+            "Ejemplo: `fusionar_token('NEXO-', 'A99')` → `'NEXO-A99'`."
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "base_xp_reward": 100,
         "initial_code": (
-            "def saludar(nombre):\n"
-            "    # Tu código aquí\n"
-            "    pass\n"
+            "def fusionar_token(parte_izq, parte_der):\n"
+            "    # Conecta ambas partes y devuelve el resultado\n"
             "\n"
-            "nombre = input()\n"
-            "print(saludar(nombre))\n"
+            "\n"
+            "parte_izq = input()\n"
+            "parte_der = input()\n"
+            "print(fusionar_token(parte_izq, parte_der))\n"
         ),
-        "expected_output": "Hola, Arquitecto",
-        "test_inputs_json": json.dumps(["Arquitecto"]),
+        "expected_output": "NEXO-A99",
+        "test_inputs_json": json.dumps(["NEXO-", "A99"]),
         "level_order": 1,
         "phase": "basico",
-        "concepts_taught_json": json.dumps(["def", "return", "f-strings"]),
+        "concepts_taught_json": json.dumps(["def", "return", "concatenacion", "strings"]),
         "challenge_type": "python",
         "theory_content": THEORY_M1,
+        "lore_briefing": (
+            "Los paquetes de memoria de este sector están fragmentados por el firewall. "
+            "Dos mitades de un token de seguridad viajan por canales separados del Nexo. "
+            "Tu misión: fusionarlas en un único pulso antes de que el firewall cierre la compuerta neuronal."
+        ),
+        "pedagogical_objective": "Definir una función con dos parámetros. Concatenar strings con el operador +. Retornar valores desde una función.",
+        "syntax_hint": "def fusionar_token(parte_izq, parte_der):\n    return parte_izq + parte_der",
     },
     {
         "title": "Misión 2: La Calculadora Binaria",
@@ -322,6 +367,13 @@ CHALLENGES = [
         "concepts_taught_json": json.dumps(["int", "input", "aritmetica"]),
         "challenge_type": "python",
         "theory_content": THEORY_M2,
+        "lore_briefing": (
+            "Dos módulos de energía sináptica enviaron sus lecturas al mismo tiempo al Nexo. "
+            "La Matriz necesita sumarlas para calibrar la carga total del canal neuronal. "
+            "Sin esta operación, el reactor de la Matriz permanecerá offline."
+        ),
+        "pedagogical_objective": "Leer múltiples valores desde stdin con input(). Convertir strings a enteros con int().",
+        "syntax_hint": "a = int(input())\nb = int(input())\nprint(a + b)",
     },
     # ── Tier 2 / CONTROL ──────────────────────────────────────────────────────
     {
@@ -329,7 +381,7 @@ CHALLENGES = [
         "description": (
             "Un mensaje cifrado llega al sistema. Para descifrarlo necesitas invertirlo.\n\n"
             "Implementa `invertir(cadena)` que retorne el string al revés.\n"
-            "Ejemplo: `'Arquitecto'` → `'otcetiqrA'`."
+            "Ejemplo: `'Arquitecto'` → `'otcetiuqrA'`."
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "base_xp_reward": 300,
@@ -341,13 +393,20 @@ CHALLENGES = [
             "cadena = input()\n"
             "print(invertir(cadena))\n"
         ),
-        "expected_output": "otcetiqrA",
+        "expected_output": "otcetiuqrA",
         "test_inputs_json": json.dumps(["Arquitecto"]),
         "level_order": 3,
         "phase": "control",
         "concepts_taught_json": json.dumps(["strings", "slicing", "indices"]),
         "challenge_type": "python",
         "theory_content": THEORY_M3,
+        "lore_briefing": (
+            "Interceptamos un pulso cifrado en la Matriz Neuronal. El protocolo del Nexo es simple: "
+            "invierte la secuencia sináptica antes de transmitirla. "
+            "Debemos revertir la operación antes de que el canal neuronal se cierre."
+        ),
+        "pedagogical_objective": "Manipular strings con slicing. Entender índices y el operador [::-1].",
+        "syntax_hint": "def invertir(cadena):\n    return cadena[::-1]",
     },
     {
         "title": "Misión 4: El Contador de Vocales",
@@ -374,6 +433,13 @@ CHALLENGES = [
         "concepts_taught_json": json.dumps(["for", "in", "contador"]),
         "challenge_type": "python",
         "theory_content": THEORY_M4,
+        "lore_briefing": (
+            "El analizador neuronal del Nexo escanea tejidos de código buscando nodos de energía activos. "
+            "Para calibrarlo necesita saber cuántos nodos vocales contiene cada señal sináptica. "
+            "Entrena el clasificador antes de que la Matriz detecte la intrusión."
+        ),
+        "pedagogical_objective": "Iterar sobre strings con bucles for. Usar el operador in para verificar pertenencia.",
+        "syntax_hint": "for letra in texto:\n    if letra in 'aeiouAEIOU':\n        contador += 1",
     },
     # ── Tier 3 / AVANZADO ─────────────────────────────────────────────────────
     {
@@ -402,6 +468,13 @@ CHALLENGES = [
         "concepts_taught_json": json.dumps(["while", "iteracion", "optimizacion"]),
         "challenge_type": "python",
         "theory_content": THEORY_M5,
+        "lore_briefing": (
+            "El protocolo de autenticación del Nexo exige la frecuencia fractal de Fibonacci "
+            "como clave de sincronía neuronal. Los nodos anteriores usaban recursión y colapsaron bajo carga. "
+            "Necesitamos una solución iterativa que la Matriz Neuronal no pueda anticipar."
+        ),
+        "pedagogical_objective": "Implementar algoritmos iterativos eficientes. Entender la diferencia entre recursión O(2^n) e iteración O(n).",
+        "syntax_hint": "a, b = 0, 1\nfor _ in range(2, n + 1):\n    a, b = b, a + b",
     },
 ]
 

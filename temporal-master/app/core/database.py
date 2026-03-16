@@ -45,6 +45,7 @@ async def init_db() -> None:
     import app.models.concept_mastery  # noqa: F401
     import app.models.duel  # noqa: F401
     import app.models.bitacora_read  # noqa: F401  — add_daki_bitacora_tracking
+    import app.models.user_metrics   # noqa: F401  — user telemetry
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -87,6 +88,24 @@ async def init_db() -> None:
             "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS syntax_hint TEXT",
         ]:
             await conn.execute(text(stmt))
+        # Telemetría de usuario — user_metrics (Backlog Item 1)
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS user_metrics (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL,
+                challenge_id UUID NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 1,
+                time_spent_ms INTEGER NOT NULL DEFAULT 0,
+                status VARCHAR(10) NOT NULL DEFAULT 'fail',
+                first_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                last_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                CONSTRAINT uq_metrics_user_challenge UNIQUE (user_id, challenge_id)
+            )
+        """))
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_user_metrics_user_id ON user_metrics (user_id)"
+        ))
+
         # Bitácora DAKI — add_daki_bitacora_tracking
         # La tabla user_bitacora_read se crea vía create_all (modelo registrado arriba).
         # Este índice compuesto acelera la query GET /bitacora/unread?user_id=...

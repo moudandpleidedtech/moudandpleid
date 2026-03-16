@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -42,19 +42,6 @@ const LEAGUE_META: Record<string, { color: string; glow: string; icon: string }>
   'Oro':                { color: '#FFD700', glow: '#FFD70060', icon: '◆' },
   'Diamante':           { color: '#7DF9FF', glow: '#7DF9FF60', icon: '◈' },
   'Arquitecto Supremo': { color: '#FF6B9D', glow: '#FF6B9D60', icon: '✦' },
-}
-
-const TIER_LABEL: Record<string, string> = {
-  1:  'ESTUDIANTE',
-  2:  'ESTUDIANTE',
-  3:  'CÓDIGO JOVEN',
-  4:  'CÓDIGO JOVEN',
-  5:  'ARQUITECTO',
-  6:  'ARQUITECTO',
-  7:  'MAESTRO',
-  8:  'MAESTRO',
-  9:  'LEYENDA',
-  10: 'LEYENDA',
 }
 
 function getTitleForLevel(level: number): string {

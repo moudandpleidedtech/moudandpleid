@@ -29,7 +29,7 @@ const ARCHIVOS: Archivo[] = [
       'Operador, lograste engañar al radar. Para hacerlo, usaste Variables — contenedores ' +
       'que guardan información valiosa en la memoria RAM del dron — y la función Print, ' +
       'que emite esa información hacia los canales de salida. ' +
-      'Acabas de dominar la entrada y salida de datos. El Área 51 no sabe que ya estás dentro.',
+      'Acabas de dominar la entrada y salida de datos. El Nexo no detectó tu presencia.',
     code:
       '# Asignar datos vitales de la misión\nnombre = "Dron"\ncoordenadas = [51, 7]\n\n# Emitir señal de ping\nprint(nombre)\nprint(f"Sector: {coordenadas}")',
     codeCaption: 'Variables + Print',
@@ -93,7 +93,7 @@ const ARCHIVOS: Archivo[] = [
       'La sincronía fractal fue lograda. La secuencia de Fibonacci demuestra que los algoritmos ' +
       'pueden modelar patrones que existen en la naturaleza misma. El motor de salto del dron ' +
       'opera en frecuencias no lineales — solo Fibonacci puede predecirlas. ' +
-      'Has alcanzado el nivel de lógica algorítmica que el Área 51 creía imposible para un humano.',
+      'Has alcanzado el nivel de lógica algorítmica que la Matriz Neuronal clasificaba como imposible para un nodo humano.',
     code:
       '# Generar frecuencia fractal de Fibonacci\ndef fibonacci(n):\n    a, b = 0, 1\n    secuencia = []\n    for _ in range(n):\n        secuencia.append(a)\n        a, b = b, a + b\n    return secuencia\n\nfrecuencias = fibonacci(8)\nprint(frecuencias)\n# [0, 1, 1, 2, 3, 5, 8, 13]',
     codeCaption: 'Funciones + iteración avanzada',

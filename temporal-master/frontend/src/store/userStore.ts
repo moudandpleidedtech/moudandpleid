@@ -13,6 +13,7 @@ interface UserState {
   totalXp: number
   streakDays: number
   previousLevel: number
+  completedChallengeIds: string[]
   setUser: (_user: {
     id: string
     username: string
@@ -21,6 +22,7 @@ interface UserState {
     streak_days: number
   }) => void
   applyGamificationResult: (_result: GamificationResult) => void
+  markChallengeCompleted: (_id: string) => void
   clearUser: () => void
 }
 
@@ -33,6 +35,7 @@ export const useUserStore = create<UserState>()(
       totalXp: 0,
       streakDays: 0,
       previousLevel: 1,
+      completedChallengeIds: [],
 
       setUser: ({ id, username, current_level, total_xp, streak_days }) =>
         set({
@@ -51,17 +54,33 @@ export const useUserStore = create<UserState>()(
           totalXp: new_total_xp,
         })),
 
+      markChallengeCompleted: (id: string) =>
+        set((state) => ({
+          completedChallengeIds: state.completedChallengeIds.includes(id)
+            ? state.completedChallengeIds
+            : [...state.completedChallengeIds, id],
+        })),
+
       clearUser: () =>
-        set({ userId: '', username: '', level: 1, totalXp: 0, streakDays: 0, previousLevel: 1 }),
+        set({
+          userId: '',
+          username: '',
+          level: 1,
+          totalXp: 0,
+          streakDays: 0,
+          previousLevel: 1,
+          completedChallengeIds: [],
+        }),
     }),
     {
-      name: 'pq-user',          // clave en localStorage
-      partialize: (state) => ({ // solo persistimos los datos del usuario, no las funciones
-        userId:    state.userId,
-        username:  state.username,
-        level:     state.level,
-        totalXp:   state.totalXp,
-        streakDays: state.streakDays,
+      name: 'pq-user',
+      partialize: (state) => ({
+        userId:                state.userId,
+        username:              state.username,
+        level:                 state.level,
+        totalXp:               state.totalXp,
+        streakDays:            state.streakDays,
+        completedChallengeIds: state.completedChallengeIds,
       }),
     }
   )

@@ -18,7 +18,6 @@ STANDARD       cualquier otro caso
                → usa la difficulty solicitada por el jugador
 """
 
-import json
 import uuid
 from dataclasses import dataclass
 from typing import Literal

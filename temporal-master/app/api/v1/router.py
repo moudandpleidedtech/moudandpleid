@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import activity, analytics, boss, bounty, challenges, compiler, duels, gamification, hint, leaderboard, simulate, users
+from app.api.v1.endpoints import activity, analytics, boss, bounty, challenges, compiler, duels, gamification, health, hint, leaderboard, simulate, users
 
 router = APIRouter(prefix="/api/v1")
 
+router.include_router(health.router)
 router.include_router(gamification.router, prefix="/gamification", tags=["gamification"])
 router.include_router(compiler.router, tags=["compiler"])
 router.include_router(challenges.router, tags=["challenges"])

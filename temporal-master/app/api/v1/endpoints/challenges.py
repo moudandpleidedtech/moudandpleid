@@ -32,6 +32,10 @@ class ChallengeOut(BaseModel):
     challenge_type: str
     # Theory content (Prompt 18)
     theory_content: Optional[str]
+    # Mission briefing (Prompt B)
+    lore_briefing: Optional[str]
+    pedagogical_objective: Optional[str]
+    syntax_hint: Optional[str]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -57,6 +61,9 @@ def _build_out(
         concepts_taught=json.loads(challenge.concepts_taught_json) if challenge.concepts_taught_json else [],
         challenge_type=challenge.challenge_type or "python",
         theory_content=challenge.theory_content,
+        lore_briefing=challenge.lore_briefing,
+        pedagogical_objective=challenge.pedagogical_objective,
+        syntax_hint=challenge.syntax_hint,
     )
 
 
@@ -89,6 +96,7 @@ async def list_challenges(
         completed = prog.completed if prog else False
         attempts = prog.attempts if prog else 0
         out.append(_build_out(challenge, completed, attempts, unlocked=prev_completed))
+        # Toda misión (incluyendo tutoriales) debe completarse para desbloquear la siguiente
         prev_completed = completed
 
     return out
@@ -104,26 +112,41 @@ async def get_challenge(
     user_id: Optional[uuid.UUID] = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> ChallengeOut:
-    challenge = await db.get(Challenge, challenge_id)
+    # Carga la lista ordenada para calcular el estado de desbloqueo correctamente
+    all_result = await db.execute(
+        select(Challenge).order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
+    )
+    all_challenges = all_result.scalars().all()
+
+    challenge = next((c for c in all_challenges if c.id == challenge_id), None)
     if challenge is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Misión no encontrada",
         )
 
-    prog = None
+    progress_map: dict[uuid.UUID, UserProgress] = {}
     if user_id:
         prog_result = await db.execute(
-            select(UserProgress).where(
-                UserProgress.user_id == user_id,
-                UserProgress.challenge_id == challenge_id,
-            )
+            select(UserProgress).where(UserProgress.user_id == user_id)
         )
-        prog = prog_result.scalar_one_or_none()
+        for p in prog_result.scalars().all():
+            progress_map[p.challenge_id] = p
 
+    # Recorre la cadena ordenada para determinar si esta misión está desbloqueada
+    prev_completed = True
+    unlocked = True
+    for c in all_challenges:
+        if c.id == challenge_id:
+            unlocked = prev_completed
+            break
+        prog = progress_map.get(c.id)
+        prev_completed = prog.completed if prog else False
+
+    prog = progress_map.get(challenge_id)
     return _build_out(
         challenge,
         completed=prog.completed if prog else False,
         attempts=prog.attempts if prog else 0,
-        unlocked=True,
+        unlocked=unlocked,
     )

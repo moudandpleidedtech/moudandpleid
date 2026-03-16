@@ -21,6 +21,8 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false 
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+
 const GRID_COLS = 8
 const GRID_ROWS = 6
 const BOSS_DURATION_MS = 45_000   // 45 s para corromper todo
@@ -112,7 +114,7 @@ function CorruptedCell({ col, row, intensity }: { col: number; row: number; inte
 }
 
 /** Celda intacta del grid (zona del jugador) */
-function IntactCell({ col, row }: { col: number; row: number }) {
+function IntactCell({ col: _col, row }: { col: number; row: number }) {
   const isDefenseLine = row === GRID_ROWS - 1
   const isBossZone = row <= 1
 
@@ -183,7 +185,7 @@ function VictoryBurst({ visible }: { visible: boolean }) {
 
 interface Props {
   userId: string
-  onVictory?: (result: BossResult) => void
+  onVictory?: (_result: BossResult) => void
   onDefeat?: () => void
 }
 
@@ -198,35 +200,65 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
   const [implodingCells, setImplodingCells] = useState<Set<string>>(new Set())
   const [stderr, setStderr] = useState('')
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const endMsRef  = useRef<number>(0)
   const containerCtrl = useAnimation()
 
   // Cuántas filas están corrompidas (de abajo hacia arriba)
   const corruptedRows = Math.ceil(((100 - integrity) / 100) * GRID_ROWS)
 
-  // ── Timer de integridad ────────────────────────────────────────────────────
-  const startTimer = useCallback(() => {
+  // ── Timer de integridad (endTime-based — persiste aunque la pestaña se minimice) ──
+  //
+  // En lugar de decrementar un contador por tick, guardamos el instante de
+  // finalización (endMs) en localStorage y calculamos el tiempo restante como
+  // endMs - Date.now() en cada frame.  Así, si el usuario minimiza la pestaña
+  // y el intervalo se ralentiza (throttling del navegador), el tiempo real sigue
+  // corriendo y el estado se corrige en cuanto la pestaña vuelve a estar activa.
+
+  const BOSS_STORAGE_KEY = 'boss_fight_end_ms'
+
+  const startTimer = useCallback((resumeEndMs?: number) => {
     if (timerRef.current) return
+    const endMs = resumeEndMs ?? Date.now() + BOSS_DURATION_MS
+    endMsRef.current = endMs
+    if (!resumeEndMs) localStorage.setItem(BOSS_STORAGE_KEY, String(endMs))
+
     timerRef.current = setInterval(() => {
-      setIntegrity((prev) => {
-        const next = +(prev - (100 / (BOSS_DURATION_MS / TICK_MS))).toFixed(2)
-        if (next <= 0) {
-          clearInterval(timerRef.current!)
-          timerRef.current = null
-          setPhase('defeat')
-          return 0
-        }
-        return next
-      })
+      const remaining = endMsRef.current - Date.now()
+      if (remaining <= 0) {
+        clearInterval(timerRef.current!)
+        timerRef.current = null
+        localStorage.removeItem(BOSS_STORAGE_KEY)
+        setIntegrity(0)
+        setPhase('defeat')
+        return
+      }
+      setIntegrity(+(remaining / BOSS_DURATION_MS * 100).toFixed(2))
     }, TICK_MS)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-  }, [])
+    localStorage.removeItem(BOSS_STORAGE_KEY)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reanudar sesión activa si el usuario refresca durante el combate
+  useEffect(() => {
+    const stored = localStorage.getItem(BOSS_STORAGE_KEY)
+    if (!stored) return
+    const endMs = Number(stored)
+    const remaining = endMs - Date.now()
+    if (remaining > 0) {
+      setIntegrity(+(remaining / BOSS_DURATION_MS * 100).toFixed(2))
+      setPhase('fighting')
+      startTimer(endMs)
+    } else {
+      localStorage.removeItem(BOSS_STORAGE_KEY)
+    }
+  }, [startTimer]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => stopTimer(), [stopTimer])
 
@@ -245,11 +277,14 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
     if (isExecuting || phase !== 'fighting') return
     setIsExecuting(true)
     setStderr('')
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 12_000)
     try {
-      const res = await fetch('/api/v1/boss/execute', {
+      const res = await fetch(`${API_BASE}/api/v1/boss/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, source_code: code }),
+        signal: controller.signal,
       })
       const data: BossResult = await res.json()
       setBossResult(data)
@@ -274,10 +309,12 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
         // Acelerar la corrupción como penalización
         setIntegrity((prev) => Math.max(0, prev - 8))
       }
-    } catch {
-      setStderr('Error de conexión con el servidor.')
+    } catch (err) {
+      const isAbort = err instanceof DOMException && err.name === 'AbortError'
+      setStderr(isAbort ? '[ FALLO NEURONAL: TIEMPO LÍMITE EXCEDIDO ]' : 'Error de conexión con el servidor.')
       triggerShake('soft')
     } finally {
+      clearTimeout(timeoutId)
       setIsExecuting(false)
     }
   }, [code, isExecuting, onVictory, phase, stopTimer, triggerShake, userId])
@@ -298,7 +335,6 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
 
   // ── Intensidad de la celda corrupta (más intensa más abajo) ───────────────
   const cellIntensity = (row: number) => {
-    const frozenRow = GRID_ROWS - 1 - (GRID_ROWS - 1 - row) // same as row for bottom-up
     const distFromBottom = GRID_ROWS - 1 - row
     return Math.max(0.2, 1 - distFromBottom * 0.15)
   }

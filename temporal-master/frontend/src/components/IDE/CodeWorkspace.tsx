@@ -10,6 +10,9 @@ import ParticleBurst from '@/components/UI/ParticleBurst'
 import ComboEffect from '@/components/UI/ComboEffect'
 import Toast from '@/components/UI/Toast'
 import MissionBriefing from '@/components/Game/MissionBriefing'
+import VictoryModal, { type VictoryNext } from '@/components/UI/VictoryModal'
+import DakiHint from '@/components/IDE/DakiHint'
+import TutorialPanel from '@/components/IDE/TutorialPanel'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -27,6 +30,7 @@ interface Challenge {
   completed: boolean
   unlocked?: boolean
   theory_content?: string | null
+  level_order?: number | null
 }
 
 interface ChallengeListItem {
@@ -46,6 +50,23 @@ interface Props {
   challengeId: string
 }
 
+// ─── Background por nivel ─────────────────────────────────────────────────────
+
+const LEVEL_BACKGROUNDS: Record<number, string> = {
+  1: '/assets/backgrounds/map1.png',
+  2: '/assets/backgrounds/map2.png',
+  3: '/assets/backgrounds/map3.png',
+  4: '/assets/backgrounds/map4.png',
+  5: '/assets/backgrounds/map5.png',
+}
+
+function getMissionBackground(levelOrder: number | null | undefined): string {
+  if (levelOrder && LEVEL_BACKGROUNDS[levelOrder]) {
+    return LEVEL_BACKGROUNDS[levelOrder]
+  }
+  return LEVEL_BACKGROUNDS[1]
+}
+
 const TIER_LABEL: Record<number, string> = {
   1: 'INICIANTE',
   2: 'INTERMEDIO',
@@ -56,6 +77,15 @@ const TIER_PAR_LINES: Record<number, number> = {
   1: 8,
   2: 14,
   3: 22,
+}
+
+// ─── Código por fase del tutorial ────────────────────────────────────────────
+
+const TUTORIAL_STEP_CODES: Record<number, string> = {
+  1: 'print("Iniciando enlace neuronal...")\n',
+  2: 'print("Estabilizando pulso...)\n',
+  3: '# Escribe tu código debajo:\n',
+  4: 'def finalizar_enlace():\n    print("Enlace Listo")\n\nprint(finalizar_enlace())\n',
 }
 
 const KEYWORD_GLOW: Record<string, string> = {
@@ -108,73 +138,6 @@ function AnimatedDots() {
   return <span className="inline-block w-4 text-left">{dots}</span>
 }
 
-// Modal de victoria con dos botones diferenciados
-interface VictoryNext { id: string; title: string; isDrone: boolean }
-
-function VictoryModal({
-  next,
-  xpEarned,
-  onNext,
-  onReview,
-}: {
-  next: VictoryNext | null
-  xpEarned: number
-  onNext: () => void
-  onReview: () => void
-}) {
-  return (
-    <motion.div
-      className="fixed inset-0 z-[80] flex items-center justify-center"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-    >
-      <div className="absolute inset-0 bg-black/80" onClick={onReview} />
-      <motion.div
-        className="relative z-10 w-full max-w-sm mx-4 p-7 bg-[#0A0A0A] border border-[#00FF41]/40 font-mono"
-        style={{ boxShadow: '0 0 60px #00FF4118' }}
-        initial={{ scale: 0.82, y: 28, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-      >
-        {/* Título */}
-        <div className="text-center mb-5">
-          <div
-            className="text-[#00FF41] font-black text-2xl tracking-[0.2em] mb-1"
-            style={{ textShadow: '0 0 20px #00FF41, 0 0 40px #00FF4160' }}
-          >
-            NODO COMPLETADO
-          </div>
-          <div className="text-[#00FF41]/35 text-[10px] tracking-[0.35em]">
-            PROTOCOLO VERIFICADO · +{xpEarned} XP
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {/* Botón primario — Siguiente Nodo */}
-          <button
-            onClick={onNext}
-            className="w-full py-3 bg-[#00FF41] text-black font-black text-sm tracking-[0.2em] hover:bg-[#00FF41]/90 active:scale-[0.98] transition-all duration-100"
-            style={{ boxShadow: '0 0 24px #00FF4155' }}
-          >
-            {next ? 'SIGUIENTE NODO →' : 'VOLVER A MISIONES →'}
-          </button>
-          {next && (
-            <div className="text-center text-[9px] text-[#00FF41]/28 tracking-widest truncate px-2">
-              {next.title}
-            </div>
-          )}
-
-          {/* Botón secundario — Revisar código */}
-          <button
-            onClick={onReview}
-            className="w-full py-2.5 text-[#00FF41]/55 text-xs font-bold tracking-[0.18em] border border-[#00FF41]/20 hover:border-[#00FF41]/50 hover:text-[#00FF41] transition-all duration-150"
-          >
-            REVISAR MI CÓDIGO
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-}
 
 // Overlay de error de red / timeout
 function NetworkErrorFallback({ onRetry }: { onRetry: () => void }) {
@@ -212,8 +175,10 @@ function NetworkErrorFallback({ onRetry }: { onRetry: () => void }) {
 
 export default function CodeWorkspace({ challengeId }: Props) {
   const router = useRouter()
-  const { userId, username, level, previousLevel, totalXp, streakDays, applyGamificationResult } =
-    useUserStore()
+  const {
+    userId, username, level, previousLevel, totalXp, streakDays,
+    completedChallengeIds, applyGamificationResult, markChallengeCompleted,
+  } = useUserStore()
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
   const [allChallenges, setAllChallenges] = useState<ChallengeListItem[]>([])
@@ -235,6 +200,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [networkError, setNetworkError]   = useState(false)
   const lastCodeRef = useRef('')
 
+  // Game feel states
+  const [editorAnim, setEditorAnim] = useState<'anim-shake' | 'anim-victory-glow' | 'anim-error-flash' | ''>('')
+  const triggerEditorAnim = (cls: 'anim-shake' | 'anim-victory-glow' | 'anim-error-flash', ms = 500) => {
+    setEditorAnim(cls)
+    setTimeout(() => setEditorAnim(''), ms)
+  }
+
   // Toast para nivel bloqueado
   const [toastMsg, setToastMsg]           = useState('')
   const [showToast, setShowToast]         = useState(false)
@@ -245,28 +217,67 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [comboXp, setComboXp]             = useState(0)
   const [showCombo, setShowCombo]         = useState(false)
 
-  const kwFlashRef = useRef<ReturnType<typeof setTimeout>>()
-  const shakeCtrl  = useAnimation()
-  const consoleRef = useRef<HTMLDivElement>(null)
+  const kwFlashRef       = useRef<ReturnType<typeof setTimeout>>()
+  const shakeCtrl        = useAnimation()
+  const consoleRef       = useRef<HTMLDivElement>(null)
+  const codeDraftRef     = useRef<ReturnType<typeof setTimeout>>()  // debounce para localStorage
+  const challengeStartMs = useRef<number>(Date.now())               // para telemetría time_spent
 
   const [failStreak, setFailStreak]       = useState(0)
   const [loadingHint, setLoadingHint]     = useState(false)
 
-  useEffect(() => { if (!userId) router.replace('/') }, [userId, router])
+  // Tutorial multi-step
+  const [tutorialStep, setTutorialStep]   = useState(1)
+  const [syncProgress, setSyncProgress]   = useState(0)
+  const [tutorialFlash, setTutorialFlash] = useState(false)
+
+  // Guardia de hidratación: esperar a que Zustand lea localStorage antes de evaluar userId
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    if (!userId) router.replace('/')
+  }, [hydrated, userId, router])
 
   // Carga la lista completa de misiones para detectar el siguiente nodo
   useEffect(() => {
-    if (!userId) return
+    if (!hydrated || !userId) return
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
       .then((r) => r.json())
       .then((data: ChallengeListItem[]) => setAllChallenges(data))
       .catch(() => {})
-  }, [userId])
+  }, [hydrated, userId])
+
+  // Limpiar consola, rachas y resetear timer al cambiar de reto
+  useEffect(() => {
+    setOutput([{ text: '> Terminal lista.', kind: 'info' }])
+    setFailStreak(0)
+    challengeStartMs.current = Date.now()
+    // Limpiar debounce pendiente del reto anterior
+    if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
+  }, [challengeId])
+
+  // Guardar borrador del código en localStorage (debounce 800ms)
+  // Clave: code_draft_<challengeId>  — así cada reto tiene su propio borrador
+  useEffect(() => {
+    if (!code || !challengeId) return
+    if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
+    codeDraftRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(`code_draft_${challengeId}`, code)
+      } catch { /* localStorage lleno o bloqueado — ignorar silenciosamente */ }
+    }, 800)
+    return () => {
+      if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
+    }
+  }, [code, challengeId])
 
   // Carga el reto actual
   useEffect(() => {
-    if (!userId) return
-    fetch(`${API_BASE}/api/v1/challenges/${challengeId}?user_id=${userId}`)
+    if (!hydrated || !userId) return
+    const controller = new AbortController()
+    fetch(`${API_BASE}/api/v1/challenges/${challengeId}?user_id=${userId}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data: Challenge) => {
         // Reto bloqueado → toast + redirección
@@ -276,13 +287,25 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => router.replace('/misiones'), 2200)
           return
         }
-        setChallenge(data)
-        if (data.initial_code) setCode(data.initial_code)
-        // Si hay contenido teórico, mostrar briefing antes del editor
-        if (data.theory_content) setViewMode('briefing')
+        // Merge local cache: si ya se completó en esta sesión, reflejarlo sin esperar a la API
+        const mergedData = completedChallengeIds.includes(data.id)
+          ? { ...data, completed: true }
+          : data
+        setChallenge(mergedData)
+        // Restaurar borrador desde localStorage si existe;
+        // si no, usar initial_code. Garantiza string no-undefined durante hidratación.
+        const draft = (() => {
+          try { return localStorage.getItem(`code_draft_${data.id}`) } catch { return null }
+        })()
+        setCode(draft ?? mergedData.initial_code ?? '')
+        // Briefing teórico: solo para misiones normales no completadas
+        if (mergedData.theory_content && !mergedData.completed && mergedData.challenge_type !== 'tutorial') {
+          setViewMode('briefing')
+        }
       })
-      .catch(() => {})
-  }, [challengeId, userId, router])
+      .catch((err) => { if (err?.name !== 'AbortError') {} })
+    return () => controller.abort()
+  }, [hydrated, challengeId, userId, router])
 
   useEffect(() => {
     if (level > previousLevel) {
@@ -407,6 +430,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, test_inputs: challenge?.test_inputs ?? [],
+          time_spent_ms: Date.now() - challengeStartMs.current,
         }),
         signal: controller.signal,
       })
@@ -419,7 +443,116 @@ export default function CodeWorkspace({ challengeId }: Props) {
       }
 
       const data = await res.json()
+
+      // ── Tutorial multi-step override ─────────────────────────────────────────
+      if (challenge?.challenge_type === 'tutorial') {
+        const lines: ConsoleLine[] = []
+        if (data.stdout) lines.push({ text: data.stdout, kind: 'stdout' })
+        if (data.stderr) lines.push({ text: data.stderr, kind: 'stderr' })
+
+        let stepPassed = false
+        let stepError  = false
+
+        switch (tutorialStep) {
+          case 1:
+            // Solo ejecutar → siempre pasa
+            stepPassed = true
+            break
+
+          case 2:
+            // Sin SyntaxError → pasa
+            if (!data.stderr || !data.stderr.includes('SyntaxError')) {
+              stepPassed = true
+            } else {
+              stepError = true
+              lines.push({ text: '> [DAKI]: Ruido sintáctico detectado. Cierra las comillas e intenta de nuevo.', kind: 'enigma' })
+            }
+            break
+
+          case 3:
+            // Código contiene "operador =" y sin error → pasa
+            if (/\boperador\s*=/.test(code) && !data.stderr) {
+              stepPassed = true
+            } else if (data.stderr) {
+              stepError = true
+              lines.push({ text: '> [DAKI]: Error en el canal de memoria. Revisa la sintaxis.', kind: 'enigma' })
+            } else {
+              stepError = true
+              lines.push({ text: '> [DAKI]: Variable no detectada. Escribe: operador = 1', kind: 'enigma' })
+            }
+            break
+
+          case 4:
+            // Usa output_matched del backend (step 4 produce "Enlace Listo" si es correcto)
+            applyGamificationResult({
+              new_level: data.gamification.new_level,
+              new_total_xp: data.gamification.new_total_xp,
+            })
+            if (data.output_matched && !data.gamification.already_completed) {
+              markChallengeCompleted(challengeId)
+              setSyncProgress(100)
+              setTutorialFlash(true)
+              triggerEditorAnim('anim-victory-glow', 1400)
+              setShowParticles(true)
+              setTimeout(() => setShowParticles(false), 1400)
+              setVictoryXp(data.gamification.xp_earned)
+              setVictoryNext(findNextChallenge(challengeId))
+              lines.push({ text: '> [DAKI]: ¡Calibración completada! Acceso al Nexo concedido.', kind: 'success' })
+              setTimeout(() => setShowVictory(true), 700)
+            } else if (data.gamification.already_completed) {
+              setSyncProgress(100)
+              setVictoryXp(0)
+              setVictoryNext(findNextChallenge(challengeId))
+              setTimeout(() => setShowVictory(true), 700)
+            } else {
+              stepError = true
+              lines.push({ text: '> [DAKI]: Función sin retorno. Cambia print por return dentro de finalizar_enlace().', kind: 'enigma' })
+            }
+            break
+        }
+
+        if (stepPassed && tutorialStep < 4) {
+          const nextStep    = tutorialStep + 1
+          const nextProgress = nextStep * 25
+          lines.push({ text: `> [DAKI]: Fase ${tutorialStep} completada — Sincronización al ${nextProgress}%.`, kind: 'success' })
+          setOutput(lines)
+          scrollConsole()
+          setTutorialFlash(true)
+          triggerEditorAnim('anim-victory-glow', 900)
+          setTimeout(() => {
+            setTutorialStep(nextStep)
+            setSyncProgress(nextProgress)
+            setCode(TUTORIAL_STEP_CODES[nextStep])
+            setOutput([{ text: '> Terminal lista.', kind: 'info' }])
+          }, 900)
+        } else {
+          if (stepError) {
+            triggerShake('soft')
+            triggerEditorAnim('anim-error-flash', 500)
+          }
+          setOutput(lines)
+          scrollConsole()
+        }
+
+        return  // ← evita que corra la lógica normal de misiones
+      }
+      // ── Fin override tutorial ─────────────────────────────────────────────────
+
       const lines: ConsoleLine[] = []
+
+      // ── Interceptar timeout: bucle infinito o código sin fin ─────────────────
+      if (data.stderr?.toLowerCase().includes('timed out') || data.stderr?.toLowerCase().includes('time limit')) {
+        setOutput([
+          { text: '[ FALLO NEURONAL: BUCLE INFINITO DETECTADO ]', kind: 'stderr' },
+          { text: '> El Nexo detectó un proceso sin fin. Revisa si tienes un bucle sin condición de salida.', kind: 'enigma' },
+        ])
+        triggerShake('hard')
+        triggerEditorAnim('anim-error-flash', 600)
+        scrollConsole()
+        setFailStreak((prev) => prev + 1)
+        return
+      }
+      // ─────────────────────────────────────────────────────────────────────────
 
       if (data.stdout) lines.push({ text: data.stdout, kind: 'stdout' })
       if (data.stderr) lines.push({ text: data.stderr, kind: 'stderr' })
@@ -453,7 +586,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
 
       if (data.output_matched && !data.gamification.already_completed) {
+        markChallengeCompleted(challengeId)
         triggerShake('soft')
+        triggerEditorAnim('anim-victory-glow', 1400)
         setShowParticles(true)
         setTimeout(() => setShowParticles(false), 1400)
 
@@ -471,6 +606,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         setTimeout(() => setShowVictory(true), 700)
       } else if (!data.output_matched) {
         triggerShake('soft')
+        triggerEditorAnim('anim-error-flash', 500)
       }
 
       if (!data.output_matched) {
@@ -496,7 +632,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, isRunning, userId, challengeId, challenge, failStreak, parLines,
-      triggerShake, countEffectiveLines, findNextChallenge, applyGamificationResult])
+      tutorialStep, triggerShake, countEffectiveLines, findNextChallenge, applyGamificationResult, markChallengeCompleted])
 
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
@@ -534,22 +670,57 @@ export default function CodeWorkspace({ challengeId }: Props) {
         {showNivelSubido && <NivelSubidoOverlay level={level} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showVictory && (
-          <VictoryModal
-            next={victoryNext}
-            xpEarned={victoryXp}
-            onNext={handleNextChallenge}
-            onReview={() => setShowVictory(false)}
-          />
-        )}
-      </AnimatePresence>
+      <VictoryModal
+        visible={showVictory}
+        next={victoryNext}
+        xpEarned={victoryXp}
+        onNext={handleNextChallenge}
+        onReview={() => setShowVictory(false)}
+        titleOverride={challenge?.challenge_type === 'tutorial'
+          ? '[ CALIBRACIÓN COMPLETADA. RIESGO CEREBRAL AL 0%. ACCESO AL NEXO CONCEDIDO ]'
+          : undefined
+        }
+      />
 
       {/* Layout con screen shake */}
       <motion.div
         animate={shakeCtrl}
-        className="relative flex flex-col h-[calc(100vh-2rem)] bg-[#0A0A0A] text-[#00FF41] font-mono overflow-hidden"
+        className="relative flex flex-col h-[calc(100vh-2rem)] bg-cover bg-center bg-no-repeat text-[#00FF41] font-mono overflow-hidden"
+        style={{
+          backgroundImage: `url('${getMissionBackground(challenge?.level_order)}'), radial-gradient(ellipse at center, #0a1a0a 0%, #000000 70%)`,
+        }}
       >
+        {/* Overlay: oscurece 80% + blur para que el editor y el tablero brillen */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0 pointer-events-none" />
+
+        {/* Grid ciberpunk — visible solo cuando no carga la imagen */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(0,255,65,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,65,0.8) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        {/* Todo el contenido sobre el overlay */}
+        <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
+
+        {/* Flash verde al avanzar fase tutorial */}
+        <AnimatePresence>
+          {tutorialFlash && (
+            <motion.div
+              key="tutorial-flash"
+              className="fixed inset-0 z-[8500] pointer-events-none"
+              style={{ background: 'rgba(0,255,65,0.10)', mixBlendMode: 'screen' }}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+              onAnimationComplete={() => setTutorialFlash(false)}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Error de red: overlay sobre todo */}
         <AnimatePresence>
           {networkError && (
@@ -562,20 +733,40 @@ export default function CodeWorkspace({ challengeId }: Props) {
           )}
         </AnimatePresence>
 
-        {/* Barra de estado */}
-        <header className="flex items-center justify-between px-4 py-1.5 bg-[#0D0D0D] border-b border-[#00FF41]/20 text-xs shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/misiones')}
-              className="text-[#00FF41]/40 hover:text-[#00FF41] transition-colors tracking-widest">
-              MISIONES
+        {/* HUD de navegación */}
+        <header className="grid grid-cols-3 items-center px-4 py-1.5 bg-[#0D0D0D] border-b border-[#00FF41]/20 text-xs shrink-0">
+
+          {/* Izquierda — botón abortar */}
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                setNetworkError(false)
+                router.push('/misiones')
+              }}
+              className="flex items-center gap-1.5 px-3 py-1 border border-orange-500/40 text-orange-400/80
+                         tracking-widest hover:border-orange-400/80 hover:text-orange-300 hover:bg-orange-500/10
+                         active:scale-95 transition-all duration-150"
+            >
+              <span className="text-orange-400/60">◀</span> ABORTAR MISIÓN
             </button>
-            <span className="text-[#00FF41]/20">|</span>
-            <span className="font-bold tracking-widest text-[#00FF41]"
-              style={{ textShadow: '0 0 8px #00FF41' }}>
-              PYTHON QUEST
-            </span>
           </div>
-          <div className="flex items-center gap-5 text-[#00FF41]/70">
+
+          {/* Centro — nombre de la misión */}
+          <div className="flex justify-center">
+            {challenge ? (
+              <span
+                className="font-black tracking-[0.15em] text-[#00FF41] truncate max-w-xs text-center"
+                style={{ textShadow: '0 0 8px #00FF4160' }}
+              >
+                {challenge.title.toUpperCase()}
+              </span>
+            ) : (
+              <span className="text-[#00FF41]/25 tracking-widest animate-pulse">CARGANDO...</span>
+            )}
+          </div>
+
+          {/* Derecha — stats del usuario */}
+          <div className="flex items-center justify-end gap-5 text-[#00FF41]/70">
             <span className="text-[#00FF41]/40">{username}</span>
             <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
             <span id="xp-display">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
@@ -595,6 +786,38 @@ export default function CodeWorkspace({ challengeId }: Props) {
             )}
           </div>
         </header>
+
+        {/* ── Barra de progreso del tutorial ── */}
+        {challenge?.challenge_type === 'tutorial' && (
+          <div className="shrink-0 px-4 py-2.5 bg-black/50 border-b border-cyan-500/15 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-[8px] tracking-[0.5em] text-cyan-400/55 font-bold uppercase shrink-0">
+                Enlace Neuronal
+              </span>
+              <div className="flex-1 h-1.5 bg-cyan-950/40 overflow-hidden">
+                <motion.div
+                  className="h-full"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(0,180,255,0.8), rgba(0,255,65,0.8))',
+                    boxShadow: '0 0 8px rgba(0,229,255,0.5)',
+                  }}
+                  animate={{ width: `${syncProgress}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                />
+              </div>
+              <motion.span
+                key={syncProgress}
+                className="text-[13px] font-black tracking-widest text-cyan-400 shrink-0"
+                style={{ textShadow: '0 0 10px rgba(0,229,255,0.7)', minWidth: '2.8rem', textAlign: 'right' }}
+                initial={{ scale: 1.3, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                {syncProgress}%
+              </motion.span>
+            </div>
+          </div>
+        )}
 
         {/* Briefing — se muestra antes del editor si hay theory_content */}
         <AnimatePresence mode="wait">
@@ -621,7 +844,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         <div className={`flex flex-1 overflow-hidden transition-all ${viewMode === 'briefing' ? 'hidden' : ''}`}>
 
           {/* Editor */}
-          <div id="code-editor-panel" className="flex-1 flex flex-col min-w-0">
+          <div id="code-editor-panel" className={`flex-1 flex flex-col min-w-0 border border-transparent ${editorAnim}`}>
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#00FF41]/10 bg-[#0D0D0D] shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-[#00FF41]/40 text-xs tracking-widest">editor · python</span>
@@ -686,7 +909,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
           {/* Panel derecho */}
           <div className="w-80 flex flex-col border-l border-[#00FF41]/20 bg-[#0D0D0D] shrink-0">
 
-            {/* Descripción del reto */}
+            {/* Tutorial — panel guiado de DAKI (reemplaza la descripción habitual) */}
+            {challenge?.challenge_type === 'tutorial' ? (
+              <TutorialPanel tutorialStep={tutorialStep} syncProgress={syncProgress} />
+            ) : (
             <div className="flex-1 flex flex-col overflow-hidden border-b border-[#00FF41]/20">
               <div className="px-3 py-2 text-[#00FF41]/40 text-xs tracking-widest uppercase border-b border-[#00FF41]/10 shrink-0">
                 mision
@@ -715,6 +941,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 )}
               </div>
             </div>
+            )}
+
+            {/* Panel de pistas DAKI — solo para misiones normales, tras 2 fallos */}
+            {challenge?.challenge_type !== 'tutorial' && (
+              <DakiHint visible={failStreak >= 2} levelOrder={challenge?.level_order} />
+            )}
 
             {/* Consola */}
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -744,6 +976,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
           </div>
         </div>
+        </div> {/* end z-10 content wrapper */}
       </motion.div>
     </>
   )

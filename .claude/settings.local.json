@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(docker compose:*)",
+      "Bash(gh auth:*)",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/bounty/generate -H \"Content-Type: application/json\" -d '{\"\"user_id\"\":\"\"00000000-0000-0000-0000-000000000001\"\",\"\"user_level\"\":1,\"\"target_concept\"\":\"\"funciones\"\",\"\"difficulty_modifier\"\":5.0}')",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/bounty/generate -H \"Content-Type: application/json\" -d '{\"\"\"\"user_id\"\"\"\":\"\"\"\"00000000-0000-0000-0000-000000000001\"\"\"\",\"\"\"\"user_level\"\"\"\":1,\"\"\"\"target_concept\"\"\"\":\"\"\"\"funciones\"\"\"\",\"\"\"\"difficulty_modifier\"\"\"\":5.0}')",
+      "Bash(python -m json.tool)",
+      "Bash(docker exec:*)",
+      "Bash(curl -s \"http://localhost:8000/api/v1/challenges?user_id=00000000-0000-0000-0000-000000000001\")"
+    ]
+  }
+}

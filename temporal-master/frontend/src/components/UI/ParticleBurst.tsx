@@ -37,7 +37,6 @@ export default function ParticleBurst({ visible }: Props) {
     return Array.from({ length: N }, (_, i) => {
       // Origen: zona del botón EJECUTAR (~83% derecha, ~10% top del panel editor)
       const spreadX = ((i * 7) % 16) - 8          // -8 a +8 vw
-      const spreadY = ((i * 11) % 12) - 6          // -6 a +6 vh
       return {
         id: i,
         startX: 80 + (i % 6) - 3,                 // ~77–83 vw

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const TERMINAL_LINES = [
   { text: '> VERIFICANDO CREDENCIALES DE OPERADOR...', color: '#00FF41', delay: 0 },
-  { text: '> ANALIZANDO PROTOCOLO DE SEGURIDAD ÁREA 51...', color: '#00FF41', delay: 160 },
+  { text: '> SINCRONIZANDO CON MATRIZ NEURONAL DEL NEXO...', color: '#00FF41', delay: 160 },
   { text: '> BYPASS FIREWALL: [██████████░░░░░░] 62%', color: '#FFD700', delay: 320 },
   { text: '> INYECTANDO PAYLOAD DE INFILTRACIÓN...', color: '#00FF41', delay: 480 },
   { text: '> BYPASS FIREWALL: [████████████████] 100%', color: '#FFD700', delay: 620 },

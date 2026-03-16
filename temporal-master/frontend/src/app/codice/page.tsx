@@ -85,7 +85,7 @@ export default function CodicePage() {
           >
             CÓDICE
           </span>
-          <span className="text-[#00FF41]/20 text-xs tracking-widest">// BÓVEDA DE CONOCIMIENTO</span>
+          <span className="text-[#00FF41]/20 text-xs tracking-widest">{'// BÓVEDA DE CONOCIMIENTO'}</span>
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
           <span>{username}</span>

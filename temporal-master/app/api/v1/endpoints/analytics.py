@@ -5,7 +5,6 @@ GET /api/v1/analytics/user-profile?user_id=...
 Devuelve un mapa de radar con maestría por concepto y flags de refuerzo.
 """
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel

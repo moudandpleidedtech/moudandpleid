@@ -20,7 +20,9 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
 
     Tries Piston API (remote sandbox) first; falls back to local subprocess.
     """
-    stdin = "\n".join(test_inputs)
+    # Unir inputs con newlines y añadir newline final para que el último input()
+    # no quede esperando EOF en runtimes que requieren \n como terminador.
+    stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
         return await _execute_via_piston(source_code, stdin)
     except Exception:
