@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import sys
 import tempfile
 import time
@@ -9,6 +10,41 @@ import httpx
 PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
 PISTON_TIMEOUT_S = 10.0
 LOCAL_TIMEOUT_S = 3.0
+
+# Error types DAKI knows how to identify
+_KNOWN_ERRORS = (
+    "SyntaxError", "IndentationError", "NameError", "TypeError",
+    "ValueError", "AttributeError", "IndexError", "KeyError",
+    "ZeroDivisionError", "RecursionError", "RuntimeError",
+)
+
+
+def _parse_python_error(stderr: str) -> dict | None:
+    """
+    Parse a Python traceback/error from stderr into a structured dict.
+
+    Returns:
+        {error_type: str, line: int | None, detail: str} or None if not parseable.
+    """
+    if not stderr or not stderr.strip():
+        return None
+
+    # Extract all "File ..., line N" occurrences — last one is most relevant
+    line_matches = re.findall(r'File ".*?", line (\d+)', stderr)
+    line_num: int | None = int(line_matches[-1]) if line_matches else None
+
+    # Find the error type and detail (last matching error line in stderr)
+    pattern = r'^(' + '|'.join(_KNOWN_ERRORS) + r'):\s*(.*)$'
+    error_match = re.search(pattern, stderr, re.MULTILINE)
+
+    if not error_match and line_num is None:
+        return None
+
+    return {
+        "error_type": error_match.group(1) if error_match else "Error",
+        "line": line_num,
+        "detail": error_match.group(2).strip() if error_match else stderr.strip().splitlines()[-1],
+    }
 
 
 async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
@@ -24,9 +60,12 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     # no quede esperando EOF en runtimes que requieren \n como terminador.
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
-        return await _execute_via_piston(source_code, stdin)
+        result = await _execute_via_piston(source_code, stdin)
     except Exception:
-        return await _execute_via_subprocess(source_code, stdin)
+        result = await _execute_via_subprocess(source_code, stdin)
+
+    result["error_info"] = _parse_python_error(result.get("stderr", ""))
+    return result
 
 
 async def _execute_via_piston(source_code: str, stdin: str) -> dict:

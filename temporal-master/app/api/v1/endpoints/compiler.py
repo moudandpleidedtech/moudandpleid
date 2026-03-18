@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -39,12 +40,19 @@ class CodeExecuteRequest(BaseModel):
     time_spent_ms: int = 0    # tiempo en ms desde que el usuario abrió el reto (opcional)
 
 
+class ErrorInfo(BaseModel):
+    error_type: str
+    line: Optional[int]
+    detail: str
+
+
 class CodeExecuteResponse(BaseModel):
     stdout: str
     stderr: str
     execution_time_ms: float
     output_matched: bool
     gamification: ChallengeAttemptResult
+    error_info: Optional[ErrorInfo] = None
 
 
 async def _upsert_metric(
@@ -142,10 +150,15 @@ async def execute_challenge_code(
         success=is_success,
     )
 
+    # Parsear error info si existe
+    raw_ei = exec_result.get("error_info")
+    error_info = ErrorInfo(**raw_ei) if raw_ei else None
+
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],
         stderr=exec_result["stderr"],
         execution_time_ms=exec_result["execution_time_ms"],
         output_matched=output_matched,
         gamification=gamification_result,
+        error_info=error_info,
     )

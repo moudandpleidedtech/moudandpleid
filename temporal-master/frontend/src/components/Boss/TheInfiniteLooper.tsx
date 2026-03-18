@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import dynamic from 'next/dynamic'
+import { useUserStore } from '@/store/userStore'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
@@ -70,6 +71,56 @@ interface BossResult {
   stdout: string
   stderr: string
   execution_time_ms: number
+  badge_earned: string | null
+}
+
+// ─── Matrix Rain ───────────────────────────────────────────────────────────────
+
+const MATRIX_CHARS = 'ア0∞NEXO1フBシ9ケ7∅XOR42ERROR'
+
+function MatrixRain() {
+  const COLS = 18
+  const ROWS = 14
+  const [grid, setGrid] = useState<string[][]>(() =>
+    Array.from({ length: COLS }, () =>
+      Array.from({ length: ROWS }, () => MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)])
+    )
+  )
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setGrid((prev) =>
+        prev.map((col) => [
+          MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)],
+          ...col.slice(0, -1),
+        ])
+      )
+    }, 75)
+    return () => clearInterval(id)
+  }, [])
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" style={{ opacity: 0.18 }}>
+      <div className="flex h-full justify-between px-2">
+        {grid.map((col, ci) => (
+          <div key={ci} className="flex flex-col items-center">
+            {col.map((char, ri) => (
+              <span
+                key={ri}
+                className="font-mono text-[11px] leading-[1.55]"
+                style={{
+                  color: ri === 0 ? '#ffffff' : `rgba(0,255,65,${Math.max(0, 1 - ri * 0.075)})`,
+                  textShadow: ri < 2 ? `0 0 6px rgba(0,255,65,0.9)` : 'none',
+                }}
+              >
+                {char}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ─── Sub-componentes ───────────────────────────────────────────────────────────
@@ -190,11 +241,13 @@ interface Props {
 }
 
 export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props) {
+  const { earnBadge } = useUserStore()
   const [phase, setPhase] = useState<Phase>('intro')
   const [integrity, setIntegrity] = useState(100)           // 0–100
   const [code, setCode] = useState(INITIAL_CODE)
   const [isExecuting, setIsExecuting] = useState(false)
   const [bossResult, setBossResult] = useState<BossResult | null>(null)
+  const [badgeEarned, setBadgeEarned] = useState<string | null>(null)
   const [tracebackLine, setTracebackLine] = useState(0)     // para animación escalonada
   const [victoryBurst, setVictoryBurst] = useState(false)
   const [implodingCells, setImplodingCells] = useState<Set<string>>(new Set())
@@ -291,6 +344,11 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
 
       if (data.success) {
         stopTimer()
+        // Registrar medalla en el store local
+        if (data.badge_earned) {
+          earnBadge(data.badge_earned)
+          setBadgeEarned(data.badge_earned)
+        }
         // Implosión de celdas
         const all = new Set<string>()
         for (let r = 0; r < GRID_ROWS; r++)
@@ -318,6 +376,18 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
       setIsExecuting(false)
     }
   }, [code, isExecuting, onVictory, phase, stopTimer, triggerShake, userId])
+
+  // ── Fanfarria de victoria ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'victory') return
+    const audio = new Audio('/sounds/victory.mp3')
+    audio.volume = 0.72
+    audio.play().catch(() => { /* autoplay policy bloqueó — silencioso */ })
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+    }
+  }, [phase])
 
   // ── Animación del traceback en derrota ────────────────────────────────────
   useEffect(() => {
@@ -490,56 +560,190 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
 
   if (phase === 'victory') {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8"
-        style={{ background: 'radial-gradient(ellipse at center, #000a1a 0%, #000 70%)' }}
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
+        style={{ background: 'radial-gradient(ellipse at 50% 40%, #001428 0%, #000508 55%, #000 100%)' }}
       >
         <VictoryBurst visible={victoryBurst} />
+        <MatrixRain />
+
+        {/* Scanlines más visibles */}
         <motion.div
-          className="text-center"
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+          className="absolute inset-0 pointer-events-none"
+          animate={{ opacity: [0, 0.12, 0, 0.08, 0] }}
+          transition={{ duration: 0.18, repeat: Infinity, repeatDelay: 1.2 }}
+          style={{
+            background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,255,65,0.22) 3px, rgba(0,255,65,0.22) 4px)',
+          }}
+        />
+
+        {/* Vignette lateral */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.75) 100%)' }}
+        />
+
+        <motion.div
+          className="relative z-10 text-center max-w-3xl w-full"
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <div
-            className="font-mono font-black tracking-[0.15em] text-5xl"
-            style={{ color: '#0080FF', textShadow: '0 0 40px #0080FF, 0 0 100px #0040FF' }}
+          {/* ── Eyebrow ── */}
+          <motion.div
+            className="font-mono text-[10px] tracking-[0.8em] text-cyan-400/40 mb-4 uppercase"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
           >
-            VICTORIA
-          </div>
-          <div className="mt-3 font-mono text-blue-400 tracking-widest text-sm">
-            ∞ LOOPER DERROTADO
-          </div>
+            ∞ LOOPER — PROCESO TERMINADO · NÚCLEO LIBERADO
+          </motion.div>
+
+          {/* ── Título principal — glitch severo ── */}
+          <motion.div
+            className="font-mono font-black tracking-[0.1em] mb-3 leading-none"
+            style={{ fontSize: 'clamp(2rem, 7vw, 3.5rem)' }}
+            animate={{
+              x: [0, -4, 5, -2, 2, 0],
+              filter: [
+                'hue-rotate(0deg) brightness(1)',
+                'hue-rotate(100deg) brightness(1.6)',
+                'hue-rotate(0deg) brightness(1)',
+                'hue-rotate(-70deg) brightness(1.3)',
+                'hue-rotate(0deg) brightness(1)',
+              ],
+            }}
+            transition={{ duration: 0.22, repeat: Infinity, repeatDelay: 2 }}
+          >
+            <span style={{
+              color: '#00FF41',
+              textShadow: '0 0 40px #00FF41, 0 0 100px #00FF4180, 0 0 160px #00FF4130, -3px 0 #FF0044, 3px 0 #0088FF',
+            }}>
+              [ SISTEMA CONQUISTADO ]
+            </span>
+          </motion.div>
+
+          {/* Línea divisoria animada */}
+          <motion.div
+            className="mx-auto mb-10"
+            style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(0,229,255,0.6), transparent)' }}
+            initial={{ width: 0 }}
+            animate={{ width: '60%' }}
+            transition={{ delay: 0.3, duration: 0.7, ease: 'easeOut' }}
+          />
+
+          {/* ── Badge SYSTEM_KILLER ── */}
+          <motion.div
+            className="relative mx-auto mb-10 max-w-lg"
+            initial={{ scale: 0.65, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 16 }}
+          >
+            <div
+              className="relative border-2 px-12 py-10"
+              style={{
+                borderColor: 'rgba(0,229,255,0.75)',
+                boxShadow: '0 0 60px rgba(0,229,255,0.3), inset 0 0 40px rgba(0,229,255,0.07)',
+              }}
+            >
+              {/* Esquinas decorativas más grandes */}
+              <span className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400" />
+              <span className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyan-400" />
+              <span className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-cyan-400" />
+              <span className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-cyan-400" />
+
+              {/* Etiqueta superior */}
+              <div className="font-mono text-[8px] tracking-[0.6em] text-cyan-400/35 mb-5 uppercase">
+                INVENTARIO ACTUALIZADO · MEDALLA DESBLOQUEADA
+              </div>
+
+              {/* Icono de medalla */}
+              <motion.div
+                className="text-8xl mb-5 select-none"
+                animate={{ rotate: [0, 6, -6, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ filter: 'drop-shadow(0 0 24px rgba(0,229,255,0.9)) drop-shadow(0 0 48px rgba(0,229,255,0.4))' }}
+              >
+                ⬡
+              </motion.div>
+
+              {/* Nombre de la medalla */}
+              <motion.div
+                className="font-mono font-black text-2xl tracking-[0.25em] mb-2"
+                style={{ color: '#00E5FF', textShadow: '0 0 24px rgba(0,229,255,0.9), 0 0 60px rgba(0,229,255,0.4)' }}
+                animate={{ opacity: [1, 0.55, 1] }}
+                transition={{ duration: 2.2, repeat: Infinity }}
+              >
+                {badgeEarned ?? 'SYSTEM_KILLER'}
+              </motion.div>
+
+              <div className="font-mono text-xs tracking-[0.3em] text-cyan-400/55 mb-6">
+                MEDALLA DE CONQUISTA · CLASE OMEGA
+              </div>
+
+              {/* Status bar */}
+              <div
+                className="font-mono text-sm tracking-[0.12em] px-5 py-3"
+                style={{ background: 'rgba(0,229,255,0.07)', border: '1px solid rgba(0,229,255,0.25)' }}
+              >
+                <span style={{ color: 'rgba(0,229,255,0.55)' }}>STATUS: </span>
+                <span style={{ color: '#00FF41', textShadow: '0 0 8px #00FF4160' }}>ARCHITECT OF VOID</span>
+                <span style={{ color: 'rgba(0,229,255,0.3)' }}>  ·  </span>
+                <span style={{ color: 'rgba(0,229,255,0.55)' }}>SKILL: </span>
+                <span style={{ color: '#00FF41', textShadow: '0 0 8px #00FF4160' }}>LOOP MASTERY</span>
+              </div>
+            </div>
+
+            {/* Pulso de energía exterior */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{ boxShadow: ['0 0 0px rgba(0,229,255,0)', '0 0 70px rgba(0,229,255,0.35)', '0 0 0px rgba(0,229,255,0)'] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </motion.div>
+
+          {/* ── XP y stats ── */}
           {bossResult && (
             <motion.div
-              className="mt-8 font-mono space-y-2"
-              initial={{ opacity: 0, y: 20 }}
+              className="font-mono mb-10 space-y-2"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.75 }}
             >
-              <div className="text-2xl text-blue-300 font-bold">
-                +{bossResult.xp_earned} XP
+              <div
+                className="text-5xl font-black tracking-widest"
+                style={{ color: '#FFD700', textShadow: '0 0 30px rgba(255,215,0,0.7), 0 0 70px rgba(255,215,0,0.3)' }}
+              >
+                +{bossResult.xp_earned.toLocaleString()} XP
               </div>
-              <div className="text-sm text-gray-400">
-                Total: {bossResult.new_total_xp} XP · Nivel {bossResult.new_level}
-              </div>
-              <div className="text-xs text-green-400 mt-2">
-                Salida: {bossResult.stdout.trim()}
+              <div className="text-sm tracking-wider" style={{ color: 'rgba(255,215,0,0.4)' }}>
+                Total: {bossResult.new_total_xp.toLocaleString()} XP · Nivel {bossResult.new_level}
               </div>
             </motion.div>
           )}
-          <motion.div
-            className="mt-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
+
+          {/* ── CTA ── */}
+          <motion.a
+            href="/hub"
+            className="inline-block font-mono font-black tracking-[0.25em] px-14 py-5 text-base"
+            style={{
+              background: 'rgba(0,229,255,0.12)',
+              border: '2px solid rgba(0,229,255,0.7)',
+              color: '#00E5FF',
+              boxShadow: '0 0 30px rgba(0,229,255,0.25)',
+              textShadow: '0 0 12px rgba(0,229,255,0.6)',
+            }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1 }}
+            whileHover={{
+              boxShadow: '0 0 60px rgba(0,229,255,0.55)',
+              background: 'rgba(0,229,255,0.18)',
+              scale: 1.03,
+            }}
           >
-            <a
-              href="/misiones"
-              className="font-mono font-bold px-8 py-3 border-2 border-blue-500 text-blue-400 hover:bg-blue-900/30 transition-colors"
-            >
-              VOLVER AL MAPA
-            </a>
-          </motion.div>
+            ▶ VOLVER AL CENTRO DE MANDO
+          </motion.a>
         </motion.div>
       </div>
     )

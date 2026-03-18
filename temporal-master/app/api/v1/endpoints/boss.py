@@ -8,6 +8,7 @@ POST /api/v1/boss/execute
 El jefe no necesita un Challenge en la DB: su lógica vive aquí.
 """
 
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, status
@@ -59,6 +60,7 @@ class BossExecuteResponse(BaseModel):
     stdout: str
     stderr: str
     execution_time_ms: float
+    badge_earned: str | None = None   # "SYSTEM_KILLER" si es la primera victoria
 
 
 # ─── Endpoint ─────────────────────────────────────────────────────────────────
@@ -87,6 +89,7 @@ async def boss_execute(
     )
 
     xp_earned = 0
+    badge_earned: str | None = None
     user = await db.get(User, payload.user_id)
     new_total_xp = user.total_xp if user else 0
     new_level = user.current_level if user else 1
@@ -97,6 +100,17 @@ async def boss_execute(
         user.current_level = GamificationEngine.calculate_level_from_xp(user.total_xp)
         new_total_xp = user.total_xp
         new_level = user.current_level
+
+        # Otorgar medalla SYSTEM_KILLER si aún no la tiene
+        try:
+            badges: list[str] = json.loads(user.badges_json or "[]")
+        except (ValueError, TypeError):
+            badges = []
+        if "SYSTEM_KILLER" not in badges:
+            badges.append("SYSTEM_KILLER")
+            user.badges_json = json.dumps(badges)
+            badge_earned = "SYSTEM_KILLER"
+
         await db.flush()
         await activity_service.emit_boss_defeated(user.username)
 
@@ -108,6 +122,7 @@ async def boss_execute(
         stdout=result["stdout"],
         stderr=result["stderr"],
         execution_time_ms=result["execution_time_ms"],
+        badge_earned=badge_earned,
     )
 
 

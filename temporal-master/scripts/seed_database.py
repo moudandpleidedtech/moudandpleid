@@ -320,9 +320,10 @@ CHALLENGES = [
         "base_xp_reward": 100,
         "initial_code": (
             "def fusionar_token(parte_izq, parte_der):\n"
-            "    # Conecta ambas partes y devuelve el resultado\n"
+            "    # ESCRIBE AQUÍ: Une parte_izq con parte_der usando el signo +\n"
+            "    return \n"
             "\n"
-            "\n"
+            "# ─── MOTOR DE PRUEBAS — NO MODIFICAR ──────────────────────────────────────────\n"
             "parte_izq = input()\n"
             "parte_der = input()\n"
             "print(fusionar_token(parte_izq, parte_der))\n"
@@ -341,6 +342,11 @@ CHALLENGES = [
         ),
         "pedagogical_objective": "Definir una función con dos parámetros. Concatenar strings con el operador +. Retornar valores desde una función.",
         "syntax_hint": "def fusionar_token(parte_izq, parte_der):\n    return parte_izq + parte_der",
+        "hints_json": json.dumps([
+            "Operador, los textos en Python se pueden unir como bloques de datos.",
+            "Usa el símbolo matemático de suma (+) para 'soldar' las cadenas.",
+            "Escribe 'return parte_izq + parte_der' para completar el código.",
+        ]),
     },
     {
         "title": "Misión 2: La Calculadora Binaria",
@@ -374,6 +380,11 @@ CHALLENGES = [
         ),
         "pedagogical_objective": "Leer múltiples valores desde stdin con input(). Convertir strings a enteros con int().",
         "syntax_hint": "a = int(input())\nb = int(input())\nprint(a + b)",
+        "hints_json": json.dumps([
+            "A diferencia del texto, los datos numéricos operan con lógica matemática directa sin comillas.",
+            "El operador (+) realizará una suma aritmética real entre las dos variables.",
+            "Escribe 'return a + b' para devolver la suma exacta al núcleo.",
+        ]),
     },
     # ── Tier 2 / CONTROL ──────────────────────────────────────────────────────
     {
@@ -407,6 +418,11 @@ CHALLENGES = [
         ),
         "pedagogical_objective": "Manipular strings con slicing. Entender índices y el operador [::-1].",
         "syntax_hint": "def invertir(cadena):\n    return cadena[::-1]",
+        "hints_json": json.dumps([
+            "El sistema lee de izquierda a derecha, pero puedes manipular ese flujo para que corra a la inversa.",
+            "Usa la técnica de 'Slicing' con un paso negativo para leer al revés.",
+            "Escribe 'return cadena[::-1]' para invertir la polaridad del texto.",
+        ]),
     },
     {
         "title": "Misión 4: El Contador de Vocales",
@@ -440,6 +456,11 @@ CHALLENGES = [
         ),
         "pedagogical_objective": "Iterar sobre strings con bucles for. Usar el operador in para verificar pertenencia.",
         "syntax_hint": "for letra in texto:\n    if letra in 'aeiouAEIOU':\n        contador += 1",
+        "hints_json": json.dumps([
+            "Necesitas un contador en cero y un bucle que inspeccione el flujo letra por letra.",
+            "Utiliza un 'for' para recorrer el texto y un 'if' para verificar si la letra está en 'aeiouáéíóú'.",
+            "Inicia 'contador = 0'. Haz 'for letra in texto.lower():' y suma 1 si es vocal.",
+        ]),
     },
     # ── Tier 3 / AVANZADO ─────────────────────────────────────────────────────
     {
@@ -475,6 +496,11 @@ CHALLENGES = [
         ),
         "pedagogical_objective": "Implementar algoritmos iterativos eficientes. Entender la diferencia entre recursión O(2^n) e iteración O(n).",
         "syntax_hint": "a, b = 0, 1\nfor _ in range(2, n + 1):\n    a, b = b, a + b",
+        "hints_json": json.dumps([
+            "Cada pulso es la suma de los dos anteriores. Empieza con 0 y 1.",
+            "Necesitas actualizar dos variables simultáneamente dentro de un bucle que corra 'n' veces.",
+            "Usa 'a, b = 0, 1' y dentro de un 'for _ in range(n):' haz 'a, b = b, a + b'.",
+        ]),
     },
 ]
 

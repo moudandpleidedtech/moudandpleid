@@ -26,6 +26,8 @@ class User(Base):
     )
     # Sistema PvP Elo (Prompt 20)
     elo_rating: Mapped[int] = mapped_column(Integer, default=1200, nullable=False, server_default="1200")
+    # Medallas de logro — JSON array, ej: ["SYSTEM_KILLER"]
+    badges_json: Mapped[str] = mapped_column(String, nullable=False, default="[]", server_default="[]")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -36,6 +36,7 @@ class ChallengeOut(BaseModel):
     lore_briefing: Optional[str]
     pedagogical_objective: Optional[str]
     syntax_hint: Optional[str]
+    hints: list[str]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -64,6 +65,7 @@ def _build_out(
         lore_briefing=challenge.lore_briefing,
         pedagogical_objective=challenge.pedagogical_objective,
         syntax_hint=challenge.syntax_hint,
+        hints=json.loads(challenge.hints_json) if challenge.hints_json else [],
     )
 
 

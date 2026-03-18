@@ -31,6 +31,8 @@ interface Challenge {
   unlocked?: boolean
   theory_content?: string | null
   level_order?: number | null
+  challenge_type?: string
+  hints?: string[]
 }
 
 interface ChallengeListItem {
@@ -44,6 +46,12 @@ interface ChallengeListItem {
 interface ConsoleLine {
   text: string
   kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma'
+}
+
+interface ErrorInfo {
+  error_type: string
+  line: number | null
+  detail: string
 }
 
 interface Props {
@@ -86,6 +94,20 @@ const TUTORIAL_STEP_CODES: Record<number, string> = {
   2: 'print("Estabilizando pulso...)\n',
   3: '# Escribe tu código debajo:\n',
   4: 'def finalizar_enlace():\n    print("Enlace Listo")\n\nprint(finalizar_enlace())\n',
+}
+
+// ─── Mensajes DAKI por tipo de error ─────────────────────────────────────────
+
+const DAKI_ERROR_MESSAGES: Record<string, string> = {
+  SyntaxError:      '[DAKI]: Anomalía de sintaxis en la Línea {line}. Te falta algún símbolo — ":", paréntesis o comillas.',
+  IndentationError: '[DAKI]: Desalineación de energía en la Línea {line}. Los espacios al inicio deben ser múltiplos de 4.',
+  NameError:        '[DAKI]: En la Línea {line} invocas una variable o función que no existe en los registros del Nexo.',
+  TypeError:        '[DAKI]: Conflicto de tipo en la Línea {line}. Estás mezclando señales incompatibles (ej. texto + número).',
+  ValueError:       '[DAKI]: Valor inválido en la Línea {line}. El dato recibido no puede procesarse con esa operación.',
+  AttributeError:   '[DAKI]: En la Línea {line} accedes a un atributo que no existe en ese objeto.',
+  IndexError:       '[DAKI]: Desbordamiento de índice en la Línea {line}. Estás fuera de los límites de la lista.',
+  KeyError:         '[DAKI]: Clave ausente en la Línea {line}. Esa clave no existe en el diccionario.',
+  ZeroDivisionError:'[DAKI]: División por cero en la Línea {line}. El Nexo no puede procesar el infinito.',
 }
 
 const KEYWORD_GLOW: Record<string, string> = {
@@ -222,9 +244,14 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const consoleRef       = useRef<HTMLDivElement>(null)
   const codeDraftRef     = useRef<ReturnType<typeof setTimeout>>()  // debounce para localStorage
   const challengeStartMs = useRef<number>(Date.now())               // para telemetría time_spent
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const editorRef        = useRef<any>(null)                        // instancia Monaco editor
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const decorationsRef   = useRef<any>(null)                        // IEditorDecorationsCollection
 
   const [failStreak, setFailStreak]       = useState(0)
   const [loadingHint, setLoadingHint]     = useState(false)
+  const [hintIndex, setHintIndex]         = useState(-1)   // -1 = oculto, 0/1/2 = pista visible
 
   // Tutorial multi-step
   const [tutorialStep, setTutorialStep]   = useState(1)
@@ -253,6 +280,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   useEffect(() => {
     setOutput([{ text: '> Terminal lista.', kind: 'info' }])
     setFailStreak(0)
+    setHintIndex(-1)
     challengeStartMs.current = Date.now()
     // Limpiar debounce pendiente del reto anterior
     if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
@@ -326,6 +354,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
       src.split('\n').filter((l) => l.trim() && !l.trim().startsWith('#')).length,
     []
   )
+
+  // ─── DAKI Linter: decoración de línea errónea en Monaco ────────────────────
+  const applyErrorDecoration = useCallback((line: number | null) => {
+    if (!editorRef.current || !line) return
+    const model = editorRef.current.getModel()
+    if (!model) return
+    const newDecorations = [{
+      range: new (window as any).monaco.Range(line, 1, line, model.getLineMaxColumn(line)),
+      options: {
+        isWholeLine: true,
+        className: 'daki-error-line',
+        glyphMarginClassName: 'daki-error-glyph',
+        overviewRuler: { color: 'rgba(255,50,50,0.8)', position: 1 },
+      },
+    }]
+    if (decorationsRef.current) {
+      decorationsRef.current.set(newDecorations)
+    } else {
+      decorationsRef.current = editorRef.current.createDecorationsCollection(newDecorations)
+    }
+    // Auto-clear after 4s
+    setTimeout(() => decorationsRef.current?.clear(), 4000)
+  }, [])
 
   // Screen shake
   const triggerShake = useCallback(
@@ -557,6 +608,19 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (data.stdout) lines.push({ text: data.stdout, kind: 'stdout' })
       if (data.stderr) lines.push({ text: data.stderr, kind: 'stderr' })
 
+      // ── DAKI Linter: mensaje amigable + resaltar línea errónea ───────────────
+      const ei = data.error_info as ErrorInfo | null
+      if (ei) {
+        const template = DAKI_ERROR_MESSAGES[ei.error_type]
+        const lineLabel = ei.line ? `${ei.line}` : '?'
+        const dakiMsg = template
+          ? template.replace('{line}', lineLabel)
+          : `[DAKI]: Error en la Línea ${lineLabel} — ${ei.detail}`
+        lines.push({ text: dakiMsg, kind: 'enigma' })
+        applyErrorDecoration(ei.line)
+      }
+      // ─────────────────────────────────────────────────────────────────────────
+
       lines.push({
         text: `${data.execution_time_ms.toFixed(1)}ms  |  ${
           data.output_matched ? 'Salida correcta ✓' : 'Salida incorrecta ✗'
@@ -612,9 +676,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (!data.output_matched) {
         const newStreak = failStreak + 1
         setFailStreak(newStreak)
-        if (newStreak >= 3) {
-          setFailStreak(0)
-          setTimeout(() => requestHint(lines), 800)
+        // Auto-revelar siguiente pista DAKI en los umbrales 2, 4, 6
+        if (newStreak % 2 === 0) {
+          setHintIndex((prev: number) => {
+            const maxIdx = (challenge?.hints?.length ?? 1) - 1
+            return Math.min(prev + 1, maxIdx)
+          })
         }
       } else {
         setFailStreak(0)
@@ -891,6 +958,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 theme="vs-dark"
                 value={code}
                 onChange={(val) => handleCodeChange(val ?? '')}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onMount={(editor: any) => { editorRef.current = editor }}
                 options={{
                   minimap: { enabled: false },
                   fontSize: 14,
@@ -943,9 +1012,31 @@ export default function CodeWorkspace({ challengeId }: Props) {
             </div>
             )}
 
-            {/* Panel de pistas DAKI — solo para misiones normales, tras 2 fallos */}
-            {challenge?.challenge_type !== 'tutorial' && (
-              <DakiHint visible={failStreak >= 2} levelOrder={challenge?.level_order} />
+            {/* Panel de pistas DAKI + botón de solicitud */}
+            {challenge?.challenge_type !== 'tutorial' && (challenge?.hints?.length ?? 0) > 0 && (
+              <>
+                {/* Botón de solicitud de pista */}
+                <div className="shrink-0 px-3 py-2 border-b border-[#00FF41]/10">
+                  <button
+                    onClick={() => setHintIndex((prev: number) => Math.min(prev + 1, (challenge?.hints?.length ?? 1) - 1))}
+                    disabled={hintIndex >= (challenge?.hints?.length ?? 1) - 1 && hintIndex >= 0}
+                    className="w-full text-left px-3 py-1.5 text-[9px] tracking-[0.35em] font-bold border transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{
+                      borderColor: hintIndex < 0 ? 'rgba(0,229,255,0.4)' : 'rgba(0,229,255,0.2)',
+                      color: hintIndex < 0 ? 'rgba(0,229,255,0.8)' : 'rgba(0,229,255,0.4)',
+                      background: hintIndex < 0 ? 'rgba(0,229,255,0.05)' : 'transparent',
+                    }}
+                  >
+                    {hintIndex < 0
+                      ? '▸ SOLICITAR PISTA DE DAKI'
+                      : hintIndex < (challenge?.hints?.length ?? 1) - 1
+                        ? `▸ SIGUIENTE PISTA  [${hintIndex + 2}/${challenge?.hints?.length}]`
+                        : `✓ PISTA FINAL REVELADA  [${challenge?.hints?.length}/${challenge?.hints?.length}]`
+                    }
+                  </button>
+                </div>
+                <DakiHint visible={hintIndex >= 0} hints={challenge?.hints ?? []} hintIndex={hintIndex} />
+              </>
             )}
 
             {/* Consola */}

@@ -44,3 +44,6 @@ class Challenge(Base):
     lore_briefing: Mapped[str | None] = mapped_column(Text, nullable=True)
     pedagogical_objective: Mapped[str | None] = mapped_column(Text, nullable=True)
     syntax_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Pistas progresivas (array JSON de 3 strings) ──────────────────────────
+    hints_json: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")

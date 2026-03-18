@@ -161,3 +161,15 @@ html, body {
 .anim-error-flash {
   animation: error-flash 0.5s ease-in-out;
 }
+
+/* DAKI Linter — resaltado de línea errónea en Monaco */
+.daki-error-line {
+  background: rgba(255, 50, 50, 0.12) !important;
+  border-left: 2px solid rgba(255, 80, 80, 0.8) !important;
+}
+
+.daki-error-glyph::before {
+  content: '⚠';
+  color: rgba(255, 100, 100, 0.9);
+  font-size: 11px;
+}

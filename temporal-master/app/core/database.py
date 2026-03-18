@@ -106,6 +106,16 @@ async def init_db() -> None:
             "CREATE INDEX IF NOT EXISTS ix_user_metrics_user_id ON user_metrics (user_id)"
         ))
 
+        # Medallas de usuario (Gamificación Boss)
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS badges_json TEXT NOT NULL DEFAULT '[]'"
+        ))
+
+        # Pistas progresivas por misión
+        await conn.execute(text(
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS hints_json TEXT NOT NULL DEFAULT '[]'"
+        ))
+
         # Bitácora DAKI — add_daki_bitacora_tracking
         # La tabla user_bitacora_read se crea vía create_all (modelo registrado arriba).
         # Este índice compuesto acelera la query GET /bitacora/unread?user_id=...

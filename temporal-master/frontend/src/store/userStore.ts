@@ -14,6 +14,7 @@ interface UserState {
   streakDays: number
   previousLevel: number
   completedChallengeIds: string[]
+  badges: string[]
   setUser: (_user: {
     id: string
     username: string
@@ -23,6 +24,7 @@ interface UserState {
   }) => void
   applyGamificationResult: (_result: GamificationResult) => void
   markChallengeCompleted: (_id: string) => void
+  earnBadge: (_badge: string) => void
   clearUser: () => void
 }
 
@@ -36,6 +38,7 @@ export const useUserStore = create<UserState>()(
       streakDays: 0,
       previousLevel: 1,
       completedChallengeIds: [],
+      badges: [],
 
       setUser: ({ id, username, current_level, total_xp, streak_days }) =>
         set({
@@ -61,6 +64,13 @@ export const useUserStore = create<UserState>()(
             : [...state.completedChallengeIds, id],
         })),
 
+      earnBadge: (badge: string) =>
+        set((state) => ({
+          badges: state.badges.includes(badge)
+            ? state.badges
+            : [...state.badges, badge],
+        })),
+
       clearUser: () =>
         set({
           userId: '',
@@ -70,6 +80,7 @@ export const useUserStore = create<UserState>()(
           streakDays: 0,
           previousLevel: 1,
           completedChallengeIds: [],
+          badges: [],
         }),
     }),
     {
@@ -81,6 +92,7 @@ export const useUserStore = create<UserState>()(
         totalXp:               state.totalXp,
         streakDays:            state.streakDays,
         completedChallengeIds: state.completedChallengeIds,
+        badges:                state.badges,
       }),
     }
   )

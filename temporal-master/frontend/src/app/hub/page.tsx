@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
+import HubAudio from '@/components/UI/HubAudio'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -170,7 +171,7 @@ function TacticButton({
 
 export default function HubPage() {
   const router = useRouter()
-  const { userId, username, level, totalXp, streakDays, clearUser } = useUserStore()
+  const { userId, username, level, totalXp, streakDays, badges, clearUser } = useUserStore()
 
   const handleLogout = () => {
     clearUser()
@@ -181,6 +182,12 @@ export default function HubPage() {
   const { displayed, done } = useTypewriter(quote)
   const [isBitacoraOpen, setIsBitacoraOpen] = useState(false)
   const [completedOrders, setCompletedOrders] = useState<number[]>([])
+  const [bgmFadeOut, setBgmFadeOut] = useState(false)
+
+  const navigateWithFade = (path: string) => {
+    setBgmFadeOut(true)
+    setTimeout(() => router.push(path), 580)
+  }
 
   useEffect(() => {
     if (!userId) { router.replace('/'); return }
@@ -216,6 +223,9 @@ export default function HubPage() {
         className="fixed inset-0 pointer-events-none z-10"
         style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%)' }}
       />
+
+      {/* BGM ambiental del Hub */}
+      <HubAudio fadeOut={bgmFadeOut} />
 
       {/* Bitácora — Códice de Infiltración */}
       <BitacoraModal isOpen={isBitacoraOpen} onClose={() => setIsBitacoraOpen(false)} completedOrders={completedOrders} />
@@ -349,7 +359,7 @@ export default function HubPage() {
               transition={{ delay: 0.55 }}
             >
               <TacticButton
-                onClick={() => router.push('/misiones')}
+                onClick={() => navigateWithFade('/misiones')}
                 label="INICIAR AUDITORÍA"
                 sublabel="Desplegar dron · Ir a misiones"
                 icon="▶"
@@ -395,7 +405,7 @@ export default function HubPage() {
             ].map(({ label, path, color }) => (
               <button
                 key={path}
-                onClick={() => router.push(path)}
+                onClick={() => navigateWithFade(path)}
                 className="text-left px-4 py-2 border transition-all duration-150 text-[10px] tracking-widest font-bold"
                 style={{ borderColor: `${color}20`, color: `${color}50` }}
                 onMouseEnter={e => {
@@ -415,6 +425,78 @@ export default function HubPage() {
               </button>
             ))}
           </div>
+
+          {/* ── Registro de Conquistas ── */}
+          {badges.length > 0 && (
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+              style={{
+                border: '1px solid rgba(0,229,255,0.28)',
+                background: 'rgba(0,10,20,0.7)',
+                boxShadow: '0 0 24px rgba(0,229,255,0.08), inset 0 0 20px rgba(0,229,255,0.03)',
+              }}
+            >
+              {/* Esquinas decorativas */}
+              <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-400/60" />
+              <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cyan-400/60" />
+              <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cyan-400/60" />
+              <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-400/60" />
+
+              <div className="px-5 py-4">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[9px] tracking-[0.55em] text-cyan-400/50 font-bold">
+                    REGISTRO DE CONQUISTAS
+                  </p>
+                  <span className="text-[8px] tracking-widest text-cyan-400/25">
+                    {badges.length}/∞
+                  </span>
+                </div>
+
+                {/* Lista de medallas */}
+                <div className="flex flex-col gap-2">
+                  {badges.includes('SYSTEM_KILLER') && (
+                    <motion.div
+                      className="flex items-center gap-3 px-3 py-2.5"
+                      style={{ background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.22)' }}
+                      animate={{ boxShadow: ['0 0 0px rgba(0,229,255,0)', '0 0 16px rgba(0,229,255,0.18)', '0 0 0px rgba(0,229,255,0)'] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                    >
+                      <motion.span
+                        className="text-2xl shrink-0 select-none"
+                        style={{ filter: 'drop-shadow(0 0 8px rgba(0,229,255,0.9))' }}
+                        animate={{ rotate: [0, 8, -8, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        ⬡
+                      </motion.span>
+                      <div className="flex flex-col min-w-0 gap-0.5">
+                        <span
+                          className="text-xs font-black tracking-[0.25em]"
+                          style={{ color: '#00E5FF', textShadow: '0 0 10px rgba(0,229,255,0.6)' }}
+                        >
+                          SYSTEM_KILLER
+                        </span>
+                        <span className="text-[8px] tracking-wider text-cyan-400/40 truncate">
+                          ARCHITECT OF VOID · LOOP MASTERY
+                        </span>
+                      </div>
+                      <motion.span
+                        className="ml-auto text-[8px] tracking-widest text-cyan-400/30 shrink-0"
+                        animate={{ opacity: [0.3, 0.8, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        ✦
+                      </motion.span>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Estado del sistema */}
           <div className="mt-auto border border-[#00FF41]/8 px-4 py-3 bg-black/30">
