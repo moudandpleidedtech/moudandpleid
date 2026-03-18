@@ -124,6 +124,13 @@ async def init_db() -> None:
             "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS hints_json TEXT NOT NULL DEFAULT '[]'"
         ))
 
+        # Telemetría extendida — El Ojo de DAKI
+        for stmt in [
+            "ALTER TABLE user_metrics ADD COLUMN IF NOT EXISTS hints_used INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE user_metrics ADD COLUMN IF NOT EXISTS syntax_errors_log TEXT NOT NULL DEFAULT '[]'",
+        ]:
+            await conn.execute(text(stmt))
+
         # Arquitectura GG — 100 niveles
         for stmt in [
             "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS sector_id INTEGER",
