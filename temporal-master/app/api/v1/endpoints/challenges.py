@@ -37,6 +37,11 @@ class ChallengeOut(BaseModel):
     pedagogical_objective: Optional[str]
     syntax_hint: Optional[str]
     hints: list[str]
+    # GG 100-level architecture
+    sector_id: Optional[int]
+    difficulty: Optional[str]
+    is_project: bool
+    telemetry_goal_time: Optional[int]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -66,6 +71,10 @@ def _build_out(
         pedagogical_objective=challenge.pedagogical_objective,
         syntax_hint=challenge.syntax_hint,
         hints=json.loads(challenge.hints_json) if challenge.hints_json else [],
+        sector_id=challenge.sector_id,
+        difficulty=challenge.difficulty,
+        is_project=challenge.is_project,
+        telemetry_goal_time=challenge.telemetry_goal_time,
     )
 
 
