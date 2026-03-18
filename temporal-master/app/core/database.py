@@ -124,6 +124,19 @@ async def init_db() -> None:
             "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS hints_json TEXT NOT NULL DEFAULT '[]'"
         ))
 
+        # Arquitectura GG — 100 niveles
+        for stmt in [
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS sector_id INTEGER",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS difficulty VARCHAR(10)",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS is_project BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS telemetry_goal_time INTEGER",
+        ]:
+            await conn.execute(text(stmt))
+        # Índice para búsquedas por sector
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_challenges_sector_id ON challenges (sector_id)"
+        ))
+
         # Bitácora DAKI — add_daki_bitacora_tracking
         # La tabla user_bitacora_read se crea vía create_all (modelo registrado arriba).
         # Este índice compuesto acelera la query GET /bitacora/unread?user_id=...

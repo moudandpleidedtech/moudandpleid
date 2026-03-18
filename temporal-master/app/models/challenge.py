@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, Integer, String, Text
+from sqlalchemy import Boolean, Enum, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -47,3 +47,9 @@ class Challenge(Base):
 
     # ── Pistas progresivas (array JSON de 3 strings) ──────────────────────────
     hints_json: Mapped[str] = mapped_column(Text, nullable=False, server_default="[]")
+
+    # ── Arquitectura GG 100 niveles ───────────────────────────────────────────
+    sector_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)   # easy | medium | hard | expert
+    is_project: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    telemetry_goal_time: Mapped[int | None] = mapped_column(Integer, nullable=True)  # segundos
