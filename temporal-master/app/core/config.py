@@ -19,5 +19,8 @@ class Settings(BaseSettings):
 
     ANTHROPIC_API_KEY: str = ""
 
+    # Activar SSL para conexión a BD (requerido en Supabase / producción)
+    DB_SSL: bool = False
+
 
 settings = Settings()
