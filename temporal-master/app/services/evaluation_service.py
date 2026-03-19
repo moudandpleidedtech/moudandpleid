@@ -40,6 +40,12 @@ import concurrent.futures
 import io
 import json
 import multiprocessing as mp
+
+# Contexto 'spawn' en vez del default 'fork' para el proceso hijo del sandbox.
+# Con 'fork' el hijo hereda toda la memoria de FastAPI (> 128 MB) y choca
+# inmediatamente con RLIMIT_AS = 128 MB antes de ejecutar una sola línea.
+# Con 'spawn' el hijo arranca limpio e importa solo lo que necesita (~10 MB).
+_MP_CTX = mp.get_context("spawn")
 import re
 import time
 import uuid
@@ -276,7 +282,9 @@ def _build_safe_globals(input_iter) -> dict:
             # Introspección mínima
             "isinstance": isinstance,
             "hasattr":    hasattr,
-            # OOP
+            # OOP — __name__ es necesario para que Python calcule __qualname__
+            # de clases anidadas; sin él, cualquier `class Foo:` lanza NameError.
+            "__name__":        "__main__",
             "__build_class__": builtins.__build_class__,
             "super":           super,
             "object":          object,
@@ -344,9 +352,18 @@ def _run_in_sandbox(source_code: str, test_inputs: list[str]) -> dict:
             "error_detail": str(exc),
             "error_line":   None,
         }
+    except MemoryError:
+        # El bucle generó demasiado output y llenó el StringIO.
+        # Equivalente a agotar el recurso de memoria — se trata como timeout.
+        return {"_timeout": True}
     except Exception as exc:  # noqa: BLE001
+        stdout_safe = ""
+        try:
+            stdout_safe = stdout_buf.getvalue()
+        except MemoryError:
+            pass
         return {
-            "stdout":       stdout_buf.getvalue(),
+            "stdout":       stdout_safe,
             "error_type":   "RuntimeError",
             "error_detail": str(exc),
             "error_line":   None,
@@ -404,9 +421,9 @@ def _execute_isolated(
     5. Si terminó normalmente → lee y devuelve el resultado de la cola.
     """
     # mp.Queue (en vez de SimpleQueue) para tener empty() + get() no bloqueante
-    result_q: "mp.Queue[dict]" = mp.Queue(maxsize=1)
+    result_q: "mp.Queue[dict]" = _MP_CTX.Queue(maxsize=1)
 
-    p = mp.Process(
+    p = _MP_CTX.Process(
         target=_worker,
         args=(source_code, test_inputs, result_q),
         daemon=True,
@@ -440,10 +457,12 @@ def _execute_isolated(
             pass
 
     # Cola vacía: el proceso murió sin producir resultado.
-    # exit_code < 0  →  matado por señal (RLIMIT_CPU=SIGKILL, OOM, etc.)
-    # Tratamos igual que timeout — el operador agotó los recursos del Nexo.
+    # exit_code < 0  →  matado por señal (RLIMIT_CPU=SIGKILL, OOM kill del kernel)
+    # exit_code > 0  →  excepción no capturada en el hijo (ej. MemoryError al
+    #                    iterar el StringIO dentro de _run_in_sandbox)
+    # Ambos casos = recurso agotado → tratamos igual que timeout.
     exit_code = p.exitcode
-    if exit_code is not None and exit_code < 0:
+    if exit_code is not None and exit_code != 0:
         return {"_timeout": True}
 
     return {
