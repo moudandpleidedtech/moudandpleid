@@ -25,6 +25,7 @@ class ChallengeOut(BaseModel):
     completed: bool
     attempts: int
     unlocked: bool
+    status: str      # "locked" | "unlocked" | "completed"
     # Curriculum fields (Prompt 12)
     level_order: Optional[int]
     phase: Optional[str]
@@ -42,6 +43,7 @@ class ChallengeOut(BaseModel):
     difficulty: Optional[str]
     is_project: bool
     telemetry_goal_time: Optional[int]
+    strict_match: bool
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -62,6 +64,7 @@ def _build_out(
         completed=completed,
         attempts=attempts,
         unlocked=unlocked,
+        status="completed" if completed else ("unlocked" if unlocked else "locked"),
         level_order=challenge.level_order,
         phase=challenge.phase,
         concepts_taught=json.loads(challenge.concepts_taught_json) if challenge.concepts_taught_json else [],
@@ -75,6 +78,7 @@ def _build_out(
         difficulty=challenge.difficulty,
         is_project=challenge.is_project,
         telemetry_goal_time=challenge.telemetry_goal_time,
+        strict_match=challenge.strict_match,
     )
 
 

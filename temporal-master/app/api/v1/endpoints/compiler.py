@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
+from app.services.daki_intel import get_daki_message
 from app.services.execution_service import execute_python_code
 from app.services.gamification_service import gamification_engine
 
@@ -42,6 +43,7 @@ class CodeExecuteRequest(BaseModel):
     test_inputs: list[str] = []
     hints_used: int = 0       # pistas solicitadas a ENIGMA antes de este intento
     time_spent_ms: int = 0    # tiempo en ms desde que el usuario abrió el reto (opcional)
+    daki_level: int = 1       # nivel evolutivo de DAKI (1 robótico, 2 amistoso, 3 compañero)
 
 
 class ErrorInfo(BaseModel):
@@ -65,6 +67,7 @@ class CodeExecuteResponse(BaseModel):
     gamification: ChallengeAttemptResult
     error_info: Optional[ErrorInfo] = None
     daki_intervention: Optional[DakiIntervention] = None   # pista automática por tolerancia
+    daki_message: str = ""                                  # frase narrativa de DAKI Intel
 
 
 async def _upsert_metric(
@@ -199,6 +202,13 @@ async def execute_challenge_code(
                     text=hints[hint_idx],
                 )
 
+    # ── DAKI Intel: mensaje narrativo según error/resultado ───────────────────
+    _daki_event = (
+        error_info.error_type if error_info
+        else ("success" if is_success else "failed")
+    )
+    daki_message = get_daki_message(_daki_event, payload.daki_level)
+
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],
         stderr=exec_result["stderr"],
@@ -207,4 +217,5 @@ async def execute_challenge_code(
         gamification=gamification_result,
         error_info=error_info,
         daki_intervention=daki_intervention,
+        daki_message=daki_message,
     )

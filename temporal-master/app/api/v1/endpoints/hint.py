@@ -54,9 +54,13 @@ async def request_hint(
     )
     progress = prog_result.scalar_one_or_none()
     if progress is None:
-        progress = UserProgress(user_id=payload.user_id, challenge_id=payload.challenge_id)
+        progress = UserProgress(
+            user_id=payload.user_id,
+            challenge_id=payload.challenge_id,
+            hints_used=0,
+        )
         db.add(progress)
-    progress.hints_used += 1
+    progress.hints_used = (progress.hints_used or 0) + 1
 
     hint = await ai_mentor.get_hint(
         challenge_title=challenge.title,

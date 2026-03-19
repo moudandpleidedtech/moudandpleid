@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { speakDaki, cancelDakiVoice, type DakiLevel } from '@/lib/dakiVoice'
 
 // ─── Mensajes de estado durante el arranque ───────────────────────────────────
 
@@ -12,8 +13,18 @@ const STATUS_MESSAGES = [
   { text: '[ ENLACE ESTABLECIDO ]',        delay: 2650 },
 ]
 
-const TOTAL_MS   = 3500   // duración total de la secuencia
-const FADE_AT_MS = 3100   // cuándo empieza el fade-out
+const FADE_AT_MS = 3100   // cuándo empieza el fade-out visual
+
+/**
+ * Narración cinemática de DAKI al establecer el Enlace Neuronal.
+ * Se reproduce en serie: primero el SFX de alerta, luego este texto.
+ * No lleva el prefijo conversacional estándar para mantener la inmersión.
+ */
+const DAKI_NARRATION =
+  'Enlace Neuronal completo. Ya estamos dentro del sistema. ' +
+  'Tu cuerpo físico está a salvo. ' +
+  'Soy DAKI, tu instructora táctica de aprendizaje. ' +
+  'Prepárate para la primera incursión de código.'
 
 // Charset: ASCII técnico + katakana lite + binario
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789アイウエオカサタナハマ@#$&*{}[]<>|'
@@ -21,7 +32,8 @@ const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789アイウエオカサタナ�
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  username?: string
+  username?:  string
+  dakiLevel?: DakiLevel
   onComplete: () => void
 }
 
@@ -102,7 +114,7 @@ function MatrixCanvas() {
 
 type Phase = 'waiting' | 'booting' | 'fading'
 
-export default function NeuralBoot({ username, onComplete }: Props) {
+export default function NeuralBoot({ username, dakiLevel = 2, onComplete }: Props) {
   const [phase, setPhase]               = useState<Phase>('waiting')
   const [currentMsg, setCurrentMsg]     = useState('')
   const [msgKey, setMsgKey]             = useState(0)
@@ -115,8 +127,8 @@ export default function NeuralBoot({ username, onComplete }: Props) {
   useEffect(() => {
     bootSoundRef.current = new Audio('/sounds/boot-sequence.mp3')
     dataSoundRef.current = new Audio('/sounds/data-stream.mp3')
-    bootSoundRef.current.volume = 0.8
-    dataSoundRef.current.volume = 0.5
+    bootSoundRef.current.volume = 0.4
+    dataSoundRef.current.volume = 0.25
   }, [])
 
   const stopAudio = () => {
@@ -135,17 +147,15 @@ export default function NeuralBoot({ username, onComplete }: Props) {
   const handleConnect = useCallback(() => {
     setPhase('booting')
 
-    // Reproducir sonido de arranque inmediatamente
+    // ── Sonidos ambientales del arranque visual ────────────────────────────────
     bootSoundRef.current?.play().catch(() => {/* autoplay policy — silencioso */})
-
-    // Data stream con 200ms de retraso
     timersRef.current.push(
       setTimeout(() => {
         dataSoundRef.current?.play().catch(() => {})
       }, 200)
     )
 
-    // Mensajes en cascada
+    // ── Mensajes de estado en cascada ─────────────────────────────────────────
     STATUS_MESSAGES.forEach(({ text, delay }) => {
       timersRef.current.push(
         setTimeout(() => {
@@ -155,23 +165,31 @@ export default function NeuralBoot({ username, onComplete }: Props) {
       )
     })
 
-    // Fade-out
+    // ── Fade-out visual (la pantalla se oscurece mientras DAKI habla) ─────────
     timersRef.current.push(
       setTimeout(() => setPhase('fading'), FADE_AT_MS)
     )
 
-    // Detener audio y navegar
-    timersRef.current.push(
-      setTimeout(() => {
+    // ── Narración DAKI: SFX → TTS → 500ms pausa → onComplete ─────────────────
+    // La navegación la controla el callback onEnd de DAKI, no un timer fijo.
+    // Así el usuario escucha la narración completa antes de cambiar de pantalla.
+    speakDaki(
+      DAKI_NARRATION,
+      dakiLevel,
+      () => {
         stopAudio()
-        onComplete()
-      }, TOTAL_MS)
+        timersRef.current.push(
+          setTimeout(onComplete, 500)
+        )
+      },
+      true,  // skipPrefix: la narración cinemática es verbatim
     )
-  }, [onComplete])
+  }, [dakiLevel, onComplete])
 
   useEffect(() => () => {
     clearTimers()
     stopAudio()
+    cancelDakiVoice()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

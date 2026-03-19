@@ -54,6 +54,7 @@ async def init_db() -> None:
     import app.models.duel  # noqa: F401
     import app.models.bitacora_read  # noqa: F401  — add_daki_bitacora_tracking
     import app.models.user_metrics   # noqa: F401  — user telemetry
+    import app.models.daki_interception  # noqa: F401  — Protocolo Memoria Muscular
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -147,6 +148,28 @@ async def init_db() -> None:
         # Índice para búsquedas por sector
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_challenges_sector_id ON challenges (sector_id)"
+        ))
+
+        # Protocolo Memoria Muscular — tabla de intercepciones DAKI
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS daki_interceptions (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                concept_name VARCHAR(100) NOT NULL,
+                triggered_on_challenge_id UUID NOT NULL,
+                triggered_on_sector INTEGER NOT NULL,
+                mision_flash_json TEXT NOT NULL,
+                daki_message TEXT NOT NULL,
+                status VARCHAR(10) NOT NULL DEFAULT 'pending',
+                flash_attempts INTEGER NOT NULL DEFAULT 0,
+                triggered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                completed_at TIMESTAMPTZ,
+                expires_at TIMESTAMPTZ NOT NULL
+            )
+        """))
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_daki_interceptions_user_id "
+            "ON daki_interceptions (user_id)"
         ))
 
         # Bitácora DAKI — add_daki_bitacora_tracking

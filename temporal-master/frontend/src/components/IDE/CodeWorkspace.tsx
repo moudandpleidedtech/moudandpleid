@@ -13,6 +13,7 @@ import MissionBriefing from '@/components/Game/MissionBriefing'
 import VictoryModal, { type VictoryNext } from '@/components/UI/VictoryModal'
 import DakiHint from '@/components/IDE/DakiHint'
 import TutorialPanel from '@/components/IDE/TutorialPanel'
+import { useDakiVoice } from '@/hooks/useDakiVoice'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -200,6 +201,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const {
     userId, username, level, previousLevel, totalXp, streakDays,
     completedChallengeIds, applyGamificationResult, markChallengeCompleted,
+    dakiLevel,
   } = useUserStore()
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
@@ -252,6 +254,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [failStreak, setFailStreak]       = useState(0)
   const [loadingHint, setLoadingHint]     = useState(false)
   const [hintIndex, setHintIndex]         = useState(-1)   // -1 = oculto, 0/1/2 = pista visible
+  const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
+
+  // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
+  const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
 
   // Tutorial multi-step
   const [tutorialStep, setTutorialStep]   = useState(1)
@@ -482,6 +488,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           user_id: userId, challenge_id: challengeId,
           source_code: code, test_inputs: challenge?.test_inputs ?? [],
           time_spent_ms: Date.now() - challengeStartMs.current,
+          daki_level: dakiLevel,
         }),
         signal: controller.signal,
       })
@@ -608,16 +615,22 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (data.stdout) lines.push({ text: data.stdout, kind: 'stdout' })
       if (data.stderr) lines.push({ text: data.stderr, kind: 'stderr' })
 
-      // ── DAKI Linter: mensaje amigable + resaltar línea errónea ───────────────
+      // ── DAKI Linter: resaltar línea errónea en editor ────────────────────────
       const ei = data.error_info as ErrorInfo | null
       if (ei) {
-        const template = DAKI_ERROR_MESSAGES[ei.error_type]
         const lineLabel = ei.line ? `${ei.line}` : '?'
-        const dakiMsg = template
-          ? template.replace('{line}', lineLabel)
+        const legacyMsg = DAKI_ERROR_MESSAGES[ei.error_type]
+        const consoleLine = legacyMsg
+          ? legacyMsg.replace('{line}', lineLabel)
           : `[DAKI]: Error en la Línea ${lineLabel} — ${ei.detail}`
-        lines.push({ text: dakiMsg, kind: 'enigma' })
+        lines.push({ text: consoleLine, kind: 'enigma' })
         applyErrorDecoration(ei.line)
+      }
+
+      // ── DAKI Intel: frase narrativa del backend → consola + voz ──────────────
+      if (data.daki_message) {
+        setDakiMessage(data.daki_message)
+        speakDaki(data.daki_message)
       }
       // ─────────────────────────────────────────────────────────────────────────
 
@@ -648,6 +661,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
         new_level: data.gamification.new_level,
         new_total_xp: data.gamification.new_total_xp,
       })
+
+      // Borrador cumplió su misión en cuanto el código es correcto — lo limpiamos siempre
+      if (data.output_matched) {
+        try { localStorage.removeItem(`code_draft_${challengeId}`) } catch { /* ignorar */ }
+      }
 
       if (data.output_matched && !data.gamification.already_completed) {
         markChallengeCompleted(challengeId)
@@ -1035,8 +1053,47 @@ export default function CodeWorkspace({ challengeId }: Props) {
                     }
                   </button>
                 </div>
-                <DakiHint visible={hintIndex >= 0} hints={challenge?.hints ?? []} hintIndex={hintIndex} />
+                <DakiHint
+                  visible={hintIndex >= 0}
+                  hints={challenge?.hints ?? []}
+                  hintIndex={hintIndex}
+                  dakiLevel={dakiLevel}
+                />
               </>
+            )}
+
+            {/* ── DAKI Intel: respuesta narrativa al último run ── */}
+            {dakiMessage && (
+              <motion.div
+                key={dakiMessage}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mx-0 border-t border-b shrink-0 font-mono"
+                style={{
+                  borderColor: 'rgba(189,0,255,0.25)',
+                  background: 'rgba(189,0,255,0.04)',
+                  boxShadow: 'inset 0 0 16px rgba(189,0,255,0.03)',
+                }}
+              >
+                <div className="flex items-center gap-2 px-3 py-1.5 border-b" style={{ borderColor: 'rgba(189,0,255,0.15)' }}>
+                  <motion.span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: '#BD00FF', boxShadow: '0 0 6px rgba(189,0,255,0.8)' }}
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                  <span className="text-[9px] tracking-[0.4em] font-bold" style={{ color: 'rgba(189,0,255,0.7)' }}>
+                    [ DAKI INTEL ]
+                  </span>
+                </div>
+                <div className="px-3 py-2">
+                  <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(189,0,255,0.8)', fontFamily: 'monospace' }}>
+                    {dakiMessage}
+                  </p>
+                </div>
+              </motion.div>
             )}
 
             {/* Consola */}

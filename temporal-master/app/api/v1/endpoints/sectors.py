@@ -18,6 +18,7 @@ from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
 from app.services.daki_service import compute_daki_state, refresh_daki_level
+from app.services.progression import bulk_resolve_sector
 
 router = APIRouter(prefix="/levels", tags=["sectors"])
 
@@ -45,10 +46,12 @@ class LevelOut(BaseModel):
     theory_content: Optional[str]
     initial_code: str
     test_inputs: list[str]
+    strict_match: bool
     # Estado del usuario
     completed: bool
     attempts: int
     unlocked: bool
+    status: str      # "locked" | "unlocked" | "completed"
 
 
 class DakiStateOut(BaseModel):
@@ -82,6 +85,7 @@ def _build_level(
     completed: bool,
     attempts: int,
     unlocked: bool,
+    level_status: str = "",
 ) -> LevelOut:
     return LevelOut(
         id=challenge.id,
@@ -104,9 +108,11 @@ def _build_level(
         theory_content=challenge.theory_content,
         initial_code=challenge.initial_code,
         test_inputs=json.loads(challenge.test_inputs_json),
+        strict_match=challenge.strict_match,
         completed=completed,
         attempts=attempts,
         unlocked=unlocked,
+        status=level_status or ("completed" if completed else ("unlocked" if unlocked else "locked")),
     )
 
 
@@ -154,33 +160,21 @@ async def get_sector_levels(
         )
         progress_map = _build_progress_map(prog_result.scalars().all())
 
-    # El primer nivel del sector se desbloquea si:
-    # - Es el Sector 1 (siempre desbloqueado), o
-    # - El proyecto del sector anterior (is_project=True) fue completado
-    first_unlocked = True
-    if sector_id > 1:
-        prev_project_result = await db.execute(
-            select(Challenge)
-            .where(Challenge.sector_id == sector_id - 1, Challenge.is_project == True)  # noqa: E712
-            .order_by(Challenge.level_order.desc())
-            .limit(1)
-        )
-        prev_project = prev_project_result.scalar_one_or_none()
-        if prev_project:
-            prog = progress_map.get(prev_project.id)
-            first_unlocked = prog.completed if prog else False
-        # Si el sector anterior no tiene proyecto, lo desbloqueamos igual (sector legacy)
-        # first_unlocked ya es True por defecto en ese caso
+    # Calcula status de progresión para todos los niveles del sector
+    statuses = await bulk_resolve_sector(db, user_id, sector_id, list(levels), progress_map)
 
-    # Desbloqueo secuencial dentro del sector
     out: list[LevelOut] = []
-    prev_completed = first_unlocked
-    for level in levels:
+    for level, lvl_status in zip(levels, statuses):
         prog = progress_map.get(level.id)
         completed = prog.completed if prog else False
         attempts = prog.attempts if prog else 0
-        out.append(_build_level(level, completed, attempts, unlocked=prev_completed))
-        prev_completed = completed
+        out.append(_build_level(
+            level,
+            completed=completed,
+            attempts=attempts,
+            unlocked=(lvl_status != "locked"),
+            level_status=lvl_status,
+        ))
 
     # Estado de DAKI — calcula y persiste en BD si hay usuario
     daki_state_out: DakiStateOut | None = None

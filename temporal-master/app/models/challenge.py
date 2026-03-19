@@ -53,3 +53,8 @@ class Challenge(Base):
     difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)   # easy | medium | hard | expert
     is_project: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     telemetry_goal_time: Mapped[int | None] = mapped_column(Integer, nullable=True)  # segundos
+
+    # ── Motor de evaluación ───────────────────────────────────────────────────
+    # strict_match=True  → comparación exacta (solo normaliza CRLF→LF + strip global)
+    # strict_match=False → normalización tolerante (colapsa whitespace redundante)
+    strict_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")

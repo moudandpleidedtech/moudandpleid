@@ -1,0 +1,359 @@
+[
+  {
+    "sector_id": 10,
+    "level_order": 91,
+    "title": "FizzBuzz Táctico",
+    "description": "Imprime los números del 1 al 20 con las siguientes reglas:\n\n- Divisible por **3 Y 5**: imprime `NEXO`\n- Solo divisible por **3**: imprime `GLI`\n- Solo divisible por **5**: imprime `TCH`\n- Cualquier otro: imprime el número\n\nSin `input()`. La comprobación de la condición combinada va primero.",
+    "difficulty_tier": 2,
+    "difficulty": "medium",
+    "base_xp_reward": 200,
+    "is_project": false,
+    "telemetry_goal_time": 240,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "fizzbuzz",
+      "modulo",
+      "logica_multiple",
+      "orden_condiciones"
+    ],
+    "initial_code": "for i in range(1, 21):\n    if i % 3 == 0 and i % 5 == 0:\n        print(\"NEXO\")\n    elif i % 3 == 0:\n        # Imprime GLI\n        pass\n    elif i % 5 == 0:\n        # Imprime TCH\n        pass\n    else:\n        print(i)\n",
+    "expected_output": "1\n2\nGLI\n4\nTCH\nGLI\n7\n8\nGLI\nTCH\n11\nGLI\n13\n14\nNEXO\n16\n17\nGLI\n19\nTCH",
+    "test_inputs_json": [],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Protocolo de Clasificación de Frecuencias\n\nEl núcleo cifra sus comunicaciones con un patrón numérico.\nFizzBuzz táctico es la clave de desencriptación del primer anillo.\nEl orden de las condiciones es la diferencia entre éxito y fallo.",
+    "pedagogical_objective": "Reforzar la lógica de condiciones múltiples con módulo; entender por qué el orden de los elif importa.",
+    "syntax_hint": "Comprueba primero `i % 3 == 0 and i % 5 == 0` (caso más restrictivo).",
+    "theory_content": "## FizzBuzz: lógica de clasificación múltiple\n\nFizzBuzz es el clásico problema de clasificar números con condiciones múltiples.\nLa clave es **comprobar la condición más específica primero**:\n\n```python\nfor i in range(1, 21):\n    if i % 3 == 0 and i % 5 == 0:\n        print(\"NEXO\")       # divisible por AMBOS\n    elif i % 3 == 0:\n        print(\"GLI\")\n    elif i % 5 == 0:\n        print(\"TCH\")\n    else:\n        print(i)\n```\n\nSi comprobas `i % 3 == 0` antes que el caso combinado, los múltiplos de 15\nserían clasificados como \"GLI\" en vez de \"NEXO\". El orden de los `if/elif` importa.\n",
+    "hints_json": [
+      "Empieza siempre por el caso más específico: divisible por 3 Y 5.",
+      "15 es el primer número divisible por ambos — debería imprimir NEXO.",
+      "Los `elif` se evalúan solo si el `if` anterior fue False."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 92,
+    "title": "Secuencia Fibonacci",
+    "description": "Lee `n` por `input()` e imprime los primeros `n` números de la serie de Fibonacci.\n\nLa serie empieza: `0, 1, 1, 2, 3, 5, 8, 13, ...`\n\nCon `n = 8`:\n```\n0\n1\n1\n2\n3\n5\n8\n13\n```",
+    "difficulty_tier": 2,
+    "difficulty": "medium",
+    "base_xp_reward": 210,
+    "is_project": false,
+    "telemetry_goal_time": 260,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "fibonacci",
+      "desempaquetado_variables",
+      "swap_simultaneo",
+      "acumulador"
+    ],
+    "initial_code": "n = int(input())\na, b = 0, 1\nfor _ in range(n):\n    print(a)\n    # Avanza la serie: nuevo_a = b, nuevo_b = a + b\n    a, b = b, a + b\n",
+    "expected_output": "0\n1\n1\n2\n3\n5\n8\n13",
+    "test_inputs_json": [
+      "8"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Desencriptación del Núcleo: Capa 2\n\nLa secuencia de Fibonacci es la clave de cifrado del segundo anillo.\nCada término nace de la suma de los dos anteriores — como la red misma de NEXO.",
+    "pedagogical_objective": "Dominar el swap simultáneo de variables para generar series aritméticas.",
+    "syntax_hint": "`a, b = b, a + b` — el lado derecho se evalúa completo antes de asignar.",
+    "theory_content": "## Secuencia de Fibonacci: desempaquetado de variables\n\nLa serie de Fibonacci comienza con 0 y 1; cada siguiente término es la suma\nde los dos anteriores: 0, 1, 1, 2, 3, 5, 8, 13, 21, …\n\nEl truco de Python para avanzar dos variables a la vez en una sola línea:\n\n```python\na, b = 0, 1\nfor _ in range(n):\n    print(a)\n    a, b = b, a + b   # swap simultáneo: nuevo_a = viejo_b, nuevo_b = viejo_a + viejo_b\n```\n\n`a, b = b, a + b` evalúa el lado derecho **entero** antes de asignar,\npor lo que no necesitas variable temporal.\n",
+    "hints_json": [
+      "La clave es `a, b = b, a + b`: swap simultáneo sin variable temporal.",
+      "Imprime `a` antes de avanzar la serie.",
+      "Con n=8, los primeros 8 Fibonacci son: 0, 1, 1, 2, 3, 5, 8, 13."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 93,
+    "title": "El Número Perdido",
+    "description": "La lista `datos = [1, 2, 3, 5, 6, 7, 8, 9, 10]` debería contener todos los enteros del 1 al 10, pero falta uno.\n\nEncuentra el número faltante usando la **fórmula de Gauss** (suma esperada − suma real) e imprímelo:\n\n```\n4\n```\n\nNo uses bucles de búsqueda — una sola fórmula matemática basta.",
+    "difficulty_tier": 2,
+    "difficulty": "medium",
+    "base_xp_reward": 220,
+    "is_project": false,
+    "telemetry_goal_time": 250,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "formula_gauss",
+      "sum_builtin",
+      "aritmetica_listas",
+      "O1_espacio"
+    ],
+    "initial_code": "datos = [1, 2, 3, 5, 6, 7, 8, 9, 10]\nn = 10\n\n# Suma esperada usando la fórmula de Gauss: n*(n+1)//2\nesperado = n * (n + 1) // 2\n\n# Suma real de la lista\nactual = sum(datos)\n\n# El faltante es la diferencia\nprint(esperado - actual)\n",
+    "expected_output": "4",
+    "test_inputs_json": [],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Desencriptación del Núcleo: Capa 3\n\nUn ID ha sido borrado del registro de nodos. El resto está intacto.\nLa fórmula matemática revela al ausente sin buscar uno a uno.",
+    "pedagogical_objective": "Aplicar la fórmula de Gauss como alternativa O(1) a la búsqueda lineal.",
+    "syntax_hint": "`esperado = n * (n + 1) // 2`, luego `print(esperado - sum(datos))`.",
+    "theory_content": "## Número faltante: fórmula de Gauss\n\nSi tienes todos los números del 1 al N excepto uno, puedes encontrar\nel faltante sin comparar elemento a elemento:\n\n```python\n# La suma de 1..N es n*(n+1)//2 (fórmula de Gauss)\nesperado = n * (n + 1) // 2\nfaltante = esperado - sum(datos)\n```\n\nComplejidad: O(n) en tiempo, O(1) en espacio extra.\nSin búsqueda anidada, sin sorted — pura matemática.\n",
+    "hints_json": [
+      "La suma de 1 a 10 es 55 (fórmula de Gauss).",
+      "`sum([1,2,3,5,6,7,8,9,10])` = 51.",
+      "55 - 51 = 4 → el número faltante."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 94,
+    "title": "Detector de Palíndromos",
+    "description": "Lee una palabra por `input()` e imprime `SI` si es palíndromo o `NO` si no lo es.\n\nCon `\"RECONOCER\"` → `SI`  \nCon `\"DAKI\"` → `NO`\n\nUsa slicing inverso `[::-1]` para comparar.",
+    "difficulty_tier": 2,
+    "difficulty": "medium",
+    "base_xp_reward": 210,
+    "is_project": false,
+    "telemetry_goal_time": 230,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "palindromo",
+      "slicing_inverso",
+      "comparacion_string"
+    ],
+    "initial_code": "palabra = input()\nif palabra == palabra[::-1]:\n    print(\"SI\")\nelse:\n    # Imprime NO\n    pass\n",
+    "expected_output": "SI",
+    "test_inputs_json": [
+      "RECONOCER"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Desencriptación del Núcleo: Capa 4\n\nLas claves del núcleo son simétricas — se leen igual en ambas direcciones.\nDetecta si la señal recibida es una clave válida palindrómica.",
+    "pedagogical_objective": "Aplicar slicing [::-1] para invertir strings y detectar palíndromos.",
+    "syntax_hint": "`palabra[::-1]` devuelve el string al revés. Compara con `==`.",
+    "theory_content": "## Palíndromos: slicing inverso\n\nUn palíndromo se lee igual de izquierda a derecha que de derecha a izquierda.\n\n```python\npalabra = input()\nif palabra == palabra[::-1]:\n    print(\"SI\")\nelse:\n    print(\"NO\")\n```\n\n`palabra[::-1]` usa el slicing extendido `[inicio:fin:paso]` con paso `-1`,\nque recorre la secuencia al revés. Es la forma más idiomática en Python.\n",
+    "hints_json": [
+      "`[::-1]` es el paso -1 del slicing: recorre el string de atrás hacia adelante.",
+      "RECONOCER invertido es RECONOCER → son iguales → es palíndromo.",
+      "Si `palabra == palabra[::-1]` → imprime SI, sino NO."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 95,
+    "title": "Compresión de Señal (RLE)",
+    "description": "Lee una señal por `input()` y aplica **Run-Length Encoding**:\nreemplaza cada grupo de caracteres repetidos por `CARACTER + CANTIDAD`.\n\nCon `\"AAABBBCCDDDDEE\"` → `\"A3B3C2D4E2\"`\n\nUsa un `while` externo que recorra la señal y un `while` interno que cuente repeticiones.",
+    "difficulty_tier": 3,
+    "difficulty": "hard",
+    "base_xp_reward": 280,
+    "is_project": false,
+    "telemetry_goal_time": 360,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "RLE",
+      "while_anidado",
+      "compresion",
+      "indice_manual"
+    ],
+    "initial_code": "señal = input()\nresultado = \"\"\ni = 0\n\nwhile i < len(señal):\n    c = señal[i]\n    count = 1\n    # Cuenta cuántas veces se repite c a partir de i\n    while i + count < len(señal) and señal[i + count] == c:\n        count += 1\n    resultado += c + str(count)\n    i += count\n\nprint(resultado)\n",
+    "expected_output": "A3B3C2D4E2",
+    "test_inputs_json": [
+      "AAABBBCCDDDDEE"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Desencriptación del Núcleo: Capa 5\n\nEl quinto anillo usa compresión RLE para ocultar patrones repetitivos.\nDescodifica la señal comprimida para revelar la estructura del núcleo.",
+    "pedagogical_objective": "Implementar RLE con bucle while manual e índice; comprender compresión de datos.",
+    "syntax_hint": "`resultado += c + str(count)` para cada grupo. Avanza `i += count`.",
+    "theory_content": "## Compresión RLE (Run-Length Encoding)\n\nRLE reemplaza secuencias repetidas por `CARACTER + CANTIDAD`:\n`\"AAABBB\"` → `\"A3B3\"`.\n\n```python\ni = 0\nresultado = \"\"\nwhile i < len(señal):\n    c = señal[i]\n    count = 1\n    while i + count < len(señal) and señal[i + count] == c:\n        count += 1\n    resultado += c + str(count)\n    i += count\n```\n\nEl bucle interior cuenta cuántas veces se repite `c` a partir de la posición `i`.\nLuego salta directamente al siguiente grupo con `i += count`.\n",
+    "hints_json": [
+      "El bucle externo empieza en la posición `i` del grupo actual.",
+      "El bucle interno cuenta `count` mientras el siguiente carácter sea igual a `c`.",
+      "Después de contar, añade `c + str(count)` al resultado y salta `i += count`."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 96,
+    "title": "Detección de Anagramas",
+    "description": "Lee dos palabras (una por línea) e imprime si son anagramas.\n\nCon `\"LISTEN\"` y `\"SILENT\"` → `\"SI ANAGRAMA\"`  \nCon `\"DAKI\"` y `\"NEXO\"` → `\"NO ANAGRAMA\"`\n\nUsa `sorted()` sobre los strings para comparar sus letras.",
+    "difficulty_tier": 3,
+    "difficulty": "hard",
+    "base_xp_reward": 250,
+    "is_project": false,
+    "telemetry_goal_time": 280,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "anagrama",
+      "sorted_string",
+      "comparacion_listas",
+      "verificacion"
+    ],
+    "initial_code": "w1 = input()\nw2 = input()\n\nif sorted(w1) == sorted(w2):\n    print(\"SI ANAGRAMA\")\nelse:\n    print(\"NO ANAGRAMA\")\n",
+    "expected_output": "SI ANAGRAMA",
+    "test_inputs_json": [
+      "LISTEN",
+      "SILENT"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — El Sistema Me Reconoce\n\nDAKI usa anagramas como protocolo de autenticación entre nodos aliados.\nDos palabras que comparten las mismas letras son la misma señal cifrada.",
+    "pedagogical_objective": "Usar sorted() sobre strings para detectar anagramas; reforzar comparación de listas.",
+    "syntax_hint": "`sorted('LISTEN')` devuelve `['E','I','L','N','S','T']`.",
+    "theory_content": "## Anagramas: sorted() sobre strings\n\nDos palabras son **anagramas** si contienen exactamente las mismas letras\nen cualquier orden. La forma más limpia de comprobarlo:\n\n```python\nw1 = input()\nw2 = input()\nif sorted(w1) == sorted(w2):\n    print(\"SI ANAGRAMA\")\nelse:\n    print(\"NO ANAGRAMA\")\n```\n\n`sorted(\"LISTEN\")` devuelve `['E', 'I', 'L', 'N', 'S', 'T']`.\n`sorted(\"SILENT\")` devuelve la misma lista → son anagramas.\nSi las listas ordenadas son iguales, las letras son las mismas.\n",
+    "hints_json": [
+      "`sorted(string)` devuelve una lista con las letras ordenadas alfabéticamente.",
+      "Si `sorted(w1) == sorted(w2)`, ambas tienen exactamente las mismas letras.",
+      "LISTEN y SILENT ordenados dan la misma lista → son anagramas."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 97,
+    "title": "Frecuencia de Palabras",
+    "description": "Lee `n` líneas de texto y cuenta la frecuencia de cada palabra.\nImprime cada palabra y su conteo en **orden alfabético**.\n\nFormato: `palabra: N`\n\nCon 3 líneas (`\"hola nexo hola\"`, `\"nexo nexo daki\"`, `\"hola\"`):\n```\ndaki: 1\nhola: 3\nnexo: 3\n```",
+    "difficulty_tier": 3,
+    "difficulty": "hard",
+    "base_xp_reward": 270,
+    "is_project": false,
+    "telemetry_goal_time": 330,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "dict_contador",
+      "get_con_default",
+      "split",
+      "sorted_dict"
+    ],
+    "initial_code": "n = int(input())\nfrecuencia = {}\n\nfor _ in range(n):\n    linea = input()\n    for palabra in linea.split():\n        frecuencia[palabra] = frecuencia.get(palabra, 0) + 1\n\nfor palabra in sorted(frecuencia):\n    print(f\"{palabra}: {frecuencia[palabra]}\")\n",
+    "expected_output": "daki: 1\nhola: 3\nnexo: 3",
+    "test_inputs_json": [
+      "3",
+      "hola nexo hola",
+      "nexo nexo daki",
+      "hola"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Análisis Lingüístico del Núcleo\n\nLos mensajes interceptados repiten ciertas palabras clave.\nCuenta la frecuencia para identificar qué términos domina el enemigo.",
+    "pedagogical_objective": "Dominar el patrón dict.get(k, 0) + 1 para contar frecuencias; iterar claves ordenadas.",
+    "syntax_hint": "`frecuencia.get(palabra, 0)` devuelve 0 si la palabra es nueva.",
+    "theory_content": "## Frecuencia de palabras: dict como contador\n\nEl patrón `dict.get(clave, 0) + 1` es el estándar para contar con diccionarios:\n\n```python\nfrecuencia = {}\nfor linea in lineas:\n    for palabra in linea.split():\n        frecuencia[palabra] = frecuencia.get(palabra, 0) + 1\n```\n\n- `frecuencia.get(palabra, 0)` devuelve el conteo actual, o `0` si es nueva.\n- `sorted(frecuencia)` itera las claves en orden alfabético.\n- Imprime con `f\"{palabra}: {frecuencia[palabra]}\"`.\n",
+    "hints_json": [
+      "`linea.split()` divide por espacios: `\"hola nexo hola\"` → `[\"hola\", \"nexo\", \"hola\"]`.",
+      "`frecuencia.get(p, 0) + 1` incrementa el conteo sin lanzar KeyError.",
+      "`sorted(frecuencia)` ordena las claves alfabéticamente."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 98,
+    "title": "Two Sum: Pares Objetivo",
+    "description": "Dado el array `nums = [2, 7, 11, 15]` y `target = 9`, encuentra los **índices** de los dos números que suman exactamente `target`.\n\nImprime los dos índices separados por un espacio:\n\n```\n0 1\n```\n\nUsa doble bucle: el índice `j` empieza en `i + 1` para no repetir pares.",
+    "difficulty_tier": 3,
+    "difficulty": "hard",
+    "base_xp_reward": 280,
+    "is_project": false,
+    "telemetry_goal_time": 320,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "two_sum",
+      "doble_bucle",
+      "indices",
+      "busqueda_par"
+    ],
+    "initial_code": "nums   = [2, 7, 11, 15]\ntarget = 9\n\nfor i in range(len(nums)):\n    for j in range(i + 1, len(nums)):\n        if nums[i] + nums[j] == target:\n            print(i, j)\n",
+    "expected_output": "0 1",
+    "test_inputs_json": [],
+    "strict_match": true,
+    "lore_briefing": "DAKI — Sincronización de Nodos Duales\n\nDos nodos deben activarse simultáneamente para sumar la frecuencia objetivo.\nEncuentra el par correcto entre los nodos disponibles.",
+    "pedagogical_objective": "Implementar la búsqueda de pares con doble bucle; entender el rol de j = i+1.",
+    "syntax_hint": "`print(i, j)` imprime los dos índices separados por espacio.",
+    "theory_content": "## Two Sum: búsqueda de pares\n\nDado un array y un objetivo, encuentra los dos índices cuyos valores sumen exactamente el objetivo.\n\nLa solución directa con doble bucle (O(n²)):\n\n```python\nfor i in range(len(nums)):\n    for j in range(i + 1, len(nums)):\n        if nums[i] + nums[j] == target:\n            print(i, j)\n```\n\n`j` empieza en `i + 1` para evitar usar el mismo elemento dos veces\ny para no repetir pares (no queremos `(1,0)` si ya encontramos `(0,1)`).\n",
+    "hints_json": [
+      "`j` empieza en `i + 1` para no comparar un elemento consigo mismo.",
+      "`nums[0] + nums[1] = 2 + 7 = 9 == target` → imprime `0 1`.",
+      "`print(i, j)` pone un espacio automáticamente entre los dos valores."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 99,
+    "title": "Criba de Primos",
+    "description": "Lee `n` por `input()` e imprime todos los números primos del 2 al `n` (inclusive), uno por línea.\n\nCon `n = 20`:\n```\n2\n3\n5\n7\n11\n13\n17\n19\n```\n\nPara cada número, comprueba si algún divisor entre 2 y `num-1` lo divide exactamente. Si ninguno lo divide → es primo.",
+    "difficulty_tier": 3,
+    "difficulty": "hard",
+    "base_xp_reward": 290,
+    "is_project": false,
+    "telemetry_goal_time": 350,
+    "challenge_type": "code",
+    "phase": "practica",
+    "concepts_taught_json": [
+      "numeros_primos",
+      "doble_bucle",
+      "break",
+      "flag_booleano"
+    ],
+    "initial_code": "n = int(input())\n\nfor num in range(2, n + 1):\n    es_primo = True\n    for d in range(2, num):\n        if num % d == 0:\n            es_primo = False\n            break\n    if es_primo:\n        print(num)\n",
+    "expected_output": "2\n3\n5\n7\n11\n13\n17\n19",
+    "test_inputs_json": [
+      "20"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — La Antesala del Núcleo\n\nLos nodos primarios son indivisibles — su frecuencia no puede ser factorizada.\nIdentifica todos los nodos primarios hasta el umbral N.\nEsta es la última prueba antes del Algoritmo Maestro.",
+    "pedagogical_objective": "Implementar la verificación de primalidad con doble bucle y bandera booleana.",
+    "syntax_hint": "`break` sale del bucle interior en cuanto encuentra un divisor.",
+    "theory_content": "## Números primos: criba simple\n\nUn número es primo si solo es divisible por 1 y por sí mismo.\nLa verificación básica prueba divisores desde 2 hasta el número - 1:\n\n```python\nfor num in range(2, n + 1):\n    es_primo = True\n    for d in range(2, num):\n        if num % d == 0:\n            es_primo = False\n            break\n    if es_primo:\n        print(num)\n```\n\n`break` sale del bucle interior en cuanto encuentra un divisor,\nevitando comprobaciones innecesarias.\n",
+    "hints_json": [
+      "`es_primo = True` asume primo; `break` lo desmiente en cuanto encuentra un divisor.",
+      "El 2 es primo: su bucle interior `range(2, 2)` está vacío → `es_primo` se mantiene True.",
+      "`break` solo sale del `for d` interior, no del `for num` exterior."
+    ],
+    "grid_map_json": null
+  },
+  {
+    "sector_id": 10,
+    "level_order": 100,
+    "title": "CONTRATO-100: El Algoritmo Maestro",
+    "description": "**BOSS FINAL — El Nexo Central**\n\nEl sistema de inteligencia recibe N registros de agentes con formato `NOMBRE:PUNTAJE`.\nAlgunos registros están corrompidos. Tu misión:\n\n1. Lee `n = int(input())` — número de registros\n2. Por cada registro: usa `try/except` para parsear `NOMBRE:PUNTAJE`\n3. Si `puntaje >= 70`: guarda en lista de aprobados como dict `{\"nombre\", \"puntaje\"}`\n4. Si `puntaje < 70` o registro inválido: incrementa `rechazados`\n5. Ordena aprobados por puntaje **descendente**\n6. Por cada aprobado: imprime `NOMBRE: PUNTAJE [ÉLITE]` si puntaje ≥ 90, o `[APROBADO]` si puntaje 70–89\n7. Imprime `Rechazados: N`\n\n**Entradas:** `5`, `Alpha:95`, `Beta:72`, `Gamma:ERROR`, `Delta:88`, `Epsilon:65`\n\n```\nAlpha: 95 [ÉLITE]\nDelta: 88 [APROBADO]\nBeta: 72 [APROBADO]\nRechazados: 2\n```",
+    "difficulty_tier": 3,
+    "difficulty": "expert",
+    "base_xp_reward": 1000,
+    "is_project": true,
+    "telemetry_goal_time": 900,
+    "challenge_type": "project",
+    "phase": "proyecto",
+    "concepts_taught_json": [
+      "integracion_total",
+      "try_except",
+      "lista_de_dicts",
+      "sorted_funcion_clave",
+      "condicional_etiqueta",
+      "f_string",
+      "ranking"
+    ],
+    "initial_code": "n = int(input())\naprobados  = []\nrechazados = 0\n\nfor _ in range(n):\n    linea = input()\n    try:\n        nombre, puntaje = linea.split(\":\")\n        puntaje = int(puntaje)\n        if puntaje >= 70:\n            aprobados.append({\"nombre\": nombre, \"puntaje\": puntaje})\n        else:\n            rechazados += 1\n    except (ValueError, IndexError):\n        rechazados += 1\n\ndef por_puntaje(agente):\n    return agente[\"puntaje\"]\n\naprobados = sorted(aprobados, key=por_puntaje, reverse=True)\n\nfor agente in aprobados:\n    # Determina etiqueta ÉLITE o APROBADO e imprime\n    pass\n\nprint(f\"Rechazados: {rechazados}\")\n",
+    "expected_output": "Alpha: 95 [ÉLITE]\nDelta: 88 [APROBADO]\nBeta: 72 [APROBADO]\nRechazados: 2",
+    "test_inputs_json": [
+      "5",
+      "Alpha:95",
+      "Beta:72",
+      "Gamma:ERROR",
+      "Delta:88",
+      "Epsilon:65"
+    ],
+    "strict_match": true,
+    "lore_briefing": "DAKI — CONTRATO-100: Protocolo Omega\n\nHas llegado al corazón del Nexo Central. DAKI te habla directamente:\n\n'Operador. Has cruzado 9 sectores, descifrado el núcleo y sobrevivido a cada protocolo.\nEste es el Algoritmo Maestro — la prueba que separa a los usuarios de los Arquitectos.\nClasifica a los agentes. Los dignos serán reconocidos. Los demás, rechazados.\nEl Certificado aguarda al otro lado.'\n\nCompleta el algoritmo. La red te observa.",
+    "pedagogical_objective": "Integrar en una sola solución: input/output, try/except con múltiples tipos, lista de dicts, sorted() con función clave, lógica condicional de etiquetado y f-strings. Demostrar dominio completo del lenguaje Python a nivel introductorio-intermedio.",
+    "syntax_hint": "`etiqueta = \"ÉLITE\" if agente[\"puntaje\"] >= 90 else \"APROBADO\"`",
+    "theory_content": "## El Algoritmo Maestro: integración total\n\nEl nivel final combina todos los conceptos del curso:\n\n| Concepto             | Dónde se usa                         |\n|----------------------|--------------------------------------|\n| `input()` + `int()`  | Leer N agentes                       |\n| `str.split(\":\")`     | Parsear formato `NOMBRE:PUNTAJE`     |\n| `try/except`         | Manejar líneas malformadas           |\n| Lista de dicts       | Almacenar agentes válidos            |\n| `sorted()` + función | Ordenar por puntaje descendente      |\n| `if/else`            | Asignar etiqueta ÉLITE / APROBADO    |\n| f-strings            | Formatear la salida final            |\n\n**Patrón sorted con función clave:**\n```python\ndef por_puntaje(agente):\n    return agente[\"puntaje\"]\n\nagentes = sorted(agentes, key=por_puntaje, reverse=True)\n```\n\n`reverse=True` ordena de mayor a menor. La función `por_puntaje`\nle dice a `sorted` qué valor usar para comparar cada elemento.\n",
+    "hints_json": [
+      "`nombre, puntaje = linea.split(\":\")` falla si no hay \":\" → excepto (ValueError/IndexError).",
+      "`sorted(aprobados, key=por_puntaje, reverse=True)` ordena de mayor a menor puntaje.",
+      "Dentro del for: `etiqueta = \"ÉLITE\" if agente[\"puntaje\"] >= 90 else \"APROBADO\"`.",
+      "Formato exacto: `f\"{agente['nombre']}: {agente['puntaje']} [{etiqueta}]\"`.",
+      "Epsilon (65 < 70) y Gamma (ERROR) suman los 2 rechazados."
+    ],
+    "grid_map_json": null
+  }
+]

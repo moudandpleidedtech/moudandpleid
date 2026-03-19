@@ -7,7 +7,7 @@ import NeuralBoot from '@/components/UI/NeuralBoot'
 
 export default function BootSequencePage() {
   const router = useRouter()
-  const { userId, username } = useUserStore()
+  const { userId, username, dakiLevel } = useUserStore()
 
   // Guard: sin sesión → login
   useEffect(() => {
@@ -16,10 +16,17 @@ export default function BootSequencePage() {
 
   const handleComplete = () => {
     localStorage.setItem('boot_seen', '1')
-    router.push('/hub')
+    // Navega a misiones: el Nivel 01 ("Hola Mundo") es el primero de la lista
+    router.push('/misiones')
   }
 
   if (!userId) return null
 
-  return <NeuralBoot username={username} onComplete={handleComplete} />
+  return (
+    <NeuralBoot
+      username={username}
+      dakiLevel={dakiLevel}
+      onComplete={handleComplete}
+    />
+  )
 }

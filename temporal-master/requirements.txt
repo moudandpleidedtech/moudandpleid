@@ -23,5 +23,8 @@ httpx==0.27.2
 # Utils
 python-dotenv==1.0.1
 
+# PDF generation
+reportlab==4.2.5
+
 # Anthropic AI SDK
 anthropic>=0.50.0
