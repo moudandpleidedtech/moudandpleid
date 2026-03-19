@@ -124,6 +124,11 @@ async def init_db() -> None:
             "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS hints_json TEXT NOT NULL DEFAULT '[]'"
         ))
 
+        # DAKI State Machine
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS daki_level INTEGER NOT NULL DEFAULT 1"
+        ))
+
         # Telemetría extendida — El Ojo de DAKI
         for stmt in [
             "ALTER TABLE user_metrics ADD COLUMN IF NOT EXISTS hints_used INTEGER NOT NULL DEFAULT 0",

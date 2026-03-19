@@ -6,6 +6,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
+interface DakiStateOut {
+  daki_level: 1 | 2 | 3
+  mood: string
+  label: string
+  description: string
+  completed_sectors: number
+  next_threshold: number | null
+}
+
+interface SectorResponse {
+  levels: LevelOut[]
+  daki_state: DakiStateOut | null
+}
+
 interface LevelOut {
   id: string
   title: string
@@ -264,9 +278,10 @@ export default function SectorMap({
   challengeBasePath = '/challenge',
 }: SectorMapProps) {
   const router   = useRouter()
-  const [levels, setLevels]   = useState<LevelOut[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState<string | null>(null)
+  const [levels, setLevels]       = useState<LevelOut[]>([])
+  const [dakiState, setDakiState] = useState<DakiStateOut | null>(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
 
   // userId desde Zustand — solo en cliente para evitar SSR mismatch
   const [userId, setUserId] = useState<string | null>(null)
@@ -289,7 +304,11 @@ export default function SectorMap({
         if (!r.ok) throw new Error(`Sector ${sectorId} no encontrado`)
         return r.json()
       })
-      .then((data: LevelOut[]) => { setLevels(data); setLoading(false) })
+      .then((data: SectorResponse) => {
+        setLevels(data.levels)
+        setDakiState(data.daki_state)
+        setLoading(false)
+      })
       .catch((e) => {
         if (e.name !== 'AbortError') {
           setError(e.message ?? 'Error de conexión')
@@ -437,6 +456,73 @@ export default function SectorMap({
             ))}
           </AnimatePresence>
         </div>
+
+        {/* ── Estado DAKI ── */}
+        {dakiState && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-8 p-4 rounded"
+            style={{
+              background: 'rgba(0,255,65,0.03)',
+              border: '1px solid rgba(0,255,65,0.15)',
+            }}
+          >
+            <div className="flex items-start gap-4 flex-wrap">
+              {/* Nivel DAKI */}
+              <div className="shrink-0">
+                <p className="text-[9px] tracking-widest mb-1" style={{ fontFamily: 'monospace', color: '#00FF4155' }}>
+                  ESTADO DAKI
+                </p>
+                <div className="flex gap-1">
+                  {([1, 2, 3] as const).map((n) => (
+                    <div
+                      key={n}
+                      className="w-5 h-5 rounded-sm flex items-center justify-center text-[9px]"
+                      style={{
+                        background: dakiState.daki_level >= n ? 'rgba(0,255,65,0.2)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${dakiState.daki_level >= n ? 'rgba(0,255,65,0.6)' : 'rgba(255,255,255,0.08)'}`,
+                        color: dakiState.daki_level >= n ? '#00FF41' : '#333',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      {n}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-sm font-bold tracking-wide mb-0.5"
+                  style={{ fontFamily: 'monospace', color: '#00FF41' }}
+                >
+                  {dakiState.label}
+                </p>
+                <p
+                  className="text-[11px] leading-relaxed"
+                  style={{ fontFamily: 'monospace', color: '#00FF4177' }}
+                >
+                  {dakiState.description}
+                </p>
+              </div>
+
+              {/* Próximo umbral */}
+              {dakiState.next_threshold !== null && (
+                <div className="shrink-0 text-right">
+                  <p className="text-[9px] tracking-widest" style={{ fontFamily: 'monospace', color: '#00FF4133' }}>
+                    PRÓXIMA EVOLUCIÓN
+                  </p>
+                  <p className="text-xs" style={{ fontFamily: 'monospace', color: '#FFC70099' }}>
+                    {dakiState.completed_sectors}/{dakiState.next_threshold} sectores
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Leyenda ── */}
         <motion.div

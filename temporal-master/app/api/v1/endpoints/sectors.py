@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
+from app.services.daki_service import compute_daki_state, refresh_daki_level
 
 router = APIRouter(prefix="/levels", tags=["sectors"])
 
@@ -48,6 +49,21 @@ class LevelOut(BaseModel):
     completed: bool
     attempts: int
     unlocked: bool
+
+
+class DakiStateOut(BaseModel):
+    daki_level: int
+    mood: str
+    label: str
+    description: str
+    completed_sectors: int
+    next_threshold: Optional[int]
+
+
+class SectorResponse(BaseModel):
+    """Wrapper del endpoint GET /sector/{id}: niveles + estado DAKI del usuario."""
+    levels: list["LevelOut"]
+    daki_state: Optional[DakiStateOut]   # None si no se pasa user_id
 
 
 class SectorSummary(BaseModel):
@@ -102,20 +118,20 @@ def _build_progress_map(progresses: list[UserProgress]) -> dict[uuid.UUID, UserP
 
 @router.get(
     "/sector/{sector_id}",
-    response_model=list[LevelOut],
-    summary="Niveles de un sector",
+    response_model=SectorResponse,
+    summary="Niveles de un sector con estado DAKI",
     description=(
-        "Devuelve todos los niveles de un sector ordenados por level_order. "
-        "El desbloqueo es secuencial: cada nivel requiere completar el anterior. "
-        "El primer nivel del sector está desbloqueado si el sector anterior fue completado "
-        "(o si es el Sector 1). Devuelve 404 si el sector no existe o no tiene niveles."
+        "Devuelve los niveles del sector + el estado evolutivo de DAKI para el usuario. "
+        "El desbloqueo es secuencial dentro del sector. "
+        "El primer nivel del sector requiere completar el proyecto del sector anterior. "
+        "Devuelve 404 si el sector no existe o no tiene niveles."
     ),
 )
 async def get_sector_levels(
     sector_id: int,
     user_id: Optional[uuid.UUID] = Query(None, description="UUID del operador para calcular progreso"),
     db: AsyncSession = Depends(get_db),
-) -> list[LevelOut]:
+) -> SectorResponse:
     # Carga los niveles del sector ordenados
     result = await db.execute(
         select(Challenge)
@@ -166,7 +182,21 @@ async def get_sector_levels(
         out.append(_build_level(level, completed, attempts, unlocked=prev_completed))
         prev_completed = completed
 
-    return out
+    # Estado de DAKI — calcula y persiste en BD si hay usuario
+    daki_state_out: DakiStateOut | None = None
+    if user_id:
+        state = await compute_daki_state(db, user_id)
+        await refresh_daki_level(db, user_id)
+        daki_state_out = DakiStateOut(
+            daki_level=state.daki_level,
+            mood=state.mood,
+            label=state.label,
+            description=state.description,
+            completed_sectors=state.completed_sectors,
+            next_threshold=state.next_threshold,
+        )
+
+    return SectorResponse(levels=out, daki_state=daki_state_out)
 
 
 @router.get(
