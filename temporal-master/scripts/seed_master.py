@@ -22,6 +22,7 @@ Variables de entorno requeridas (o en .env):
 
 import argparse
 import asyncio
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -87,6 +88,15 @@ def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
 
     if filter_sector is not None:
         catalog = [c for c in catalog if c.get("sector_id") == filter_sector]
+
+    # ── Normalización: los campos *_json deben ser strings, no listas/dicts ──
+    # Algunos seeds antiguos ya usan json.dumps(); los nuevos pasan listas crudas.
+    JSON_FIELDS = ("test_inputs_json", "concepts_taught_json", "hints_json", "grid_map_json")
+    for entry in catalog:
+        for field in JSON_FIELDS:
+            val = entry.get(field)
+            if isinstance(val, (list, dict)):
+                entry[field] = json.dumps(val, ensure_ascii=False)
 
     return catalog
 
