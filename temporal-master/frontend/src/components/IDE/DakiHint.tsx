@@ -1,6 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useDakiVoice } from '@/hooks/useDakiVoice'
+import type { DakiLevel } from '@/lib/dakiVoice'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -8,16 +11,26 @@ interface Props {
   visible: boolean       // hintIndex >= 0
   hints: string[]        // array de 3 pistas progresivas de la API
   hintIndex: number      // índice actual (0-based, nunca retrocede)
+  dakiLevel?: DakiLevel  // nivel evolutivo (1 robótico, 2 amistoso, 3 compañero)
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export default function DakiHint({ visible, hints, hintIndex }: Props) {
-  if (!hints || hints.length === 0) return null
+export default function DakiHint({ visible, hints, hintIndex, dakiLevel = 1 }: Props) {
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
 
-  const idx = Math.min(Math.max(hintIndex, 0), hints.length - 1)
-  const currentHint = hints[idx]
-  const total = hints.length
+  const idx         = Math.min(Math.max(hintIndex, 0), hints.length - 1)
+  const currentHint = hints[idx] ?? ''
+  const total       = hints.length
+
+  // Habla automáticamente cuando cambia la pista (si es visible y la voz está activa)
+  const { speak, cancel, isSpeaking } = useDakiVoice(dakiLevel, {
+    text: visible ? currentHint : undefined,
+    autoPlay: voiceEnabled && visible,
+    enabled: voiceEnabled,
+  })
+
+  if (!hints || hints.length === 0) return null
 
   return (
     <AnimatePresence>
@@ -54,10 +67,42 @@ export default function DakiHint({ visible, hints, hintIndex }: Props) {
                   [ MENSAJE ENTRANTE DE DAKI ]
                 </span>
               </div>
-              {/* Indicador de progreso de pista */}
-              <span className="text-[8px] tracking-widest text-cyan-400/40 font-bold">
-                PISTA {idx + 1}/{total}
-              </span>
+
+              <div className="flex items-center gap-2">
+                {/* Indicador de voz activa */}
+                {isSpeaking && (
+                  <motion.span
+                    className="text-[8px] tracking-widest text-cyan-400/60"
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.6, repeat: Infinity }}
+                  >
+                    ◉ VOZ
+                  </motion.span>
+                )}
+
+                {/* Toggle de voz */}
+                <button
+                  onClick={() => {
+                    if (voiceEnabled) {
+                      cancel()
+                      setVoiceEnabled(false)
+                    } else {
+                      setVoiceEnabled(true)
+                      speak(currentHint)
+                    }
+                  }}
+                  title={voiceEnabled ? 'Silenciar DAKI' : 'Activar voz de DAKI'}
+                  className="text-[10px] transition-opacity hover:opacity-100"
+                  style={{ color: voiceEnabled ? '#22d3ee99' : '#ffffff22' }}
+                >
+                  {voiceEnabled ? '🔊' : '🔇'}
+                </button>
+
+                {/* Pista N/total */}
+                <span className="text-[8px] tracking-widest text-cyan-400/40 font-bold">
+                  PISTA {idx + 1}/{total}
+                </span>
+              </div>
             </motion.div>
 
             {/* Cuerpo del mensaje — animado al cambiar de pista */}
