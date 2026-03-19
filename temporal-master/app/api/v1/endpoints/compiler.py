@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -15,6 +16,9 @@ from app.services.execution_service import execute_python_code
 from app.services.gamification_service import gamification_engine
 
 router = APIRouter()
+
+# attempts → índice de pista (0-based). Una vez desbloqueada, persiste.
+_HINT_THRESHOLDS: list[int] = [3, 6, 10]
 
 
 def _normalize_output(text: str) -> str:
@@ -46,6 +50,13 @@ class ErrorInfo(BaseModel):
     detail: str
 
 
+class DakiIntervention(BaseModel):
+    hint_index: int           # 0-based
+    hint_number: int          # 1-based (para mostrar "Pista 1/3")
+    total_hints: int
+    text: str
+
+
 class CodeExecuteResponse(BaseModel):
     stdout: str
     stderr: str
@@ -53,6 +64,7 @@ class CodeExecuteResponse(BaseModel):
     output_matched: bool
     gamification: ChallengeAttemptResult
     error_info: Optional[ErrorInfo] = None
+    daki_intervention: Optional[DakiIntervention] = None   # pista automática por tolerancia
 
 
 async def _upsert_metric(
@@ -61,11 +73,13 @@ async def _upsert_metric(
     challenge_id: uuid.UUID,
     time_spent_ms: int,
     success: bool,
-) -> None:
+    hints_used: int = 0,
+    error_type: Optional[str] = None,
+) -> int:
     """
-    Inserta o actualiza la fila de telemetría para (user_id, challenge_id).
-    Si ya existe, incrementa attempts, acumula time_spent_ms y actualiza status.
-    Falla silenciosamente para no bloquear la respuesta al jugador.
+    Inserta o actualiza telemetría para (user_id, challenge_id).
+    Retorna el attempts total DESPUÉS del upsert (usado para lógica DAKI).
+    Falla silenciosamente si hay error — la telemetría no es crítica.
     """
     try:
         result = await db.execute(
@@ -78,24 +92,34 @@ async def _upsert_metric(
         now = datetime.now(timezone.utc)
 
         if metric is None:
-            db.add(UserMetric(
+            errors_log = [error_type] if error_type else []
+            metric = UserMetric(
                 user_id=user_id,
                 challenge_id=challenge_id,
                 attempts=1,
                 time_spent_ms=time_spent_ms,
                 status="success" if success else "fail",
+                hints_used=hints_used,
+                syntax_errors_log=json.dumps(errors_log),
                 first_attempt_at=now,
                 last_attempt_at=now,
-            ))
+            )
+            db.add(metric)
         else:
             metric.attempts += 1
             metric.time_spent_ms += time_spent_ms
-            metric.status = "success" if success else metric.status  # una vez exitoso, queda exitoso
+            metric.status = "success" if success else metric.status
+            metric.hints_used = max(metric.hints_used, hints_used)
             metric.last_attempt_at = now
+            if error_type:
+                log: list[str] = json.loads(metric.syntax_errors_log or "[]")
+                log.append(error_type)
+                metric.syntax_errors_log = json.dumps(log[-50:])
 
         await db.flush()
+        return metric.attempts
     except Exception:
-        pass  # telemetría no crítica
+        return 0  # telemetría no crítica — retorna 0 para no activar pistas por error
 
 
 @router.post(
@@ -142,17 +166,38 @@ async def execute_challenge_code(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
     # ── Telemetría: upsert en user_metrics ───────────────────────────────────
-    await _upsert_metric(
+    raw_ei = exec_result.get("error_info")
+    error_info = ErrorInfo(**raw_ei) if raw_ei else None
+
+    total_attempts = await _upsert_metric(
         db=db,
         user_id=payload.user_id,
         challenge_id=payload.challenge_id,
         time_spent_ms=payload.time_spent_ms,
         success=is_success,
+        hints_used=payload.hints_used,
+        error_type=error_info.error_type if error_info else None,
     )
 
-    # Parsear error info si existe
-    raw_ei = exec_result.get("error_info")
-    error_info = ErrorInfo(**raw_ei) if raw_ei else None
+    # ── Intervención DAKI por tolerancia ─────────────────────────────────────
+    daki_intervention: Optional[DakiIntervention] = None
+    if not is_success and total_attempts > 0:
+        hints: list[str] = json.loads(challenge.hints_json) if challenge.hints_json else []
+        if hints:
+            # Determina qué índice de pista corresponde a este número de intentos
+            hint_idx = -1
+            for threshold_idx, threshold in enumerate(_HINT_THRESHOLDS):
+                if total_attempts >= threshold:
+                    hint_idx = threshold_idx
+
+            if hint_idx >= 0:
+                hint_idx = min(hint_idx, len(hints) - 1)
+                daki_intervention = DakiIntervention(
+                    hint_index=hint_idx,
+                    hint_number=hint_idx + 1,
+                    total_hints=len(hints),
+                    text=hints[hint_idx],
+                )
 
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],
@@ -161,4 +206,5 @@ async def execute_challenge_code(
         output_matched=output_matched,
         gamification=gamification_result,
         error_info=error_info,
+        daki_intervention=daki_intervention,
     )
