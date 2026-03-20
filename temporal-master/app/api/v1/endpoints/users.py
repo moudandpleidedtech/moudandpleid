@@ -21,6 +21,7 @@ class UserOut(BaseModel):
     total_xp: int
     current_level: int
     streak_days: int
+    is_paid: bool
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,6 +30,8 @@ class User(Base):
     badges_json: Mapped[str] = mapped_column(String, nullable=False, default="[]", server_default="[]")
     # Nivel evolutivo de DAKI (1=Robótico, 2=Amistoso, 3=Compañero)
     daki_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False, server_default="1")
+    # Licencia de acceso — False hasta que el pago sea verificado
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
