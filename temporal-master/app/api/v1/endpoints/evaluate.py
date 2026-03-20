@@ -13,7 +13,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.access import require_paid
 from app.core.database import get_db
+from app.models.user import User
 from app.services.daki_intel import get_daki_message
 from app.services.evaluation_service import EvaluacionResult, evaluar_incursion
 from app.services.progression import resolve_level_status
@@ -79,6 +81,7 @@ def _resolve_daki_event(status: str, error_type: str | None) -> str:
 async def evaluate_code(
     payload: EvaluateRequest,
     db: AsyncSession = Depends(get_db),
+    _user: User | None = Depends(require_paid),
 ) -> EvaluateResponse:
     # ── Guardián del Nexo: bloquea intentos en niveles no accesibles ──────────
     lvl_status = await resolve_level_status(db, payload.user_id, payload.challenge_id)

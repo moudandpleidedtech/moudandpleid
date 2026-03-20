@@ -22,5 +22,10 @@ class Settings(BaseSettings):
     # Activar SSL para conexión a BD (requerido en Supabase / producción)
     DB_SSL: bool = False
 
+    # Webhook secret compartido con la pasarela de pagos.
+    # Generar con: python -c "import secrets; print(secrets.token_hex(32))"
+    # En Stripe: copiar desde Dashboard → Webhooks → Signing secret
+    PAYMENT_WEBHOOK_SECRET: str = "change-me-in-production"
+
 
 settings = Settings()
