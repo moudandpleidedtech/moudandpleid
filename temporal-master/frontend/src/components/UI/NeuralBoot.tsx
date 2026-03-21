@@ -127,8 +127,8 @@ export default function NeuralBoot({ username, dakiLevel = 2, onComplete }: Prop
   useEffect(() => {
     bootSoundRef.current = new Audio('/sounds/boot-sequence.mp3')
     dataSoundRef.current = new Audio('/sounds/data-stream.mp3')
-    bootSoundRef.current.volume = 0.4
-    dataSoundRef.current.volume = 0.25
+    bootSoundRef.current.volume = 0.2
+    dataSoundRef.current.volume = 0.125
   }, [])
 
   const stopAudio = () => {
