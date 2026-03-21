@@ -1,7 +1,7 @@
 """
 certificate_service.py — Forja de PDFs del Nexo
 
-Genera el certificado oficial GlitchAndGold en memoria (io.BytesIO).
+Genera el certificado oficial DAKI EdTech en memoria (io.BytesIO).
 Formato: A4 apaisado (landscape).  Sin tocar el disco del servidor.
 
 Paleta:
@@ -240,8 +240,10 @@ def build_certificate_pdf(username: str) -> tuple[bytes, str]:
     w, h = page_size
 
     c = Canvas(buf, pagesize=page_size)
-    c.setTitle(f"GG Certificado — {username}")
-    c.setAuthor("GlitchAndGold Network")
+    c.setTitle(f"DAKI EdTech — Certificado de Completado: {username}")
+    c.setAuthor("DAKI EdTech")
+    c.setSubject("Certificado oficial de completado del programa de Python — DAKI EdTech")
+    c.setCreator("DAKI EdTech Platform")
 
     cert_id  = _cert_id()
     date_str = _today()

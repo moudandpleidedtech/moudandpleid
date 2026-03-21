@@ -481,7 +481,7 @@ export default function AdminDashboard({ adminSecret }: AdminDashboardProps) {
             </span>
           </div>
           <p className="text-[9px] text-white/25 mt-1 tracking-wider">
-            GlitchAndGold · Telemetría de aprendizaje en tiempo real
+            DAKI EdTech · Telemetría de aprendizaje en tiempo real
           </p>
         </div>
         <button

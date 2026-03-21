@@ -178,7 +178,7 @@ function NetworkErrorFallback({ onRetry }: { onRetry: () => void }) {
           className="text-red-400 font-black text-base tracking-[0.2em] mb-2"
           style={{ textShadow: '0 0 16px #FF444480' }}
         >
-          CONEXIÓN CON ENIGMA PERDIDA
+          CONEXIÓN CON DAKI PERDIDA
         </div>
         <div className="text-red-400/45 text-xs tracking-[0.35em]">
           REINTENTANDO PROTOCOLO...
@@ -433,7 +433,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     [allChallenges]
   )
 
-  // Pista ENIGMA
+  // Pista DAKI
   const requestHint = async (currentOutput: ConsoleLine[]) => {
     if (loadingHint || !challenge) return
     setLoadingHint(true)
@@ -456,9 +456,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
           const next = [
             ...prev,
             { text: '', kind: 'enigma' as const },
-            { text: '[ENIGMA] Transmision entrante...', kind: 'enigma' as const },
+            { text: '[DAKI] Transmisión entrante...', kind: 'enigma' as const },
             ...data.hint.split('\n').map((line: string) => ({
-              text: `[ENIGMA] ${line}`, kind: 'enigma' as const,
+              text: `[DAKI] ${line}`, kind: 'enigma' as const,
             })),
           ]
           scrollConsole()
@@ -864,7 +864,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 transition={{ duration: 1.2, repeat: Infinity }}
                 className="text-[#FFB800] text-xs tracking-widest cursor-pointer"
                 onClick={() => requestHint(output)}
-                title="Solicitar pista de ENIGMA"
+                title="Solicitar pista de DAKI"
               >
                 ENIGMA?
               </motion.span>

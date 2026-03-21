@@ -4,8 +4,15 @@ import TopNav from '@/components/UI/TopNav'
 import NeuralInstabilityEvent from '@/components/UI/NeuralInstabilityEvent'
 
 export const metadata: Metadata = {
-  title: 'Moud & Pleind — Python Quest',
-  description: 'Plataforma de retos de programación con gamificación',
+  title: 'DAKI EdTech — Aprende Python jugando',
+  description: 'DAKI EdTech es la plataforma EdTech gamificada donde aprendes Python guiado por DAKI, tu instructora de IA táctica.',
+  openGraph: {
+    title: 'DAKI EdTech',
+    description: 'Aprende Python en 100 niveles con mecánicas de videojuego y la guía de DAKI.',
+    siteName: 'DAKI EdTech',
+    locale: 'es_AR',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

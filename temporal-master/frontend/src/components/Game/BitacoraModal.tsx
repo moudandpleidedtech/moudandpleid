@@ -345,7 +345,7 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
                         ARCHIVO DESBLOQUEADO // CONOCIMIENTO INTEGRADO
                       </span>
                       <span className="text-[7px] tracking-[0.4em] text-[#00FF41]/12">
-                        ENIGMA CORP
+                        DAKI EdTech
                       </span>
                     </div>
                   </motion.div>

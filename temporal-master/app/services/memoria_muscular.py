@@ -128,7 +128,7 @@ class InterceptResult:
 #
 # Cada concepto tiene al menos 2 plantillas distintas para variedad.
 # Las misiones son deliberadamente cortas (3-5 líneas de solución)
-# y temáticamente ambientadas en el universo GlitchAndGold.
+# y temáticamente ambientadas en el universo DAKI EdTech.
 
 _PLANTILLAS: dict[str, list[dict]] = {
 

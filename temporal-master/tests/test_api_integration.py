@@ -1,7 +1,7 @@
 """
 tests/test_api_integration.py
 ==============================
-Suite de Tests de Integración — GlitchAndGold API
+Suite de Tests de Integración — DAKI EdTech API
 
 Cubre el "viaje del Operador" completo a nivel de red:
 

@@ -60,7 +60,7 @@ async def require_paid(
                     "Tu enlace neuronal no ha sido financiado. "
                     "Adquiere una Licencia de Operador para acceder al Nexo."
                 ),
-                "action_url": "https://pay.glitchandgold.com",
+                "action_url": "https://pay.dakiedtech.com",
             },
         )
 

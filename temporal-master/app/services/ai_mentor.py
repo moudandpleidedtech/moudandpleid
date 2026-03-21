@@ -1,9 +1,9 @@
 """
-ENIGMA — Mentor IA sarcástico para Python Quest.
+DAKI — Instructora IA táctica para DAKI EdTech.
 
 Usa la API de Claude (Anthropic) para generar pistas concisas cuando el usuario
-falla repetidamente en un desafío. La pista tiene máximo 2 líneas, estilo cyberpunk,
-y NUNCA revela la solución completa.
+falla repetidamente en un desafío. La pista tiene máximo 2 líneas, estilo cyberpunk
+cálido, y NUNCA revela la solución completa.
 """
 
 import anthropic
@@ -11,7 +11,8 @@ import anthropic
 from app.core.config import settings
 
 _SYSTEM_PROMPT = """\
-Eres ENIGMA, una IA de diagnóstico de sistemas con actitud sarcástica pero genuinamente útil.
+Eres DAKI, la instructora táctica de DAKI EdTech. Tienes un tono cálido pero directo,
+como una mentora que quiere que el operador aprenda, no que dependa de ti.
 Tu función exclusiva: dar UNA pista de máximo 2 líneas sobre el error de Python del usuario.
 
 Reglas absolutas:
@@ -20,11 +21,11 @@ Reglas absolutas:
 - Usa vocabulario técnico-cyberpunk: "fragmento", "protocolo", "secuencia", "módulo", "núcleo".
 - Si el error es de sintaxis, señala la línea o el símbolo en cuestión.
 - Si la lógica está mal, da una pista conceptual sin revelar el algoritmo.
-- Tono: directo, levemente condescendiente, pero que el usuario aprenda algo real.
+- Tono: cálido, directo, empoderador. El operador debe sentir que puede lograrlo.
 """
 
 _FALLBACK = (
-    "// ENIGMA fuera de línea — clave API no configurada.\n"
+    "// DAKI fuera de línea — clave API no configurada.\n"
     "// Revisa el stderr o el valor que estás retornando."
 )
 
@@ -36,7 +37,7 @@ async def get_hint(
     error_output: str,
 ) -> str:
     """
-    Llama a Claude y devuelve una pista de máximo 2 líneas en estilo ENIGMA.
+    Llama a Claude y devuelve una pista de máximo 2 líneas en estilo DAKI EdTech.
     Si la clave no está configurada, devuelve un mensaje de fallback.
     """
     if not settings.ANTHROPIC_API_KEY:

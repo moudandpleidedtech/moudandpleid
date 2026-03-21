@@ -7,7 +7,7 @@ import { useUserStore } from '@/store/userStore'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 const BOOT_LINES = [
-  '> INICIANDO PROTOCOLO DE ACCESO ENIGMA v4.2.1...',
+  '> DAKI EdTech // PROTOCOLO DE ACCESO v1.0...',
   '> VERIFICANDO INTEGRIDAD DE NÚCLEOS...       [OK]',
   '> CARGANDO PROTOCOLOS DE SEGURIDAD...        [OK]',
   '> ESTABLECIENDO CANAL CIFRADO...             [OK]',
@@ -57,7 +57,7 @@ function UnpaidModal({ onClose }: { onClose: () => void }) {
 
         {/* CTA */}
         <a
-          href="https://pay.glitchandgold.com"
+          href="https://pay.dakiedtech.com"
           target="_blank"
           rel="noopener noreferrer"
           className="group block w-full py-3 text-center font-mono text-sm tracking-[0.25em] uppercase
@@ -128,7 +128,7 @@ function TermsCheckbox({
         >
           Política de Privacidad
         </a>
-        {' '}de GlitchAndGold.
+        {' '}de DAKI EdTech.
       </span>
     </label>
   )
@@ -261,7 +261,7 @@ export default function LoginPage() {
 
           {/* Header badge */}
           <div className="text-[#00FF41]/20 text-xs tracking-[0.45em] mb-10 uppercase">
-            GlitchAndGold // Canal Seguro // v4.2.1
+            DAKI EdTech // Canal Seguro // v4.2.1
           </div>
 
           {/* Boot lines */}
@@ -396,7 +396,7 @@ export default function LoginPage() {
             <div className="mt-12 text-[#00FF41]/15 text-xs tracking-[0.2em]">
               NUEVO OPERADOR?{' '}
               <a
-                href="https://pay.glitchandgold.com"
+                href="https://pay.dakiedtech.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#00FF41]/30 hover:text-[#00FF41]/60 underline underline-offset-2 transition-colors"

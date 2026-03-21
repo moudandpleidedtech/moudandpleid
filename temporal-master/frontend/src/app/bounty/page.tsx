@@ -91,7 +91,7 @@ type Phase = 'configure' | 'generating' | 'preview'
 
 function GeneratingScreen({ concept }: { concept: string }) {
   const lines = [
-    `> CONECTANDO CON ENIGMA CORE…`,
+    `> CONECTANDO CON DAKI CORE…`,
     `> LEYENDO PERFIL DE MAESTRÍA…`,
     `> ANALIZANDO CONCEPTO: ${concept.toUpperCase()}`,
     `> DDA CALCULANDO DIFICULTAD ÓPTIMA…`,

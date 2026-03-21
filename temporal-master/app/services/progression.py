@@ -1,7 +1,7 @@
 """
 progression.py — Guardián del Nexo
 
-Lógica canónica de desbloqueo de niveles para GlitchAndGold.
+Lógica canónica de desbloqueo de niveles para DAKI EdTech.
 
 Reglas:
   1. El primer nivel del Sector 1 siempre está desbloqueado.

@@ -1,5 +1,5 @@
 """
-Endpoints de Sectores — GlitchAndGold 100-level architecture.
+Endpoints de Sectores — DAKI EdTech 100-level architecture.
 
 GET /api/v1/levels/sectors              → lista de sectores disponibles con progreso
 GET /api/v1/levels/sector/{sector_id}   → niveles de un sector específico con estado

@@ -1,8 +1,8 @@
-# Términos y Condiciones de Uso — GlitchAndGold
+# Términos y Condiciones de Uso — DAKI EdTech
 
 **Titular:** Adrian Eduardo Ardiles Peralta
-**Marca comercial:** GlitchAndGold
-**Contacto:** legal@glitchandgold.com
+**Marca comercial:** DAKI EdTech
+**Contacto:** legal@dakiedtech.com
 **País:** Argentina
 **Última actualización:** 20 de marzo de 2026
 
@@ -19,31 +19,31 @@ Al registrarte, completar el proceso de pago o pulsar **[ INGRESAR AL NEXO ]**, 
 | Campo | Valor |
 |---|---|
 | Nombre | Adrian Eduardo Ardiles Peralta |
-| Marca comercial | GlitchAndGold |
-| Contacto | legal@glitchandgold.com |
+| Marca comercial | DAKI EdTech |
+| Contacto | legal@dakiedtech.com |
 | País de constitución | Argentina |
 
 ---
 
 ## 2. Descripción del Servicio
 
-GlitchAndGold es una plataforma de aprendizaje de programación en Python con mecánicas de videojuego (EdTech gamificada). El servicio incluye:
+DAKI EdTech es una plataforma de aprendizaje de programación en Python con mecánicas de videojuego (EdTech gamificada). El servicio incluye:
 
 - 100 niveles de desafíos de código estructurados en 10 sectores temáticos.
 - DAKI, una instructora de IA generativa que proporciona retroalimentación narrativa.
 - Sistema de progresión, XP, certificado de completado y tabla de clasificación.
 - Acceso vía navegador web, sin instalación de software adicional.
 
-GlitchAndGold es un servicio de **aprendizaje autodidacta**. No es un centro de formación reglada ni otorga títulos oficiales reconocidos por ningún organismo gubernamental.
+DAKI EdTech es un servicio de **aprendizaje autodidacta**. No es un centro de formación reglada ni otorga títulos oficiales reconocidos por ningún organismo gubernamental.
 
 ---
 
 ## 3. Propiedad Intelectual
 
-Todos los contenidos de GlitchAndGold son propiedad exclusiva del Titular o de sus licenciantes, protegidos por la legislación de propiedad intelectual aplicable. Esto incluye:
+Todos los contenidos de DAKI EdTech son propiedad exclusiva del Titular o de sus licenciantes, protegidos por la legislación de propiedad intelectual aplicable. Esto incluye:
 
 - El código fuente, la arquitectura y el diseño de la plataforma.
-- El universo narrativo, los personajes, el lore y el nombre «GlitchAndGold».
+- El universo narrativo, los personajes, el lore y el nombre «DAKI EdTech».
 - El motor de voz, la personalidad y el nombre «DAKI» (instructora de IA).
 - Los desafíos de código, sus enunciados, soluciones y textos de teoría.
 - Los assets gráficos, sonoros y tipográficos.
@@ -68,13 +68,13 @@ El acceso completo requiere la adquisición única de una Licencia de Operador (
 
 ### 5.2 Garantía de 7 Días
 
-Si dentro de los **7 días naturales** siguientes a tu compra el servicio no se ajusta a lo descrito, puedes solicitar el reembolso íntegro escribiendo a **legal@glitchandgold.com** con el asunto «REEMBOLSO» e indicando el email de tu cuenta.
+Si dentro de los **7 días naturales** siguientes a tu compra el servicio no se ajusta a lo descrito, puedes solicitar el reembolso íntegro escribiendo a **legal@dakiedtech.com** con el asunto «REEMBOLSO» e indicando el email de tu cuenta.
 
 Transcurrido ese plazo, la venta es definitiva, salvo obligación legal aplicable en tu jurisdicción.
 
 ### 5.3 Procesamiento del Pago
 
-Los pagos se gestionan a través de pasarelas de terceros (Stripe, PayPal u otras). GlitchAndGold **no almacena datos de tarjeta bancaria**.
+Los pagos se gestionan a través de pasarelas de terceros (Stripe, PayPal u otras). DAKI EdTech **no almacena datos de tarjeta bancaria**.
 
 ---
 
@@ -89,7 +89,7 @@ Los pagos se gestionan a través de pasarelas de terceros (Stripe, PayPal u otra
 
 ## 7. Naturaleza del Servicio — Descargo de Responsabilidad Educativa
 
-> GlitchAndGold **no garantiza** ningún resultado específico derivado del uso de la plataforma, incluyendo la obtención de empleo, la aprobación de certificaciones oficiales de terceros o el desarrollo de habilidades a un nivel determinado. Los resultados dependen del esfuerzo, la dedicación y las circunstancias individuales de cada usuario.
+> DAKI EdTech **no garantiza** ningún resultado específico derivado del uso de la plataforma, incluyendo la obtención de empleo, la aprobación de certificaciones oficiales de terceros o el desarrollo de habilidades a un nivel determinado. Los resultados dependen del esfuerzo, la dedicación y las circunstancias individuales de cada usuario.
 
 El Titular no asume responsabilidad por el uso que el usuario haga de los conocimientos de Python adquiridos, incluyendo su aplicación en entornos profesionales o proyectos propios.
 
@@ -97,7 +97,7 @@ El Titular no asume responsabilidad por el uso que el usuario haga de los conoci
 
 ## 8. Limitación de Responsabilidad
 
-En la máxima medida permitida por la legislación aplicable, GlitchAndGold y su Titular no serán responsables de:
+En la máxima medida permitida por la legislación aplicable, DAKI EdTech y su Titular no serán responsables de:
 
 - Daños indirectos, incidentales o consecuentes derivados del uso o la imposibilidad de uso del servicio.
 - Interrupciones del servicio por mantenimiento, fallos técnicos o causas de fuerza mayor.
@@ -136,8 +136,8 @@ Estos Términos se rigen por la legislación de **Argentina**. Para cualquier co
 ## 12. Contacto
 
 Para consultas legales, reembolsos o ejercicio de derechos sobre tus datos:
-**legal@glitchandgold.com**
+**legal@dakiedtech.com**
 
 ---
 
-*GlitchAndGold © 2026 · Adrian Eduardo Ardiles Peralta · Todos los derechos reservados.*
+*DAKI EdTech © 2026 · Adrian Eduardo Ardiles Peralta · Todos los derechos reservados.*

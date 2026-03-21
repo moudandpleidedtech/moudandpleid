@@ -778,8 +778,8 @@ public/assets/backgrounds/
 
 ```bash
 # 1. Clonar
-git clone https://github.com/moudandpleidedtech/moudandpleid.git
-cd moudandpleid/temporal-master
+git clone https://github.com/dakiedtechedtech/dakiedtech.git
+cd dakiedtech/temporal-master
 
 # 2. Variables de entorno
 cp .env.example .env

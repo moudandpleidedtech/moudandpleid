@@ -1,5 +1,5 @@
 """
-seed_master.py — Orquestador de Inyección GlitchAndGold
+seed_master.py — Orquestador de Inyección DAKI EdTech
 ========================================================
 
 Carga TODOS los niveles de los 10 sectores actuales (hasta level_order 100)
@@ -53,7 +53,7 @@ def _safe_import_catalog(module: str, attr: str) -> list[dict]:
 
 def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
     """
-    Retorna la lista maestra de todos los challenges de GlitchAndGold.
+    Retorna la lista maestra de todos los challenges de DAKI EdTech.
 
     Cada dict tiene exactamente los campos que acepta el modelo Challenge
     (excepto `id`, que se genera en DB o se preserva en el upsert).
@@ -233,7 +233,7 @@ async def upsert_challenges(
 
 async def seed(filter_sector: int | None = None, dry_run: bool = False) -> None:
     print("\n" + "═" * 65)
-    print("  ⚡ GlitchAndGold — Orquestador de Inyección (seed_master)")
+    print("  ⚡ DAKI EdTech — Orquestador de Inyección (seed_master)")
     print("═" * 65)
 
     if dry_run:
@@ -301,7 +301,7 @@ async def seed(filter_sector: int | None = None, dry_run: bool = False) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="GlitchAndGold — Master Seed (upsert seguro de todos los niveles)"
+        description="DAKI EdTech — Master Seed (upsert seguro de todos los niveles)"
     )
     parser.add_argument(
         "--dry-run",

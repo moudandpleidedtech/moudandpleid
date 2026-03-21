@@ -1,7 +1,7 @@
 """
 tests/test_evaluator.py
 =======================
-Suite de Unit Tests del Sandbox de GlitchAndGold.
+Suite de Unit Tests del Sandbox de DAKI EdTech.
 
 Cubre las tres capas testables de forma directa (sin DB):
 

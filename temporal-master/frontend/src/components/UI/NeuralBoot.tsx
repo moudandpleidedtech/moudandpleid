@@ -230,7 +230,7 @@ export default function NeuralBoot({ username, dakiLevel = 2, onComplete }: Prop
               {/* Header */}
               <div className="text-center space-y-1">
                 <p className="text-[#00FF41]/20 text-[9px] tracking-[0.7em] uppercase">
-                  ENIGMA // PROTOCOLO NEURONAL // v4.2.1
+                  DAKI EdTech // PROTOCOLO NEURONAL // v1.0
                 </p>
                 {username && (
                   <p className="text-[#00FF41]/35 text-[10px] tracking-[0.4em] uppercase">

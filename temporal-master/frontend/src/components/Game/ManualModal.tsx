@@ -12,7 +12,7 @@ function CodeBlock({ code }: { code: string }) {
         <span className="w-2 h-2 rounded-full bg-red-500/50" />
         <span className="w-2 h-2 rounded-full bg-yellow-500/50" />
         <span className="w-2 h-2 rounded-full bg-green-500/50" />
-        <span className="ml-2 text-[8px] tracking-[0.4em] text-cyan-500/30 font-mono">TERMINAL // ENIGMA</span>
+        <span className="ml-2 text-[8px] tracking-[0.4em] text-cyan-500/30 font-mono">TERMINAL // DAKI EdTech</span>
       </div>
       <pre className="px-4 py-3 text-[12px] font-mono text-cyan-300/85 leading-relaxed overflow-x-auto whitespace-pre">
         {code}
@@ -137,7 +137,7 @@ export default function ManualModal({ isOpen, onClose }: ManualModalProps) {
               </h2>
               <div className="flex items-center justify-between">
                 <p className="text-[9px] tracking-[0.4em] text-[#00FF41]/30">
-                  MANUAL TÁCTICO // OPERADOR AUTORIZADO // ENIGMA CORP
+                  MANUAL TÁCTICO // OPERADOR AUTORIZADO // DAKI EdTech
                 </p>
                 <button
                   onClick={onClose}
@@ -210,7 +210,7 @@ export default function ManualModal({ isOpen, onClose }: ManualModalProps) {
               {/* Footer */}
               <div className="pt-2 pb-1 border-t border-[#00FF41]/8 text-center">
                 <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15">
-                  FIN DEL ARCHIVO // DESTRUIR DESPUÉS DE MEMORIZAR // ENIGMA CORP
+                  FIN DEL ARCHIVO // DESTRUIR DESPUÉS DE MEMORIZAR // DAKI EdTech
                 </p>
               </div>
             </div>

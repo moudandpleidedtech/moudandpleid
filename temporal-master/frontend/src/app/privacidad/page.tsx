@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Política de Privacidad — GlitchAndGold',
-  description: 'Política de Privacidad y tratamiento de datos de la plataforma GlitchAndGold.',
+  title: 'Política de Privacidad — DAKI EdTech',
+  description: 'Política de Privacidad y tratamiento de datos de la plataforma DAKI EdTech.',
 }
 
 export default function PrivacidadPage() {
@@ -31,7 +31,7 @@ export default function PrivacidadPage() {
             Política de Privacidad
           </h1>
           <p className="text-sm text-[#00FF41]/50 leading-6">
-            Plataforma GlitchAndGold — Propiedad de{' '}
+            Plataforma DAKI EdTech — Propiedad de{' '}
             <span className="text-[#00FF41]/70">Adrian Eduardo Ardiles Peralta</span>
             <br />
             Última actualización: 20 de marzo de 2026
@@ -42,7 +42,7 @@ export default function PrivacidadPage() {
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-[#00FF41]/10 text-xs text-[#00FF41]/25 leading-6">
-          <p>GlitchAndGold © 2026 · Todos los derechos reservados.</p>
+          <p>DAKI EdTech © 2026 · Todos los derechos reservados.</p>
           <p className="mt-1">
             <Link href="/terminos" className="hover:text-[#00FF41]/50 underline transition-colors">
               Términos y Condiciones
@@ -66,8 +66,8 @@ function PrivacyDoc() {
       <Section title="1. Responsable del Tratamiento">
         <Table rows={[
           ['Responsable', 'Adrian Eduardo Ardiles Peralta'],
-          ['Marca comercial', 'GlitchAndGold'],
-          ['Email de contacto', 'legal@glitchandgold.com'],
+          ['Marca comercial', 'DAKI EdTech'],
+          ['Email de contacto', 'legal@dakiedtech.com'],
           ['País', 'Argentina'],
         ]} />
       </Section>
@@ -88,7 +88,7 @@ function PrivacyDoc() {
             items={[
               'ID de transacción de la pasarela de pago (ej. Stripe charge_id).',
               'Estado de pago (pagado / no pagado).',
-              'GlitchAndGold NO almacena datos de tarjeta bancaria. El procesamiento de pago ocurre íntegramente en la pasarela de terceros.',
+              'DAKI EdTech NO almacena datos de tarjeta bancaria. El procesamiento de pago ocurre íntegramente en la pasarela de terceros.',
             ]}
           />
           <DataCategory
@@ -133,14 +133,14 @@ function PrivacyDoc() {
 
       <Section title="5. Inteligencia Artificial — DAKI">
         <Callout type="info">
-          DAKI es un sistema de IA generativa integrado en GlitchAndGold. Las interacciones
+          DAKI es un sistema de IA generativa integrado en DAKI EdTech. Las interacciones
           con DAKI (mensajes de retroalimentación, voz sintética) se generan en tiempo real.
           La síntesis de voz utiliza la Web Speech API del navegador, procesándose localmente
           en tu dispositivo sin enviar audio a servidores externos.
         </Callout>
         <p className="mt-4 text-[#00FF41]/50">
           Los intentos de código que envías para evaluación son procesados en el servidor
-          de GlitchAndGold y pueden almacenarse de forma anonimizada para mejorar el motor
+          de DAKI EdTech y pueden almacenarse de forma anonimizada para mejorar el motor
           de evaluación. No se asocian a tu identidad personal en los registros de telemetría.
         </p>
       </Section>
@@ -157,7 +157,7 @@ function PrivacyDoc() {
 
       <Section title="7. Cesión de Datos a Terceros">
         <p>
-          GlitchAndGold no vende ni cede tus datos personales a terceros con fines
+          DAKI EdTech no vende ni cede tus datos personales a terceros con fines
           comerciales. Compartimos datos únicamente con los siguientes proveedores de
           servicios, bajo acuerdo de confidencialidad:
         </p>
@@ -169,7 +169,7 @@ function PrivacyDoc() {
         ]} />
         <p className="mt-4 text-[#00FF41]/50">
           Todos los proveedores están sujetos a sus propias políticas de privacidad.
-          GlitchAndGold puede estar legalmente obligado a facilitar datos a autoridades
+          DAKI EdTech puede estar legalmente obligado a facilitar datos a autoridades
           competentes si así lo requiere la ley aplicable.
         </p>
       </Section>
@@ -187,7 +187,7 @@ function PrivacyDoc() {
         </ul>
         <p className="mt-4 text-[#00FF41]/50">
           Para ejercer cualquiera de estos derechos, escríbenos a{' '}
-          <span className="text-[#00FF41]/70">legal@glitchandgold.com</span> con el
+          <span className="text-[#00FF41]/70">legal@dakiedtech.com</span> con el
           asunto «DERECHOS ARCO» e indicando tu email de cuenta. Atendemos en un plazo
           máximo de 30 días.
         </p>
@@ -205,7 +205,7 @@ function PrivacyDoc() {
 
       <Section title="10. Cookies">
         <p className="text-[#00FF41]/60">
-          GlitchAndGold utiliza exclusivamente cookies de sesión técnicas necesarias para
+          DAKI EdTech utiliza exclusivamente cookies de sesión técnicas necesarias para
           el funcionamiento del servicio (autenticación). No utilizamos cookies de
           analítica de terceros (Google Analytics) ni cookies publicitarias.
           Puedes configurar tu navegador para bloquear o eliminar cookies, aunque esto
@@ -224,7 +224,7 @@ function PrivacyDoc() {
       <Section title="12. Contacto y Reclamaciones">
         <p className="text-[#00FF41]/60">
           Para cualquier consulta sobre privacidad:{' '}
-          <span className="text-[#00FF41]/80">legal@glitchandgold.com</span>
+          <span className="text-[#00FF41]/80">legal@dakiedtech.com</span>
         </p>
         <p className="mt-3 text-[#00FF41]/40">
           Si consideras que el tratamiento de tus datos no se ajusta a la normativa,

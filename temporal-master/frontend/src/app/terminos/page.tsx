@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Términos y Condiciones — GlitchAndGold',
-  description: 'Términos y Condiciones de uso de la plataforma GlitchAndGold.',
+  title: 'Términos y Condiciones — DAKI EdTech',
+  description: 'Términos y Condiciones de uso de la plataforma DAKI EdTech.',
 }
 
 export default function TerminosPage() {
@@ -31,7 +31,7 @@ export default function TerminosPage() {
             Términos y Condiciones de Uso
           </h1>
           <p className="text-sm text-[#00FF41]/50 leading-6">
-            Plataforma GlitchAndGold — Propiedad de{' '}
+            Plataforma DAKI EdTech — Propiedad de{' '}
             <span className="text-[#00FF41]/70">Adrian Eduardo Ardiles Peralta</span>
             <br />
             Última actualización: 20 de marzo de 2026
@@ -42,7 +42,7 @@ export default function TerminosPage() {
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-[#00FF41]/10 text-xs text-[#00FF41]/25 leading-6">
-          <p>GlitchAndGold © 2026 · Todos los derechos reservados.</p>
+          <p>DAKI EdTech © 2026 · Todos los derechos reservados.</p>
           <p className="mt-1">
             <Link href="/privacidad" className="hover:text-[#00FF41]/50 underline transition-colors">
               Política de Privacidad
@@ -67,7 +67,7 @@ function LegalDoc() {
 
       <Section title="0. Aviso Importante — Leer antes de continuar">
         <p>
-          Al registrarte en GlitchAndGold, completar el proceso de pago o pulsar el botón{' '}
+          Al registrarte en DAKI EdTech, completar el proceso de pago o pulsar el botón{' '}
           <strong className="text-[#00FF41]/90">[ INGRESAR AL NEXO ]</strong>, manifiestas
           que has leído, comprendido y aceptado en su totalidad los presentes Términos y
           Condiciones, así como nuestra{' '}
@@ -83,15 +83,15 @@ function LegalDoc() {
       <Section title="1. Identificación del Titular">
         <ul className="space-y-1 text-[#00FF41]/60">
           <li><span className="text-[#00FF41]/80">Nombre:</span> Adrian Eduardo Ardiles Peralta</li>
-          <li><span className="text-[#00FF41]/80">Marca comercial:</span> GlitchAndGold</li>
-          <li><span className="text-[#00FF41]/80">Contacto:</span> legal@glitchandgold.com</li>
+          <li><span className="text-[#00FF41]/80">Marca comercial:</span> DAKI EdTech</li>
+          <li><span className="text-[#00FF41]/80">Contacto:</span> legal@dakiedtech.com</li>
           <li><span className="text-[#00FF41]/80">País de constitución:</span> Argentina</li>
         </ul>
       </Section>
 
       <Section title="2. Descripción del Servicio">
         <p>
-          GlitchAndGold es una plataforma de aprendizaje de programación en Python con
+          DAKI EdTech es una plataforma de aprendizaje de programación en Python con
           mecánicas de videojuego (EdTech gamificada). El servicio incluye:
         </p>
         <ul className="mt-3 space-y-1.5 text-[#00FF41]/60 list-none">
@@ -101,7 +101,7 @@ function LegalDoc() {
           <Li>Acceso vía navegador web, sin instalación de software adicional.</Li>
         </ul>
         <p className="mt-4 text-[#00FF41]/50">
-          GlitchAndGold es un servicio de <strong className="text-[#00FF41]/70">aprendizaje autodidacta</strong>.
+          DAKI EdTech es un servicio de <strong className="text-[#00FF41]/70">aprendizaje autodidacta</strong>.
           No es un centro de formación reglada ni otorga títulos oficiales reconocidos por
           ningún organismo gubernamental.
         </p>
@@ -109,13 +109,13 @@ function LegalDoc() {
 
       <Section title="3. Propiedad Intelectual">
         <p>
-          Todos los contenidos de GlitchAndGold son propiedad exclusiva del Titular o de
+          Todos los contenidos de DAKI EdTech son propiedad exclusiva del Titular o de
           sus licenciantes, y están protegidos por la legislación de propiedad intelectual
           aplicable. Esto incluye, de forma enunciativa y no limitativa:
         </p>
         <ul className="mt-3 space-y-1.5 text-[#00FF41]/60">
           <Li>El código fuente, la arquitectura y el diseño de la plataforma.</Li>
-          <Li>El universo narrativo, los personajes, el lore y el nombre «GlitchAndGold».</Li>
+          <Li>El universo narrativo, los personajes, el lore y el nombre «DAKI EdTech».</Li>
           <Li>El motor de voz, la personalidad y el nombre «DAKI» (instructora de IA).</Li>
           <Li>Los desafíos de código, sus enunciados, soluciones y textos de teoría.</Li>
           <Li>Los assets gráficos, sonoros y tipográficos.</Li>
@@ -144,7 +144,7 @@ function LegalDoc() {
       <Section title="5. Política de Pagos y Reembolsos">
         <SubSection title="5.1 Precio y Acceso">
           <p>
-            El acceso completo a GlitchAndGold requiere la adquisición única de una
+            El acceso completo a DAKI EdTech requiere la adquisición única de una
             Licencia de Operador (pago único, sin suscripción recurrente).
             El precio vigente se muestra en la página de compra en el momento de la transacción.
           </p>
@@ -155,7 +155,7 @@ function LegalDoc() {
             <strong className="text-[#00FF41]/90">7 días naturales</strong> siguientes a
             tu compra consideras que el servicio no se ajusta a lo descrito, puedes
             solicitar el reembolso íntegro del importe abonado escribiendo a{' '}
-            <span className="text-[#00FF41]/80">legal@glitchandgold.com</span> con el
+            <span className="text-[#00FF41]/80">legal@dakiedtech.com</span> con el
             asunto «REEMBOLSO» e indicando el email de tu cuenta.
           </p>
           <p className="mt-2 text-[#00FF41]/50">
@@ -166,7 +166,7 @@ function LegalDoc() {
         <SubSection title="5.3 Procesamiento del Pago">
           <p className="text-[#00FF41]/50">
             Los pagos se gestionan a través de pasarelas de pago de terceros (Stripe, PayPal
-            u otras). GlitchAndGold no almacena datos de tarjeta bancaria. Consulta los
+            u otras). DAKI EdTech no almacena datos de tarjeta bancaria. Consulta los
             términos de la pasarela utilizada para información sobre seguridad del pago.
           </p>
         </SubSection>
@@ -174,7 +174,7 @@ function LegalDoc() {
 
       <Section title="6. Uso de Inteligencia Artificial — DAKI">
         <p>
-          GlitchAndGold integra un sistema de IA generativa denominado{' '}
+          DAKI EdTech integra un sistema de IA generativa denominado{' '}
           <strong className="text-[#00FF41]/90">DAKI</strong> que actúa como instructora
           táctica de aprendizaje. Al usar la plataforma, aceptas las siguientes condiciones
           sobre el uso de IA:
@@ -196,7 +196,7 @@ function LegalDoc() {
 
       <Section title="7. Naturaleza del Servicio — Descargo de Responsabilidad Educativa">
         <Callout type="info">
-          GlitchAndGold es una herramienta de aprendizaje. No garantizamos, ni expresa ni
+          DAKI EdTech es una herramienta de aprendizaje. No garantizamos, ni expresa ni
           implícitamente, ningún resultado específico derivado del uso de la plataforma,
           incluyendo (pero no limitándose a) la obtención de empleo, la aprobación de
           certificaciones oficiales de terceros o el desarrollo de habilidades a un nivel
@@ -212,7 +212,7 @@ function LegalDoc() {
 
       <Section title="8. Limitación de Responsabilidad">
         <p>
-          En la máxima medida permitida por la legislación aplicable, GlitchAndGold y su
+          En la máxima medida permitida por la legislación aplicable, DAKI EdTech y su
           Titular no serán responsables de:
         </p>
         <ul className="mt-3 space-y-1.5 text-[#00FF41]/60">
@@ -271,7 +271,7 @@ function LegalDoc() {
         <p className="text-[#00FF41]/50">
           Para cualquier consulta legal, solicitud de reembolso o ejercicio de derechos
           sobre tus datos, escríbenos a:{' '}
-          <span className="text-[#00FF41]/80">legal@glitchandgold.com</span>
+          <span className="text-[#00FF41]/80">legal@dakiedtech.com</span>
         </p>
       </Section>
 

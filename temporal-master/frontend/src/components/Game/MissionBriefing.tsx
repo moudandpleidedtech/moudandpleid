@@ -271,7 +271,7 @@ export default function MissionBriefing({ title, theoryContent, onInitialize }: 
                 </span>
               </div>
               <span className="text-[10px] tracking-[0.3em] text-[#00FF41]/20">
-                ENIGMA // SALA DE BRIEFING
+                DAKI EdTech // SALA DE BRIEFING
               </span>
             </div>
             <h1

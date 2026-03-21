@@ -5,7 +5,7 @@ from typing import List
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    APP_NAME: str = "Moud & Pleind Python Quest"
+    APP_NAME: str = "DAKI EdTech"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
     SECRET_KEY: str = "change-me-in-production"

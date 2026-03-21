@@ -1,7 +1,7 @@
 """
 GET /api/v1/certificate/download
 
-Genera y devuelve en streaming el certificado PDF oficial GlitchAndGold
+Genera y devuelve en streaming el certificado PDF oficial DAKI EdTech
 para el Operador que completó el Nivel 100.
 
 Seguridad:
@@ -96,7 +96,7 @@ async def _verify_level100_completion(
     "/download",
     summary="Descarga el certificado PDF del Operador de Nivel 100",
     description=(
-        "Genera el certificado oficial GlitchAndGold en formato PDF y lo devuelve "
+        "Genera el certificado oficial DAKI EdTech en formato PDF y lo devuelve "
         "como descarga directa.  Requiere que el Operador haya completado el Nivel 100. "
         "El archivo se genera en memoria — nada se escribe en el disco del servidor."
     ),
