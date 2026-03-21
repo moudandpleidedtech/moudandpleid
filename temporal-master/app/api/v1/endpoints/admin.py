@@ -8,6 +8,7 @@ Endpoints:
   GET  /api/v1/admin/overview       — KPIs globales (usuarios, ingresos, retención)
   GET  /api/v1/admin/drop-off       — Usuarios estancados por nivel
   GET  /api/v1/admin/daki-stats     — Estadísticas de uso de DAKI por nivel
+  GET  /api/v1/admin/recent-users   — Últimos 10 usuarios registrados
   GET  /api/v1/admin/dashboard      — Telemetría completa por nivel (legacy, mantenida)
 """
 
@@ -365,6 +366,56 @@ async def get_daki_stats(
         most_dependent_level=most_dependent.title if most_dependent else None,
         global_avg_hints=global_avg,
         levels=stats,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 4 — Recent Users: últimos 10 usuarios registrados
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class RecentUserItem(BaseModel):
+    id: str
+    username: str
+    email: str
+    current_level: int
+    total_xp: int
+    is_paid: bool
+    league_tier: str
+    created_at: str
+
+
+class RecentUsersResponse(BaseModel):
+    users: list[RecentUserItem]
+
+
+@router.get(
+    "/recent-users",
+    response_model=RecentUsersResponse,
+    summary="Últimos 10 usuarios registrados",
+    dependencies=[Depends(require_admin)],
+)
+async def get_recent_users(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> RecentUsersResponse:
+    result = await db.execute(
+        select(User).order_by(User.created_at.desc()).limit(10)
+    )
+    users = result.scalars().all()
+    return RecentUsersResponse(
+        users=[
+            RecentUserItem(
+                id=str(u.id),
+                username=u.username,
+                email=u.email,
+                current_level=u.current_level,
+                total_xp=u.total_xp,
+                is_paid=u.is_paid,
+                league_tier=u.league_tier,
+                created_at=u.created_at.isoformat(),
+            )
+            for u in users
+        ]
     )
 
 
