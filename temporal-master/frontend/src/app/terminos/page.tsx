@@ -32,7 +32,7 @@ export default function TerminosPage() {
           </h1>
           <p className="text-sm text-[#00FF41]/50 leading-6">
             Plataforma GlitchAndGold — Propiedad de{' '}
-            <span className="text-[#00FF41]/70">[NOMBRE_REAL_DEL_TITULAR]</span>
+            <span className="text-[#00FF41]/70">Adrian Eduardo Ardiles Peralta</span>
             <br />
             Última actualización: 20 de marzo de 2026
           </p>
@@ -82,10 +82,10 @@ function LegalDoc() {
 
       <Section title="1. Identificación del Titular">
         <ul className="space-y-1 text-[#00FF41]/60">
-          <li><span className="text-[#00FF41]/80">Nombre:</span> [NOMBRE_REAL_DEL_TITULAR]</li>
+          <li><span className="text-[#00FF41]/80">Nombre:</span> Adrian Eduardo Ardiles Peralta</li>
           <li><span className="text-[#00FF41]/80">Marca comercial:</span> GlitchAndGold</li>
           <li><span className="text-[#00FF41]/80">Contacto:</span> legal@glitchandgold.com</li>
-          <li><span className="text-[#00FF41]/80">País de constitución:</span> [PAÍS]</li>
+          <li><span className="text-[#00FF41]/80">País de constitución:</span> Argentina</li>
         </ul>
       </Section>
 
@@ -259,10 +259,10 @@ function LegalDoc() {
       <Section title="11. Ley Aplicable y Jurisdicción">
         <p className="text-[#00FF41]/50">
           Estos Términos se rigen por la legislación de{' '}
-          <span className="text-[#00FF41]/70">[PAÍS/ESTADO]</span>. Para cualquier
+          <span className="text-[#00FF41]/70">Argentina</span>. Para cualquier
           controversia derivada del presente contrato, las partes se someten a los
           juzgados y tribunales de{' '}
-          <span className="text-[#00FF41]/70">[CIUDAD]</span>, con renuncia expresa a
+          <span className="text-[#00FF41]/70">Córdoba</span>, con renuncia expresa a
           cualquier otro fuero que pudiera corresponderles.
         </p>
       </Section>

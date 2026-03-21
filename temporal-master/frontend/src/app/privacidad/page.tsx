@@ -32,7 +32,7 @@ export default function PrivacidadPage() {
           </h1>
           <p className="text-sm text-[#00FF41]/50 leading-6">
             Plataforma GlitchAndGold — Propiedad de{' '}
-            <span className="text-[#00FF41]/70">[NOMBRE_REAL_DEL_TITULAR]</span>
+            <span className="text-[#00FF41]/70">Adrian Eduardo Ardiles Peralta</span>
             <br />
             Última actualización: 20 de marzo de 2026
           </p>
@@ -65,10 +65,10 @@ function PrivacyDoc() {
 
       <Section title="1. Responsable del Tratamiento">
         <Table rows={[
-          ['Responsable', '[NOMBRE_REAL_DEL_TITULAR]'],
+          ['Responsable', 'Adrian Eduardo Ardiles Peralta'],
           ['Marca comercial', 'GlitchAndGold'],
           ['Email de contacto', 'legal@glitchandgold.com'],
-          ['País', '[PAÍS]'],
+          ['País', 'Argentina'],
         ]} />
       </Section>
 
