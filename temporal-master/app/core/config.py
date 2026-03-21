@@ -33,5 +33,12 @@ class Settings(BaseSettings):
     # TTL del JWT de admin en minutos (8 horas por defecto)
     ADMIN_TOKEN_EXPIRE_MINUTES: int = 480
 
+    # ── Alertas CEO (Prompt 48) ───────────────────────────────────────────────
+    # Discord: crea un webhook en tu servidor → Ajustes del canal → Integraciones
+    ALERT_DISCORD_WEBHOOK: str = ""
+    # Telegram: crea un bot con @BotFather, obtén el chat_id con @userinfobot
+    ALERT_TELEGRAM_BOT_TOKEN: str = ""
+    ALERT_TELEGRAM_CHAT_ID: str = ""
+
 
 settings = Settings()

@@ -24,6 +24,7 @@ Compatibilidad de pasarelas (campo email en payload):
     Genérico: email  (campo directo en el JSON)
 """
 
+import asyncio
 import hashlib
 import hmac
 import uuid
@@ -37,6 +38,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
+from app.services.alerts import fire_sale_alert
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -183,6 +185,9 @@ async def payment_webhook(
 
     user = await _activate_user(db, email, payment_id)
 
+    # Alerta CEO — fire-and-forget, no bloquea el response
+    asyncio.create_task(fire_sale_alert(email))
+
     return {
         "received":   True,
         "processed":  True,
@@ -229,6 +234,9 @@ async def manual_verify(
         )
 
     user = await _activate_user(db, payload.email, payload.payment_id)
+
+    # Alerta CEO — fire-and-forget, no bloquea el response
+    asyncio.create_task(fire_sale_alert(payload.email))
 
     return {
         "activated": True,

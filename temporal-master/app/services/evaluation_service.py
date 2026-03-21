@@ -57,6 +57,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.challenge import Challenge
+from app.services.alerts import fire_security_alert, is_injection_attempt
 
 # ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -509,10 +510,20 @@ async def evaluar_incursion(
     # ── Layer 2: AST Guard ────────────────────────────────────────────────────
     sec = _ast_guard(codigo_usuario)
     if sec:
+        # Alerta CEO solo si parece un intento real de escape (no un simple import)
+        detail = sec["error_detail"]
+        if is_injection_attempt(detail):
+            asyncio.create_task(
+                fire_security_alert(
+                    challenge_id=str(challenge_id),
+                    detail=detail,
+                    snippet=codigo_usuario[:300],
+                )
+            )
         return EvaluacionResult(
             status="error",
             error=sec["error_type"],
-            error_detail=sec["error_detail"],
+            error_detail=detail,
         )
 
     # ── Carga el challenge ────────────────────────────────────────────────────
