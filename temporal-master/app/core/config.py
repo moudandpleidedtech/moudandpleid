@@ -27,5 +27,11 @@ class Settings(BaseSettings):
     # En Stripe: copiar desde Dashboard → Webhooks → Signing secret
     PAYMENT_WEBHOOK_SECRET: str = "change-me-in-production"
 
+    # Precio de la Licencia de Operador en USD (para proyección de ingresos)
+    LICENSE_PRICE_USD: float = 49.0
+
+    # TTL del JWT de admin en minutos (8 horas por defecto)
+    ADMIN_TOKEN_EXPIRE_MINUTES: int = 480
+
 
 settings = Settings()

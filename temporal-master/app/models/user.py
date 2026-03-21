@@ -34,6 +34,8 @@ class User(Base):
     is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     # ID externo de la pasarela de pagos (Stripe charge_id, PayPal order_id, etc.)
     payment_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
+    # Rol administrativo — solo el CEO/admin tiene acceso al dashboard
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
