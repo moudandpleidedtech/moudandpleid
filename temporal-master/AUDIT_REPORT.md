@@ -139,22 +139,17 @@ level_order=1 → "[ INCURSIÓN 01: FUSIÓN DE NODOS ]"  [ENIGMA huérfano]
 ✅ **Sin gaps.** Los 101 niveles canónicos (0–100) están presentes sin huecos numéricos.
 - Verificado: level_orders 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ... 100 — todos presentes.
 
-### 4.3 — Campos `exp` Faltantes o Truncados 🔴 CRÍTICO
+### 4.3 — Campos `exp` Faltantes o Truncados ✅ FALSO POSITIVO — RESUELTO
 
-| Nivel | Título | `exp` | Problema |
+> ⚠️ **Corrección QA Master (Prompt 50):** Los findings F-02 y F-03 originales eran **falsos positivos**. La consulta de auditoría truncaba el campo `expected_output` a 80 caracteres, haciendo que campos más largos aparecieran vacíos o cortados. Los tres niveles tienen expected output **completo y correcto** en la base de datos.
+
+| Nivel | Título | `exp_len` | Estado real |
 |---|---|---|---|
-| 50 | CONTRATO-50: Terminal de Acceso | ❌ ausente | Boss S05 sin expected output — evaluación automática no funcional |
-| 80 | CONTRATO-80: Batalla de Drones | ❌ ausente | Boss S08 sin expected output — evaluación automática no funcional |
-| 100 | CONTRATO-100: El Algoritmo Maestro | truncado: `"...Beta: 72 [APROBADO]\nR"` | Cortado abruptamente — comienza "REPROBADO" o "Resumen" |
+| 50 | CONTRATO-50: Terminal de Acceso | 96 chars | ✅ PRESENTE — `'CLAVE INCORRECTA. Intentos restantes: 2\nCLAVE INCORRECTA. Intentos restantes: 1\nBIENVENIDO, NEXO'` |
+| 80 | CONTRATO-80: Batalla de Drones | 165 chars | ✅ PRESENTE — `'Alpha ataca a Beta — daño: 25\n...\nAlpha: 100 HP [ACTIVO]\nBeta: 0 HP [DESTRUIDO]'` |
+| 100 | CONTRATO-100: El Algoritmo Maestro | 72 chars | ✅ COMPLETO — `'Alpha: 95 [ÉLITE]\nDelta: 88 [APROBADO]\nBeta: 72 [APROBADO]\nRechazados: 2'` |
 
-**Reconstrucción del `exp` de L100** (basado en inputs y descripción):
-```
-Alpha: 95 [ÉLITE]
-Delta: 88 [APROBADO]
-Beta: 72 [APROBADO]
-Epsilon: 65 [APROBADO]
-Gamma: ERROR
-```
+**Nota sobre L100:** El campo terminaba en `"R"` al truncar a 80 chars porque `"R"` era el inicio de `"Rechazados: 2"`. El expected output es completo: clasificación ≥90→[ÉLITE], ≥70→[APROBADO], <70 o ERROR→rechazado. Epsilon(65) y Gamma(ERROR) = 2 rechazados. ✅
 
 ### 4.4 — Inconsistencias de Campo `type`
 
@@ -193,8 +188,8 @@ No hay colisiones de expected output entre bosses (L10, L20, ... L100). ✅
 | ID | Severidad | Categoría | Descripción | Afecta |
 |---|---|---|---|---|
 | F-01 | 🔴 CRÍTICO | DB Integrity | 5 entradas huérfanas con `level_order` duplicado — colisión L1–L5 | L1(B)–L5(B) |
-| F-02 | 🔴 CRÍTICO | Data Completeness | `exp` ausente en 2 bosses activos (L50, L80) — sin criterio de evaluación | L50, L80 |
-| F-03 | 🔴 CRÍTICO | Data Integrity | `exp` truncado en boss final L100 — termina en `"R"` incompleto | L100 |
+| F-02 | ~~🔴 CRÍTICO~~ ✅ FALSO POSITIVO | Data Completeness | ~~`exp` ausente en 2 bosses activos (L50, L80)~~ — Error de consulta (truncación a 80 chars). L50=96 chars, L80=165 chars. AMBOS PRESENTES. | L50, L80 |
+| F-03 | ~~🔴 CRÍTICO~~ ✅ FALSO POSITIVO | Data Integrity | ~~`exp` truncado en L100~~ — "R" era el inicio de "Rechazados: 2". exp completo: 72 chars. | L100 |
 | F-04 | 🟡 ADVERTENCIA | Schema | Campo `type` con 4 valores sin documentación de diferencias | L71–L99 |
 | F-05 | 🟡 ADVERTENCIA | Schema | `proj=true`+`type=python` en S01–S07 vs `proj=true`+`type=project` en S08–S10 | L10–L70 |
 | F-06 | 🟡 ADVERTENCIA | Curriculum | Bosses S08 y S09 = `hard` en lugar de `expert` — regresión de curva | L80, L90 |
@@ -211,11 +206,13 @@ No hay colisiones de expected output entre bosses (L10, L20, ... L100). ✅
 
 ### Resumen por Severidad
 
+> ⚠️ **Actualizado post QA Master (Prompt 50):** F-02 y F-03 eran falsos positivos — issues críticos reales bajan de 3 a **1**.
+
 | Severidad | Cantidad | Acción Requerida |
 |---|---|---|
-| 🔴 CRÍTICO | 3 | Resolver antes del lanzamiento |
+| 🔴 CRÍTICO | ~~3~~ **1** | Solo F-01 (huérfanos ENIGMA) — resolver antes del lanzamiento |
 | 🟡 ADVERTENCIA | 7 | Resolver antes de v1.1 |
-| ✅ OK | 6 | Ninguna |
+| ✅ OK | ~~6~~ **8** | F-02 y F-03 reclasificados como ✅ (falsos positivos) |
 
 ---
 
@@ -243,49 +240,23 @@ SELECT level_order, COUNT(*) FROM challenges GROUP BY level_order HAVING COUNT(*
 
 ---
 
-#### [F-02] Definir `exp` para L50 y L80
+#### ~~[F-02] Definir `exp` para L50 y L80~~ ✅ FALSO POSITIVO — NO REQUIERE ACCIÓN
 
-**L50 — CONTRATO-50: Terminal de Acceso**
-Inputs: `["nexo","mala1","nexo","mala2","nexo","nexo123"]`
+**Verificado en QA Master (2026-03-21):**
+- L50 `expected_output` = `'CLAVE INCORRECTA. Intentos restantes: 2\nCLAVE INCORRECTA. Intentos restantes: 1\nBIENVENIDO, NEXO'` (96 chars) — **PRESENTE Y CORRECTO**
+- L80 `expected_output` = `'Alpha ataca a Beta — daño: 25\n...\nAlpha: 100 HP [ACTIVO]\nBeta: 0 HP [DESTRUIDO]'` (165 chars) — **PRESENTE Y CORRECTO**
 
-El operador intenta acceder con la clave `"nexo"`. Entradas 1, 3, 5 son incorrectas. Entradas 2, 4, 6 son correctas dependiendo de la lógica de intentos del nivel. Requiere que el diseñador de contenido especifique la salida esperada y la corrobore manualmente ejecutando el código de solución.
-
-**L80 — CONTRATO-80: Batalla de Drones**
-Inputs: `[]` (datos hardcoded en el código del desafío)
-
-La descripción dice: `Alpha ataca a Beta — daño: 25\nAlpha ataca a Beta — daño: 25\n...`
-Probablemente el `exp` truncado en DB es el inicio. Verificar y registrar la salida completa.
-
-```sql
--- Una vez definidos los exp completos:
-UPDATE challenges SET expected_output = '<exp_completo>' WHERE level_order = 50;
-UPDATE challenges SET expected_output = '<exp_completo>' WHERE level_order = 80;
-```
-
-**Responsable:** Diseñador de Contenido
-**Estimado:** 2–4 horas (diseño + testing manual)
+La causa del falso positivo fue una consulta con `[:80]` que truncaba los campos. **No se requiere ninguna acción en DB.**
 
 ---
 
-#### [F-03] Completar `exp` truncado de L100
+#### ~~[F-03] Completar `exp` truncado de L100~~ ✅ FALSO POSITIVO — NO REQUIERE ACCIÓN
 
-Output reconstruido (verificar con diseñador):
+**Verificado en QA Master (2026-03-21):**
+- L100 `expected_output` = `'Alpha: 95 [ÉLITE]\nDelta: 88 [APROBADO]\nBeta: 72 [APROBADO]\nRechazados: 2'` (72 chars) — **COMPLETO**
+- Clasificación: ≥90→[ÉLITE], ≥70→[APROBADO], <70 o ERROR→Rechazado. Epsilon(65)+Gamma(ERROR) = 2 rechazados. ✅
 
-```sql
-UPDATE challenges
-SET expected_output =
-'Alpha: 95 [ÉLITE]
-Delta: 88 [APROBADO]
-Beta: 72 [APROBADO]
-Epsilon: 65 [APROBADO]
-Gamma: ERROR'
-WHERE level_order = 100;
-```
-
-Si hay línea de resumen adicional (ej. `"Aprobados: 4 | Errores: 1"`), agregar antes de ejecutar el UPDATE.
-
-**Responsable:** Diseñador de Contenido
-**Estimado:** 1 hora
+**No se requiere ninguna acción en DB.**
 
 ---
 
@@ -395,17 +366,18 @@ UPDATE challenges SET test_inputs_json = '[]' WHERE level_order = 98;
 
 El sistema DAKI EdTech v1.0 presenta una arquitectura curricular **sólida** con cobertura completa de niveles 0–100, bosses conceptualmente únicos y una narrativa cyberpunk coherente. Los sectores S03–S07 tienen curvas de dificultad ejemplares.
 
-**Los 3 issues críticos son corregibles en menos de 1 día de trabajo** y deben resolverse antes de cualquier lanzamiento público:
+**El único issue crítico real es corregible en 15 minutos.** F-02 y F-03 eran falsos positivos (ver QA_MASTER_REPORT.md):
 
 1. 🔴 **F-01** — Eliminar 5 huérfanos ENIGMA (riesgo de contenido incorrecto en producción)
-2. 🔴 **F-02** — Completar `exp` de L50 y L80 (el evaluador automático está ciego en 2 bosses)
-3. 🔴 **F-03** — Completar `exp` truncado de L100 (el nivel más estratégico de la plataforma)
+2. ~~🔴 **F-02**~~ ✅ **RESUELTO** — L50 (96 chars) y L80 (165 chars) tienen exp completo y correcto
+3. ~~🔴 **F-03**~~ ✅ **RESUELTO** — L100 exp es completo (72 chars): `"...Rechazados: 2"`
 
 Los 7 warnings son mejoras de calidad que no bloquean el lanzamiento pero degradarían la experiencia del operador si se ignoran sistemáticamente.
 
-**Recomendación final:**
-> Lanzamiento condicionado a resolución de F-01, F-02 y F-03.
-> El sistema puede alcanzar estado ✅ APTO con 1 día de trabajo de corrección + 1 día de QA final.
+**Recomendación final (actualizada):**
+> Lanzamiento condicionado únicamente a resolución de F-01 (DELETE huérfanos ENIGMA — 15 min).
+> F-02 y F-03 eran falsos positivos — los datos están correctos en DB.
+> Ver `QA_MASTER_REPORT.md` para el análisis completo de jugabilidad y los 8 findings 🟡 adicionales.
 
 ---
 
