@@ -13,6 +13,8 @@ import MissionBriefing from '@/components/Game/MissionBriefing'
 import VictoryModal, { type VictoryNext } from '@/components/UI/VictoryModal'
 import DakiHint from '@/components/IDE/DakiHint'
 import TutorialPanel from '@/components/IDE/TutorialPanel'
+import DakiWaveform from '@/components/UI/DakiWaveform'
+import PaywallModal from '@/components/UI/PaywallModal'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
@@ -230,6 +232,28 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setEditorAnim(cls)
     setTimeout(() => setEditorAnim(''), ms)
   }
+
+  // Terminal (right panel) flash — mismo juego de clases, panel separado
+  const [terminalAnim, setTerminalAnim] = useState<'anim-victory-glow' | 'anim-error-flash' | ''>('')
+  const triggerTerminalAnim = (cls: 'anim-victory-glow' | 'anim-error-flash', ms = 600) => {
+    setTerminalAnim(cls)
+    setTimeout(() => setTerminalAnim(''), ms)
+  }
+
+  // Waveform: true mientras DAKI "habla" (~duración estimada del mensaje)
+  const [waveformActive, setWaveformActive] = useState(false)
+  const waveformTimerRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const activateWaveform = useCallback((msg: string) => {
+    if (waveformTimerRef.current) clearTimeout(waveformTimerRef.current)
+    setWaveformActive(true)
+    // ~40ms por carácter (ritmo de TTS), mínimo 2s, máximo 8s
+    const duration = Math.min(Math.max(msg.length * 40, 2000), 8000)
+    waveformTimerRef.current = setTimeout(() => setWaveformActive(false), duration)
+  }, [])
+
+  // Paywall modal: se muestra si el backend devuelve 402
+  const [showPaywall, setShowPaywall] = useState(false)
 
   // Toast para nivel bloqueado
   const [toastMsg, setToastMsg]           = useState('')
@@ -494,8 +518,14 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
 
       if (!res.ok) {
+        // ── 402: paywall — el usuario llegó al límite freemium ────────────────
+        if (res.status === 402) {
+          setShowPaywall(true)
+          return
+        }
         const err = await res.json()
         triggerShake('soft')
+        triggerTerminalAnim('anim-error-flash', 600)
         setOutput([{ text: `[ERROR] ${err.detail ?? res.statusText}`, kind: 'stderr' }])
         return
       }
@@ -627,10 +657,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
         applyErrorDecoration(ei.line)
       }
 
-      // ── DAKI Intel: frase narrativa del backend → consola + voz ──────────────
+      // ── DAKI Intel: frase narrativa del backend → consola + voz + waveform ──
       if (data.daki_message) {
         setDakiMessage(data.daki_message)
         speakDaki(data.daki_message)
+        activateWaveform(data.daki_message)
       }
       // ─────────────────────────────────────────────────────────────────────────
 
@@ -671,6 +702,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         markChallengeCompleted(challengeId)
         triggerShake('soft')
         triggerEditorAnim('anim-victory-glow', 1400)
+        triggerTerminalAnim('anim-victory-glow', 1400)
         setShowParticles(true)
         setTimeout(() => setShowParticles(false), 1400)
 
@@ -689,6 +721,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       } else if (!data.output_matched) {
         triggerShake('soft')
         triggerEditorAnim('anim-error-flash', 500)
+        triggerTerminalAnim('anim-error-flash', 600)
       }
 
       if (!data.output_matched) {
@@ -717,7 +750,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, isRunning, userId, challengeId, challenge, failStreak, parLines,
-      tutorialStep, triggerShake, countEffectiveLines, findNextChallenge, applyGamificationResult, markChallengeCompleted])
+      tutorialStep, triggerShake, countEffectiveLines, findNextChallenge,
+      applyGamificationResult, markChallengeCompleted, activateWaveform])
 
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
@@ -765,6 +799,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
           ? '[ CALIBRACIÓN COMPLETADA. RIESGO CEREBRAL AL 0%. ACCESO AL NEXO CONCEDIDO ]'
           : undefined
         }
+      />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
       />
 
       {/* Layout con screen shake */}
@@ -993,8 +1032,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
             </div>
           </div>
 
-          {/* Panel derecho */}
-          <div className="w-80 flex flex-col border-l border-[#00FF41]/20 bg-[#0D0D0D] shrink-0">
+          {/* Panel derecho — flash verde/rojo en éxito/error */}
+          <div className={`w-80 flex flex-col border-l border-[#00FF41]/20 bg-[#0D0D0D] shrink-0 ${terminalAnim}`}>
 
             {/* Tutorial — panel guiado de DAKI (reemplaza la descripción habitual) */}
             {challenge?.challenge_type === 'tutorial' ? (
@@ -1087,6 +1126,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
                   <span className="text-[9px] tracking-[0.4em] font-bold" style={{ color: 'rgba(189,0,255,0.7)' }}>
                     [ DAKI INTEL ]
                   </span>
+                  <div className="ml-auto">
+                    <DakiWaveform isActive={waveformActive} color="#BD00FF" size="sm" />
+                  </div>
                 </div>
                 <div className="px-3 py-2">
                   <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(189,0,255,0.8)', fontFamily: 'monospace' }}>
