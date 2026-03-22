@@ -16,6 +16,7 @@ import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
 import PaywallModal from '@/components/UI/PaywallModal'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
+import { useIdleDetection } from '@/hooks/useIdleDetection'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -48,7 +49,7 @@ interface ChallengeListItem {
 
 interface ConsoleLine {
   text: string
-  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma'
+  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention'
 }
 
 interface ErrorInfo {
@@ -255,11 +256,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Paywall modal: se muestra si el backend devuelve 402
   const [showPaywall, setShowPaywall] = useState(false)
 
-  // Módulo de Memoria Evolutiva — intervención proactiva por estancamiento (Prompt 56)
-  const [stagnationMsg, setStagnationMsg]     = useState('')
-  const [showStagnation, setShowStagnation]   = useState(false)
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout>>()
-  const IDLE_TIMEOUT_MS = 2 * 60 * 1000   // 2 minutos
+  // Intervención proactiva — último error para contexto (Prompt 57)
+  const lastErrorRef = useRef('')
 
   // Toast para nivel bloqueado
   const [toastMsg, setToastMsg]           = useState('')
@@ -303,51 +301,50 @@ export default function CodeWorkspace({ challengeId }: Props) {
     if (!userId) router.replace('/')
   }, [hydrated, userId, router])
 
-  // Temporizador de estancamiento (Prompt 56): 2 min sin actividad → DAKI interviene
-  useEffect(() => {
-    if (!hydrated || !userId || !challengeId) return
+  // ─── Intervención proactiva (Prompt 57) ─────────────────────────────────────
+  // useIdleDetection monitorea inactividad *semántica*: ausencia de cambios de código
+  // o envíos de solución (no mouse/keyboard genérico). resetTimer() se llama desde
+  // handleCodeChange y al inicio de handleEjecutar.
+  const handleStuck = useCallback(async () => {
+    if (!challenge || !userId) return
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/daki/intervene`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          challenge_id: challengeId,
+          current_code: code,
+          error_output: lastErrorRef.current,
+          idle_minutes: 2,
+        }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      const msg: string = data.daki_message ?? ''
+      if (!msg) return
 
-    const fireStagnation = async () => {
-      if (!challenge) return
-      try {
-        const res = await fetch(`${API_BASE}/api/v1/daki/stagnation`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            challenge_id: challengeId,
-            idle_minutes: 2,
-          }),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setStagnationMsg(data.daki_message)
-          setShowStagnation(true)
-          activateWaveform(data.daki_message)
-        }
-      } catch { /* silencioso */ }
-    }
-
-    const resetTimer = () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-      setShowStagnation(false)
-      idleTimerRef.current = setTimeout(fireStagnation, IDLE_TIMEOUT_MS)
-    }
-
-    resetTimer()
-    window.addEventListener('keydown', resetTimer)
-    window.addEventListener('pointermove', resetTimer)
-    window.addEventListener('click', resetTimer)
-
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
-      window.removeEventListener('keydown', resetTimer)
-      window.removeEventListener('pointermove', resetTimer)
-      window.removeEventListener('click', resetTimer)
-    }
-  // IDLE_TIMEOUT_MS is a constant — safe to omit from deps
+      // Inyectar en terminal como líneas de intervención prominentes
+      setOutput((prev) => [
+        ...prev,
+        { text: '━━━ DAKI INTERRUPT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+        ...msg.split('\n').filter(Boolean).map((line) => ({
+          text: `  ${line}`, kind: 'intervention' as const,
+        })),
+        { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+      ])
+      scrollConsole()
+      speakDaki(msg)
+      activateWaveform(msg)
+    } catch { /* silencioso */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, userId, challengeId, challenge, activateWaveform])
+  }, [challenge, userId, challengeId, code, speakDaki, activateWaveform])
+
+  const { resetTimer: resetIdleTimer } = useIdleDetection({
+    timeoutMs: 2 * 60 * 1000,
+    onStuck: handleStuck,
+    enabled: hydrated && !!userId && !!challengeId,
+  })
 
   // Carga la lista completa de misiones para detectar el siguiente nodo
   useEffect(() => {
@@ -482,6 +479,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Keyword glow
   const handleCodeChange = useCallback((val: string) => {
     setCode(val ?? '')
+    resetIdleTimer()   // actividad semántica: el Operador está editando
     const lastLine = (val ?? '').split('\n').pop() ?? ''
     const lastToken =
       lastLine
@@ -493,7 +491,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       setKeywordFlash(lastToken)
       kwFlashRef.current = setTimeout(() => setKeywordFlash(null), 700)
     }
-  }, [])
+  }, [resetIdleTimer])
 
   const scrollConsole = () =>
     setTimeout(() => consoleRef.current?.scrollTo(0, consoleRef.current.scrollHeight), 60)
@@ -553,6 +551,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setNetworkError(false)
     setOutput([{ text: '> Compilando...', kind: 'info' }])
     lastCodeRef.current = code
+    resetIdleTimer()   // actividad semántica: el Operador ejecutó código
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 12_000)
@@ -696,7 +695,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
       // ─────────────────────────────────────────────────────────────────────────
 
       if (data.stdout) lines.push({ text: data.stdout, kind: 'stdout' })
-      if (data.stderr) lines.push({ text: data.stderr, kind: 'stderr' })
+      if (data.stderr) {
+        lines.push({ text: data.stderr, kind: 'stderr' })
+        lastErrorRef.current = data.stderr  // contexto para intervención proactiva
+      }
 
       // ── DAKI Linter: resaltar línea errónea en editor ────────────────────────
       const ei = data.error_info as ErrorInfo | null
@@ -804,7 +806,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, isRunning, userId, challengeId, challenge, failStreak, parLines,
       tutorialStep, triggerShake, countEffectiveLines, findNextChallenge,
-      applyGamificationResult, markChallengeCompleted, activateWaveform])
+      applyGamificationResult, markChallengeCompleted, activateWaveform, resetIdleTimer])
 
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
@@ -859,37 +861,6 @@ export default function CodeWorkspace({ challengeId }: Props) {
         onClose={() => setShowPaywall(false)}
       />
 
-      {/* Intervención proactiva de DAKI por estancamiento (Prompt 56) */}
-      <AnimatePresence>
-        {showStagnation && (
-          <motion.div
-            className="fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 w-[min(90vw,600px)]"
-            initial={{ y: 60, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 60, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          >
-            <div className="bg-[#0A0A0A]/95 border border-[#BD00FF]/50 px-5 py-4 font-mono text-sm"
-              style={{ boxShadow: '0 0 24px #BD00FF18' }}>
-              <div className="flex items-start gap-3">
-                <DakiWaveform isActive={waveformActive} color="#BD00FF" size="sm" />
-                <div className="flex-1">
-                  <div className="text-[#BD00FF] text-[10px] tracking-[0.3em] mb-1.5 uppercase">
-                    DAKI — Intervención Proactiva
-                  </div>
-                  <div className="text-[#00FF41] text-xs leading-relaxed whitespace-pre-line">
-                    {stagnationMsg}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowStagnation(false)}
-                  className="text-[#ffffff20] hover:text-[#ffffff60] text-xl leading-none mt-0.5 transition-colors"
-                >×</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Layout con screen shake */}
       <motion.div
@@ -1237,12 +1208,20 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 {output.map((line, i) => (
                   <div key={i}
                     className={`text-xs leading-5 whitespace-pre-wrap break-all ${
-                      line.kind === 'stderr'   ? 'text-red-400'
-                      : line.kind === 'success' ? 'text-[#00FF41]'
-                      : line.kind === 'enigma'  ? 'enigma-line'
-                      : line.kind === 'info'    ? 'text-[#00FF41]/45'
+                      line.kind === 'stderr'       ? 'text-red-400'
+                      : line.kind === 'success'   ? 'text-[#00FF41]'
+                      : line.kind === 'enigma'    ? 'enigma-line'
+                      : line.kind === 'info'      ? 'text-[#00FF41]/45'
+                      : line.kind === 'intervention'
+                        ? 'text-[#BD00FF] font-semibold tracking-wide'
                       : 'text-[#00FF41]/85'
-                    }`}>
+                    }`}
+                    style={line.kind === 'intervention' ? {
+                      textShadow: '0 0 8px #BD00FF60',
+                      borderLeft: '2px solid #BD00FF80',
+                      paddingLeft: '6px',
+                    } : undefined}
+                  >
                     {line.text}
                   </div>
                 ))}
