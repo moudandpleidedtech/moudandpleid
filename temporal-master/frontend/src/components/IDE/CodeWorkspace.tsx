@@ -14,6 +14,7 @@ import VictoryModal, { type VictoryNext } from '@/components/UI/VictoryModal'
 import DakiHint from '@/components/IDE/DakiHint'
 import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
+import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
 import PaywallModal from '@/components/UI/PaywallModal'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
 import { useIdleDetection } from '@/hooks/useIdleDetection'
@@ -1222,7 +1223,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                       paddingLeft: '6px',
                     } : undefined}
                   >
-                    {line.text}
+                    <DakiTerminalLine text={line.text} kind={line.kind} />
                   </div>
                 ))}
               </div>
