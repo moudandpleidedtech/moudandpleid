@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'Términos y Condiciones — DAKI EdTech',
-  description: 'Términos y Condiciones de uso de la plataforma DAKI EdTech.',
+  description: 'Términos y Condiciones del Sistema de Entrenamiento Táctico DAKI EdTech — Naturaleza del servicio, política de reembolso condicionada y propiedad intelectual.',
 }
 
 export default function TerminosPage() {
@@ -25,16 +25,16 @@ export default function TerminosPage() {
         {/* Header */}
         <div className="border-b border-[#00FF41]/15 pb-8 mb-10">
           <div className="text-xs text-[#00FF41]/30 tracking-[0.4em] uppercase mb-3">
-            Documento Legal // Protocolo v1.0
+            Documento Legal // Protocolo v2.0
           </div>
           <h1 className="text-2xl text-[#00FF41] tracking-wide mb-4">
             Términos y Condiciones de Uso
           </h1>
           <p className="text-sm text-[#00FF41]/50 leading-6">
-            Plataforma DAKI EdTech — Propiedad de{' '}
+            Sistema de Entrenamiento Táctico DAKI EdTech — Propiedad de{' '}
             <span className="text-[#00FF41]/70">Adrian Eduardo Ardiles Peralta</span>
             <br />
-            Última actualización: 20 de marzo de 2026
+            Última actualización: 22 de marzo de 2026
           </p>
         </div>
 
@@ -89,22 +89,45 @@ function LegalDoc() {
         </ul>
       </Section>
 
-      <Section title="2. Descripción del Servicio">
+      <Section title="2. Naturaleza del Servicio y El Ecosistema DAKI">
         <p>
-          DAKI EdTech es una plataforma de aprendizaje de programación en Python con
-          mecánicas de videojuego (EdTech gamificada). El servicio incluye:
+          DAKI EdTech no es un servicio de clases de programación tradicional. Operamos
+          como un{' '}
+          <strong className="text-[#00FF41]/90">
+            Sistema de Entrenamiento Táctico Asistido por Inteligencia Artificial
+          </strong>
+          . Al adquirir nuestros servicios, el usuario (en adelante,{' '}
+          <em className="text-[#00FF41]/80">"El Operador"</em>) obtiene acceso a{' '}
+          <strong className="text-[#00FF41]/90">DAKI</strong>, nuestra Entidad Neuronal de
+          acompañamiento, y a los entornos de simulación interactiva.
         </p>
-        <ul className="mt-3 space-y-1.5 text-[#00FF41]/60 list-none">
-          <Li>100 niveles de desafíos de código estructurados en 10 sectores temáticos.</Li>
-          <Li>DAKI, una instructora de IA generativa que proporciona retroalimentación narrativa.</Li>
-          <Li>Sistema de progresión, XP, certificado de completado y tabla de clasificación.</Li>
+        <p className="mt-3">
+          El valor del servicio radica en la orquestación del aprendizaje, el andamiaje
+          táctico y la retroalimentación en tiempo real proporcionada por el{' '}
+          <strong className="text-[#00FF41]/80">Motor Cognitivo DAKI</strong>,
+          independientemente del lenguaje de programación subyacente.
+        </p>
+        <ul className="mt-4 space-y-1.5 text-[#00FF41]/60 list-none">
+          <Li>100 incursiones estructuradas en 10 sectores temáticos de dificultad progresiva.</Li>
+          <Li>DAKI — Instructora Neuronal Táctica con sistema de escalación cognitiva de 3 niveles.</Li>
+          <Li>Sistema de rangos operacionales, XP, certificado de élite y tabla de clasificación.</Li>
           <Li>Acceso vía navegador web, sin instalación de software adicional.</Li>
         </ul>
-        <p className="mt-4 text-[#00FF41]/50">
-          DAKI EdTech es un servicio de <strong className="text-[#00FF41]/70">aprendizaje autodidacta</strong>.
-          No es un centro de formación reglada ni otorga títulos oficiales reconocidos por
-          ningún organismo gubernamental.
+      </Section>
+
+      <Section title="2b. Certificación y Alcance Académico">
+        <p>
+          DAKI EdTech es una plataforma tecnológica orientada al{' '}
+          <strong className="text-[#00FF41]/80">entrenamiento de alto rendimiento</strong> y
+          el aprendizaje autodidacta a través de la gamificación. No constituimos un centro
+          de formación académica reglada.
         </p>
+        <Callout type="info">
+          Los <strong>"Rangos de Operador"</strong> y certificados expedidos son
+          reconocimientos internos de destreza lógica dentro de nuestro ecosistema y{' '}
+          <strong>no poseen validez oficial</strong> respaldada por ministerios de educación
+          o entidades gubernamentales.
+        </Callout>
       </Section>
 
       <Section title="3. Propiedad Intelectual">
@@ -121,10 +144,14 @@ function LegalDoc() {
           <Li>Los assets gráficos, sonoros y tipográficos.</Li>
         </ul>
         <Callout type="warn">
-          Queda expresamente prohibido: el scraping automatizado de contenidos, la
-          redistribución o reventa del material, la ingeniería inversa del sistema de
-          evaluación, y la reproducción total o parcial sin autorización escrita del Titular.
-          El incumplimiento podrá dar lugar a acciones legales.
+          Todo el contenido narrativo, el lore, el diseño de las misiones y la{' '}
+          <strong>"Personalidad y Lógica de Respuesta de DAKI"</strong> son propiedad
+          intelectual exclusiva de DAKI EdTech. Queda{' '}
+          <strong>estrictamente prohibida</strong> la extracción automatizada (scraping),
+          copia, o reproducción del contenido de las simulaciones para su uso en plataformas
+          externas. Asimismo quedan prohibidos: la redistribución o reventa del material, la
+          ingeniería inversa del sistema de evaluación y la reproducción total o parcial sin
+          autorización escrita del Titular. El incumplimiento podrá dar lugar a acciones legales.
         </Callout>
       </Section>
 
@@ -142,27 +169,48 @@ function LegalDoc() {
       </Section>
 
       <Section title="5. Política de Pagos y Reembolsos">
-        <SubSection title="5.1 Precio y Acceso">
+        <SubSection title="5.1 Precio y Acceso Freemium">
           <p>
-            El acceso completo a DAKI EdTech requiere la adquisición única de una
-            Licencia de Operador (pago único, sin suscripción recurrente).
-            El precio vigente se muestra en la página de compra en el momento de la transacción.
-          </p>
-        </SubSection>
-        <SubSection title="5.2 Garantía de 7 Días">
-          <p>
-            Si dentro de los{' '}
-            <strong className="text-[#00FF41]/90">7 días naturales</strong> siguientes a
-            tu compra consideras que el servicio no se ajusta a lo descrito, puedes
-            solicitar el reembolso íntegro del importe abonado escribiendo a{' '}
-            <span className="text-[#00FF41]/80">legal@dakiedtech.com</span> con el
-            asunto «REEMBOLSO» e indicando el email de tu cuenta.
+            El acceso completo a DAKI EdTech requiere la adquisición única de una{' '}
+            <strong className="text-[#00FF41]/80">Licencia de Fundador</strong> (pago
+            único, sin suscripción recurrente). El precio vigente se muestra en la página
+            de compra en el momento de la transacción.
           </p>
           <p className="mt-2 text-[#00FF41]/50">
-            Transcurrido el periodo de 7 días, la venta es definitiva y no procede devolución,
-            salvo obligación legal aplicable en tu jurisdicción.
+            El{' '}
+            <strong className="text-[#00FF41]/70">Sector de Evaluación (Niveles 00 al 10)</strong>{' '}
+            es de acceso gratuito e irrestricto, sin necesidad de pago, para que el
+            Operador valide la compatibilidad del Sistema DAKI antes de comprometerse.
           </p>
         </SubSection>
+
+        <SubSection title='5.2 Garantía de Sincronización ("Política de Reembolso Condicionada")'>
+          <p>
+            Para las compras de la Licencia de Fundador, ofrecemos una garantía de
+            devolución de{' '}
+            <strong className="text-[#00FF41]/90">7 días corridos</strong> desde la
+            fecha de compra, <strong>estrictamente condicionada</strong> al consumo de
+            los recursos de la IA.
+          </p>
+          <Callout type="warn">
+            <strong>Condición de Anulación del Reembolso:</strong> El reembolso solo
+            será procesado si se solicita dentro de los primeros 7 días corridos
+            posteriores a la compra,{' '}
+            <strong>Y</strong> si los registros del sistema indican que el Operador{' '}
+            <strong>NO ha superado el Nivel 20</strong> de la incursión.
+            <br /><br />
+            Si el Operador completa el Nivel 21 o superior, se considerará que el
+            servicio y la capacidad de procesamiento de DAKI han sido{' '}
+            <strong>consumidos de manera efectiva</strong>, inhabilitando cualquier
+            reclamo de reembolso.
+          </Callout>
+          <p className="mt-3 text-[#00FF41]/50">
+            Para solicitar el reembolso dentro de las condiciones establecidas, escribe a{' '}
+            <span className="text-[#00FF41]/80">legal@dakiedtech.com</span> con el
+            asunto «GARANTÍA DE SINCRONIZACIÓN» e indicando el email de tu cuenta.
+          </p>
+        </SubSection>
+
         <SubSection title="5.3 Procesamiento del Pago">
           <p className="text-[#00FF41]/50">
             Los pagos se gestionan a través de pasarelas de pago de terceros (Stripe, PayPal
@@ -231,7 +279,28 @@ function LegalDoc() {
         </p>
       </Section>
 
-      <Section title="9. Conducta del Usuario">
+      <Section title="9. Disponibilidad del Servicio (Uptime)">
+        <p>
+          DAKI EdTech realiza esfuerzos razonables para mantener la disponibilidad continua
+          del servicio. Sin embargo, dado que el Motor Cognitivo DAKI depende de
+          infraestructuras de IA de terceros, pueden producirse interrupciones o latencias
+          fuera del control directo del Titular.
+        </p>
+        <Callout type="info">
+          En caso de latencias o caídas de los servidores centrales de IA, el sistema
+          entrará en{' '}
+          <strong>modo de contingencia ("Respuestas Offline")</strong> para preservar
+          la inmersión del Operador hasta que se restablezca la conexión total. Las
+          interrupciones planificadas se anunciarán con antelación cuando sea posible.
+        </Callout>
+        <p className="mt-3 text-[#00FF41]/50">
+          El Titular no asume responsabilidad por interrupciones causadas por fallos
+          en servicios de terceros (proveedores cloud, API de IA, pasarelas de pago),
+          cortes de energía, eventos de fuerza mayor o ataques externos.
+        </p>
+      </Section>
+
+      <Section title="10. Conducta del Operador">
         <p>
           El usuario se compromete a no utilizar la plataforma para:
         </p>
@@ -247,7 +316,7 @@ function LegalDoc() {
         </p>
       </Section>
 
-      <Section title="10. Modificación de los Términos">
+      <Section title="11. Modificación de los Términos">
         <p>
           El Titular se reserva el derecho a modificar estos Términos en cualquier momento.
           Los cambios entrarán en vigor con su publicación en esta página con la nueva fecha
@@ -256,7 +325,7 @@ function LegalDoc() {
         </p>
       </Section>
 
-      <Section title="11. Ley Aplicable y Jurisdicción">
+      <Section title="12. Ley Aplicable y Jurisdicción">
         <p className="text-[#00FF41]/50">
           Estos Términos se rigen por la legislación de{' '}
           <span className="text-[#00FF41]/70">Argentina</span>. Para cualquier
@@ -267,7 +336,7 @@ function LegalDoc() {
         </p>
       </Section>
 
-      <Section title="12. Contacto">
+      <Section title="13. Contacto">
         <p className="text-[#00FF41]/50">
           Para cualquier consulta legal, solicitud de reembolso o ejercicio de derechos
           sobre tus datos, escríbenos a:{' '}

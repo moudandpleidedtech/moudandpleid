@@ -4,7 +4,7 @@
 **Marca comercial:** DAKI EdTech
 **Contacto:** legal@dakiedtech.com
 **País:** Argentina
-**Última actualización:** 20 de marzo de 2026
+**Última actualización:** 22 de marzo de 2026 — Protocolo v2.0
 
 ---
 
@@ -25,20 +25,28 @@ Al registrarte, completar el proceso de pago o pulsar **[ INGRESAR AL NEXO ]**, 
 
 ---
 
-## 2. Descripción del Servicio
+## 2. Naturaleza del Servicio y El Ecosistema DAKI
 
-DAKI EdTech es una plataforma de aprendizaje de programación en Python con mecánicas de videojuego (EdTech gamificada). El servicio incluye:
+DAKI EdTech no es un servicio de clases de programación tradicional. Operamos como un **Sistema de Entrenamiento Táctico Asistido por Inteligencia Artificial**. Al adquirir nuestros servicios, el usuario (en adelante, *"El Operador"*) obtiene acceso a **DAKI**, nuestra Entidad Neuronal de acompañamiento, y a los entornos de simulación interactiva.
 
-- 100 niveles de desafíos de código estructurados en 10 sectores temáticos.
-- DAKI, una instructora de IA generativa que proporciona retroalimentación narrativa.
-- Sistema de progresión, XP, certificado de completado y tabla de clasificación.
+El valor del servicio radica en la orquestación del aprendizaje, el andamiaje táctico y la retroalimentación en tiempo real proporcionada por el **Motor Cognitivo DAKI**, independientemente del lenguaje de programación subyacente.
+
+- 100 incursiones estructuradas en 10 sectores temáticos de dificultad progresiva.
+- DAKI — Instructora Neuronal Táctica con sistema de escalación cognitiva de 3 niveles.
+- Sistema de rangos operacionales, XP, certificado de élite y tabla de clasificación.
 - Acceso vía navegador web, sin instalación de software adicional.
-
-DAKI EdTech es un servicio de **aprendizaje autodidacta**. No es un centro de formación reglada ni otorga títulos oficiales reconocidos por ningún organismo gubernamental.
 
 ---
 
-## 3. Propiedad Intelectual
+## 2b. Certificación y Alcance Académico
+
+DAKI EdTech es una plataforma tecnológica orientada al **entrenamiento de alto rendimiento** y el aprendizaje autodidacta a través de la gamificación. No constituimos un centro de formación académica reglada.
+
+> Los **"Rangos de Operador"** y certificados expedidos son reconocimientos internos de destreza lógica dentro de nuestro ecosistema y **no poseen validez oficial** respaldada por ministerios de educación o entidades gubernamentales.
+
+---
+
+## 3. Propiedad Intelectual y Anti-Exfiltración
 
 Todos los contenidos de DAKI EdTech son propiedad exclusiva del Titular o de sus licenciantes, protegidos por la legislación de propiedad intelectual aplicable. Esto incluye:
 
@@ -48,13 +56,13 @@ Todos los contenidos de DAKI EdTech son propiedad exclusiva del Titular o de sus
 - Los desafíos de código, sus enunciados, soluciones y textos de teoría.
 - Los assets gráficos, sonoros y tipográficos.
 
-> **Prohibido:** scraping automatizado, redistribución o reventa del material, ingeniería inversa del sistema de evaluación, y reproducción total o parcial sin autorización escrita del Titular. El incumplimiento podrá dar lugar a acciones legales.
+> **Prohibido:** Todo el contenido narrativo, el lore, el diseño de las misiones y la "Personalidad y Lógica de Respuesta de DAKI" son propiedad intelectual exclusiva de DAKI EdTech. Queda **estrictamente prohibida** la extracción automatizada (scraping), copia, o reproducción del contenido de las simulaciones para su uso en plataformas externas. Asimismo quedan prohibidos: la redistribución o reventa del material, la ingeniería inversa del sistema de evaluación y la reproducción total o parcial sin autorización escrita del Titular. El incumplimiento podrá dar lugar a acciones legales.
 
 ---
 
 ## 4. Licencia de Uso
 
-Al adquirir una Licencia de Operador, se te concede una licencia **personal, intransferible, no exclusiva y revocable** para acceder a la plataforma únicamente para uso personal y formativo.
+Al adquirir una Licencia de Fundador, se te concede una licencia **personal, intransferible, no exclusiva y revocable** para acceder a la plataforma únicamente para uso personal y formativo.
 
 La licencia **no autoriza:** acceso compartido de cuentas, cesión de credenciales a terceros, ni uso comercial del material.
 
@@ -62,15 +70,21 @@ La licencia **no autoriza:** acceso compartido de cuentas, cesión de credencial
 
 ## 5. Política de Pagos y Reembolsos
 
-### 5.1 Precio y Acceso
+### 5.1 Precio y Acceso Freemium
 
-El acceso completo requiere la adquisición única de una Licencia de Operador (pago único, sin suscripción recurrente). El precio vigente se muestra en la página de compra en el momento de la transacción.
+El acceso completo a DAKI EdTech requiere la adquisición única de una **Licencia de Fundador** (pago único, sin suscripción recurrente). El precio vigente se muestra en la página de compra en el momento de la transacción.
 
-### 5.2 Garantía de 7 Días
+El **Sector de Evaluación (Niveles 00 al 10)** es de acceso gratuito e irrestricto, sin necesidad de pago, para que el Operador valide la compatibilidad del Sistema DAKI antes de comprometerse.
 
-Si dentro de los **7 días naturales** siguientes a tu compra el servicio no se ajusta a lo descrito, puedes solicitar el reembolso íntegro escribiendo a **legal@dakiedtech.com** con el asunto «REEMBOLSO» e indicando el email de tu cuenta.
+### 5.2 Garantía de Sincronización ("Política de Reembolso Condicionada")
 
-Transcurrido ese plazo, la venta es definitiva, salvo obligación legal aplicable en tu jurisdicción.
+Para las compras de la Licencia de Fundador, ofrecemos una garantía de devolución de **7 días corridos** desde la fecha de compra, **estrictamente condicionada** al consumo de los recursos de la IA.
+
+> **⚠ Condición de Anulación del Reembolso:** El reembolso solo será procesado si se solicita dentro de los primeros 7 días corridos posteriores a la compra, **Y** si los registros del sistema indican que el Operador **NO ha superado el Nivel 20** de la incursión.
+>
+> Si el Operador completa el Nivel 21 o superior, se considerará que el servicio y la capacidad de procesamiento de DAKI han sido **consumidos de manera efectiva**, inhabilitando cualquier reclamo de reembolso.
+
+Para solicitar el reembolso dentro de las condiciones establecidas, escribe a **legal@dakiedtech.com** con el asunto «GARANTÍA DE SINCRONIZACIÓN» e indicando el email de tu cuenta.
 
 ### 5.3 Procesamiento del Pago
 
@@ -91,7 +105,7 @@ Los pagos se gestionan a través de pasarelas de terceros (Stripe, PayPal u otra
 
 > DAKI EdTech **no garantiza** ningún resultado específico derivado del uso de la plataforma, incluyendo la obtención de empleo, la aprobación de certificaciones oficiales de terceros o el desarrollo de habilidades a un nivel determinado. Los resultados dependen del esfuerzo, la dedicación y las circunstancias individuales de cada usuario.
 
-El Titular no asume responsabilidad por el uso que el usuario haga de los conocimientos de Python adquiridos, incluyendo su aplicación en entornos profesionales o proyectos propios.
+El Titular no asume responsabilidad por el uso que el usuario haga de los conocimientos adquiridos, incluyendo su aplicación en entornos profesionales o proyectos propios.
 
 ---
 
@@ -108,7 +122,17 @@ La **responsabilidad máxima del Titular** estará limitada al importe abonado p
 
 ---
 
-## 9. Conducta del Usuario
+## 9. Disponibilidad del Servicio (Uptime)
+
+DAKI EdTech realiza esfuerzos razonables para mantener la disponibilidad continua del servicio. Sin embargo, dado que el Motor Cognitivo DAKI depende de infraestructuras de IA de terceros, pueden producirse interrupciones o latencias fuera del control directo del Titular.
+
+> En caso de latencias o caídas de los servidores centrales de IA, el sistema entrará en **modo de contingencia ("Respuestas Offline")** para preservar la inmersión del Operador hasta que se restablezca la conexión total. Las interrupciones planificadas se anunciarán con antelación cuando sea posible.
+
+El Titular no asume responsabilidad por interrupciones causadas por fallos en servicios de terceros (proveedores cloud, API de IA, pasarelas de pago), cortes de energía, eventos de fuerza mayor o ataques externos.
+
+---
+
+## 10. Conducta del Operador
 
 El usuario se compromete a no utilizar la plataforma para:
 
@@ -121,19 +145,19 @@ El incumplimiento podrá resultar en la **suspensión inmediata y definitiva** d
 
 ---
 
-## 10. Modificación de los Términos
+## 11. Modificación de los Términos
 
 El Titular se reserva el derecho a modificar estos Términos en cualquier momento. Los cambios entrarán en vigor con su publicación en esta página. El uso continuado de la plataforma implica la aceptación de los nuevos Términos.
 
 ---
 
-## 11. Ley Aplicable y Jurisdicción
+## 12. Ley Aplicable y Jurisdicción
 
 Estos Términos se rigen por la legislación de **Argentina**. Para cualquier controversia, las partes se someten a los juzgados y tribunales de **Córdoba**, con renuncia expresa a cualquier otro fuero.
 
 ---
 
-## 12. Contacto
+## 13. Contacto
 
 Para consultas legales, reembolsos o ejercicio de derechos sobre tus datos:
 **legal@dakiedtech.com**
