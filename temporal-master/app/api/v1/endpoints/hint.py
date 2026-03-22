@@ -18,6 +18,7 @@ class HintRequest(BaseModel):
     challenge_id: uuid.UUID
     source_code: str
     error_output: str = ""
+    fail_count: int = 1    # número de intentos fallidos → calibra el nivel de pista DAKI
 
 
 class HintResponse(BaseModel):
@@ -67,6 +68,7 @@ async def request_hint(
         challenge_description=challenge.description,
         source_code=payload.source_code,
         error_output=payload.error_output,
+        fail_count=max(1, payload.fail_count),
     )
 
     return HintResponse(hint=hint)

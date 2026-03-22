@@ -1,33 +1,52 @@
 """
-DAKI — Instructora IA táctica para DAKI EdTech.
+ai_mentor.py — Motor de Pistas Tácticas de DAKI
 
-Usa la API de Claude (Anthropic) para generar pistas concisas cuando el usuario
-falla repetidamente en un desafío. La pista tiene máximo 2 líneas, estilo cyberpunk
-cálido, y NUNCA revela la solución completa.
+Llama al modelo LLM (Claude Haiku) con el Núcleo Cognitivo de DAKI y genera
+pistas calibradas según el nivel de falla del Operador.
+
+Escalación:
+    fail_count=1  → NIVEL-1: Pista sutil (2 líneas)
+    fail_count=2  → NIVEL-2: Pista conceptual fuerte (3 líneas)
+    fail_count≥3  → NIVEL-3: Reframing total del problema (4 líneas)
+
+El system prompt completo vive en daki_persona.py.
 """
 
 import anthropic
 
 from app.core.config import settings
-
-_SYSTEM_PROMPT = """\
-Eres DAKI, la instructora táctica de DAKI EdTech. Tienes un tono cálido pero directo,
-como una mentora que quiere que el operador aprenda, no que dependa de ti.
-Tu función exclusiva: dar UNA pista de máximo 2 líneas sobre el error de Python del usuario.
-
-Reglas absolutas:
-- Máximo 2 líneas. Sin introducción. Sin despedida.
-- NUNCA escribas el código corregido ni la solución completa.
-- Usa vocabulario técnico-cyberpunk: "fragmento", "protocolo", "secuencia", "módulo", "núcleo".
-- Si el error es de sintaxis, señala la línea o el símbolo en cuestión.
-- Si la lógica está mal, da una pista conceptual sin revelar el algoritmo.
-- Tono: cálido, directo, empoderador. El operador debe sentir que puede lograrlo.
-"""
-
-_FALLBACK = (
-    "// DAKI fuera de línea — clave API no configurada.\n"
-    "// Revisa el stderr o el valor que estás retornando."
+from app.services.daki_persona import (
+    DAKI_SYSTEM_PROMPT,
+    get_escalation_directive,
+    get_offline_response,
 )
+
+# Tokens máximos por nivel — progresivamente más generosos
+_MAX_TOKENS: dict[int, int] = {1: 110, 2: 160, 3: 220}
+
+
+def _build_user_message(
+    challenge_title: str,
+    challenge_description: str,
+    source_code: str,
+    error_output: str,
+    fail_count: int,
+) -> str:
+    """
+    Construye el mensaje del usuario que recibe el modelo.
+    Inyecta la directiva de escalación antes del contexto de la incursión.
+    """
+    escalation = get_escalation_directive(fail_count)
+
+    return (
+        f"{escalation}\n\n"
+        f"--- CONTEXTO DE INCURSIÓN ---\n"
+        f"Nombre: {challenge_title}\n"
+        f"Descripción: {challenge_description}\n\n"
+        f"Código del Operador:\n```python\n{source_code[:2000]}\n```\n\n"
+        f"Salida / Error obtenido:\n{error_output[:600] or '(sin error — salida incorrecta)'}\n\n"
+        "Activa el protocolo correspondiente y entrega la pista táctica."
+    )
 
 
 async def get_hint(
@@ -35,28 +54,41 @@ async def get_hint(
     challenge_description: str,
     source_code: str,
     error_output: str,
+    fail_count: int = 1,
 ) -> str:
     """
-    Llama a Claude y devuelve una pista de máximo 2 líneas en estilo DAKI EdTech.
-    Si la clave no está configurada, devuelve un mensaje de fallback.
+    Genera una pista táctica calibrada al nivel de falla del Operador.
+
+    Args:
+        challenge_title:       Nombre de la misión activa.
+        challenge_description: Descripción del desafío.
+        source_code:           Código actual del Operador (truncado a 2000 chars).
+        error_output:          Salida o error obtenido (truncado a 600 chars).
+        fail_count:            Número de intentos fallidos en esta incursión.
+                               1 → sutil | 2 → conceptual | ≥3 → reframe.
+
+    Returns:
+        Pista táctica como string (máx 2–4 líneas según nivel).
     """
     if not settings.ANTHROPIC_API_KEY:
-        return _FALLBACK
+        return get_offline_response(fail_count)
 
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-    user_msg = (
-        f"Desafío: {challenge_title}\n"
-        f"Descripción: {challenge_description}\n\n"
-        f"Código del usuario:\n```python\n{source_code[:2000]}\n```\n\n"
-        f"Salida / Error obtenido:\n{error_output[:500]}\n\n"
-        "Dame la pista (máximo 2 líneas)."
+    max_tokens = _MAX_TOKENS.get(min(fail_count, 3), 220)
+
+    user_msg = _build_user_message(
+        challenge_title=challenge_title,
+        challenge_description=challenge_description,
+        source_code=source_code,
+        error_output=error_output,
+        fail_count=fail_count,
     )
 
     message = await client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=120,
-        system=_SYSTEM_PROMPT,
+        max_tokens=max_tokens,
+        system=DAKI_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_msg}],
     )
 

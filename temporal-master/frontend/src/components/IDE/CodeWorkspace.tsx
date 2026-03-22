@@ -472,6 +472,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, error_output: errorText,
+          fail_count: Math.max(1, failStreak),
         }),
       })
       const data = await res.json()
