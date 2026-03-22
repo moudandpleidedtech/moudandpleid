@@ -44,6 +44,8 @@ class ChallengeOut(BaseModel):
     is_project: bool
     telemetry_goal_time: Optional[int]
     strict_match: bool
+    # Freemium
+    is_free: bool
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -79,6 +81,7 @@ def _build_out(
         is_project=challenge.is_project,
         telemetry_goal_time=challenge.telemetry_goal_time,
         strict_match=challenge.strict_match,
+        is_free=challenge.is_free,
     )
 
 

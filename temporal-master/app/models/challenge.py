@@ -58,3 +58,8 @@ class Challenge(Base):
     # strict_match=True  → comparación exacta (solo normaliza CRLF→LF + strip global)
     # strict_match=False → normalización tolerante (colapsa whitespace redundante)
     strict_match: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+    # ── Freemium — Gancho Narrativo ────────────────────────────────────────────
+    # is_free=True  → accesible sin licencia (L0–L10, demo de enganche)
+    # is_free=False → requiere is_paid=True en el usuario (default para todos)
+    is_free: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
