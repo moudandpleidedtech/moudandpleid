@@ -85,9 +85,10 @@ interface CardProps {
   username: string
   certId: string
   certDate: string
+  rank: string
 }
 
-function CertCard({ username, certId, certDate }: CardProps) {
+function CertCard({ username, certId, certDate, rank }: CardProps) {
   return (
     // Gradient border wrapper (p-[1px] trick)
     <motion.div
@@ -182,9 +183,18 @@ function CertCard({ username, certId, certDate }: CardProps) {
               <p className="text-[11px] tracking-[0.22em] text-white/55 mb-0.5">
                 OPERADOR DE SISTEMAS
               </p>
+              {/* Rank badge */}
+              <motion.p
+                className="text-[11px] tracking-[0.22em] font-bold mb-1"
+                style={{ color: '#FFD700', textShadow: '0 0 12px rgba(255,215,0,0.55)' }}
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 2.2, repeat: Infinity }}
+              >
+                {rank.toUpperCase()}
+              </motion.p>
               <p
-                className="text-[11px] tracking-[0.22em] font-bold"
-                style={{ color: '#BD00FF', textShadow: '0 0 10px rgba(189,0,255,0.5)' }}
+                className="text-[10px] tracking-[0.22em]"
+                style={{ color: 'rgba(189,0,255,0.65)' }}
               >
                 NIVEL 100 · NEXO VENCIDO
               </p>
@@ -236,8 +246,23 @@ function CertCard({ username, certId, certDate }: CardProps) {
           {/* Divider */}
           <div className="h-px bg-gradient-to-r from-transparent via-[#FFD700]/18 to-transparent mb-5" />
 
+          {/* ── SIGNATURE ROW ─────────────────────────────────────────────── */}
+          <div className="flex justify-center py-3 border-t border-b" style={{ borderColor: 'rgba(255,215,0,0.10)' }}>
+            <div className="text-center">
+              <p
+                className="text-[12px] font-bold italic tracking-[0.18em]"
+                style={{ color: '#FFD700', textShadow: '0 0 10px rgba(255,215,0,0.35)', fontStyle: 'italic' }}
+              >
+                DAKI Neuronal Authority
+              </p>
+              <p className="text-[7px] tracking-[0.4em] text-white/18 mt-0.5">
+                AUTORIDAD CENTRAL DE CERTIFICACIÓN — DAKI EdTech v1.0
+              </p>
+            </div>
+          </div>
+
           {/* ── FOOTER ROW ─────────────────────────────────────────────────── */}
-          <div className="flex items-end justify-between pb-7">
+          <div className="flex items-end justify-between pb-7 pt-4">
             <div>
               <p className="text-[7px] tracking-[0.4em] text-white/18 mb-1">
                 IDENTIFICADOR DE CERTIFICADO
@@ -276,8 +301,9 @@ interface Props {
 }
 
 export default function CertificateReveal({ onClose }: Props) {
-  const username = useUserStore(s => s.username) || 'Operador'
-  const userId   = useUserStore(s => s.userId)
+  const username    = useUserStore(s => s.username) || 'Operador'
+  const userId      = useUserStore(s => s.userId)
+  const currentRank = useUserStore(s => s.currentRank) || 'Netzach Operative'
   const [phase, setPhase]             = useState<Phase>('decrypt')
   const [visibleLines, setVisibleLines] = useState(0)
   const [certId]    = useState(generateCertId)
@@ -442,7 +468,7 @@ export default function CertificateReveal({ onClose }: Props) {
             </motion.div>
 
             {/* Certificate */}
-            <CertCard username={username} certId={certId} certDate={certDate} />
+            <CertCard username={username} certId={certId} certDate={certDate} rank={currentRank} />
 
             {/* Download button */}
             <motion.button

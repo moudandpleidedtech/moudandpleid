@@ -36,6 +36,14 @@ class User(Base):
     payment_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
     # Rol administrativo — solo el CEO/admin tiene acceso al dashboard
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+
+    # ── Sistema de Rangos (Prompt 54) ─────────────────────────────────────────
+    # points: acumula level_order por cada desafío completado (métrica curricular)
+    # current_rank: codename del rango actual (ve rank_service.py para la tabla)
+    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
+    current_rank: Mapped[str] = mapped_column(
+        String(60), nullable=False, default="Trainee", server_default="Trainee"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

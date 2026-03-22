@@ -22,6 +22,8 @@ class UserOut(BaseModel):
     current_level: int
     streak_days: int
     is_paid: bool
+    points: int = 0
+    current_rank: str = "Trainee"
     model_config = ConfigDict(from_attributes=True)
 
 

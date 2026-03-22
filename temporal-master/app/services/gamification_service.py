@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.user_progress import UserProgress
 from app.schemas.gamification import ChallengeAttemptResult
 from app.services import activity_service, mastery_service
+from app.services.rank_service import compute_rank, rank_promotes
 
 EFFICIENCY_BONUS_RATE = 0.20
 EFFICIENCY_TIME_THRESHOLD_MS = 50
@@ -97,6 +98,12 @@ class GamificationEngine:
             user.total_xp += xp_earned
             user.current_level = self.calculate_level_from_xp(user.total_xp)
             level_up = user.current_level > old_level
+
+            # ── Rango y points curriculares ───────────────────────────────────
+            new_rank = compute_rank(challenge.level_order)
+            if rank_promotes(user.current_rank, new_rank):
+                user.current_rank = new_rank
+            user.points += challenge.level_order or 0
 
             # Actualiza mapa de maestría con esfuerzo cognitivo real
             await mastery_service.update_mastery_on_completion(

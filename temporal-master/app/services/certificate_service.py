@@ -145,23 +145,47 @@ def _draw_username(c: Canvas, w: float, h: float, username: str) -> None:
     c.drawCentredString(w / 2, h - 80 * mm, username.upper())
 
 
-def _draw_subtitle(c: Canvas, w: float, h: float) -> None:
+def _draw_rank_section(c: Canvas, w: float, h: float, rank: str) -> None:
+    """Muestra el rango del operador y la firma de autoridad."""
     mid_y = h / 2
 
-    # "Validación DAKI" en púrpura
+    # Etiqueta "Rango Certificado"
     c.setFillColor(PURPLE)
-    c.setFont("Helvetica-Bold", 13)
-    c.drawCentredString(w / 2, mid_y + 6 * mm, "Validación DAKI")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(w / 2, mid_y + 8 * mm, "RANGO CERTIFICADO")
 
     # Línea decorativa
     c.setStrokeColor(PURPLE)
     c.setLineWidth(0.6)
-    c.line(w / 2 - 45 * mm, mid_y + 3 * mm, w / 2 + 45 * mm, mid_y + 3 * mm)
+    c.line(w / 2 - 45 * mm, mid_y + 5 * mm, w / 2 + 45 * mm, mid_y + 5 * mm)
 
-    # Nivel 100
+    # Nombre del rango en dorado — elemento principal
+    c.setFillColor(GOLD)
+    c.setFont("Helvetica-Bold", 22)
+    c.drawCentredString(w / 2, mid_y - 4 * mm, rank.upper())
+
+    # Completado
     c.setFillColor(WHITE)
-    c.setFont("Helvetica", 12)
-    c.drawCentredString(w / 2, mid_y - 4 * mm, "Nivel 100 Completado  ·  Nexo Vencido")
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(w / 2, mid_y - 12 * mm, "Nivel 100 Completado  ·  Nexo Vencido")
+
+    # Separador antes de la firma
+    sep_y = mid_y - 20 * mm
+    c.setStrokeColor(GOLD)
+    c.setLineWidth(0.4)
+    c.setDash([3, 4])
+    c.line(w / 2 - 55 * mm, sep_y, w / 2 + 55 * mm, sep_y)
+    c.setDash()
+
+    # Firma de autoridad
+    c.setFillColor(GOLD)
+    c.setFont("Helvetica-BoldOblique", 11)
+    c.drawCentredString(w / 2, sep_y - 7 * mm, "DAKI Neuronal Authority")
+
+    # Subtítulo firma
+    c.setFillColor(DIM)
+    c.setFont("Helvetica", 8)
+    c.drawCentredString(w / 2, sep_y - 13 * mm, "Autoridad Central de Certificación — DAKI EdTech v1.0")
 
 
 def _draw_daki_badge(c: Canvas, w: float, h: float) -> None:
@@ -228,22 +252,29 @@ def _draw_pixel_grid(c: Canvas, x: float, y: float, cols: int = 6, rows: int = 4
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def build_certificate_pdf(username: str) -> tuple[bytes, str]:
+def build_certificate_pdf(
+    username: str,
+    rank: str = "Netzach Operative",
+) -> tuple[bytes, str]:
     """
     Genera el PDF del certificado en memoria.
 
+    Args:
+        username: nombre del operador (se muestra en mayúsculas)
+        rank:     codename del rango (default "Netzach Operative" para L100)
+
     Returns:
-        (pdf_bytes, cert_id)  — los bytes del PDF y el ID único emitido.
+        (pdf_bytes, cert_id)  — bytes del PDF y el ID único emitido.
     """
     buf = io.BytesIO()
     page_size = landscape(A4)
     w, h = page_size
 
     c = Canvas(buf, pagesize=page_size)
-    c.setTitle(f"DAKI EdTech — Certificado de Completado: {username}")
-    c.setAuthor("DAKI EdTech")
-    c.setSubject("Certificado oficial de completado del programa de Python — DAKI EdTech")
-    c.setCreator("DAKI EdTech Platform")
+    c.setTitle(f"DAKI EdTech — Certificado {rank}: {username}")
+    c.setAuthor("DAKI Neuronal Authority")
+    c.setSubject(f"Certificado oficial — {rank} — DAKI EdTech")
+    c.setCreator("DAKI EdTech Platform v1.0")
 
     cert_id  = _cert_id()
     date_str = _today()
@@ -256,7 +287,7 @@ def build_certificate_pdf(username: str) -> tuple[bytes, str]:
     _draw_header_band(c, w, h)
     _draw_title(c, w, h)
     _draw_username(c, w, h, username)
-    _draw_subtitle(c, w, h)
+    _draw_rank_section(c, w, h, rank)
     _draw_daki_badge(c, w, h)
     _draw_metadata_row(c, w, h, cert_id, date_str)
 

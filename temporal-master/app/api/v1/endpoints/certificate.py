@@ -118,7 +118,10 @@ async def download_certificate(
     user = await _verify_level100_completion(user_id, db)
 
     # ── 2. Genera el PDF en memoria ───────────────────────────────────────────
-    pdf_bytes, cert_id = build_certificate_pdf(username=user.username)
+    pdf_bytes, cert_id = build_certificate_pdf(
+        username=user.username,
+        rank=user.current_rank or "Netzach Operative",
+    )
 
     # ── 3. Devuelve como streaming sin tocar el disco ─────────────────────────
     filename = f"GG_Certificado_Nivel100_{cert_id}.pdf"

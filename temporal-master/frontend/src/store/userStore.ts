@@ -16,12 +16,16 @@ interface UserState {
   completedChallengeIds: string[]
   badges: string[]
   dakiLevel: 1 | 2 | 3   // nivel evolutivo de DAKI (sincronizado con el backend)
+  currentRank: string     // codename del rango actual (rank_service.py)
+  points: number          // puntos curriculares acumulados
   setUser: (_user: {
     id: string
     username: string
     current_level: number
     total_xp: number
     streak_days: number
+    current_rank?: string
+    points?: number
   }) => void
   applyGamificationResult: (_result: GamificationResult) => void
   markChallengeCompleted: (_id: string) => void
@@ -42,8 +46,10 @@ export const useUserStore = create<UserState>()(
       completedChallengeIds: [],
       badges: [],
       dakiLevel: 1,
+      currentRank: 'Trainee',
+      points: 0,
 
-      setUser: ({ id, username, current_level, total_xp, streak_days }) =>
+      setUser: ({ id, username, current_level, total_xp, streak_days, current_rank, points }) =>
         set({
           userId: id,
           username,
@@ -51,6 +57,8 @@ export const useUserStore = create<UserState>()(
           totalXp: total_xp,
           streakDays: streak_days,
           previousLevel: current_level,
+          currentRank: current_rank ?? 'Trainee',
+          points: points ?? 0,
         }),
 
       applyGamificationResult: ({ new_level, new_total_xp }) =>
@@ -87,6 +95,8 @@ export const useUserStore = create<UserState>()(
           completedChallengeIds: [],
           badges: [],
           dakiLevel: 1,
+          currentRank: 'Trainee',
+          points: 0,
         }),
     }),
     {
@@ -100,6 +110,8 @@ export const useUserStore = create<UserState>()(
         completedChallengeIds: state.completedChallengeIds,
         badges:                state.badges,
         dakiLevel:             state.dakiLevel,
+        currentRank:           state.currentRank,
+        points:                state.points,
       }),
     }
   )
