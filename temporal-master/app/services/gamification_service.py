@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.user_progress import UserProgress
 from app.schemas.gamification import ChallengeAttemptResult
 from app.services import activity_service, mastery_service
+from app.services.memory_service import record_event
 from app.services.rank_service import compute_rank, rank_promotes
 
 EFFICIENCY_BONUS_RATE = 0.20
@@ -101,9 +102,27 @@ class GamificationEngine:
 
             # ── Rango y points curriculares ───────────────────────────────────
             new_rank = compute_rank(challenge.level_order)
-            if rank_promotes(user.current_rank, new_rank):
+            old_rank = user.current_rank
+            if rank_promotes(old_rank, new_rank):
                 user.current_rank = new_rank
+                await record_event(
+                    db=db,
+                    user_id=user_id,
+                    event_type="subida_rango",
+                    context_data={"old_rank": old_rank, "new_rank": new_rank},
+                    challenge_id=challenge_id,
+                )
             user.points += challenge.level_order or 0
+
+            # ── Memoria: exito_rapido si es el primer intento ─────────────────
+            if progress.attempts == 1:
+                await record_event(
+                    db=db,
+                    user_id=user_id,
+                    event_type="exito_rapido",
+                    context_data={"challenge_title": challenge.title},
+                    challenge_id=challenge_id,
+                )
 
             # Actualiza mapa de maestría con esfuerzo cognitivo real
             await mastery_service.update_mastery_on_completion(

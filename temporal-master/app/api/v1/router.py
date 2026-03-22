@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import activity, admin, analytics, boss, bounty, certificate, challenges, compiler, duels, evaluate, gamification, health, hint, intercept, leaderboard, payments, sectors, simulate, telemetry, users
+from app.api.v1.endpoints import activity, admin, analytics, boss, bounty, certificate, challenges, compiler, daki, duels, evaluate, gamification, health, hint, intercept, leaderboard, payments, sectors, simulate, telemetry, users
 
 router = APIRouter(prefix="/api/v1")
 
@@ -24,3 +24,4 @@ router.include_router(bounty.router)
 router.include_router(certificate.router, tags=["certificate"])
 router.include_router(intercept.router)
 router.include_router(payments.router, tags=["payments"])
+router.include_router(daki.router, tags=["daki"])

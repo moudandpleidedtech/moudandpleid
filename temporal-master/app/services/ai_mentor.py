@@ -31,15 +31,19 @@ def _build_user_message(
     source_code: str,
     error_output: str,
     fail_count: int,
+    operator_history: str = "",
 ) -> str:
     """
     Construye el mensaje del usuario que recibe el modelo.
-    Inyecta la directiva de escalación antes del contexto de la incursión.
+    Inyecta la directiva de escalación y el historial del Operador (si existe).
     """
     escalation = get_escalation_directive(fail_count)
 
+    history_block = f"\n{operator_history}\n" if operator_history else ""
+
     return (
-        f"{escalation}\n\n"
+        f"{escalation}\n"
+        f"{history_block}\n"
         f"--- CONTEXTO DE INCURSIÓN ---\n"
         f"Nombre: {challenge_title}\n"
         f"Descripción: {challenge_description}\n\n"
@@ -55,6 +59,7 @@ async def get_hint(
     source_code: str,
     error_output: str,
     fail_count: int = 1,
+    operator_history: str = "",
 ) -> str:
     """
     Genera una pista táctica calibrada al nivel de falla del Operador.
@@ -66,6 +71,7 @@ async def get_hint(
         error_output:          Salida o error obtenido (truncado a 600 chars).
         fail_count:            Número de intentos fallidos en esta incursión.
                                1 → sutil | 2 → conceptual | ≥3 → reframe.
+        operator_history:      Sección OPERATOR_HISTORY formateada desde memory_service.
 
     Returns:
         Pista táctica como string (máx 2–4 líneas según nivel).
@@ -83,6 +89,7 @@ async def get_hint(
         source_code=source_code,
         error_output=error_output,
         fail_count=fail_count,
+        operator_history=operator_history,
     )
 
     message = await client.messages.create(

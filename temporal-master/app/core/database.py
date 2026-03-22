@@ -55,6 +55,7 @@ async def init_db() -> None:
     import app.models.bitacora_read  # noqa: F401  — add_daki_bitacora_tracking
     import app.models.user_metrics   # noqa: F401  — user telemetry
     import app.models.daki_interception  # noqa: F401  — Protocolo Memoria Muscular
+    import app.models.user_core_memory   # noqa: F401  — Módulo de Memoria Evolutiva
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -178,4 +179,23 @@ async def init_db() -> None:
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_ubr_user_archivo "
             "ON user_bitacora_read (user_id, archivo_id)"
+        ))
+
+        # Freemium gate (Prompt 52)
+        await conn.execute(text(
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS is_free BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+
+        # Sistema de Rangos (Prompt 54)
+        for stmt in [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS current_rank VARCHAR(60) NOT NULL DEFAULT 'Trainee'",
+        ]:
+            await conn.execute(text(stmt))
+
+        # Memoria Evolutiva (Prompt 56) — user_core_memory se crea vía create_all.
+        # El índice en user_id acelera get_recent_events().
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_user_core_memory_user_id "
+            "ON user_core_memory (user_id)"
         ))

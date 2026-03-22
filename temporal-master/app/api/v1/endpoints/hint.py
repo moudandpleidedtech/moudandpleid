@@ -9,6 +9,11 @@ from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
 from app.services import ai_mentor
+from app.services.memory_service import (
+    format_operator_history,
+    get_recent_events,
+    record_event,
+)
 
 router = APIRouter()
 
@@ -63,12 +68,30 @@ async def request_hint(
         db.add(progress)
     progress.hints_used = (progress.hints_used or 0) + 1
 
+    # ── Memoria Evolutiva: registrar error_frecuente y recuperar historial ─────
+    if payload.fail_count >= 2:
+        await record_event(
+            db=db,
+            user_id=payload.user_id,
+            event_type="error_frecuente",
+            context_data={
+                "challenge_title": challenge.title,
+                "fail_count": payload.fail_count,
+                "error_type": payload.error_output[:120] if payload.error_output else "",
+            },
+            challenge_id=payload.challenge_id,
+        )
+
+    recent_events = await get_recent_events(db, payload.user_id, limit=5)
+    operator_history = format_operator_history(recent_events)
+
     hint = await ai_mentor.get_hint(
         challenge_title=challenge.title,
         challenge_description=challenge.description,
         source_code=payload.source_code,
         error_output=payload.error_output,
         fail_count=max(1, payload.fail_count),
+        operator_history=operator_history,
     )
 
     return HintResponse(hint=hint)
