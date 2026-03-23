@@ -7,8 +7,9 @@ export const metadata: Metadata = {
   title: 'DAKI EdTech — Aprende Python jugando',
   description: 'DAKI EdTech es la plataforma EdTech gamificada donde aprendes Python guiado por DAKI, tu instructora de IA táctica.',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
   openGraph: {
     title: 'DAKI EdTech',
