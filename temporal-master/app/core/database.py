@@ -211,3 +211,9 @@ async def init_db() -> None:
             "UPDATE tactical_access_keys SET code_string = UPPER(code_string) "
             "WHERE code_string != UPPER(code_string)"
         ))
+
+        # Freemium gate — sectores 00 y 01 siempre gratuitos (idempotente)
+        await conn.execute(text(
+            "UPDATE challenges SET is_free = TRUE "
+            "WHERE sector_id IN (0, 1) AND is_free = FALSE"
+        ))

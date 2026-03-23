@@ -5,16 +5,37 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import func, select, text
 
 from app.api.v1.router import router
 from app.core.config import settings
-from app.core.database import init_db
+from app.core.database import AsyncSessionLocal, init_db
 from app.core.rate_limit import limiter
+
+
+async def _auto_seed() -> None:
+    """Si la tabla challenges está vacía, carga todos los sectores automáticamente."""
+    from app.models.challenge import Challenge  # noqa: F401 — registrar modelo
+    async with AsyncSessionLocal() as session:
+        count = await session.scalar(select(func.count()).select_from(Challenge))
+    if count and count > 0:
+        return  # Ya hay datos — nada que hacer
+
+    print("🌱  [auto-seed] Base de datos vacía — iniciando inyección de contenido...")
+    try:
+        from scripts.seed_master import seed as seed_all
+        await seed_all()
+        from scripts.seed_tactical_keys import seed as seed_keys
+        await seed_keys()
+        print("✅  [auto-seed] Contenido cargado correctamente.")
+    except Exception as exc:  # pragma: no cover
+        print(f"⚠️  [auto-seed] Error durante la inyección: {exc}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await _auto_seed()
     yield
 
 
