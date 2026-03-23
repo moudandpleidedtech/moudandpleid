@@ -318,9 +318,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const consoleRef       = useRef<HTMLDivElement>(null)
   const codeDraftRef     = useRef<ReturnType<typeof setTimeout>>()  // debounce para localStorage
   const challengeStartMs = useRef<number>(Date.now())               // para telemetría time_spent
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef        = useRef<any>(null)                        // instancia Monaco editor
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const decorationsRef   = useRef<any>(null)                        // IEditorDecorationsCollection
 
   const [failStreak, setFailStreak]       = useState(0)
@@ -1299,7 +1297,6 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 theme="vs-dark"
                 value={code}
                 onChange={(val) => handleCodeChange(val ?? '')}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onMount={(editor: any) => { editorRef.current = editor }}
                 options={{
                   minimap: { enabled: false },

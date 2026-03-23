@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
 import HubAudio from '@/components/UI/HubAudio'
@@ -237,7 +237,7 @@ export default function HubPage() {
             PYTHON QUEST
           </span>
           <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 hidden sm:block">
-            // CENTRO DE MANDO ACTIVO
+            {'// CENTRO DE MANDO ACTIVO'}
           </span>
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/45">

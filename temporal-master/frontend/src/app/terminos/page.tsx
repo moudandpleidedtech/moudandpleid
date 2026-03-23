@@ -97,7 +97,7 @@ function LegalDoc() {
             Sistema de Entrenamiento Táctico Asistido por Inteligencia Artificial
           </strong>
           . Al adquirir nuestros servicios, el usuario (en adelante,{' '}
-          <em className="text-[#00FF41]/80">"El Operador"</em>) obtiene acceso a{' '}
+          <em className="text-[#00FF41]/80">&quot;El Operador&quot;</em>) obtiene acceso a{' '}
           <strong className="text-[#00FF41]/90">DAKI</strong>, nuestra Entidad Neuronal de
           acompañamiento, y a los entornos de simulación interactiva.
         </p>
@@ -123,7 +123,7 @@ function LegalDoc() {
           de formación académica reglada.
         </p>
         <Callout type="info">
-          Los <strong>"Rangos de Operador"</strong> y certificados expedidos son
+          Los <strong>&quot;Rangos de Operador&quot;</strong> y certificados expedidos son
           reconocimientos internos de destreza lógica dentro de nuestro ecosistema y{' '}
           <strong>no poseen validez oficial</strong> respaldada por ministerios de educación
           o entidades gubernamentales.
@@ -145,7 +145,7 @@ function LegalDoc() {
         </ul>
         <Callout type="warn">
           Todo el contenido narrativo, el lore, el diseño de las misiones y la{' '}
-          <strong>"Personalidad y Lógica de Respuesta de DAKI"</strong> son propiedad
+          <strong>&quot;Personalidad y Lógica de Respuesta de DAKI&quot;</strong> son propiedad
           intelectual exclusiva de DAKI EdTech. Queda{' '}
           <strong>estrictamente prohibida</strong> la extracción automatizada (scraping),
           copia, o reproducción del contenido de las simulaciones para su uso en plataformas
@@ -289,7 +289,7 @@ function LegalDoc() {
         <Callout type="info">
           En caso de latencias o caídas de los servidores centrales de IA, el sistema
           entrará en{' '}
-          <strong>modo de contingencia ("Respuestas Offline")</strong> para preservar
+          <strong>modo de contingencia (&quot;Respuestas Offline&quot;)</strong> para preservar
           la inmersión del Operador hasta que se restablezca la conexión total. Las
           interrupciones planificadas se anunciarán con antelación cuando sea posible.
         </Callout>

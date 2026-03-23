@@ -23,7 +23,7 @@ function TermsCheckbox({
   onChange,
 }: {
   checked: boolean
-  onChange: (v: boolean) => void
+  onChange: (_v: boolean) => void
 }) {
   return (
     <label className="flex items-start gap-3 cursor-pointer group select-none mt-5">
@@ -283,7 +283,7 @@ export default function LoginPage() {
               {/* Bloque legal */}
               <div className="border border-[#00FF41]/12 bg-[#00FF41]/3 px-4 py-4">
                 <div className="text-xs text-[#00FF41]/30 tracking-[0.3em] uppercase mb-3">
-                  // Protocolo Legal — Sector 00
+                  {'// Protocolo Legal — Sector 00'}
                 </div>
                 <TermsCheckbox checked={termsAccepted} onChange={setTermsAccepted} />
               </div>

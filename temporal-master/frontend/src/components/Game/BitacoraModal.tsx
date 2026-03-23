@@ -83,7 +83,7 @@ interface BitacoraModalProps {
 
 // ─── Componente ────────────────────────────────────────────────────────────────
 
-export default function BitacoraModal({ isOpen, onClose, userId, completedOrders }: BitacoraModalProps) {
+export default function BitacoraModal({ isOpen, onClose, userId, completedOrders: _completedOrders }: BitacoraModalProps) {
   const [archivos, setArchivos] = useState<Archivo[]>([])
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Archivo | null>(null)

@@ -370,7 +370,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, username: string) =
 
           {error && (
             <p className="text-xs font-mono" style={{ color: '#ef4444' }}>
-              // ERROR: {error}
+              {'// ERROR: '}{error}
             </p>
           )}
 
@@ -527,7 +527,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
         <main className={CONTENT_CLS} style={{ background: '#050508' }}>
           <div className="flex items-center justify-center h-[60vh]">
             <span className="font-mono text-sm animate-pulse" style={{ color: '#00FF41' }}>
-              // CARGANDO DATOS DEL NEXO...
+              {'// CARGANDO DATOS DEL NEXO...'}
             </span>
           </div>
         </main>
@@ -541,7 +541,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
         <Sidebar active={section} onNav={setSection} username={username} onLogout={onLogout} />
         <main className={CONTENT_CLS} style={{ background: '#050508' }}>
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-            <span className="font-mono text-sm" style={{ color: '#ef4444' }}>// {error}</span>
+            <span className="font-mono text-sm" style={{ color: '#ef4444' }}>{'// '}{error}</span>
             <button
               onClick={fetchAll}
               className="font-mono text-xs px-4 py-2 tracking-widest"
@@ -794,7 +794,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
                       {dropOff.levels.filter(lv => lv.is_bottleneck).length === 0 && (
                         <tr>
                           <td colSpan={6} className="px-4 py-6 text-center" style={{ color: '#374151' }}>
-                            // Sin cuellos de botella detectados
+                            {'// Sin cuellos de botella detectados'}
                           </td>
                         </tr>
                       )}
@@ -901,7 +901,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
                       {recentUsers.length === 0 && (
                         <tr>
                           <td colSpan={7} className="px-4 py-8 text-center" style={{ color: '#374151' }}>
-                            // Sin usuarios registrados aún
+                            {'// Sin usuarios registrados aún'}
                           </td>
                         </tr>
                       )}

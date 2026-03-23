@@ -76,7 +76,7 @@ function BriefingPanel({
   onDeploy,
 }: {
   mission: Mission | null
-  onDeploy: (m: Mission) => void
+  onDeploy: (_m: Mission) => void
 }) {
   if (!mission) {
     return (
