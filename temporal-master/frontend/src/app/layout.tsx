@@ -6,6 +6,10 @@ import NeuralInstabilityEvent from '@/components/UI/NeuralInstabilityEvent'
 export const metadata: Metadata = {
   title: 'DAKI EdTech — Aprende Python jugando',
   description: 'DAKI EdTech es la plataforma EdTech gamificada donde aprendes Python guiado por DAKI, tu instructora de IA táctica.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
   openGraph: {
     title: 'DAKI EdTech',
     description: 'Aprende Python en 100 niveles con mecánicas de videojuego y la guía de DAKI.',
