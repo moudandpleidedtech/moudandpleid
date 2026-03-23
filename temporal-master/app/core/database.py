@@ -4,12 +4,10 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
 
-# SSL requerido para Supabase y cualquier BD en producción (DB_SSL=true)
-_connect_args: dict = {}
-if settings.DB_SSL:
-    import ssl as _ssl
-    _ssl_ctx = _ssl.create_default_context()
-    _connect_args = {"ssl": _ssl_ctx}
+# SSL para Neon (y cualquier Postgres en producción).
+# asyncpg acepta ssl=True directamente; no usar ssl.create_default_context()
+# porque Neon ya incluye ?ssl=require en la URL y combinarlos causa conflicto.
+_connect_args: dict = {"ssl": True} if settings.DB_SSL else {}
 
 engine = create_async_engine(
     settings.DATABASE_URL,
