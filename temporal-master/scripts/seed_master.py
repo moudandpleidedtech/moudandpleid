@@ -64,6 +64,7 @@ def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
     catalog: list[dict[str, Any]] = []
 
     sources = [
+        ("scripts.seed_sector_00", "SECTOR_00"),
         ("scripts.seed_sector_01", "SECTOR_01"),
         ("scripts.seed_sector_02", "SECTOR_02"),
         ("scripts.seed_sector_03", "SECTOR_03"),
