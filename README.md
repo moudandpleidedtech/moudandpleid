@@ -1,2 +1,2 @@
 # moudandpleid
-Poryecto EdTech
+Proyecto EdTech
