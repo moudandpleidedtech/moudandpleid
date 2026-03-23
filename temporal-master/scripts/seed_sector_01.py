@@ -496,8 +496,8 @@ SECTOR_01 = [
         "description": (
             "DAKI genera credenciales formateadas para cada operador.\n\n"
             "Lee un `nombre` y un `nivel` (entero). Imprime exactamente:\n"
-            "`Operador {nombre} — Nivel {nivel}`\n\n"
-            "Ejemplo: `DAKI` y `7` → `Operador DAKI — Nivel 7`."
+            "`Operador {nombre} - Nivel {nivel}`\n\n"
+            "Ejemplo: `DAKI` y `7` → `Operador DAKI - Nivel 7`."
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "medium",
@@ -510,14 +510,14 @@ SECTOR_01 = [
         "phase": "fundamentos",
         "concepts_taught_json": json.dumps(["f-strings", "formato", "variables mixtas"]),
         "initial_code": (
-            "# MISIÓN: Imprime 'Operador {nombre} — Nivel {nivel}' usando f-string\n"
+            "# MISIÓN: Imprime 'Operador {nombre} - Nivel {nivel}' usando f-string\n"
             "\n"
             "nombre = input()\n"
             "nivel  = int(input())\n"
             "\n"
             '# print(f"Operador ...)\n'
         ),
-        "expected_output": "Operador DAKI — Nivel 7",
+        "expected_output": "Operador DAKI - Nivel 7",
         "test_inputs_json": json.dumps(["DAKI", "7"]),
         "lore_briefing": (
             "El sistema de autenticación del Nexo emite credenciales con formato estándar. "
@@ -525,12 +525,12 @@ SECTOR_01 = [
             "con nombre y nivel de acceso."
         ),
         "pedagogical_objective": "Usar f-strings para formatear texto dinámico con variables de distintos tipos.",
-        "syntax_hint": 'print(f"Operador {nombre} — Nivel {nivel}")',
+        "syntax_hint": 'print(f"Operador {nombre} - Nivel {nivel}")',
         "theory_content": THEORY_N8,
         "hints_json": json.dumps([
             "Los f-strings te permiten insertar variables dentro de un texto usando {}. Empieza con f\"...\"",
             'Pon la f antes de la comilla y usa {} para cada variable: f"Texto {variable}"',
-            'La solución: print(f"Operador {nombre} — Nivel {nivel}") — nota el guión largo —.',
+            'La solución: print(f"Operador {nombre} - Nivel {nivel}") — usa guión simple (-).',
         ]),
     },
     # ── NIVEL 9 ──────────────────────────────────────────────────────────────

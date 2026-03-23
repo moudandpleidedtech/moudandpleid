@@ -12,7 +12,24 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/pythonquest"
 
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",       # dev — Next.js
+        "https://dakiedtech.com",      # prod dominio propio
+        "https://www.dakiedtech.com",  # prod con www
+    ]
+
+    # URL dinámica del frontend en Vercel (p. ej. https://daki-edtech.vercel.app).
+    # Se inyecta en CORS_origins en tiempo de ejecución.
+    # Cargar en Render: FRONTEND_URL=https://<tu-proyecto>.vercel.app
+    FRONTEND_URL: str = ""
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """ALLOWED_ORIGINS + FRONTEND_URL si está definido."""
+        origins = list(self.ALLOWED_ORIGINS)
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        return origins
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"

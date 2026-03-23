@@ -63,9 +63,9 @@ export default function TopNav() {
           className="text-[#00FF41] font-bold"
           style={{ textShadow: '0 0 6px #00FF4180' }}
         >
-          NVL {level}
+          RANGO {level}
         </span>
-        {/* Botón de pánico — siempre visible, a la derecha del NVL */}
+        {/* Botón de pánico — siempre visible, a la derecha del RANGO */}
         <button
           onClick={handleLogout}
           className="ml-4 text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all"
@@ -76,12 +76,6 @@ export default function TopNav() {
 
       {/* Accesos rápidos */}
       <div className="flex items-center gap-2">
-        <Link
-          href="/bounty"
-          className="text-[10px] tracking-[0.18em] text-[#FFD700]/45 hover:text-[#FFD700] border border-[#FFD700]/15 hover:border-[#FFD700]/55 px-2.5 py-0.5 transition-all duration-150 hidden lg:inline-flex"
-        >
-          BOUNTY
-        </Link>
         <Link
           href="/arena"
           className="text-[10px] tracking-[0.18em] text-[#FF0040]/45 hover:text-[#FF0040] border border-[#FF0040]/15 hover:border-[#FF0040]/55 px-2.5 py-0.5 transition-all duration-150 hidden lg:inline-flex"

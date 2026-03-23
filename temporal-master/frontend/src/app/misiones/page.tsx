@@ -372,7 +372,7 @@ export default function MisionesPage() {
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
           <span className="text-[#00FF41]/30 hidden sm:block">{username}</span>
-          <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
+          <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
           {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
         </div>
@@ -629,38 +629,6 @@ export default function MisionesPage() {
                       </div>
                     </button>
 
-                    {/* BOUNTIES IA */}
-                    <div className="px-5 pt-4 pb-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="h-px flex-1 bg-[#FFD700]/10" />
-                        <span className="text-[8px] tracking-[0.4em] text-[#FFD700]/30">BOUNTIES IA</span>
-                        <div className="h-px flex-1 bg-[#FFD700]/10" />
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => router.push('/bounty')}
-                      className="w-full text-left px-5 py-3.5 border-l-4 border-l-yellow-800/40 transition-all duration-200 cursor-pointer hover:translate-x-1"
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(255,215,0,0.05)'
-                        e.currentTarget.style.boxShadow = '0 0 16px rgba(255,215,0,0.08), inset 0 0 16px rgba(255,215,0,0.04)'
-                        e.currentTarget.style.borderLeftColor = 'rgba(234,179,8,0.5)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.boxShadow = 'none'
-                        e.currentTarget.style.borderLeftColor = 'rgba(133,77,14,0.4)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[#FFD700]/50">◆</span>
-                          <span className="text-[11px] font-bold tracking-wide text-[#FFD700]/65">
-                            MISIONES BOUNTY
-                          </span>
-                        </div>
-                        <span className="text-[8px] tracking-widest text-[#FFD700]/30 border border-[#FFD700]/15 px-1.5 py-0.5">IA</span>
-                      </div>
-                    </button>
                   </>
                 )}
               </>

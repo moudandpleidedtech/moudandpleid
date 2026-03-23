@@ -56,6 +56,7 @@ async def init_db() -> None:
     import app.models.user_metrics   # noqa: F401  — user telemetry
     import app.models.daki_interception  # noqa: F401  — Protocolo Memoria Muscular
     import app.models.user_core_memory   # noqa: F401  — Módulo de Memoria Evolutiva
+    import app.models.tactical_key       # noqa: F401  — Llaves de Override Táctico (Prompt 66)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -198,4 +199,17 @@ async def init_db() -> None:
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_user_core_memory_user_id "
             "ON user_core_memory (user_id)"
+        ))
+
+        # Llaves de Override Táctico (Prompt 66) — se crea vía create_all.
+        # code_string tiene UNIQUE index del modelo; este índice adicional
+        # acelera la búsqueda case-insensitive en el endpoint de redención.
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_tactical_keys_code "
+            "ON tactical_access_keys (code_string)"
+        ))
+        # Normalizar codes existentes a UPPER (idempotente en tabla nueva)
+        await conn.execute(text(
+            "UPDATE tactical_access_keys SET code_string = UPPER(code_string) "
+            "WHERE code_string != UPPER(code_string)"
         ))

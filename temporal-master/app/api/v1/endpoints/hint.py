@@ -1,11 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
 from app.services import ai_mentor
@@ -40,7 +41,9 @@ class HintResponse(BaseModel):
         "cuando el usuario lleva 3 o más intentos fallidos en un desafío Python."
     ),
 )
+@limiter.limit("10/minute")
 async def request_hint(
+    request: Request,
     payload: HintRequest,
     db: AsyncSession = Depends(get_db),
 ) -> HintResponse:

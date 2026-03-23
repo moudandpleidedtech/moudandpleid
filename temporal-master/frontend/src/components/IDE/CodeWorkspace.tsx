@@ -35,9 +35,11 @@ interface Challenge {
   completed: boolean
   unlocked?: boolean
   theory_content?: string | null
+  lore_briefing?: string | null
   level_order?: number | null
   challenge_type?: string
   hints?: string[]
+  is_free?: boolean
 }
 
 interface ChallengeListItem {
@@ -50,7 +52,7 @@ interface ChallengeListItem {
 
 interface ConsoleLine {
   text: string
-  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention'
+  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention' | 'daki-cli'
 }
 
 interface ErrorInfo {
@@ -101,19 +103,6 @@ const TUTORIAL_STEP_CODES: Record<number, string> = {
   4: 'def finalizar_enlace():\n    print("Enlace Listo")\n\nprint(finalizar_enlace())\n',
 }
 
-// ─── Mensajes DAKI por tipo de error ─────────────────────────────────────────
-
-const DAKI_ERROR_MESSAGES: Record<string, string> = {
-  SyntaxError:      '[DAKI]: Anomalía de sintaxis en la Línea {line}. Te falta algún símbolo — ":", paréntesis o comillas.',
-  IndentationError: '[DAKI]: Desalineación de energía en la Línea {line}. Los espacios al inicio deben ser múltiplos de 4.',
-  NameError:        '[DAKI]: En la Línea {line} invocas una variable o función que no existe en los registros del Nexo.',
-  TypeError:        '[DAKI]: Conflicto de tipo en la Línea {line}. Estás mezclando señales incompatibles (ej. texto + número).',
-  ValueError:       '[DAKI]: Valor inválido en la Línea {line}. El dato recibido no puede procesarse con esa operación.',
-  AttributeError:   '[DAKI]: En la Línea {line} accedes a un atributo que no existe en ese objeto.',
-  IndexError:       '[DAKI]: Desbordamiento de índice en la Línea {line}. Estás fuera de los límites de la lista.',
-  KeyError:         '[DAKI]: Clave ausente en la Línea {line}. Esa clave no existe en el diccionario.',
-  ZeroDivisionError:'[DAKI]: División por cero en la Línea {line}. El Nexo no puede procesar el infinito.',
-}
 
 const KEYWORD_GLOW: Record<string, string> = {
   def:    '#60A5FA',
@@ -142,11 +131,11 @@ function NivelSubidoOverlay({ level }: { level: number }) {
         transition={{ type: 'spring', stiffness: 280, damping: 22 }}>
         <div className="font-mono font-black tracking-[0.2em] text-7xl text-[#00FF41]"
           style={{ textShadow: '0 0 20px #00FF41, 0 0 60px #00FF4180' }}>
-          NIVEL ARRIBA
+          RANGO ASCENDIDO
         </div>
         <motion.div className="mt-3 font-mono text-3xl text-[#00FF41]/80 tracking-widest"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          NIVEL {level}
+          RANGO {level}
         </motion.div>
         <motion.div className="absolute inset-[-2rem] border border-[#00FF41]/30"
           animate={{ opacity: [0.3, 0.8, 0.3] }} transition={{ duration: 1, repeat: Infinity }} />
@@ -198,6 +187,53 @@ function NetworkErrorFallback({ onRetry }: { onRetry: () => void }) {
   )
 }
 
+// ─── Intel Drawer: renderiza theory_content con formato cyberpunk mínimo ──────
+
+function TheoryRenderer({ text }: { text: string }) {
+  const lines = text.split('\n')
+  return (
+    <div className="space-y-0.5">
+      {lines.map((line, i) => {
+        if (line.startsWith('# '))
+          return (
+            <div key={i} className="text-[#00FF41] font-black text-xs tracking-[0.2em] uppercase mt-5 mb-1"
+              style={{ textShadow: '0 0 10px rgba(0,255,65,0.4)' }}>
+              {line.slice(2)}
+            </div>
+          )
+        if (line.startsWith('## '))
+          return (
+            <div key={i} className="text-[#00FF41]/80 font-bold text-[11px] tracking-[0.15em] uppercase mt-3 mb-0.5">
+              {line.slice(3)}
+            </div>
+          )
+        if (line.startsWith('```') || line === '```')
+          return null
+        if (!line.trim())
+          return <div key={i} className="h-2" />
+
+        // inline: `code` and **bold**
+        const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/)
+        if (parts.length > 1) {
+          return (
+            <div key={i} className="text-[#00FF41]/65 text-[11px] leading-6">
+              {parts.map((p, j) => {
+                if (p.startsWith('`') && p.endsWith('`'))
+                  return <code key={j} className="text-[#00FF41] bg-[#00FF41]/10 px-1 rounded text-[10px] font-mono">{p.slice(1, -1)}</code>
+                if (p.startsWith('**') && p.endsWith('**'))
+                  return <strong key={j} className="text-[#00FF41]/90 font-bold">{p.slice(2, -2)}</strong>
+                return <span key={j}>{p}</span>
+              })}
+            </div>
+          )
+        }
+        return <div key={i} className="text-[#00FF41]/65 text-[11px] leading-6">{line}</div>
+      })}
+    </div>
+  )
+}
+
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function CodeWorkspace({ challengeId }: Props) {
@@ -205,7 +241,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const {
     userId, username, level, previousLevel, totalXp, streakDays,
     completedChallengeIds, applyGamificationResult, markChallengeCompleted,
-    dakiLevel,
+    dakiLevel, isPaid, setIsPaid,
   } = useUserStore()
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
@@ -256,6 +292,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   // Paywall modal: se muestra si el backend devuelve 402
   const [showPaywall, setShowPaywall] = useState(false)
+
+  // ── Intel Drawer (Fase 1) ─────────────────────────────────────────────────
+  const [showIntelDrawer, setShowIntelDrawer] = useState(false)
+
+  // ── DAKI CLI (Fase 2) ─────────────────────────────────────────────────────
+  const [cliInput, setCliInput]   = useState('')
+  const [cliLoading, setCliLoading] = useState(false)
 
   // Intervención proactiva — último error para contexto (Prompt 57)
   const lastErrorRef = useRef('')
@@ -325,6 +368,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
       const msg: string = data.daki_message ?? ''
       if (!msg) return
 
+      // Forzar vista de editor para que el terminal sea visible
+      setViewMode('editor')
+
       // Inyectar en terminal como líneas de intervención prominentes
       setOutput((prev) => [
         ...prev,
@@ -346,6 +392,46 @@ export default function CodeWorkspace({ challengeId }: Props) {
     onStuck: handleStuck,
     enabled: hydrated && !!userId && !!challengeId,
   })
+
+  // ── DAKI CLI: envía la pregunta del Operador y muestra respuesta en terminal ─
+  const handleDakiAsk = useCallback(async () => {
+    const q = cliInput.trim()
+    if (!q || cliLoading || !userId || !challengeId) return
+    setCliInput('')
+    setCliLoading(true)
+
+    setOutput((prev) => [
+      ...prev,
+      { text: `> ${q}`, kind: 'daki-cli' as const },
+    ])
+    scrollConsole()
+
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/daki/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, challenge_id: challengeId, question: q }),
+      })
+      const data = await res.json()
+      const reply: string = data.daki_message ?? '// [DAKI] Sin señal.'
+      setOutput((prev) => [
+        ...prev,
+        ...reply.split('\n').filter(Boolean).map((line) => ({
+          text: `[DAKI] ${line}`, kind: 'daki-cli' as const,
+        })),
+      ])
+      activateWaveform(reply)
+    } catch {
+      setOutput((prev) => [
+        ...prev,
+        { text: '[DAKI] Señal interrumpida. Intenta de nuevo.', kind: 'daki-cli' as const },
+      ])
+    } finally {
+      setCliLoading(false)
+      scrollConsole()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cliInput, cliLoading, userId, challengeId, activateWaveform])
 
   // Carga la lista completa de misiones para detectar el siguiente nodo
   useEffect(() => {
@@ -395,6 +481,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => router.replace('/misiones'), 2200)
           return
         }
+        // Misión de pago + usuario freemium → mostrar paywall inmediatamente
+        if (data.is_free === false && !isPaid) {
+          setShowPaywall(true)
+        }
         // Merge local cache: si ya se completó en esta sesión, reflejarlo sin esperar a la API
         const mergedData = completedChallengeIds.includes(data.id)
           ? { ...data, completed: true }
@@ -413,7 +503,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
       .catch((err) => { if (err?.name !== 'AbortError') {} })
     return () => controller.abort()
-  }, [hydrated, challengeId, userId, router])
+  }, [hydrated, challengeId, userId, isPaid, router])
 
   useEffect(() => {
     if (level > previousLevel) {
@@ -701,19 +791,15 @@ export default function CodeWorkspace({ challengeId }: Props) {
         lastErrorRef.current = data.stderr  // contexto para intervención proactiva
       }
 
-      // ── DAKI Linter: resaltar línea errónea en editor ────────────────────────
+      // ── Error info: decoración del editor + contexto técnico en consola ───────
       const ei = data.error_info as ErrorInfo | null
       if (ei) {
         const lineLabel = ei.line ? `${ei.line}` : '?'
-        const legacyMsg = DAKI_ERROR_MESSAGES[ei.error_type]
-        const consoleLine = legacyMsg
-          ? legacyMsg.replace('{line}', lineLabel)
-          : `[DAKI]: Error en la Línea ${lineLabel} — ${ei.detail}`
-        lines.push({ text: consoleLine, kind: 'enigma' })
+        lines.push({ text: `[${ei.error_type}] Línea ${lineLabel}: ${ei.detail}`, kind: 'stderr' })
         applyErrorDecoration(ei.line)
       }
 
-      // ── DAKI Intel: frase narrativa del backend → consola + voz + waveform ──
+      // ── DAKI: reacción contextual del LLM → DakiHint + voz + waveform ────────
       if (data.daki_message) {
         setDakiMessage(data.daki_message)
         speakDaki(data.daki_message)
@@ -860,8 +946,134 @@ export default function CodeWorkspace({ challengeId }: Props) {
       <PaywallModal
         visible={showPaywall}
         onClose={() => setShowPaywall(false)}
+        onGranted={() => setIsPaid(true)}
+        userId={userId}
       />
 
+
+      {/* ── Intel Drawer — Panel lateral deslizable con el Códice/Briefing ── */}
+      <AnimatePresence>
+        {showIntelDrawer && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 z-[8800] bg-black/60 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowIntelDrawer(false)}
+            />
+            {/* Drawer */}
+            <motion.div
+              className="fixed left-0 top-0 bottom-0 z-[8900] w-[440px] max-w-[90vw] flex flex-col font-mono overflow-hidden"
+              style={{
+                background:   '#030A06',
+                borderRight:  '1px solid rgba(0,255,65,0.25)',
+                boxShadow:    '6px 0 40px rgba(0,255,65,0.06), inset 0 0 60px rgba(0,255,65,0.02)',
+              }}
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+            >
+              {/* Scanline overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none z-0"
+                style={{ background: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)' }}
+              />
+
+              {/* Header */}
+              <div
+                className="relative z-10 flex items-center gap-3 px-5 py-3 shrink-0"
+                style={{ borderBottom: '1px solid rgba(0,255,65,0.15)', background: 'rgba(0,255,65,0.03)' }}
+              >
+                <motion.span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: '#00FF41', boxShadow: '0 0 8px rgba(0,255,65,0.9)' }}
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
+                />
+                <span
+                  className="text-xs font-black tracking-[0.35em] uppercase flex-1"
+                  style={{ color: 'rgba(0,255,65,0.85)', textShadow: '0 0 12px rgba(0,255,65,0.3)' }}
+                >
+                  [ ARCHIVO DE MISIÓN ]
+                </span>
+                <button
+                  onClick={() => setShowIntelDrawer(false)}
+                  className="text-[#00FF41]/30 hover:text-[#00FF41]/70 transition-colors text-sm leading-none"
+                  aria-label="Cerrar"
+                >✕</button>
+              </div>
+
+              {/* Subheader — nombre del nivel */}
+              <div
+                className="relative z-10 px-5 py-2.5 shrink-0"
+                style={{ borderBottom: '1px solid rgba(0,255,65,0.08)' }}
+              >
+                <div className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-0.5">INCURSIÓN ACTIVA</div>
+                <div className="text-[#00FF41]/80 font-bold text-xs tracking-[0.12em]">{challenge?.title?.toUpperCase()}</div>
+              </div>
+
+              {/* Body — scrollable */}
+              <div className="relative z-10 flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                {/* Lore briefing */}
+                {challenge?.lore_briefing && (
+                  <div>
+                    <div className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-2 uppercase">Briefing de la Misión</div>
+                    <p className="text-[#00FF41]/60 text-[11px] leading-relaxed italic border-l-2 pl-3"
+                      style={{ borderColor: 'rgba(0,255,65,0.2)' }}>
+                      {challenge.lore_briefing}
+                    </p>
+                  </div>
+                )}
+
+                {/* Divider */}
+                {challenge?.lore_briefing && challenge?.theory_content && (
+                  <div className="h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.15),transparent)' }} />
+                )}
+
+                {/* Theory content */}
+                {challenge?.theory_content ? (
+                  <div>
+                    <div className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-3 uppercase">Teoría del Concepto</div>
+                    <TheoryRenderer text={challenge.theory_content} />
+                  </div>
+                ) : (
+                  /* Fallback: description */
+                  <div>
+                    <div className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-2 uppercase">Objetivo de la Incursión</div>
+                    <p className="text-[#00FF41]/65 text-[11px] leading-relaxed whitespace-pre-wrap">
+                      {challenge?.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer CTA */}
+              <div
+                className="relative z-10 px-5 py-3 shrink-0"
+                style={{ borderTop: '1px solid rgba(0,255,65,0.10)' }}
+              >
+                <button
+                  onClick={() => setShowIntelDrawer(false)}
+                  className="w-full py-2 text-[10px] tracking-[0.4em] font-bold transition-all duration-150"
+                  style={{
+                    border:     '1px solid rgba(0,255,65,0.30)',
+                    color:      'rgba(0,255,65,0.60)',
+                    background: 'rgba(0,255,65,0.04)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,255,65,0.08)'; e.currentTarget.style.color = 'rgba(0,255,65,0.9)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,255,65,0.04)'; e.currentTarget.style.color = 'rgba(0,255,65,0.60)' }}
+                >
+                  VOLVER AL EDITOR →
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Layout con screen shake */}
       <motion.div
@@ -917,8 +1129,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         {/* HUD de navegación */}
         <header className="grid grid-cols-3 items-center px-4 py-1.5 bg-[#0D0D0D] border-b border-[#00FF41]/20 text-xs shrink-0">
 
-          {/* Izquierda — botón abortar */}
-          <div className="flex items-center">
+          {/* Izquierda — botón abortar + archivo de misión */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setNetworkError(false)
@@ -930,6 +1142,21 @@ export default function CodeWorkspace({ challengeId }: Props) {
             >
               <span className="text-orange-400/60">◀</span> ABORTAR MISIÓN
             </button>
+            {challenge && (
+              <button
+                onClick={() => setShowIntelDrawer(true)}
+                className="flex items-center gap-1.5 px-3 py-1 border border-[#00FF41]/30 text-[#00FF41]/60
+                           tracking-widest hover:border-[#00FF41]/60 hover:text-[#00FF41]/90 hover:bg-[#00FF41]/05
+                           active:scale-95 transition-all duration-150 text-xs"
+              >
+                <motion.span
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 2.4, repeat: Infinity }}
+                  className="text-[#00FF41]/50"
+                >◉</motion.span>
+                ARCHIVO DE MISIÓN
+              </button>
+            )}
           </div>
 
           {/* Centro — nombre de la misión */}
@@ -949,7 +1176,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           {/* Derecha — stats del usuario */}
           <div className="flex items-center justify-end gap-5 text-[#00FF41]/70">
             <span className="text-[#00FF41]/40">{username}</span>
-            <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
+            <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
             <span id="xp-display">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
             {streakDays > 0 && (
               <span>RACHA <strong className="text-[#00FF41]">{streakDays}d</strong></span>
@@ -1215,17 +1442,52 @@ export default function CodeWorkspace({ challengeId }: Props) {
                       : line.kind === 'info'      ? 'text-[#00FF41]/45'
                       : line.kind === 'intervention'
                         ? 'text-[#BD00FF] font-semibold tracking-wide'
+                      : line.kind === 'daki-cli'
+                        ? 'text-cyan-400/80'
                       : 'text-[#00FF41]/85'
                     }`}
-                    style={line.kind === 'intervention' ? {
-                      textShadow: '0 0 8px #BD00FF60',
-                      borderLeft: '2px solid #BD00FF80',
-                      paddingLeft: '6px',
-                    } : undefined}
+                    style={
+                      line.kind === 'intervention' ? {
+                        textShadow: '0 0 8px #BD00FF60',
+                        borderLeft: '2px solid #BD00FF80',
+                        paddingLeft: '6px',
+                      }
+                      : line.kind === 'daki-cli' && line.text.startsWith('[DAKI]') ? {
+                        textShadow: '0 0 8px rgba(0,229,255,0.3)',
+                        borderLeft: '2px solid rgba(0,229,255,0.4)',
+                        paddingLeft: '6px',
+                      }
+                      : undefined
+                    }
                   >
                     <DakiTerminalLine text={line.text} kind={line.kind} />
                   </div>
                 ))}
+              </div>
+
+              {/* ── DAKI CLI — Línea de Comandos ── */}
+              <div
+                className="shrink-0 border-t px-3 py-2"
+                style={{ borderColor: 'rgba(0,229,255,0.15)', background: 'rgba(0,229,255,0.02)' }}
+              >
+                <div className="flex items-center gap-2">
+                  <motion.span
+                    className="text-cyan-400/50 text-xs select-none shrink-0"
+                    animate={{ opacity: cliLoading ? [0.3, 0.9, 0.3] : 1 }}
+                    transition={{ duration: 0.8, repeat: cliLoading ? Infinity : 0 }}
+                  >▶</motion.span>
+                  <input
+                    type="text"
+                    value={cliInput}
+                    onChange={(e) => setCliInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleDakiAsk() }}
+                    placeholder={cliLoading ? '[ DAKI PROCESANDO... ]' : 'Consulta a DAKI... [Presiona Enter]'}
+                    disabled={cliLoading}
+                    className="flex-1 bg-transparent text-xs text-cyan-400 placeholder-cyan-400/20 outline-none font-mono tracking-wide disabled:cursor-wait"
+                    spellCheck={false}
+                    autoComplete="off"
+                  />
+                </div>
               </div>
             </div>
 

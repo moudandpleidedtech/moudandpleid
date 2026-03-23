@@ -1,4 +1,5 @@
 import json
+import unicodedata
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -12,7 +13,7 @@ from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
-from app.services.daki_intel import get_daki_message
+from app.services.ai_mentor import get_execute_feedback
 from app.services.execution_service import execute_python_code
 from app.services.gamification_service import gamification_engine
 
@@ -27,10 +28,14 @@ def _normalize_output(text: str) -> str:
     Normalización agresiva antes de comparar stdout con expected_output.
 
     Pasos:
-    1. Unifica saltos de línea  (CRLF → LF, CR suelto → LF)
-    2. Recorta espacios al inicio/fin de cada línea
-    3. Elimina líneas vacías sobrantes al inicio y al final del bloque
+    1. Normaliza Unicode a NFC (evita diferencias NFC/NFD invisibles)
+    2. Unifica variantes de guión: em-dash (—) y en-dash (–) → hyphen-minus (-)
+    3. Unifica saltos de línea  (CRLF → LF, CR suelto → LF)
+    4. Recorta espacios al inicio/fin de cada línea
+    5. Elimina líneas vacías sobrantes al inicio y al final del bloque
     """
+    text = unicodedata.normalize("NFC", text)
+    text = text.replace("\u2014", "-").replace("\u2013", "-")  # em-dash, en-dash → hyphen
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = [line.strip() for line in normalized.splitlines()]
     return "\n".join(lines).strip()
@@ -202,12 +207,15 @@ async def execute_challenge_code(
                     text=hints[hint_idx],
                 )
 
-    # ── DAKI Intel: mensaje narrativo según error/resultado ───────────────────
-    _daki_event = (
-        error_info.error_type if error_info
-        else ("success" if is_success else "failed")
+    # ── DAKI: reacción contextual vía LLM (stacktrace real → respuesta dinámica) ─
+    daki_message = await get_execute_feedback(
+        challenge_title=challenge.title,
+        challenge_description=challenge.description,
+        source_code=payload.source_code,
+        error_output=exec_result["stderr"],
+        attempt_number=total_attempts,
+        is_success=is_success,
     )
-    daki_message = get_daki_message(_daki_event, payload.daki_level)
 
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],

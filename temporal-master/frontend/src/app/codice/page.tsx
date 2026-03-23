@@ -89,7 +89,7 @@ export default function CodicePage() {
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
           <span>{username}</span>
-          <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
+          <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
         </div>
       </header>
 

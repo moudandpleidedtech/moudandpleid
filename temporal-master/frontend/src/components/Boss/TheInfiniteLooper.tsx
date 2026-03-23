@@ -717,7 +717,7 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
                 +{bossResult.xp_earned.toLocaleString()} XP
               </div>
               <div className="text-sm tracking-wider" style={{ color: 'rgba(255,215,0,0.4)' }}>
-                Total: {bossResult.new_total_xp.toLocaleString()} XP · Nivel {bossResult.new_level}
+                Total: {bossResult.new_total_xp.toLocaleString()} XP · Rango {bossResult.new_level}
               </div>
             </motion.div>
           )}

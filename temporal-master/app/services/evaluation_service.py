@@ -31,6 +31,39 @@ Arquitectura de defensa en capas:
               - RLIMIT_NPROC = 0  (impide fork bombs desde el sandbox)
 
 Timeout: _EXEC_TIMEOUT_S = 3.0 s
+
+──────────────────────────────────────────────────────────────────────────────
+AUDITORÍA DE SEGURIDAD — Prompt 61 (DevSecOps)
+──────────────────────────────────────────────────────────────────────────────
+Cobertura de amenazas confirmada:
+
+  ✔ import os / sys / subprocess / socket
+      → Bloqueado en Layer 2 (AST: visit_Import lanza _SecurityError en
+        CUALQUIER import, sin excepción de módulo).
+
+  ✔ Escape via __class__.__subclasses__() / __import__ / exec / eval
+      → Bloqueado en Layer 2 (visit_Attribute + visit_Name) y
+        en Layer 3 (ausente de __builtins__).
+
+  ✔ Fork bombs / CPU bombs / malloc bombs
+      → Bloqueado en Layer 5 (RLIMIT_NPROC=0, RLIMIT_CPU=3s, RLIMIT_AS=128MB)
+        y en Layer 4 (SIGTERM→SIGKILL al expirar _EXEC_TIMEOUT_S).
+
+  ✔ Payloads gigantes (DoS de parsing)
+      → Rechazados en Layer 1 antes de llegar al compilador.
+
+  ✔ Evasión por código encadenado / ofuscación de strings
+      → El AST se genera desde el código fuente real, no desde la
+        representación textual, lo que hace transparentes las técnicas
+        de ofuscación de nombres literales.
+
+Nota sobre Pyodide/WebAssembly (alternativa frontend):
+  Si la ejecución migrase a Pyodide en el navegador, el sandbox
+  del servidor dejaría de ser necesario: el código correría en el
+  worker de JS del cliente, completamente aislado del servidor por
+  la barrera del navegador. En ese caso, eliminar este servicio y
+  actualizar /evaluate para aceptar el output pre-computado del cliente.
+──────────────────────────────────────────────────────────────────────────────
 """
 
 import ast
@@ -40,6 +73,7 @@ import concurrent.futures
 import io
 import json
 import multiprocessing as mp
+import unicodedata
 
 # Contexto 'spawn' en vez del default 'fork' para el proceso hijo del sandbox.
 # Con 'fork' el hijo hereda toda la memoria de FastAPI (> 128 MB) y choca
@@ -110,27 +144,23 @@ class EvaluacionResult:
 
 # ─── Normalización ────────────────────────────────────────────────────────────
 
+def _normalize_unicode(texto: str) -> str:
+    """Normaliza Unicode NFC y unifica variantes de guión a hyphen-minus."""
+    texto = unicodedata.normalize("NFC", texto)
+    return texto.replace("\u2014", "-").replace("\u2013", "-")  # em-dash, en-dash → -
+
+
 def normalizar_salida(texto: str) -> str:
     """
     Normalización TOLERANTE (modo estándar, strict_match=False).
 
-    Aplica tres transformaciones en orden:
-      1. Limpia saltos de línea inconsistentes (CRLF → LF).
-      2. Colapsa cualquier secuencia de whitespace a un espacio simple,
-         incluyendo espacios, tabuladores y saltos de línea internos.
-         Esto evita fallar al usuario por espacios extra, indentación
-         accidental o diferencias de CRLF/LF en cada línea.
-      3. Strip global (elimina whitespace al inicio y al final).
-
-    Ejemplo:
-        "  75\\n  50  " → "75 50"
-        "Hola,   Mundo" → "Hola, Mundo"
-        "SISTEMA  ACTIVO\\n" → "SISTEMA ACTIVO"
-
-    Nota: como ambos lados (usuario y expected) pasan por esta función,
-    la comparación es justa.  La "lógica" debe ser correcta; el "formato"
-    es perdonado.
+    Aplica en orden:
+      1. Unicode NFC + unifica variantes de guión (em-dash/en-dash → -)
+      2. Limpia saltos de línea inconsistentes (CRLF → LF).
+      3. Colapsa cualquier secuencia de whitespace a un espacio simple.
+      4. Strip global.
     """
+    texto = _normalize_unicode(texto)
     return re.sub(r'\s+', ' ', texto).strip()
 
 
@@ -139,15 +169,11 @@ def _normalizar_strict(texto: str) -> str:
     Normalización ESTRICTA (strict_match=True).
 
     Solo hace lo mínimo necesario para la interoperabilidad entre sistemas:
-      • CRLF / CR  →  LF   (normaliza saltos de línea del SO)
-      • Strip global        (elimina líneas vacías finales/iniciales)
-
-    Todo lo demás se preserva tal cual: espacios internos, indentación,
-    líneas vacías entre secciones, caracteres especiales.
-
-    Usar en niveles que explícitamente enseñan formato de strings,
-    f-strings con espaciado preciso o proyectos integradores multi-línea.
+      • Unicode NFC + variantes de guión → -
+      • CRLF / CR  →  LF
+      • Strip global
     """
+    texto = _normalize_unicode(texto)
     return texto.replace("\r\n", "\n").replace("\r", "\n").strip()
 
 

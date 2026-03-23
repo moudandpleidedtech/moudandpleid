@@ -241,7 +241,7 @@ function TableRow({
               )}
             </div>
             <div className="text-[9px] text-[#00FF41]/30 tracking-widest mt-0.5">
-              {getTitleForLevel(entry.current_level)} · NVL {entry.current_level}
+              {getTitleForLevel(entry.current_level)} · RANGO {entry.current_level}
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function LeaderboardPage() {
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
           <span>{username}</span>
-          <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
+          <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
         </div>
       </header>
@@ -466,7 +466,7 @@ export default function LeaderboardPage() {
                         TU POSICIÓN ACTUAL
                       </div>
                       <div className="text-[10px] text-[#00FF41]/40 tracking-widest mt-0.5">
-                        {getTitleForLevel(level)} · NVL {level}
+                        {getTitleForLevel(level)} · RANGO {level}
                       </div>
                     </div>
                   </div>

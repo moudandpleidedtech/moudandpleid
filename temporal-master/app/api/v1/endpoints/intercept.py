@@ -59,7 +59,7 @@ from app.services.memoria_muscular import (
     verificar_intercepcion,
 )
 from app.models.daki_interception import DakiInterception
-from app.services.daki_intel import get_daki_message
+from app.services.ai_mentor import get_execute_feedback
 
 import asyncio
 import concurrent.futures
@@ -210,10 +210,20 @@ async def submit_flash_mission(
     expected_output: str = mision_data.get("expected_output", "")
     test_inputs: list[str] = []
 
+    _mission_title = mision_data.get("title", "Micro-Misión Flash")
+    _mission_desc  = mision_data.get("description", "")
+
     # Layer 2 — AST Guard
     sec = _ast_guard(payload.code)
     if sec:
-        daki_msg = get_daki_message("SecurityError", payload.daki_level)
+        daki_msg = await get_execute_feedback(
+            challenge_title=_mission_title,
+            challenge_description=_mission_desc,
+            source_code=payload.code,
+            error_output="SECURITY VIOLATION: instrucción bloqueada por el Guardián de Seguridad del Nexo.",
+            attempt_number=interception.flash_attempts,
+            is_success=False,
+        )
         return FlashSubmitResponse(
             passed=False,
             output_expected=expected_output,
@@ -234,7 +244,14 @@ async def submit_flash_mission(
 
     # Timeout
     if sandbox_result.get("_timeout"):
-        daki_msg = get_daki_message("timeout", payload.daki_level)
+        daki_msg = await get_execute_feedback(
+            challenge_title=_mission_title,
+            challenge_description=_mission_desc,
+            source_code=payload.code,
+            error_output="TimeoutError: el proceso excedió el tiempo límite. Revisa los bucles.",
+            attempt_number=interception.flash_attempts,
+            is_success=False,
+        )
         return FlashSubmitResponse(
             passed=False,
             daki_message=daki_msg,
@@ -244,8 +261,14 @@ async def submit_flash_mission(
 
     # Error de ejecución
     if sandbox_result.get("error_type"):
-        event = sandbox_result["error_type"]
-        daki_msg = get_daki_message(event, payload.daki_level)
+        daki_msg = await get_execute_feedback(
+            challenge_title=_mission_title,
+            challenge_description=_mission_desc,
+            source_code=payload.code,
+            error_output=sandbox_result.get("stderr", sandbox_result.get("error_type", "")),
+            attempt_number=interception.flash_attempts,
+            is_success=False,
+        )
         return FlashSubmitResponse(
             passed=False,
             output_got=sandbox_result["stdout"],
@@ -261,7 +284,14 @@ async def submit_flash_mission(
 
     if passed:
         await completar_intercepcion(db, interception_id, payload.user_id)
-        daki_msg = get_daki_message("success", payload.daki_level)
+        daki_msg = await get_execute_feedback(
+            challenge_title=_mission_title,
+            challenge_description=_mission_desc,
+            source_code=payload.code,
+            error_output="",
+            attempt_number=interception.flash_attempts,
+            is_success=True,
+        )
         return FlashSubmitResponse(
             passed=True,
             output_got=got,
@@ -271,7 +301,14 @@ async def submit_flash_mission(
             status="success",
         )
     else:
-        daki_msg = get_daki_message("failed", payload.daki_level)
+        daki_msg = await get_execute_feedback(
+            challenge_title=_mission_title,
+            challenge_description=_mission_desc,
+            source_code=payload.code,
+            error_output=f"Output mismatch.\nEsperado: {expected_output[:200]}\nObtenido: {sandbox_result['stdout'][:200]}",
+            attempt_number=interception.flash_attempts,
+            is_success=False,
+        )
         return FlashSubmitResponse(
             passed=False,
             output_got=got,

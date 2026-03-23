@@ -228,7 +228,7 @@ export default function HubPage() {
       <HubAudio fadeOut={bgmFadeOut} />
 
       {/* Bitácora — Códice de Infiltración */}
-      <BitacoraModal isOpen={isBitacoraOpen} onClose={() => setIsBitacoraOpen(false)} completedOrders={completedOrders} />
+      <BitacoraModal isOpen={isBitacoraOpen} onClose={() => setIsBitacoraOpen(false)} userId={userId ?? ''} completedOrders={completedOrders} />
 
       {/* ── Header ── */}
       <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm">
@@ -242,7 +242,7 @@ export default function HubPage() {
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/45">
           <span className="text-[#00FF41]/30 hidden sm:block">{username}</span>
-          <span>NVL <strong className="text-[#00FF41]">{level}</strong></span>
+          <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
           {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
           <button
@@ -400,7 +400,6 @@ export default function HubPage() {
           <div className="flex flex-col gap-2">
             <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1">ACCESOS SECUNDARIOS</p>
             {[
-              { label: 'BOUNTIES IA', path: '/bounty', color: '#FFD700' },
               { label: 'LEADERBOARD', path: '/leaderboard', color: '#FF6B6B' },
             ].map(({ label, path, color }) => (
               <button
@@ -506,7 +505,6 @@ export default function HubPage() {
                 { label: 'NÚCLEO ENIGMA', ok: true },
                 { label: 'COMPILADOR',    ok: true },
                 { label: 'DDA ENGINE',    ok: true },
-                { label: 'BOUNTY AI',     ok: false },
               ].map(({ label, ok }) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-[8px] tracking-wider text-[#00FF41]/20">{label}</span>

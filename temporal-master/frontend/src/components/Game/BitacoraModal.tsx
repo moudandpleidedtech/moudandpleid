@@ -1,128 +1,73 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// ─── Contenido de los 5 archivos ───────────────────────────────────────────────
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+
+// ─── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface Archivo {
   id: string
-  order: number          // coincide con level_order de la misión
+  order: number
   label: string
   title: string
   subtitle: string
   missionName: string
-  dakiReport: string
-  code: string
-  codeCaption: string
+  theoryContent: string
+  completed: boolean
 }
 
-const ARCHIVOS: Archivo[] = [
-  {
-    id: 'arch-01',
-    order: 1,
-    label: 'ARCHIVO 01',
-    title: 'Nodos de Memoria y Ecos',
-    subtitle: 'Variables y Print',
-    missionName: 'Misión 1 — Eco del Sistema',
-    dakiReport:
-      'Operador, lograste engañar al radar. Para hacerlo, usaste Variables — contenedores ' +
-      'que guardan información valiosa en la memoria RAM del dron — y la función Print, ' +
-      'que emite esa información hacia los canales de salida. ' +
-      'Acabas de dominar la entrada y salida de datos. El Nexo no detectó tu presencia.',
-    code:
-      '# Asignar datos vitales de la misión\nnombre = "Dron"\ncoordenadas = [51, 7]\n\n# Emitir señal de ping\nprint(nombre)\nprint(f"Sector: {coordenadas}")',
-    codeCaption: 'Variables + Print',
-  },
-  {
-    id: 'arch-02',
-    order: 2,
-    label: 'ARCHIVO 02',
-    title: 'Operadores Aritméticos Base',
-    subtitle: 'Matemáticas en el campo',
-    missionName: 'Misión 2 — Calculadora Binaria',
-    dakiReport:
-      'La suma de los registros fue un éxito. En Python, los procesadores nativos nos permiten ' +
-      'usar +, -, * y / para manipular datos numéricos y descifrar coordenadas enemigas. ' +
-      'Los operadores son las instrucciones más primitivas del sistema — y las más potentes ' +
-      'cuando se combinan con variables. Las cámaras del sector han sido burladas.',
-    code:
-      '# Descifrar coordenadas sumando registros\nreg_a = 128\nreg_b = 64\nreg_c = 32\n\ncoord_x = reg_a + reg_b\ncoord_y = reg_a - reg_c\nescala  = reg_b * 2\nfrecuencia = reg_a / reg_c\n\nprint(f"X:{coord_x} Y:{coord_y} F:{frecuencia}")',
-    codeCaption: 'Operadores: + - * /',
-  },
-  {
-    id: 'arch-03',
-    order: 3,
-    label: 'ARCHIVO 03',
-    title: 'Inversión de Flujos de Datos',
-    subtitle: 'Slicing de Strings',
-    missionName: 'Misión 3 — Inversor de Cadenas',
-    dakiReport:
-      'El firewall ha caído. El slicing es la técnica que permite manipular cadenas de texto ' +
-      'como si fueran secuencias de bytes: puedes extraer fragmentos, invertir flujos y ' +
-      'reordenar señales encriptadas. En Python, los strings son indexables — cada carácter ' +
-      'tiene una posición y puede ser aislado o invertido a voluntad.',
-    code:
-      '# Señal enemiga encriptada\nsenal = "51AERA_OTCELES"\n\n# Invertir el flujo de datos\nsenal_invertida = senal[::-1]\nprint(senal_invertida)  # SELECTO_AREA15\n\n# Extraer fragmento específico\nsector = senal[2:6]\nprint(sector)  # AREA',
-    codeCaption: 'Slicing: [inicio:fin:paso]',
-  },
-  {
-    id: 'arch-04',
-    order: 4,
-    label: 'ARCHIVO 04',
-    title: 'Protocolos de Escaneo Iterativo',
-    subtitle: 'For Loops + Condicionales IF',
-    missionName: 'Misión 4 — Contador de Vocales',
-    dakiReport:
-      'Los nodos de energía fueron identificados. El bucle FOR combinado con IF es el arma ' +
-      'de exploración del dron: itera sobre cada elemento de una secuencia y decide en tiempo ' +
-      'real qué acción tomar. Sin este protocolo, el dron no puede escanear el código fuente ' +
-      'enemigo ni detectar los nodos activos. Es la base de toda IA de combate.',
-    code:
-      '# Escanear código enemigo buscando nodos (vocales)\ncodigo = "infiltracion"\nnodos_activos = 0\n\nfor caracter in codigo:\n    if caracter in "aeiouAEIOU":\n        nodos_activos += 1\n        print(f"Nodo detectado: {caracter}")\n\nprint(f"Total nodos: {nodos_activos}")',
-    codeCaption: 'for … in + if … in',
-  },
-  {
-    id: 'arch-05',
-    order: 5,
-    label: 'ARCHIVO 05',
-    title: 'Frecuencia Fractal de Fibonacci',
-    subtitle: 'Lógica Avanzada e Iteración',
-    missionName: 'Misión 5 — Secuencia de Fibonacci',
-    dakiReport:
-      'La sincronía fractal fue lograda. La secuencia de Fibonacci demuestra que los algoritmos ' +
-      'pueden modelar patrones que existen en la naturaleza misma. El motor de salto del dron ' +
-      'opera en frecuencias no lineales — solo Fibonacci puede predecirlas. ' +
-      'Has alcanzado el nivel de lógica algorítmica que la Matriz Neuronal clasificaba como imposible para un nodo humano.',
-    code:
-      '# Generar frecuencia fractal de Fibonacci\ndef fibonacci(n):\n    a, b = 0, 1\n    secuencia = []\n    for _ in range(n):\n        secuencia.append(a)\n        a, b = b, a + b\n    return secuencia\n\nfrecuencias = fibonacci(8)\nprint(frecuencias)\n# [0, 1, 1, 2, 3, 5, 8, 13]',
-    codeCaption: 'Funciones + iteración avanzada',
-  },
-]
+const TIER_SUBTITLE: Record<number, string> = {
+  1: 'NIVEL INICIANTE',
+  2: 'NIVEL INTERMEDIO',
+  3: 'NIVEL AVANZADO',
+}
+
+// ─── localStorage helpers ──────────────────────────────────────────────────────
 
 const LS_KEY = 'pq-bitacora-read'
 
-function getReadIds(): string[] {
+function getReadOrders(): number[] {
   if (typeof window === 'undefined') return []
   try { return JSON.parse(localStorage.getItem(LS_KEY) ?? '[]') } catch { return [] }
 }
-function markRead(id: string) {
-  const current = getReadIds()
-  if (!current.includes(id)) localStorage.setItem(LS_KEY, JSON.stringify([...current, id]))
+function markOrderRead(order: number) {
+  const current = getReadOrders()
+  if (!current.includes(order)) localStorage.setItem(LS_KEY, JSON.stringify([...current, order]))
 }
 
-// ─── Bloque de código ──────────────────────────────────────────────────────────
+// ─── Exportado para uso externo ────────────────────────────────────────────────
 
-function CodeBlock({ code, caption }: { code: string; caption: string }) {
+export function countNewArchives(completedOrders: number[]): number {
+  const readOrders = getReadOrders()
+  return completedOrders.filter(o => !readOrders.includes(o)).length
+}
+
+// ─── Renderizador de markdown-lite ────────────────────────────────────────────
+
+function TheoryContent({ text }: { text: string }) {
+  const lines = text.split('\n')
   return (
-    <div className="bg-black border border-[#00FF41]/15 overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[#00FF41]/10 bg-[#00FF41]/3">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41]/60" />
-        <span className="text-[8px] tracking-[0.4em] text-[#00FF41]/30 font-mono">SINTAXIS RECUPERADA // {caption.toUpperCase()}</span>
-      </div>
-      <pre className="px-4 py-3 text-[11px] font-mono text-[#00FF41]/80 leading-relaxed overflow-x-auto whitespace-pre">
-        {code}
-      </pre>
+    <div className="flex flex-col gap-1.5">
+      {lines.map((line, i) => {
+        if (line.startsWith('## '))
+          return <p key={i} className="text-[11px] font-bold tracking-[0.25em] text-[#00FF41]/80 mt-3 mb-0.5">{line.slice(3)}</p>
+        if (line.startsWith('# '))
+          return <p key={i} className="text-[13px] font-black tracking-[0.2em] text-[#00FF41] mt-2 mb-1">{line.slice(2)}</p>
+        if (line.trim() === '')
+          return <div key={i} className="h-1" />
+        // inline code + bold
+        const parts = line.split(/(`[^`]+`|\*\*[^*]+\*\*)/g)
+        const rendered = parts.map((part, j) => {
+          if (part.startsWith('`') && part.endsWith('`'))
+            return <code key={j} className="px-1 py-0.5 bg-[#00FF41]/10 border border-[#00FF41]/20 text-[#00FF41] text-[10px] font-mono">{part.slice(1, -1)}</code>
+          if (part.startsWith('**') && part.endsWith('**'))
+            return <strong key={j} className="text-[#00FF41]/90 font-bold">{part.slice(2, -2)}</strong>
+          return <span key={j}>{part}</span>
+        })
+        return <p key={i} className="text-[11px] text-white/50 leading-relaxed">{rendered}</p>
+      })}
     </div>
   )
 }
@@ -132,27 +77,54 @@ function CodeBlock({ code, caption }: { code: string; caption: string }) {
 interface BitacoraModalProps {
   isOpen: boolean
   onClose: () => void
-  completedOrders: number[]   // level_orders de misiones completadas
+  userId: string
+  completedOrders: number[]   // usado para badge count en hub
 }
 
 // ─── Componente ────────────────────────────────────────────────────────────────
 
-export default function BitacoraModal({ isOpen, onClose, completedOrders }: BitacoraModalProps) {
-  const [selected, setSelected] = useState<Archivo>(ARCHIVOS[0])
-  const [readIds, setReadIds] = useState<string[]>([])
+export default function BitacoraModal({ isOpen, onClose, userId, completedOrders }: BitacoraModalProps) {
+  const [archivos, setArchivos] = useState<Archivo[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selected, setSelected] = useState<Archivo | null>(null)
+  const [readOrders, setReadOrders] = useState<number[]>([])
 
-  // Cargar leídos del localStorage al abrir
-  useEffect(() => { if (isOpen) setReadIds(getReadIds()) }, [isOpen])
-
-  // Marcar como leído al seleccionar (solo si está desbloqueado)
+  // Fetch dinámico al abrir
   useEffect(() => {
-    if (!isOpen) return
-    const unlocked = completedOrders.includes(selected.order)
-    if (unlocked && !readIds.includes(selected.id)) {
-      markRead(selected.id)
-      setReadIds(getReadIds())
-    }
-  }, [selected, isOpen, completedOrders, readIds])
+    if (!isOpen || !userId) return
+    setLoading(true)
+    setReadOrders(getReadOrders())
+    fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: { id: string; title: string; difficulty_tier: number; level_order: number | null; theory_content: string | null; completed: boolean }[]) => {
+        const mapped: Archivo[] = data
+          .filter(e => e.theory_content && e.level_order != null)
+          .sort((a, b) => (a.level_order ?? 0) - (b.level_order ?? 0))
+          .map(e => ({
+            id: e.id,
+            order: e.level_order as number,
+            label: `ARCHIVO ${String(e.level_order).padStart(2, '0')}`,
+            title: e.title,
+            subtitle: TIER_SUBTITLE[e.difficulty_tier] ?? 'NIVEL',
+            missionName: `Misión ${e.level_order}`,
+            theoryContent: e.theory_content as string,
+            completed: e.completed,
+          }))
+        setArchivos(mapped)
+        // Auto-seleccionar primer archivo desbloqueado
+        const first = mapped.find(a => a.completed) ?? mapped[0] ?? null
+        setSelected(first)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [isOpen, userId])
+
+  // Marcar como leído al seleccionar
+  useEffect(() => {
+    if (!isOpen || !selected || !selected.completed) return
+    markOrderRead(selected.order)
+    setReadOrders(getReadOrders())
+  }, [selected, isOpen])
 
   // Cerrar con Escape
   useEffect(() => {
@@ -162,15 +134,12 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
     return () => window.removeEventListener('keydown', h)
   }, [isOpen, onClose])
 
-  // Auto-seleccionar primer archivo desbloqueado al abrir
-  useEffect(() => {
-    if (!isOpen) return
-    const first = ARCHIVOS.find(a => completedOrders.includes(a.order)) ?? ARCHIVOS[0]
-    setSelected(first)
-  }, [isOpen, completedOrders])
+  const handleSelect = useCallback((a: Archivo) => {
+    if (a.completed) setSelected(a)
+  }, [])
 
-  const isUnlocked = (a: Archivo) => completedOrders.includes(a.order)
-  const isNew = (a: Archivo) => isUnlocked(a) && !readIds.includes(a.id)
+  const isNew = (a: Archivo) => a.completed && !readOrders.includes(a.order)
+  const completedArchivos = archivos.filter(a => a.completed)
 
   return (
     <AnimatePresence>
@@ -203,14 +172,14 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
               <div className="px-4 py-4 border-b border-[#00FF41]/10 shrink-0">
                 <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/40 mb-0.5">CÓDICE DE INFILTRACIÓN</p>
                 <p className="text-[7px] tracking-wider text-[#00FF41]/20">
-                  {completedOrders.length}/{ARCHIVOS.length} ARCHIVOS DESBLOQUEADOS
+                  {loading ? 'CARGANDO...' : `${completedArchivos.length}/${archivos.length} ARCHIVOS DESBLOQUEADOS`}
                 </p>
                 {/* Mini barra de progreso */}
                 <div className="mt-2 h-px bg-[#00FF41]/10 relative overflow-hidden">
                   <motion.div
                     className="absolute left-0 top-0 h-full bg-[#00FF41]"
                     initial={{ width: 0 }}
-                    animate={{ width: `${(completedOrders.length / ARCHIVOS.length) * 100}%` }}
+                    animate={{ width: archivos.length ? `${(completedArchivos.length / archivos.length) * 100}%` : '0%' }}
                     transition={{ duration: 0.8, ease: 'easeOut' }}
                   />
                 </div>
@@ -218,63 +187,74 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
 
               {/* Lista */}
               <div className="flex-1 overflow-y-auto py-1">
-                {ARCHIVOS.map((a, idx) => {
-                  const unlocked = isUnlocked(a)
-                  const isSelected = selected.id === a.id
-                  const hasNew = isNew(a)
-                  return (
-                    <motion.button
-                      key={a.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      onClick={() => { if (unlocked) setSelected(a) }}
-                      disabled={!unlocked}
-                      className="w-full text-left px-4 py-3 border-b border-[#00FF41]/6 transition-all duration-150 relative"
-                      style={isSelected && unlocked ? {
-                        background: 'rgba(0,255,65,0.07)',
-                        borderLeft: '2px solid rgba(0,255,65,0.6)',
-                      } : !unlocked ? {
-                        opacity: 0.45,
-                        cursor: 'not-allowed',
-                      } : {}}
-                      onMouseEnter={e => { if (unlocked && !isSelected) e.currentTarget.style.background = 'rgba(0,255,65,0.04)' }}
-                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                {loading ? (
+                  <div className="px-4 py-6 text-center">
+                    <motion.p
+                      className="text-[8px] tracking-widest text-[#00FF41]/30"
+                      animate={{ opacity: [0.3, 0.7, 0.3] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
                     >
-                      <div className="flex items-start gap-2.5">
-                        {/* Icono estado */}
-                        <span className={`text-sm mt-0.5 shrink-0 ${unlocked ? 'text-[#00FF41]/60' : 'text-[#00FF41]/20'}`}>
-                          {unlocked ? '◈' : '🔒'}
-                        </span>
-                        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[9px] font-bold tracking-wider truncate ${
-                              isSelected ? 'text-[#00FF41]' : unlocked ? 'text-[#00FF41]/65' : 'text-[#00FF41]/25'
-                            }`}>
-                              {a.label}
-                            </span>
-                            {/* Indicador NEW */}
-                            {hasNew && (
-                              <motion.span
-                                className="w-1.5 h-1.5 rounded-full bg-[#00FF41] shrink-0"
-                                animate={{ opacity: [1, 0.2, 1] }}
-                                transition={{ duration: 0.8, repeat: Infinity }}
-                              />
+                      CARGANDO BÓVEDA...
+                    </motion.p>
+                  </div>
+                ) : (
+                  archivos.map((a, idx) => {
+                    const isSelected = selected?.id === a.id
+                    const hasNew = isNew(a)
+                    return (
+                      <motion.button
+                        key={a.id}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.04 }}
+                        onClick={() => handleSelect(a)}
+                        disabled={!a.completed}
+                        className="w-full text-left px-4 py-3 border-b border-[#00FF41]/6 transition-all duration-150 relative"
+                        style={isSelected && a.completed ? {
+                          background: 'rgba(0,255,65,0.07)',
+                          borderLeft: '2px solid rgba(0,255,65,0.6)',
+                        } : !a.completed ? {
+                          opacity: 0.45,
+                          cursor: 'not-allowed',
+                        } : {}}
+                        onMouseEnter={e => { if (a.completed && !isSelected) e.currentTarget.style.background = 'rgba(0,255,65,0.04)' }}
+                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          {/* Icono estado */}
+                          <span className={`text-sm mt-0.5 shrink-0 ${a.completed ? 'text-[#00FF41]/60' : 'text-[#00FF41]/20'}`}>
+                            {a.completed ? '◈' : '🔒'}
+                          </span>
+                          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[9px] font-bold tracking-wider truncate ${
+                                isSelected ? 'text-[#00FF41]' : a.completed ? 'text-[#00FF41]/65' : 'text-[#00FF41]/25'
+                              }`}>
+                                {a.label}
+                              </span>
+                              {/* Indicador NEW */}
+                              {hasNew && (
+                                <motion.span
+                                  className="w-1.5 h-1.5 rounded-full bg-[#00FF41] shrink-0"
+                                  animate={{ opacity: [1, 0.2, 1] }}
+                                  transition={{ duration: 0.8, repeat: Infinity }}
+                                />
+                              )}
+                            </div>
+                            {a.completed ? (
+                              <span className="text-[8px] text-[#00FF41]/35 truncate">{a.subtitle}</span>
+                            ) : (
+                              <span className="text-[7px] text-[#00FF41]/18 leading-snug">
+                                [ DATOS ENCRIPTADOS ]
+                                <br />Requiere {a.missionName}
+                              </span>
                             )}
                           </div>
-                          {unlocked ? (
-                            <span className="text-[8px] text-[#00FF41]/35 truncate">{a.subtitle}</span>
-                          ) : (
-                            <span className="text-[7px] text-[#00FF41]/18 leading-snug">
-                              [ DATOS ENCRIPTADOS ]
-                              <br />Requiere {a.missionName.split('—')[0].trim()}
-                            </span>
-                          )}
                         </div>
-                      </div>
-                    </motion.button>
-                  )
-                })}
+                      </motion.button>
+                    )
+                  })
+                )}
               </div>
             </div>
 
@@ -285,11 +265,11 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
               <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-[#00FF41]/10">
                 <div>
                   <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/30 mb-0.5">
-                    {selected.label} // {selected.missionName.toUpperCase()}
+                    {selected ? `${selected.label} // ${selected.missionName.toUpperCase()}` : 'SELECCIONA UN ARCHIVO'}
                   </p>
                   <h2 className="text-sm font-black tracking-wider text-[#00FF41]"
                     style={{ textShadow: '0 0 10px rgba(0,255,65,0.4)' }}>
-                    {selected.title.toUpperCase()}
+                    {selected ? selected.title.toUpperCase() : '—'}
                   </h2>
                 </div>
                 <button
@@ -302,41 +282,36 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
 
               {/* Cuerpo scrollable */}
               <AnimatePresence mode="wait">
-                {isUnlocked(selected) ? (
+                {!selected ? (
+                  <motion.div
+                    key="empty"
+                    className="flex-1 flex items-center justify-center"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  >
+                    <p className="text-[9px] tracking-widest text-[#00FF41]/20">SELECCIONA UN ARCHIVO DE LA LISTA</p>
+                  </motion.div>
+                ) : selected.completed ? (
                   <motion.div
                     key={selected.id}
-                    className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6"
+                    className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}
                   >
-                    {/* Reporte de DAKI */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <motion.span
-                          className="w-1.5 h-1.5 rounded-full bg-[#00FF41]"
-                          animate={{ opacity: [1, 0.2, 1] }}
-                          transition={{ duration: 1.2, repeat: Infinity }}
-                        />
-                        <span className="text-[9px] tracking-[0.5em] text-[#00FF41]/40">
-                          REPORTE DE DAKI // ANÁLISIS POST-MISIÓN
-                        </span>
-                      </div>
-                      <div className="border-l-2 border-[#00FF41]/25 pl-4">
-                        <p className="text-[12px] text-white/55 leading-relaxed italic">
-                          "{selected.dakiReport}"
-                        </p>
-                      </div>
+                    {/* Encabezado de sección */}
+                    <div className="flex items-center gap-2">
+                      <motion.span
+                        className="w-1.5 h-1.5 rounded-full bg-[#00FF41]"
+                        animate={{ opacity: [1, 0.2, 1] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      />
+                      <span className="text-[9px] tracking-[0.5em] text-[#00FF41]/40">
+                        REGISTRO TÁCTICO // CONOCIMIENTO RECUPERADO
+                      </span>
                     </div>
 
-                    {/* Separador */}
-                    <div className="h-px bg-gradient-to-r from-[#00FF41]/20 via-[#00FF41]/8 to-transparent" />
-
-                    {/* Código */}
-                    <div>
-                      <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-3">
-                        ◆ SINTAXIS RECUPERADA DEL CAMPO
-                      </p>
-                      <CodeBlock code={selected.code} caption={selected.codeCaption} />
+                    {/* Teoría */}
+                    <div className="border-l-2 border-[#00FF41]/20 pl-4">
+                      <TheoryContent text={selected.theoryContent} />
                     </div>
 
                     {/* Footer del archivo */}
@@ -372,7 +347,7 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
                     </div>
                     <div className="border border-[#00FF41]/10 px-6 py-3 text-center max-w-xs">
                       <p className="text-[9px] tracking-widest text-[#00FF41]/20">
-                        DAKI: "Aún no tienes autorización para acceder a este nivel de inteligencia. Completa la misión primero."
+                        DAKI: &quot;Aún no tienes autorización para acceder a este nivel de inteligencia. Completa la misión primero.&quot;
                       </p>
                     </div>
                   </motion.div>
@@ -384,11 +359,4 @@ export default function BitacoraModal({ isOpen, onClose, completedOrders }: Bita
       )}
     </AnimatePresence>
   )
-}
-
-// ─── Export helper para calcular archivos nuevos ───────────────────────────────
-
-export function countNewArchives(completedOrders: number[]): number {
-  const readIds = getReadIds()
-  return ARCHIVOS.filter(a => completedOrders.includes(a.order) && !readIds.includes(a.id)).length
 }

@@ -1,13 +1,36 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+
+// Rutas de juego donde los efectos visuales están activos.
+// En rutas comerciales/acceso (/, /terminos, /privacidad) nunca se renderizan.
+const GAME_ROUTE_PREFIXES = [
+  '/hub', '/misiones', '/challenge', '/enigma',
+  '/boss', '/leaderboard', '/arena', '/codice',
+]
 
 // ─── Duraciones ───────────────────────────────────────────────────────────────
 
 const INSTABILITY_MS = 1200   // duración del evento visual
 const DAKI_VISIBLE_MS = 4500  // tiempo que la notificación permanece visible
 const FIRST_DELAY_MS  = 25_000 + Math.random() * 15_000  // primer evento: 25-40 s
+
+// ─── Subtítulos de microcorte (aparecen en la parte inferior durante el glitch) ──
+
+const MICROCORTE_SUBTITLES = [
+  'Reestableciendo enlace con el Nexo Central...',
+  'Falla de telemetría local. Recalibrando...',
+  'Anomalía detectada en el flujo de datos.',
+  'Sincronizando constantes vitales del Operador...',
+  'Pérdida temporal de paquetes en el Sector de Memoria.',
+  'Ajustando latencia del enlace neuronal...',
+  'Interferencia externa bloqueada por protocolo DAKI.',
+  'Microcorte en la red de suministro de tokens.',
+  'Reescribiendo caché táctico de la terminal...',
+  'Estabilizando conexión encriptada con el núcleo.',
+]
 
 // ─── Contenido narrativo ──────────────────────────────────────────────────────
 
@@ -41,11 +64,15 @@ function makeHexBlock() {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function NeuralInstabilityEvent() {
-  const [isInstable, setIsInstable]   = useState(false)
-  const [alertText, setAlertText]     = useState('')
-  const [isHex, setIsHex]             = useState(false)
-  const [showDaki, setShowDaki]       = useState(false)
-  const [dakiMsg, setDakiMsg]         = useState('')
+  const pathname = usePathname()
+  const isGameRoute = GAME_ROUTE_PREFIXES.some(p => pathname?.startsWith(p))
+
+  const [isInstable, setIsInstable]     = useState(false)
+  const [alertText, setAlertText]       = useState('')
+  const [isHex, setIsHex]               = useState(false)
+  const [subtitleMsg, setSubtitleMsg]   = useState('')
+  const [showDaki, setShowDaki]         = useState(false)
+  const [dakiMsg, setDakiMsg]           = useState('')
 
   const audioRef   = useRef<HTMLAudioElement | null>(null)
   const mainTimer  = useRef<ReturnType<typeof setTimeout>>()
@@ -73,6 +100,7 @@ export default function NeuralInstabilityEvent() {
       ? makeHexBlock()
       : ALERT_TEXTS[Math.floor(Math.random() * ALERT_TEXTS.length)]
     )
+    setSubtitleMsg(MICROCORTE_SUBTITLES[Math.floor(Math.random() * MICROCORTE_SUBTITLES.length)])
     setIsInstable(true)
 
     // Reproducir audio sin bloquear
@@ -113,6 +141,8 @@ export default function NeuralInstabilityEvent() {
       if (a) { a.pause(); a.currentTime = 0 }
     }
   }, [fireEvent])
+
+  if (!isGameRoute) return null
 
   return (
     <>
@@ -173,6 +203,22 @@ export default function NeuralInstabilityEvent() {
                   </div>
                 )}
               </motion.div>
+            </div>
+
+            {/* Subtítulo de microcorte — parte inferior central */}
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[9002] pointer-events-none w-full max-w-xl px-4">
+              <motion.p
+                animate={{ opacity: [0.6, 1, 0.6, 1, 0.6, 1, 0.7] }}
+                transition={{
+                  duration: 1.2,
+                  times: [0, 0.15, 0.30, 0.50, 0.65, 0.82, 1],
+                  ease: 'linear',
+                }}
+                className="font-mono text-red-500/80 uppercase tracking-widest text-sm text-center"
+                style={{ textShadow: '0 0 10px rgba(239,68,68,0.6)' }}
+              >
+                {subtitleMsg}
+              </motion.p>
             </div>
 
             {/* Líneas de escaneo horizontales aleatorias */}

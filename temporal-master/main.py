@@ -1,12 +1,15 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.router import router
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.rate_limit import limiter
 
 
 @asynccontextmanager
@@ -18,17 +21,43 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # Documentación interactiva solo en modo DEBUG; ocultarla en producción
+    # evita exponer la superficie de la API a actores no deseados.
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
+# ── Rate Limiter (Prompt 61) ───────────────────────────────────────────────────
+# Registra el limitador en app.state para que slowapi lo encuentre
+# en los decoradores @limiter.limit() de hint.py y daki.py.
+app.state.limiter = limiter
+
+
+async def _daki_rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """429 con voz de DAKI en lugar del mensaje genérico de slowapi."""
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Operador, la red neuronal necesita enfriarse. Mantenga la posición."
+        },
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, _daki_rate_limit_handler)
+
+# ── CORS estricto (Prompt 61) ─────────────────────────────────────────────────
+# allow_origins lee settings.ALLOWED_ORIGINS (config.py):
+#   dev  → http://localhost:3000
+#   prod → https://dakiedtech.com, https://www.dakiedtech.com
+# Cualquier origen no listado recibe 403 en la verificación del preflight OPTIONS.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    # cors_origins = ALLOWED_ORIGINS + FRONTEND_URL (si está definido en env)
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 app.include_router(router)

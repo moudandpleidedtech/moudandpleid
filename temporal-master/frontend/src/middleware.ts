@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - Usuario autenticado en login → redirige a /hub
  */
 
-const PRIVATE_ROUTES = ['/hub', '/misiones', '/challenge', '/enigma', '/boss', '/bounty', '/leaderboard', '/arena', '/codice']
+const PRIVATE_ROUTES = ['/hub', '/misiones', '/challenge', '/enigma', '/boss', '/leaderboard', '/arena', '/codice']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -34,7 +34,6 @@ export const config = {
     '/challenge/:path*',
     '/enigma',
     '/boss',
-    '/bounty',
     '/leaderboard',
     '/arena',
     '/codice',

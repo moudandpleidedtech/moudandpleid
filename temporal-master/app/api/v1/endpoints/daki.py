@@ -11,12 +11,13 @@ sin actividad semántica (sin cambios de código ni envíos de solución).
 import uuid
 
 import anthropic
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.challenge import Challenge
 from app.services.daki_persona import DAKI_SYSTEM_PROMPT
 from app.services.memory_service import (
@@ -28,6 +29,17 @@ from app.services.memory_service import (
 router = APIRouter()
 
 # ─── Directivas ──────────────────────────────────────────────────────────────
+
+_ASK_DIRECTIVE = """\
+[DIRECTIVA: CONSULTA DIRECTA DEL OPERADOR — MODO CLI]
+El Operador te hace una pregunta conceptual desde la terminal de la misión.
+Tu misión:
+  1. Responde de forma precisa y directa (máximo 4 líneas).
+  2. Usa el contexto de la incursión activa para que la respuesta sea relevante.
+  3. NO des la solución al reto. Solo explica el concepto o principio.
+  4. Si la pregunta no es sobre programación, redirígela al código.
+Tono: instructor de combate — preciso, sin relleno, sin saludos.\
+"""
 
 _STAGNATION_DIRECTIVE = """\
 [DIRECTIVA ESPECIAL: INTERVENCIÓN POR ESTANCAMIENTO]
@@ -73,6 +85,16 @@ class InterveneResponse(BaseModel):
     daki_message: str
 
 
+class AskRequest(BaseModel):
+    user_id: uuid.UUID
+    challenge_id: uuid.UUID
+    question: str
+
+
+class AskResponse(BaseModel):
+    daki_message: str
+
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _call_haiku(user_msg: str, max_tokens: int = 120) -> str:
@@ -100,7 +122,9 @@ async def _call_haiku(user_msg: str, max_tokens: int = 120) -> str:
     status_code=status.HTTP_200_OK,
     summary="Intervención proactiva por estancamiento — registra evento de memoria",
 )
+@limiter.limit("10/minute")
 async def operator_stagnation(
+    request: Request,
     payload: StagnationRequest,
     db: AsyncSession = Depends(get_db),
 ) -> StagnationResponse:
@@ -148,7 +172,9 @@ async def operator_stagnation(
         "genera una intervención táctica de máximo 2 líneas para desbloquear la mente."
     ),
 )
+@limiter.limit("10/minute")
 async def operator_intervene(
+    request: Request,
     payload: InterveneRequest,
     db: AsyncSession = Depends(get_db),
 ) -> InterveneResponse:
@@ -198,3 +224,43 @@ async def operator_intervene(
     daki_msg = await _call_haiku(user_msg, max_tokens=130)
     await db.commit()
     return InterveneResponse(daki_message=daki_msg)
+
+
+@router.post(
+    "/daki/ask",
+    response_model=AskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Consulta directa al CLI de DAKI desde la terminal de la misión",
+    description=(
+        "El Operador escribe una pregunta conceptual en la línea de comandos de DAKI. "
+        "DAKI responde explicando el concepto sin revelar la solución del reto activo."
+    ),
+)
+@limiter.limit("20/minute")
+async def ask_daki(
+    request: Request,
+    payload: AskRequest,
+    db: AsyncSession = Depends(get_db),
+) -> AskResponse:
+    if not payload.question.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La consulta no puede estar vacía.",
+        )
+
+    challenge = await db.get(Challenge, payload.challenge_id)
+    if challenge is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Desafío no encontrado.")
+
+    user_msg = (
+        f"{_ASK_DIRECTIVE}\n\n"
+        f"--- INCURSIÓN ACTIVA ---\n"
+        f"Nombre: {challenge.title}\n"
+        f"Descripción: {challenge.description}\n\n"
+        f"--- CONSULTA DEL OPERADOR ---\n"
+        f"{payload.question.strip()[:500]}\n\n"
+        "Responde en máximo 4 líneas. No des el código completo de la solución. Solo el concepto."
+    )
+
+    daki_msg = await _call_haiku(user_msg, max_tokens=220)
+    return AskResponse(daki_message=daki_msg)

@@ -15,7 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.access import check_freemium_access
 from app.core.database import get_db
-from app.services.daki_intel import get_daki_message
+from app.models.challenge import Challenge
+from app.services.ai_mentor import get_execute_feedback
 from app.services.evaluation_service import EvaluacionResult, evaluar_incursion
 from app.services.progression import resolve_level_status
 
@@ -47,29 +48,6 @@ class EvaluateResponse(BaseModel):
     daki_message: str = ""             # frase narrativa de DAKI para UI y voz
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-def _resolve_daki_event(status: str, error_type: str | None) -> str:
-    """
-    Determina el evento DAKI a partir del resultado de evaluación.
-
-    - Si hay error_type específico ("SyntaxError", "NameError", …) → úsalo.
-    - Si status es "timeout" → "timeout".
-    - Si status es "failed"  → "failed".
-    - Si status es "success" → "success".
-    - Fallback: "RuntimeError".
-    """
-    if error_type and error_type not in ("", "None"):
-        return error_type
-    if status == "timeout":
-        return "timeout"
-    if status == "success":
-        return "success"
-    if status == "failed":
-        return "failed"
-    return "RuntimeError"
-
-
 # ─── Endpoint ─────────────────────────────────────────────────────────────────
 
 @router.post(
@@ -97,15 +75,22 @@ async def evaluate_code(
             },
         )
 
+    challenge = await db.get(Challenge, payload.challenge_id)
+
     result: EvaluacionResult = await evaluar_incursion(
         codigo_usuario=payload.code,
         challenge_id=payload.challenge_id,
         db=db,
     )
-    raw       = result.as_dict
-    ei        = raw.get("error_info") or {}
-    event     = _resolve_daki_event(raw["status"], ei.get("error_type"))
-    daki_msg  = get_daki_message(event, payload.daki_level)
+    raw      = result.as_dict
+    daki_msg = await get_execute_feedback(
+        challenge_title=challenge.title if challenge else "Misión",
+        challenge_description=challenge.description if challenge else "",
+        source_code=payload.code,
+        error_output=raw.get("stderr", ""),
+        attempt_number=1,
+        is_success=(raw["status"] == "success"),
+    )
 
     return EvaluateResponse(
         status=raw["status"],

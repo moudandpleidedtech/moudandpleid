@@ -17,69 +17,6 @@ const BOOT_DELAYS = [0, 520, 980, 1440, 1900]
 
 type Phase = 'booting' | 'email' | 'password' | 'terms' | 'authenticating' | 'done'
 
-// ── Modal de pago denegado ────────────────────────────────────────────────────
-function UnpaidModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
-      <div className="relative z-10 w-full max-w-md border border-red-500/60 bg-[#0A0A0A] p-8 shadow-[0_0_60px_rgba(239,68,68,0.15)]">
-
-        {/* Corner accents */}
-        <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-red-500" />
-        <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-red-500" />
-        <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-red-500" />
-        <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-red-500" />
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-red-400 text-xs tracking-[0.4em] uppercase font-mono">
-            Error 402 — Acceso Denegado
-          </span>
-        </div>
-
-        {/* Message */}
-        <p className="font-mono text-sm text-[#00FF41]/80 leading-7 mb-2">
-          Tu enlace neuronal{' '}
-          <span className="text-red-400 font-semibold">no ha sido financiado</span>.
-        </p>
-        <p className="font-mono text-xs text-[#00FF41]/40 leading-6 mb-8">
-          El Nexo Central requiere una Licencia de Operador activa para
-          establecer la conexión. Sin ella, el acceso al sistema permanece
-          bloqueado.
-        </p>
-
-        {/* CTA */}
-        <a
-          href="https://pay.dakiedtech.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group block w-full py-3 text-center font-mono text-sm tracking-[0.25em] uppercase
-                     bg-[#00FF41]/10 border border-[#00FF41]/40 text-[#00FF41]
-                     hover:bg-[#00FF41]/20 hover:border-[#00FF41]/80
-                     hover:shadow-[0_0_20px_rgba(0,255,65,0.2)]
-                     transition-all duration-200 mb-3"
-        >
-          [ Adquirir Licencia de Operador ]
-        </a>
-        <button
-          onClick={onClose}
-          className="w-full py-2 font-mono text-xs text-[#00FF41]/30 hover:text-[#00FF41]/60
-                     tracking-[0.2em] transition-colors"
-        >
-          CANCELAR
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ── Checkbox TyC ──────────────────────────────────────────────────────────────
 function TermsCheckbox({
   checked,
@@ -151,8 +88,6 @@ export default function LoginPage() {
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [authLine, setAuthLine] = useState('')
   const [error, setError] = useState('')
-  const [showUnpaid, setShowUnpaid] = useState(false)
-
   const emailRef = useRef<HTMLInputElement>(null)
   const passRef  = useRef<HTMLInputElement>(null)
 
@@ -196,22 +131,19 @@ export default function LoginPage() {
     setAuthLine('> AUTENTICANDO CREDENCIALES...')
     setError('')
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+
     try {
       const res = await fetch(`${API_BASE}/api/v1/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: emailVal.trim() }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (!res.ok) throw new Error('auth_failed')
       const data = await res.json()
-
-      // Pago no verificado → modal sin setUser
-      if (!data.is_paid) {
-        setPhase('terms')
-        setAuthLine('')
-        setShowUnpaid(true)
-        return
-      }
 
       setUser(data)
       document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
@@ -222,10 +154,16 @@ export default function LoginPage() {
 
       const seen = typeof window !== 'undefined' && localStorage.getItem('boot_seen')
       setTimeout(() => router.push(seen ? '/hub' : '/boot-sequence'), 900)
-    } catch {
+    } catch (err) {
+      clearTimeout(timeoutId)
       setPhase('terms')
       setAuthLine('')
-      setError('> [ERROR 403] CREDENCIAL NO RECONOCIDA. REINTENTE.')
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError'
+      setError(
+        isTimeout
+          ? '> [ERROR 503] NEXO CENTRAL SIN RESPUESTA. VERIFIQUE LA CONEXIÓN.'
+          : '> [ERROR 403] CREDENCIAL NO RECONOCIDA. REINTENTE.',
+      )
     }
   }
 
@@ -235,8 +173,6 @@ export default function LoginPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      {showUnpaid && <UnpaidModal onClose={() => setShowUnpaid(false)} />}
-
       <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col justify-center px-8 md:px-24 relative overflow-hidden">
 
         {/* CRT scanlines */}
