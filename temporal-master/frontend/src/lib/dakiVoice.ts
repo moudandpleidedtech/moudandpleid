@@ -253,32 +253,132 @@ function pickVoice(
 // ─── Pre-procesado del texto ──────────────────────────────────────────────────
 
 /**
- * Elimina markdown y símbolos técnicos antes de la síntesis de voz.
- * Reemplaza bloques de código por un aviso hablable y limpia el resto.
+ * Convierte un token de código inline a su forma hablable.
+ * Prioriza términos Python comunes; para el resto limpia símbolos.
+ */
+function cleanCodeToken(raw: string): string {
+  const SPOKEN: Record<string, string> = {
+    'print':   'print',
+    'input':   'input',
+    'range':   'range',
+    'len':     'len',
+    'int':     'entero',
+    'str':     'string',
+    'float':   'flotante',
+    'bool':    'booleano',
+    'list':    'lista',
+    'dict':    'diccionario',
+    'tuple':   'tupla',
+    'set':     'conjunto',
+    'True':    'verdadero',
+    'False':   'falso',
+    'None':    'nulo',
+    'return':  'return',
+    'def':     'def',
+    'class':   'clase',
+    'if':      'if',
+    'else':    'else',
+    'elif':    'else if',
+    'for':     'for',
+    'while':   'while',
+    'break':   'break',
+    'continue':'continue',
+    'import':  'import',
+    'from':    'from',
+    'in':      'in',
+    'not':     'not',
+    'and':     'and',
+    'or':      'or',
+    'pass':    'pass',
+    'lambda':  'lambda',
+  }
+  // Limpiar paréntesis y espaciar underscores
+  const normalized = raw
+    .replace(/\(.*\)/g, '')    // quita argumentos: print("x") → print
+    .replace(/_/g, ' ')        // mi_var → mi var
+    .trim()
+  return SPOKEN[normalized] ?? normalized
+}
+
+/**
+ * Elimina markdown y convierte operadores/símbolos técnicos a palabras
+ * antes de la síntesis de voz, para que DAKI suene inteligente y fluido.
  */
 function sanitizeForSpeech(text: string): string {
   return text
+    // ── Bloques de código → descripción hablable ────────────────────────────
     .replace(/```[\s\S]*?```/g, ' código de ejemplo. ')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/[*_~#[\]()>|]/g, '')
+    // ── Inline code → limpiar el token ─────────────────────────────────────
+    .replace(/`([^`]+)`/g, (_, code) => ` ${cleanCodeToken(code)} `)
+    // ── Operadores de comparación → palabras (orden: más largo primero) ────
+    .replace(/!=/g,  ' diferente de ')
+    .replace(/==/g,  ' igual ')
+    .replace(/<=/g,  ' menor o igual ')
+    .replace(/>=/g,  ' mayor o igual ')
+    .replace(/->/g,  ' ')
+    .replace(/=>/g,  ' ')
+    // ── Markdown de formato (preservar contenido, quitar símbolos) ──────────
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')   // **negrita** → negrita
+    .replace(/\*([^*\n]+)\*/g,     '$1')   // *cursiva*   → cursiva
+    .replace(/__([^_\n]+)__/g,     '$1')   // __texto__   → texto
+    .replace(/_([^_\n]+)_/g,       '$1')   // _texto_     → texto
+    // ── Encabezados Markdown → solo el texto ────────────────────────────────
+    .replace(/^#{1,6}\s+/gm, '')
+    // ── Listas y citas ───────────────────────────────────────────────────────
+    .replace(/^\s*[-*+]\s+/gm, '')         // - item, * item
+    .replace(/^\s*>\s+/gm,     '')         // > cita
+    // ── URLs ─────────────────────────────────────────────────────────────────
+    .replace(/https?:\/\/\S+/g, '')
+    // ── Underscores en nombres de variables ──────────────────────────────────
+    .replace(/_/g, ' ')
+    // ── Símbolos restantes que el TTS deletrea ───────────────────────────────
+    .replace(/[{}[\]()\\|@%^&+=#~<>]/g, ' ')
+    // ── Puntuación técnica que no aporta al habla ────────────────────────────
+    .replace(/[:;]/g, ', ')               // dos puntos y punto y coma → pausa
+    .replace(/\//g, ' ')
+    // ── Saltos de línea → pausa ───────────────────────────────────────────────
+    .replace(/\n+/g, '. ')
+    // ── Limpiar espacios múltiples ────────────────────────────────────────────
     .replace(/\s{2,}/g, ' ')
+    // ── Puntos repetidos ─────────────────────────────────────────────────────
+    .replace(/(\.\s*){2,}/g, '. ')
     .trim()
+}
+
+// ─── Prefijos dinámicos de DAKI ───────────────────────────────────────────────
+
+/**
+ * Frases de apertura de DAKI — rotadas aleatoriamente para que no repita
+ * siempre la misma. Dan calidez y sensación de personalidad.
+ */
+const DAKI_PREFIXES = [
+  'Operador, ',
+  'Oye, ',
+  'Escucha. ',
+  'Toma nota. ',
+  'Atención, ',
+  'Operador, te comento algo. ',
+  'Un momento. ',
+  'Registro una observación. ',
+]
+
+let _lastPrefixIdx = -1
+
+function pickPrefix(): string {
+  let idx: number
+  do { idx = Math.floor(Math.random() * DAKI_PREFIXES.length) }
+  while (idx === _lastPrefixIdx && DAKI_PREFIXES.length > 1)
+  _lastPrefixIdx = idx
+  return DAKI_PREFIXES[idx]
 }
 
 /**
  * Construye el texto final que se enviará al sintetizador.
- *
- * Con prefijo (niveles 2 y 3):
- *   "Operador, un pequeño ajuste táctico para ti. [texto real]"
- *   La coma tras "Operador" crea una pausa natural en cualquier motor TTS.
- *   Suena cálido y personal en vez del "Atención, operador." anterior.
- *
- * Sin prefijo (nivel 1):
- *   "[texto real]"
+ * Niveles 2 y 3 añaden un prefijo conversacional rotativo.
  */
 function buildUtteranceText(clean: string, profile: VoiceProfile): string {
   if (!profile.withPrefix) return clean
-  return `Operador, un pequeño ajuste táctico para ti. ${clean}`
+  return `${pickPrefix()}${clean}`
 }
 
 // ─── API pública ──────────────────────────────────────────────────────────────
