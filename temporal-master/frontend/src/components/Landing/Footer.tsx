@@ -50,7 +50,7 @@ export default function Footer() {
             © 2026 DAKIedtech · Todos los sistemas operativos.
           </p>
           <p className="text-white/8 text-[10px] tracking-[0.25em] transition-colors duration-300 hover:text-[#00FF41]/25">
-            Construido con precisión. Desarrollado por QA.
+            Diseñado por consultores expertos.
           </p>
         </div>
 
