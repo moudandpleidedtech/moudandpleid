@@ -1,19 +1,27 @@
 'use client'
 
+/**
+ * /login — Terminal de Acceso Restringido · DAKI EdTech
+ * ──────────────────────────────────────────────────────
+ * UI centrada absolutamente. Estética terminal/hacker.
+ * Lógica de auth: boot typewriter → email → password → terms → JWT.
+ */
+
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 const BOOT_LINES = [
-  '> DAKI EdTech // PROTOCOLO DE ACCESO v1.0...',
+  '> INICIANDO PROTOCOLO DE AUTENTICACIÓN...',
   '> VERIFICANDO INTEGRIDAD DE NÚCLEOS...       [OK]',
   '> CARGANDO PROTOCOLOS DE SEGURIDAD...        [OK]',
   '> ESTABLECIENDO CANAL CIFRADO...             [OK]',
-  '',
+  '> TERMINAL LISTA.',
 ]
-const BOOT_DELAYS = [0, 520, 980, 1440, 1900]
+const BOOT_DELAYS = [0, 480, 920, 1360, 1800]
 
 type Phase = 'booting' | 'email' | 'password' | 'terms' | 'authenticating' | 'done'
 
@@ -26,8 +34,7 @@ function TermsCheckbox({
   onChange: (_v: boolean) => void
 }) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer group select-none mt-5">
-      {/* Custom checkbox */}
+    <label className="flex items-start gap-3 cursor-pointer group select-none">
       <div
         onClick={() => onChange(!checked)}
         className={`mt-0.5 w-4 h-4 flex-shrink-0 border transition-all duration-150 ${
@@ -42,27 +49,17 @@ function TermsCheckbox({
           </svg>
         )}
       </div>
-
-      {/* Label */}
       <span className="text-xs text-[#00FF41]/50 leading-5 group-hover:text-[#00FF41]/70 transition-colors">
         He leído y acepto los{' '}
-        <a
-          href="/terminos"
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href="/terminos" target="_blank" rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
-          className="text-[#00FF41]/80 underline underline-offset-2 hover:text-[#00FF41] transition-colors"
-        >
+          className="text-[#00FF41]/80 underline underline-offset-2 hover:text-[#00FF41] transition-colors">
           Términos y Condiciones
         </a>
         {' '}y la{' '}
-        <a
-          href="/privacidad"
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href="/privacidad" target="_blank" rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
-          className="text-[#00FF41]/80 underline underline-offset-2 hover:text-[#00FF41] transition-colors"
-        >
+          className="text-[#00FF41]/80 underline underline-offset-2 hover:text-[#00FF41] transition-colors">
           Política de Privacidad
         </a>
         {' '}de DAKI EdTech.
@@ -71,33 +68,37 @@ function TermsCheckbox({
   )
 }
 
-// ── Validación de email simple ────────────────────────────────────────────────
 function isValidEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
 }
 
-// ── Página principal ──────────────────────────────────────────────────────────
+// ── Página ────────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter()
   const { setUser } = useUserStore()
 
-  const [lines, setLines] = useState<string[]>([])
-  const [phase, setPhase] = useState<Phase>('booting')
-  const [emailVal, setEmailVal] = useState('')
-  const [passVal, setPassVal] = useState('')
+  const [lines,         setLines]         = useState<string[]>([])
+  const [phase,         setPhase]         = useState<Phase>('booting')
+  const [emailVal,      setEmailVal]      = useState('')
+  const [passVal,       setPassVal]       = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [authLine, setAuthLine] = useState('')
-  const [error, setError] = useState('')
+  const [statusLine,    setStatusLine]    = useState('Esperando credenciales')
+  const [error,         setError]         = useState('')
+  const [inputFocused,  setInputFocused]  = useState(false)
+
   const emailRef = useRef<HTMLInputElement>(null)
   const passRef  = useRef<HTMLInputElement>(null)
 
-  // ── Boot typewriter ─────────────────────────────────────────────────────────
+  // ── Boot typewriter ──────────────────────────────────────────────────────────
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
     BOOT_LINES.forEach((line, i) => {
-      timers.push(setTimeout(() => setLines(prev => [...prev, line]), BOOT_DELAYS[i] + 400))
+      timers.push(setTimeout(() => setLines(prev => [...prev, line]), BOOT_DELAYS[i] + 300))
     })
-    timers.push(setTimeout(() => setPhase('email'), BOOT_DELAYS[BOOT_LINES.length - 1] + 800))
+    timers.push(setTimeout(() => {
+      setPhase('email')
+      setStatusLine('Esperando credenciales')
+    }, BOOT_DELAYS[BOOT_LINES.length - 1] + 600))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -106,15 +107,17 @@ export default function LoginPage() {
     if (phase === 'password') passRef.current?.focus()
   }, [phase])
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!emailVal.trim()) return
     if (!isValidEmail(emailVal)) {
       setError('> [ERROR] FORMATO DE CREDENCIAL INVÁLIDO.')
+      setStatusLine('Error de validación')
       return
     }
     setError('')
+    setStatusLine('Credencial aceptada — ingrese clave')
     setPhase('password')
   }
 
@@ -122,24 +125,25 @@ export default function LoginPage() {
     e.preventDefault()
     if (!passVal.trim()) return
     setError('')
+    setStatusLine('Clave recibida — confirme protocolo legal')
     setPhase('terms')
   }
 
   const handleLogin = async () => {
     if (!termsAccepted) return
     setPhase('authenticating')
-    setAuthLine('> AUTENTICANDO CREDENCIALES...')
+    setStatusLine('Autenticando credenciales...')
     setError('')
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const timeoutId  = setTimeout(() => controller.abort(), 10_000)
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/users/login`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: emailVal.trim() }),
-        signal: controller.signal,
+        body:    JSON.stringify({ username: emailVal.trim() }),
+        signal:  controller.signal,
       })
       clearTimeout(timeoutId)
       if (!res.ok) throw new Error('auth_failed')
@@ -149,7 +153,7 @@ export default function LoginPage() {
       document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
       localStorage.setItem('userId', data.id as string)
 
-      setAuthLine(`> ACCESO CONCEDIDO. BIENVENIDO, ${(data.username as string).toUpperCase()}.`)
+      setStatusLine(`Acceso concedido — ${(data.username as string).toUpperCase()}`)
       setPhase('done')
 
       const seen = typeof window !== 'undefined' && localStorage.getItem('boot_seen')
@@ -157,193 +161,235 @@ export default function LoginPage() {
     } catch (err) {
       clearTimeout(timeoutId)
       setPhase('terms')
-      setAuthLine('')
       const isTimeout = err instanceof DOMException && err.name === 'AbortError'
       setError(
         isTimeout
-          ? '> [ERROR 503] NEXO CENTRAL SIN RESPUESTA. VERIFIQUE LA CONEXIÓN.'
-          : '> [ERROR 403] CREDENCIAL NO RECONOCIDA. REINTENTE.',
+          ? '> [ERROR 503] NEXO CENTRAL SIN RESPUESTA.'
+          : '> [ERROR 403] CREDENCIAL NO RECONOCIDA.',
       )
+      setStatusLine('Autenticación fallida')
     }
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
   const emailValid = isValidEmail(emailVal)
+  const isSuccess  = phase === 'done'
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <>
-      <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col justify-center px-8 md:px-24 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col items-center justify-center relative overflow-hidden">
 
-        {/* CRT scanlines */}
-        <div
-          className="fixed inset-0 pointer-events-none z-10"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px)',
-          }}
-        />
+      {/* Keyframes */}
+      <style>{`
+        @keyframes cursor-blink {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0; }
+        }
+        .blink { animation: cursor-blink 1s step-end infinite; }
 
-        {/* Vignette */}
-        <div
-          className="fixed inset-0 pointer-events-none z-10"
-          style={{
-            background:
-              'radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.65) 100%)',
-          }}
-        />
+        .exec-btn {
+          border: 1px solid rgba(0,255,65,0.55);
+          color: #00FF41;
+          background: transparent;
+          transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .exec-btn:hover:not(:disabled) {
+          background: #00FF41;
+          color: #0A0A0A;
+          box-shadow: 0 0 24px rgba(0,255,65,0.4);
+        }
+        .exec-btn:disabled {
+          border-color: rgba(0,255,65,0.15);
+          color: rgba(0,255,65,0.25);
+          cursor: not-allowed;
+        }
+        .input-line {
+          border-bottom: 1px solid rgba(0,255,65,0.2);
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-line.focused {
+          border-color: #00FF41;
+          box-shadow: 0 2px 12px rgba(0,255,65,0.2);
+        }
+      `}</style>
 
-        <div className="relative z-20 w-full max-w-2xl">
+      {/* CRT overlay */}
+      <div className="fixed inset-0 pointer-events-none z-10"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px)' }}
+      />
+      {/* Vignette */}
+      <div className="fixed inset-0 pointer-events-none z-10"
+        style={{ background: 'radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.75) 100%)' }}
+      />
 
-          {/* Header badge */}
-          <div className="text-[#00FF41]/20 text-xs tracking-[0.45em] mb-10 uppercase">
-            DAKI EdTech // Canal Seguro // v4.2.1
-          </div>
+      {/* ── Terminal box ───────────────────────────────────────────────────────── */}
+      <div className="relative z-20 w-full max-w-lg px-6">
 
-          {/* Boot lines */}
-          <div className="space-y-1.5 mb-3">
+        {/* ── Header ─────────────────────────────────────────────────────────── */}
+        <div className="border-b border-[#00FF41]/15 pb-4 mb-8">
+          <p className="text-[#00FF41]/25 text-xs tracking-[0.5em] uppercase mb-1">
+            {'// ACCESO RESTRINGIDO'}
+          </p>
+          <h1 className="text-[#00FF41] text-sm md:text-base font-bold tracking-[0.3em] uppercase neon-glow">
+            DAKIedtech {'//'}  PROTOCOLO DE AUTENTICACIÓN
+          </h1>
+        </div>
+
+        {/* ── Boot log ───────────────────────────────────────────────────────── */}
+        {lines.length > 0 && (
+          <div className="space-y-1 mb-8">
             {lines.map((line, i) => (
-              <div
-                key={i}
-                className={`text-sm leading-6 ${
-                  line === ''            ? 'h-2'
-                  : line.includes('[OK]') ? 'text-[#00FF41]/55'
-                  : 'text-[#00FF41]/40'
-                }`}
-              >
-                {line || '\u00A0'}
+              <div key={i} className={`text-xs leading-5 ${
+                line.includes('[OK]')    ? 'text-[#00FF41]/50'
+                : line.includes('LISTA') ? 'text-[#00FF41]/80'
+                : 'text-[#00FF41]/30'
+              }`}>
+                {line}
               </div>
             ))}
           </div>
+        )}
 
-          {/* ── EMAIL ─────────────────────────────────────────────────────── */}
-          {phase === 'email' && (
-            <>
-              <div className="text-sm text-[#00FF41] mb-1.5">
-                {'> INTRODUZCA CREDENCIAL DE OPERADOR (EMAIL):'}
-              </div>
-              <form onSubmit={handleEmailSubmit} className="flex items-center gap-2">
-                <span className="text-[#00FF41] select-none">{'>'}</span>
+        {/* ── EMAIL ──────────────────────────────────────────────────────────── */}
+        {phase === 'email' && (
+          <div className="mb-6">
+            <p className="text-xs text-[#00FF41]/50 tracking-[0.3em] uppercase mb-4">
+              {'> INTRODUZCA CÓDIGO DE OPERADOR'}
+            </p>
+            <form onSubmit={handleEmailSubmit}>
+              <div className={`input-line pb-2 mb-5 flex items-center gap-2 ${inputFocused ? 'focused' : ''}`}>
+                <span className="text-[#00FF41]/50 select-none text-xs">{'>'}</span>
                 <input
                   ref={emailRef}
                   type="text"
                   value={emailVal}
                   onChange={e => { setEmailVal(e.target.value); setError('') }}
-                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-wide"
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  placeholder="[ INGRESE CÓDIGO DE OPERADOR ]"
+                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-wide placeholder:text-[#00FF41]/20"
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="operador@nexo.io"
                 />
                 {emailVal && (
-                  <span className={`text-xs ${emailValid ? 'text-[#00FF41]/60' : 'text-red-400/60'}`}>
-                    {emailValid ? '[VÁLIDO]' : '[INVÁLIDO]'}
+                  <span className={`text-[10px] tracking-widest ${emailValid ? 'text-[#00FF41]/60' : 'text-red-400/60'}`}>
+                    {emailValid ? '[OK]' : '[ERR]'}
                   </span>
                 )}
-                <span className="text-[#00FF41] animate-pulse select-none">█</span>
-              </form>
-              {error && <div className="mt-2 text-red-400 text-xs">{error}</div>}
-            </>
-          )}
+              </div>
+              <button type="submit" disabled={!emailValid} className="exec-btn w-full py-3 text-xs tracking-[0.4em] uppercase">
+                {'[ EJECUTAR SECUENCIA ]'}
+              </button>
+            </form>
+            {error && <p className="mt-3 text-red-400 text-xs">{error}</p>}
+          </div>
+        )}
 
-          {/* ── PASSWORD ──────────────────────────────────────────────────── */}
-          {phase === 'password' && (
-            <>
-              <div className="text-sm text-[#00FF41]/45 mb-1.5">
-                {`> CREDENCIAL: ${emailVal}`}
-              </div>
-              <div className="text-sm text-[#00FF41] mb-1.5">
-                {'> INTRODUZCA CLAVE DE ACCESO:'}
-              </div>
-              <form onSubmit={handlePasswordSubmit} className="flex items-center gap-2">
-                <span className="text-[#00FF41] select-none">{'>'}</span>
+        {/* ── PASSWORD ───────────────────────────────────────────────────────── */}
+        {phase === 'password' && (
+          <div className="mb-6">
+            <p className="text-xs text-[#00FF41]/40 tracking-wide mb-1">
+              {`> OPERADOR: ${emailVal}`}
+            </p>
+            <p className="text-xs text-[#00FF41]/50 tracking-[0.3em] uppercase mb-4">
+              {'> INTRODUZCA CLAVE DE ACCESO'}
+            </p>
+            <form onSubmit={handlePasswordSubmit}>
+              <div className={`input-line pb-2 mb-5 flex items-center gap-2 ${inputFocused ? 'focused' : ''}`}>
+                <span className="text-[#00FF41]/50 select-none text-xs">{'>'}</span>
                 <input
                   ref={passRef}
                   type="password"
                   value={passVal}
                   onChange={e => setPassVal(e.target.value)}
-                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41]"
+                  onFocus={() => setInputFocused(true)}
+                  onBlur={() => setInputFocused(false)}
+                  placeholder="[ ••••••••••••• ]"
+                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] placeholder:text-[#00FF41]/20"
                   autoComplete="off"
                 />
-                <span className="text-[#00FF41] animate-pulse select-none">█</span>
-              </form>
-            </>
-          )}
-
-          {/* ── TERMS + SUBMIT ────────────────────────────────────────────── */}
-          {phase === 'terms' && (
-            <>
-              {/* Resumen de credenciales */}
-              <div className="text-sm text-[#00FF41]/40 mb-0.5">
-                {`> CREDENCIAL: ${emailVal}`}
               </div>
-              <div className="text-sm text-[#00FF41]/40 mb-3">
-                {'> CLAVE: ••••••••'}
-              </div>
-
-              {/* Bloque legal */}
-              <div className="border border-[#00FF41]/12 bg-[#00FF41]/3 px-4 py-4">
-                <div className="text-xs text-[#00FF41]/30 tracking-[0.3em] uppercase mb-3">
-                  {'// Protocolo Legal — Sector 00'}
-                </div>
-                <TermsCheckbox checked={termsAccepted} onChange={setTermsAccepted} />
-              </div>
-
-              {/* Botón Ingresar */}
-              <button
-                onClick={handleLogin}
-                disabled={!termsAccepted}
-                className={`mt-5 w-full py-3 text-sm tracking-[0.3em] uppercase font-mono border
-                  transition-all duration-200
-                  ${
-                    termsAccepted
-                      ? 'border-[#00FF41]/60 text-[#00FF41] bg-[#00FF41]/8 hover:bg-[#00FF41]/15 hover:border-[#00FF41] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] cursor-pointer'
-                      : 'border-[#00FF41]/15 text-[#00FF41]/25 bg-transparent cursor-not-allowed'
-                  }`}
-              >
-                {termsAccepted ? '[ INGRESAR AL NEXO ]' : '[ ACEPTA LOS TÉRMINOS PARA CONTINUAR ]'}
+              <button type="submit" disabled={!passVal.trim()} className="exec-btn w-full py-3 text-xs tracking-[0.4em] uppercase">
+                {'[ EJECUTAR SECUENCIA ]'}
               </button>
+            </form>
+          </div>
+        )}
 
-              {error && <div className="mt-2 text-red-400 text-xs">{error}</div>}
-            </>
-          )}
-
-          {/* ── AUTH STATUS LINE ──────────────────────────────────────────── */}
-          {authLine && (
-            <div
-              className={`text-sm mt-1 ${
-                authLine.includes('CONCEDIDO')
-                  ? 'text-[#00FF41]'
-                  : 'text-[#00FF41]/50 animate-pulse'
-              }`}
+        {/* ── TERMS + CONFIRM ────────────────────────────────────────────────── */}
+        {phase === 'terms' && (
+          <div className="mb-6">
+            <p className="text-xs text-[#00FF41]/40 tracking-wide mb-0.5">{`> OPERADOR: ${emailVal}`}</p>
+            <p className="text-xs text-[#00FF41]/40 tracking-wide mb-5">{'> CLAVE: ••••••••'}</p>
+            <div className="border border-[#00FF41]/10 bg-[#00FF41]/3 px-4 py-4 mb-5">
+              <p className="text-[10px] text-[#00FF41]/30 tracking-[0.3em] uppercase mb-3">
+                {'// Protocolo Legal — Sector 00'}
+              </p>
+              <TermsCheckbox checked={termsAccepted} onChange={setTermsAccepted} />
+            </div>
+            <button
+              onClick={handleLogin}
+              disabled={!termsAccepted}
+              className="exec-btn w-full py-3 text-xs tracking-[0.4em] uppercase"
             >
-              {authLine}
-            </div>
-          )}
+              {termsAccepted ? '[ EJECUTAR SECUENCIA ]' : '[ ACEPTE EL PROTOCOLO PARA CONTINUAR ]'}
+            </button>
+            {error && <p className="mt-3 text-red-400 text-xs">{error}</p>}
+          </div>
+        )}
 
-          {/* ── ENTER HINT ────────────────────────────────────────────────── */}
+        {/* ── AUTHENTICATING ─────────────────────────────────────────────────── */}
+        {phase === 'authenticating' && (
+          <div className="mb-6">
+            <p className="text-xs text-[#00FF41]/60 animate-pulse tracking-[0.3em]">
+              {'> AUTENTICANDO... ESPERE'}
+            </p>
+          </div>
+        )}
+
+        {/* ── DONE ───────────────────────────────────────────────────────────── */}
+        {phase === 'done' && (
+          <div className="mb-6">
+            <p className="text-sm text-[#00FF41] neon-glow tracking-[0.2em]">
+              {'> ACCESO CONCEDIDO. REDIRIGIENDO...'}
+            </p>
+          </div>
+        )}
+
+        {/* ── Consola de estado ──────────────────────────────────────────────── */}
+        <div className="border-t border-[#00FF41]/10 pt-4 mt-2 mb-8">
+          <p className={`text-xs tracking-wide ${isSuccess ? 'text-[#00FF41]' : 'text-[#00FF41]/35'}`}>
+            {'> Status: '}{statusLine}
+            <span className="blink ml-0.5">_</span>
+          </p>
           {(phase === 'email' || phase === 'password') && (
-            <div className="mt-8 text-[#00FF41]/18 text-xs tracking-[0.35em]">
+            <p className="mt-1 text-[#00FF41]/15 text-[10px] tracking-[0.3em]">
               PRESIONE [ENTER] PARA CONTINUAR
-            </div>
+            </p>
           )}
-
-          {/* ── REGISTRO HINT ─────────────────────────────────────────────── */}
-          {phase === 'email' && (
-            <div className="mt-12 text-[#00FF41]/15 text-xs tracking-[0.2em]">
-              NUEVO OPERADOR?{' '}
-              <a
-                href="https://pay.dakiedtech.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#00FF41]/30 hover:text-[#00FF41]/60 underline underline-offset-2 transition-colors"
-              >
-                ADQUIRIR LICENCIA
-              </a>
-            </div>
-          )}
-
         </div>
+
+        {/* ── NUEVO OPERADOR ─────────────────────────────────────────────────── */}
+        {phase === 'email' && (
+          <p className="text-[#00FF41]/15 text-xs tracking-[0.2em] mb-6">
+            NUEVO OPERADOR?{' '}
+            <a href="https://pay.dakiedtech.com" target="_blank" rel="noopener noreferrer"
+              className="text-[#00FF41]/30 hover:text-[#00FF41]/60 underline underline-offset-2 transition-colors">
+              ADQUIRIR LICENCIA
+            </a>
+          </p>
+        )}
+
+        {/* ── Salida de emergencia ───────────────────────────────────────────── */}
+        <div className="text-center">
+          <Link
+            href="/"
+            className="text-[#00FF41]/15 text-[10px] tracking-[0.3em] hover:text-[#00FF41]/40 transition-colors"
+          >
+            {'[ Abortar y volver al portal principal ]'}
+          </Link>
+        </div>
+
       </div>
-    </>
+    </div>
   )
 }
