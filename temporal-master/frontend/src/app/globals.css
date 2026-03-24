@@ -214,3 +214,51 @@ html, body {
   }
   .card-content { opacity: 0.85; }
 }
+
+/* ── Landing — CTA Primary Button ──────────────────────────────────────── */
+@keyframes cta-border-pulse {
+  0%, 100% { border-color: rgba(0, 255, 65, 0.20); box-shadow: 0 0 12px rgba(0,255,65,0.08); }
+  50%      { border-color: rgba(0, 255, 65, 0.65); box-shadow: 0 0 28px rgba(0,255,65,0.22); }
+}
+.cta-primary-btn {
+  animation: cta-border-pulse 2.4s ease-in-out infinite;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.cta-primary-btn:hover {
+  animation: none;
+  background: rgba(0, 255, 65, 0.12) !important;
+  border-color: #00FF41 !important;
+  box-shadow: 0 0 36px rgba(0, 255, 65, 0.45);
+}
+
+/* ── Landing — Mission Cards ────────────────────────────────────────────── */
+.mission-active {
+  border: 1px solid rgba(0, 255, 65, 0.30);
+  background: #0D0D0D;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.mission-active:hover {
+  border-color: rgba(0, 255, 65, 0.75);
+  box-shadow: 0 0 32px rgba(0, 255, 65, 0.10), 0 0 2px rgba(0, 255, 65, 0.4);
+}
+.mission-active:hover .active-btn {
+  border-color: #00FF41;
+  box-shadow: 0 0 16px rgba(0, 255, 65, 0.4);
+  background: rgba(0, 255, 65, 0.12);
+}
+.active-btn {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.mission-locked {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0D0D0D;
+}
+
+/* ── Landing — BetaProtocol / FinalCTA border blink ────────────────────── */
+@keyframes cta-section-blink {
+  0%, 85%, 100% { border-color: rgba(0, 255, 65, 0.12); }
+  90%           { border-color: rgba(0, 255, 65, 0.45); }
+}
+.cta-section-border {
+  animation: cta-section-blink 5s ease-in-out infinite;
+}

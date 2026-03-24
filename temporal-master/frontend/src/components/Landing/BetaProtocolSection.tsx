@@ -1,91 +1,118 @@
-'use client'
-
 /**
- * BetaProtocolSection.tsx — Canal de Feedback · DAKI EdTech
- * ──────────────────────────────────────────────────────────
- * Fondo negro con borde rojo alerta. Layout centrado tipo terminal.
- * Botón con glow pulsante rojo → mailto de reporte.
+ * BetaProtocolSection.tsx — CTA comercial de cierre · DAKI EdTech
+ * ───────────────────────────────────────────────────────────────
+ * Sección de conversión final. Sin inline <style> — CSS en globals.css.
  */
+
+import Link from 'next/link'
+
+const BENEFITS = [
+  '100 niveles de Python — de cero a arquitecto de sistemas reales',
+  'DAKI analiza y corrige tu código en tiempo real, sin juicios',
+  'Misiones con jefes finales, duelos y leaderboard global de Operadores',
+  'Certificado de Operador al completar las 3 Operaciones Clasificadas',
+] as const
 
 export default function BetaProtocolSection() {
   return (
-    <section className="bg-[#0A0A0A] font-mono px-6 md:px-12 py-24">
+    <section className="bg-[#060606] font-mono px-6 md:px-12 py-24 md:py-32 relative overflow-hidden">
 
-      <style>{`
-        @keyframes red-pulse {
-          0%, 100% {
-            box-shadow: 0 0 8px rgba(255,51,51,0.2), 0 0 20px rgba(255,51,51,0.08);
-            border-color: rgba(255,51,51,0.4);
-          }
-          50% {
-            box-shadow: 0 0 24px rgba(255,51,51,0.6), 0 0 48px rgba(255,51,51,0.2);
-            border-color: rgba(255,51,51,0.9);
-          }
-        }
-        @keyframes border-blink {
-          0%, 90%, 100% { border-color: rgba(255,51,51,0.25); }
-          95%            { border-color: rgba(255,51,51,0.7); }
-        }
-        .beta-wrapper {
-          border: 1px solid rgba(255,51,51,0.25);
-          animation: border-blink 4s ease-in-out infinite;
-        }
-        .report-btn {
-          animation: red-pulse 2.6s ease-in-out infinite;
-          transition: background 0.2s ease;
-        }
-        .report-btn:hover {
-          animation: none;
-          box-shadow: 0 0 32px rgba(255,51,51,0.7), 0 0 64px rgba(255,51,51,0.3);
-          border-color: #ff3333;
-          background: rgba(255,51,51,0.1);
-        }
-      `}</style>
+      {/* Grid táctica de fondo */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{
+          backgroundImage: 'linear-gradient(#00FF41 1px,transparent 1px),linear-gradient(90deg,#00FF41 1px,transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-      <div className="max-w-3xl mx-auto">
-        <div className="beta-wrapper p-10 md:p-14 flex flex-col items-center gap-8 text-center bg-[#0D0D0D]">
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(6,6,6,0.85) 100%)' }}
+      />
 
-          {/* Pre-label */}
-          <span className="text-[#ff3333]/50 text-xs tracking-[0.6em] uppercase">
-            {'// CANAL SEGURO — FASE ALPHA'}
+      <div className="max-w-2xl mx-auto text-center relative z-10">
+
+        {/* Pre-label */}
+        <p className="text-[#00FF41]/35 text-[10px] tracking-[0.7em] uppercase mb-10">
+          {'// ACCESO AL NEXO — BETA ABIERTA'}
+        </p>
+
+        {/* Headline */}
+        <h2
+          className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-[0.06em] uppercase text-white leading-none mb-4"
+          style={{ textShadow: '0 0 80px rgba(0,255,65,0.10)' }}
+        >
+          EMPIEZA A CODEAR.
+          <br />
+          <span
+            className="text-[#00FF41]"
+            style={{ textShadow: '0 0 32px rgba(0,255,65,0.55), 0 0 64px rgba(0,255,65,0.2)' }}
+          >
+            HOY.
           </span>
+        </h2>
 
-          {/* Título */}
-          <h2
-            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.1em] uppercase text-white"
-            style={{ textShadow: '0 0 30px rgba(255,51,51,0.4), 0 0 60px rgba(255,51,51,0.15)' }}
-          >
-            PROTOCOLO DE<br />
-            <span className="text-[#ff3333]">REPORTE BETA</span>
-          </h2>
-
-          {/* Separador */}
-          <div className="h-px w-24 bg-gradient-to-r from-transparent via-[#ff3333]/40 to-transparent" />
-
-          {/* Descripción */}
-          <p className="text-[#C0C0C0]/65 text-sm leading-7 tracking-wide max-w-xl">
-            A los Operadores de la Fase Alpha: El sistema está vivo.
-            Si encuentran una fisura, no la ignoren.{' '}
-            <span className="text-white/80">Documenten el fallo.</span>{' '}
-            Su feedback es el blindaje de las futuras generaciones.
-          </p>
-
-          {/* CTA */}
-          <a
-            href="mailto:reporte@dakiedtech.com?subject=[ANOMALIA]%20Reporte%20de%20Operador"
-            className="report-btn border border-[#ff3333]/40 text-[#ff3333] text-xs tracking-[0.4em] uppercase px-10 py-4 bg-[#ff3333]/5 w-full sm:w-auto text-center"
-          >
-            {`[[ REPORTAR ANOMALÍA ]]`}
-          </a>
-
-          {/* Micro-copy */}
-          <p className="text-[#ff3333]/25 text-xs tracking-[0.25em]">
-            {'[ TODOS LOS REPORTES SON ANALIZADOS POR EL NÚCLEO ]'}
-          </p>
-
+        {/* Divisor */}
+        <div className="flex items-center justify-center gap-4 my-10">
+          <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-[#00FF41]/25" />
+          <span className="text-[#00FF41]/25 text-xs">{'◆'}</span>
+          <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-[#00FF41]/25" />
         </div>
-      </div>
 
+        {/* Benefits */}
+        <ul className="text-left space-y-4 mb-10">
+          {BENEFITS.map((benefit, i) => (
+            <li key={i} className="flex items-start gap-3">
+              <span
+                className="text-[#00FF41] font-bold text-sm mt-0.5 shrink-0"
+                style={{ textShadow: '0 0 8px rgba(0,255,65,0.6)' }}
+              >
+                ✓
+              </span>
+              <span className="text-[#C0C0C0]/75 text-sm leading-6 tracking-wide">
+                {benefit}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {/* Founder license highlight */}
+        <div className="border border-[#FFB800]/20 bg-[#FFB800]/[0.04] px-6 py-4 mb-10">
+          <p className="text-[#FFB800]/80 text-[11px] tracking-[0.3em] uppercase leading-5">
+            ⚡{'  '}Licencia de Fundador gratuita para los primeros Operadores de la Beta
+          </p>
+        </div>
+
+        {/* CTA Primario */}
+        <Link
+          href="/register"
+          className="cta-primary-btn block sm:inline-block border border-[#00FF41]/25 bg-[#00FF41]/[0.06] text-[#00FF41] text-xs tracking-[0.4em] uppercase px-12 py-5 mb-5 w-full sm:w-auto"
+        >
+          {`[[ CREAR CUENTA — ES GRATIS ]]`}
+        </Link>
+
+        {/* CTA Secundario */}
+        <div className="mb-10">
+          <Link
+            href="/login"
+            className="text-[#00FF41]/20 text-[10px] tracking-[0.35em] uppercase hover:text-[#00FF41]/50 transition-colors duration-200"
+          >
+            {'[ Ya tengo cuenta → Iniciar sesión ]'}
+          </Link>
+        </div>
+
+        {/* Trust signals */}
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1">
+          {['Sin tarjeta de crédito', 'Sin subscripciones', 'Acceso inmediato'].map((t) => (
+            <span key={t} className="text-[#00FF41]/12 text-[10px] tracking-[0.25em]">
+              {t}
+            </span>
+          ))}
+        </div>
+
+      </div>
     </section>
   )
 }
