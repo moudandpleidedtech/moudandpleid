@@ -13,8 +13,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthenticated = request.cookies.has('enigma_user')
 
-  // Usuario autenticado intenta acceder al login → Centro de Mando
-  if (pathname === '/login' && isAuthenticated) {
+  // Usuario autenticado intenta acceder a login/register → Centro de Mando
+  if ((pathname === '/login' || pathname === '/register') && isAuthenticated) {
     return NextResponse.redirect(new URL('/hub', request.url))
   }
 
@@ -30,6 +30,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/login',
+    '/register',
     '/hub',
     '/misiones',
     '/challenge/:path*',
