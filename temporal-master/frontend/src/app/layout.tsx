@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import TopNav from '@/components/UI/TopNav'
 import NeuralInstabilityEvent from '@/components/UI/NeuralInstabilityEvent'
+import BunkerAtmosphere from '@/components/UI/BunkerAtmosphere'
 
 export const metadata: Metadata = {
   title: 'DAKI EdTech — Aprende Python jugando',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className="crt">
+        <BunkerAtmosphere />
         <TopNav />
         <NeuralInstabilityEvent />
         {children}
