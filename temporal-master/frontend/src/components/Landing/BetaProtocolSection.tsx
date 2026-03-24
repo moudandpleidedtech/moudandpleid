@@ -41,18 +41,21 @@ export default function BetaProtocolSection() {
 
         {/* Headline */}
         <h2
-          className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-[0.06em] uppercase text-white leading-none mb-4"
+          className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-[0.06em] uppercase text-white leading-none mb-3"
           style={{ textShadow: '0 0 80px rgba(0,255,65,0.10)' }}
         >
-          EMPIEZA A CODEAR.
+          DOMINA PYTHON.
           <br />
           <span
             className="text-[#00FF41]"
             style={{ textShadow: '0 0 32px rgba(0,255,65,0.55), 0 0 64px rgba(0,255,65,0.2)' }}
           >
-            HOY.
+            CONSTRUYE SISTEMAS.
           </span>
         </h2>
+        <p className="text-white/20 text-[10px] tracking-[0.45em] uppercase mb-4">
+          {'// el lenguaje de la IA · la nube · y los sistemas reales'}
+        </p>
 
         {/* Divisor */}
         <div className="flex items-center justify-center gap-4 my-10">

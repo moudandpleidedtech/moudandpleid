@@ -6,15 +6,15 @@
  */
 
 const STATS = [
-  { value: '100',   label: 'Niveles',          sub: 'de combate real'             },
-  { value: '∞',     label: 'Misiones',          sub: 'generadas por IA'            },
-  { value: 'IA',    label: 'Mentora',           sub: 'análisis en tiempo real'     },
-  { value: '0',     label: 'Teoría Muerta',     sub: 'solo código en producción'   },
+  { value: 'Python', label: 'Misión 01',        sub: 'el lenguaje de la IA y la nube' },
+  { value: '100',    label: 'Niveles',          sub: 'de combate real'                },
+  { value: '∞',      label: 'Misiones',         sub: 'generadas por IA'               },
+  { value: '0',      label: 'Teoría Muerta',    sub: 'solo código en producción'      },
 ] as const
 
 const PILLARS = [
+  'Python — de cero a arquitecto',
   'Sin videos pregrabados',
-  'Sin subscripciones ocultas',
   'Código en producción real',
 ] as const
 

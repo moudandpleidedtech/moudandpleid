@@ -49,28 +49,49 @@ export default function MissionsSection() {
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          {/* TARJETA 1 — ACTIVA */}
-          <div className="mission-active p-7 flex flex-col gap-5">
+          {/* TARJETA 1 — ACTIVA — PYTHON */}
+          <div className="mission-active p-7 flex flex-col gap-5 relative">
 
-            <div className="inline-flex items-center gap-2 self-start px-3 py-1 bg-[#00FF41]/10 border border-[#00FF41]/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" />
-              <span className="text-[#00FF41] text-[10px] tracking-[0.35em] uppercase font-bold">
-                ONLINE
+            {/* Fila de status + lenguaje */}
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#00FF41]/10 border border-[#00FF41]/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" />
+                <span className="text-[#00FF41] text-[10px] tracking-[0.35em] uppercase font-bold">
+                  ONLINE
+                </span>
+              </div>
+              <span
+                className="text-[#00FF41]/55 text-[10px] tracking-[0.25em] border border-[#00FF41]/20 px-2 py-0.5 font-bold"
+                style={{ textShadow: '0 0 10px rgba(0,255,65,0.5)' }}
+              >
+                PYTHON 3
               </span>
             </div>
 
             <div>
               <p className="text-[#00FF41]/40 text-[10px] tracking-[0.4em] uppercase mb-1">Operación 01</p>
               <h3 className="text-[#00FF41] text-sm font-bold tracking-[0.2em] uppercase leading-6">
-                Lógica y<br />
-                <span className="text-white/90">Sintaxis Core</span>
+                Python — Core<br />
+                <span className="text-white/90">Lógica & Sistemas</span>
               </h3>
+            </div>
+
+            {/* Tech stack tags */}
+            <div className="flex flex-wrap gap-1.5">
+              {['vars', 'funciones', 'OOP', 'algoritmos', 'APIs REST'].map(tag => (
+                <span
+                  key={tag}
+                  className="text-[#00FF41]/30 text-[9px] tracking-[0.2em] border border-[#00FF41]/10 px-1.5 py-0.5"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
 
             <div className="h-px bg-[#00FF41]/15" />
 
             <p className="text-[#C0C0C0]/70 text-sm leading-6 tracking-wide flex-1">
-              Vence al Infinite Looper. Domina variables, funciones, bucles y estructuras bajo fuego real en 100 niveles.
+              Vence al Infinite Looper. Domina Python desde cero hasta APIs REST y estructuras de datos reales en 100 niveles de combate.
             </p>
 
             {/* Progress hint */}
@@ -88,7 +109,7 @@ export default function MissionsSection() {
               href="/login"
               className="active-btn block text-center border border-[#00FF41]/45 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-4 py-3 bg-[#00FF41]/5"
             >
-              {`[[ INICIAR MISIÓN ]]`}
+              {`[[ INICIAR CON PYTHON ]]`}
             </Link>
 
           </div>

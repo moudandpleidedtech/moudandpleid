@@ -254,6 +254,32 @@ html, body {
   background: #0D0D0D;
 }
 
+/* ── CircuitBoard — pulsos eléctricos (reduced-motion off) ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .circuit-pulse { display: none; }
+}
+
+/* ── ElectricDivider — chispa que cruza horizontalmente ─────────────────── */
+@keyframes elec-spark {
+  0%   { left: -8%;  opacity: 0; width: 40px; }
+  4%   { opacity: 1; }
+  50%  { width: 80px; }
+  96%  { opacity: 1; }
+  100% { left: 108%; opacity: 0; width: 40px; }
+}
+.elec-spark {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  background: linear-gradient(to right, transparent, #00FF41, rgba(0,255,65,0.5), transparent);
+  box-shadow: 0 0 8px #00FF41, 0 0 18px rgba(0,255,65,0.55);
+  animation: elec-spark 4.5s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .elec-spark { animation: none; opacity: 0; }
+}
+
 /* ── Landing — BetaProtocol / FinalCTA border blink ────────────────────── */
 @keyframes cta-section-blink {
   0%, 85%, 100% { border-color: rgba(0, 255, 65, 0.12); }
