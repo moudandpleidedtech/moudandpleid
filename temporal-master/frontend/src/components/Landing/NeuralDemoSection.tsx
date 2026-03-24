@@ -66,13 +66,13 @@ export default function NeuralDemoSection() {
           </div>
 
           {/* ── Área del editor ────────────────────────────────────── */}
-          <div className="bg-[#0D0D0D] p-6 overflow-x-auto">
-            <table className="text-sm leading-7 w-full" style={{ borderCollapse: 'collapse' }}>
+          <div className="bg-[#0D0D0D] p-4 md:p-6 overflow-x-auto">
+            <table className="text-xs md:text-sm leading-7" style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
               <tbody>
 
                 {/* Línea 1 — comentario */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">1</td>
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">1</td>
                   <td>
                     <span className="text-[#6A9955]"># Operación 01 · Misión: El Loop Infinito</span>
                   </td>
@@ -80,13 +80,13 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 2 — blank */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">2</td>
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">2</td>
                   <td>&nbsp;</td>
                 </tr>
 
                 {/* Línea 3 — def */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">3</td>
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">3</td>
                   <td>
                     <span className="text-[#569CD6]">def </span>
                     <span className="text-[#DCDCAA]">hunt_duplicates</span>
@@ -102,8 +102,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 4 — seen = set() */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">4</td>
-                  <td className="pl-8">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">4</td>
+                  <td className="pl-4 md:pl-8 whitespace-nowrap">
                     <span className="text-[#9CDCFE]">seen </span>
                     <span className="text-white/70">= </span>
                     <span className="text-[#4EC9B0]">set</span>
@@ -113,8 +113,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 5 — result = [] */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">5</td>
-                  <td className="pl-8">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">5</td>
+                  <td className="pl-4 md:pl-8 whitespace-nowrap">
                     <span className="text-[#9CDCFE]">result </span>
                     <span className="text-white/70">= []</span>
                   </td>
@@ -122,8 +122,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 6 — for loop */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">6</td>
-                  <td className="pl-8">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">6</td>
+                  <td className="pl-4 md:pl-8 whitespace-nowrap">
                     <span className="text-[#569CD6]">for </span>
                     <span className="text-[#9CDCFE]">item </span>
                     <span className="text-[#569CD6]">in </span>
@@ -135,8 +135,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 7 — if */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">7</td>
-                  <td className="pl-16">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">7</td>
+                  <td className="pl-8 md:pl-16 whitespace-nowrap">
                     <span className="text-[#569CD6]">if </span>
                     <span className="text-[#9CDCFE]">item </span>
                     <span className="text-[#569CD6]">not in </span>
@@ -147,8 +147,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 8 — seen.add */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">8</td>
-                  <td className="pl-24">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">8</td>
+                  <td className="pl-12 md:pl-24 whitespace-nowrap">
                     <span className="text-[#9CDCFE]">seen</span>
                     <span className="text-white/70">.</span>
                     <span className="text-[#DCDCAA]">add</span>
@@ -160,8 +160,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 9 — result.append */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">9</td>
-                  <td className="pl-24">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">9</td>
+                  <td className="pl-12 md:pl-24 whitespace-nowrap">
                     <span className="text-[#9CDCFE]">result</span>
                     <span className="text-white/70">.</span>
                     <span className="text-[#DCDCAA]">append</span>
@@ -173,8 +173,8 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 10 — return */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">10</td>
-                  <td className="pl-8">
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">10</td>
+                  <td className="pl-4 md:pl-8 whitespace-nowrap">
                     <span className="text-[#569CD6]">return </span>
                     <span className="text-[#9CDCFE]">result</span>
                   </td>
@@ -182,7 +182,7 @@ export default function NeuralDemoSection() {
 
                 {/* Línea 11 — cursor */}
                 <tr>
-                  <td className="text-white/15 text-[10px] pr-6 select-none w-8 text-right">11</td>
+                  <td className="text-white/15 text-[9px] md:text-[10px] pr-4 md:pr-6 select-none w-6 md:w-8 text-right whitespace-nowrap">11</td>
                   <td>
                     <span className="inline-block w-2 h-4 bg-[#00FF41]/70 align-middle" />
                   </td>

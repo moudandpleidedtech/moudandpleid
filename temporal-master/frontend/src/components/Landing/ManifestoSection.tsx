@@ -74,7 +74,7 @@ function TacticalCard({ letter, title, body }: CardData) {
   return (
     <div
       ref={cardRef}
-      className="daki-card p-8 flex flex-col gap-5"
+      className="daki-card p-5 md:p-8 flex flex-col gap-5"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >

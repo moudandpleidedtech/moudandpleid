@@ -65,7 +65,7 @@ export default function FounderLicenseSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* FUNDADOR — primero en DOM = primero en móvil, right en desktop */}
-          <div className="founder-active border bg-[#0A0A0A] p-8 flex flex-col gap-6 md:order-2 relative">
+          <div className="founder-active border bg-[#0A0A0A] p-5 md:p-8 flex flex-col gap-6 md:order-2 relative">
 
             {/* Badge escasez */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00FF41] px-4 py-1">
@@ -129,7 +129,7 @@ export default function FounderLicenseSection() {
           </div>
 
           {/* EXPLORACIÓN — segundo en DOM = segundo en móvil, left en desktop */}
-          <div className="border border-white/[0.05] bg-[#0A0A0A] p-8 flex flex-col gap-6 md:order-1 opacity-70">
+          <div className="border border-white/[0.05] bg-[#0A0A0A] p-5 md:p-8 flex flex-col gap-6 md:order-1 opacity-70">
 
             {/* Header columna */}
             <div>
