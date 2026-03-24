@@ -38,6 +38,7 @@ export default function LoginPage() {
   const [bootDone,     setBootDone]     = useState(false)
   const [mode,         setMode]         = useState<Mode>('login')
   const [email,        setEmail]        = useState('')
+  const [callsign,     setCallsign]     = useState('')
   const [password,     setPassword]     = useState('')
   const [isLoading,    setIsLoading]    = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
@@ -47,6 +48,7 @@ export default function LoginPage() {
   })
 
   const emailRef    = useRef<HTMLInputElement>(null)
+  const callsignRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
 
   // ── Boot typewriter ──────────────────────────────────────────────────────────
@@ -65,11 +67,13 @@ export default function LoginPage() {
   // ── Reset consola al cambiar de modo ────────────────────────────────────────
   useEffect(() => {
     setConsole({ text: 'Esperando credenciales', state: 'idle' })
+    setCallsign('')
   }, [mode])
 
   // ── Enviar ───────────────────────────────────────────────────────────────────
   const ejecutarSecuencia = async () => {
     if (!email.trim() || !password.trim() || isLoading) return
+    if (mode === 'register' && !callsign.trim()) return
 
     setIsLoading(true)
     setConsole({ text: 'Autenticando credenciales...', state: 'loading' })
@@ -82,14 +86,20 @@ export default function LoginPage() {
       const res = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email.trim(), password }),
+        body:    JSON.stringify(
+          mode === 'register'
+            ? { email: email.trim(), callsign: callsign.trim(), password }
+            : { email: email.trim(), password }
+        ),
       })
 
       if (res.ok) {
-        const data = await res.json() as { access_token: string; user_id: string; level: number }
-        localStorage.setItem('daki_token',   data.access_token)
-        localStorage.setItem('daki_user_id', data.user_id)
-        localStorage.setItem('daki_level',   String(data.level))
+        const data = await res.json() as { access_token: string; user_id: string; callsign: string; level: number; is_licensed: boolean }
+        localStorage.setItem('daki_token',      data.access_token)
+        localStorage.setItem('daki_user_id',    data.user_id)
+        localStorage.setItem('daki_callsign',   data.callsign)
+        localStorage.setItem('daki_level',      String(data.level))
+        localStorage.setItem('daki_licensed',   String(data.is_licensed))
         // Cookie para middleware de Next.js
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
         setConsole({ text: 'ACCESO CONCEDIDO. Abriendo el Nexo...', state: 'success' })
@@ -124,6 +134,7 @@ export default function LoginPage() {
     if (isLoading) return
     setMode(m)
     setEmail('')
+    setCallsign('')
     setPassword('')
     setTimeout(() => emailRef.current?.focus(), 50)
   }
@@ -280,7 +291,12 @@ export default function LoginPage() {
                   onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); passwordRef.current?.focus() } }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      mode === 'register' ? callsignRef.current?.focus() : passwordRef.current?.focus()
+                    }
+                  }}
                   placeholder="operador@nexo.io"
                   disabled={isLoading}
                   className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-wide placeholder:text-[#00FF41]/15 placeholder:normal-case disabled:opacity-40"
@@ -288,6 +304,28 @@ export default function LoginPage() {
                   spellCheck={false}
                 />
               </div>
+
+              {/* Callsign — solo en modo register */}
+              {mode === 'register' && (
+                <div className={`input-line pb-2 mb-5 flex items-center gap-2 ${focusedField === 'callsign' ? 'focused' : ''}`}>
+                  <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.3em] w-20 shrink-0">CALLSIGN</span>
+                  <input
+                    ref={callsignRef}
+                    type="text"
+                    value={callsign}
+                    onChange={e => setCallsign(e.target.value.replace(/\s/g, ''))}
+                    onFocus={() => setFocusedField('callsign')}
+                    onBlur={() => setFocusedField(null)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); passwordRef.current?.focus() } }}
+                    placeholder="Ej: Ghost-Zero"
+                    disabled={isLoading}
+                    maxLength={20}
+                    className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-widest uppercase placeholder:text-[#00FF41]/15 placeholder:normal-case placeholder:tracking-wide disabled:opacity-40"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+              )}
 
               {/* Password */}
               <div className={`input-line pb-2 mb-6 flex items-center gap-2 ${focusedField === 'password' ? 'focused' : ''}`}>
@@ -308,7 +346,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading || !email.trim() || !password.trim()}
+                disabled={isLoading || !email.trim() || !password.trim() || (mode === 'register' && !callsign.trim())}
                 className="exec-btn w-full py-3 text-xs tracking-[0.4em] uppercase"
               >
                 {isLoading

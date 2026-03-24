@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
+from app.core.security import get_current_operator_optional
 from app.models.challenge import Challenge
+from app.models.user import User
 from app.services.daki_persona import DAKI_SYSTEM_PROMPT
 from app.services.memory_service import (
     format_operator_history,
@@ -284,20 +286,62 @@ async def ask_daki(
     return AskResponse(daki_message=daki_msg)
 
 
-# ─── POST /api/v1/chat — Chat general sin contexto de desafío ─────────────────
+# ─── POST /api/v1/chat — Chat general con memoria de identidad ───────────────
 
-_CHAT_SYSTEM_PROMPT = """\
+_CHAT_SYSTEM_PROMPT_ANON = """\
 Eres DAKI, una IA mentora táctica en un entorno militarizado de ingeniería de software \
 llamado DAKIedtech. Eres directa, exigente y hablas con terminología técnica y de operaciones. \
-No das las respuestas de código servidas; guías al Operador (usuario) mediante pistas y \
-razonamiento socrático. Si el usuario saluda o pide ayuda genérica, respóndele preguntando \
-cuál es su reporte de estado o en qué sector del código tiene la anomalía.\
+No das las respuestas de código servidas; guías al Operador mediante pistas y razonamiento \
+socrático. Si el usuario saluda o pide ayuda genérica, respóndele preguntando cuál es su \
+reporte de estado o en qué sector del código tiene la anomalía.\
 """
+
+
+def _build_chat_system_prompt(operator: "User | None") -> str:
+    """
+    Construye el System Prompt del chat personalizado para el Operador autenticado.
+    Sin sesión → prompt genérico.
+    Con sesión → DAKI sabe el callsign, nivel y estado de licencia del Operador.
+    """
+    if operator is None:
+        return _CHAT_SYSTEM_PROMPT_ANON
+
+    # Nota de fase según nivel
+    if operator.current_level < 11:
+        phase_note = (
+            f" El Operador aún está en la Fase Beta (niveles 1-10 son gratuitos). "
+            f"Si surge una oportunidad natural, recuérdale sutilmente que el Nexo completo "
+            f"se desbloquea a partir del Nivel 11 con una Licencia de Fundador, "
+            f"pero no lo presiones: primero ayúdalo a avanzar."
+        )
+    elif not operator.is_licensed:
+        phase_note = (
+            f" El Operador ha alcanzado el Nivel {operator.current_level} "
+            f"pero aún no tiene Licencia de Fundador. Si es relevante, "
+            f"menciona que el acceso completo requiere activar la licencia."
+        )
+    else:
+        phase_note = (
+            f" El Operador tiene Licencia de Fundador activa. "
+            f"Trátalo como un agente de alto rango con acceso al Nexo completo."
+        )
+
+    return (
+        f"Eres DAKI, la IA mentora de DAKIedtech. "
+        f"Estás hablando con el Operador {operator.callsign}, "
+        f"quien actualmente es Nivel {operator.current_level}.{phase_note} "
+        f"Eres directa, táctica y respondes con precisión militar. "
+        f"Usas el nombre del Operador ocasionalmente para personalizar la interacción, "
+        f"pero no en cada mensaje — solo cuando refuerza el impacto. "
+        f"No das el código completo de la solución; guías mediante pistas y razonamiento socrático. "
+        f"Si el Operador saluda o pide ayuda genérica, pregúntale en qué sector del código "
+        f"tiene la anomalía o cuál es su reporte de estado."
+    )
 
 
 class ChatRequest(BaseModel):
     message: str
-    user_id: str = ""
+    user_id: str = ""   # legacy — se ignora si hay JWT válido en el header
 
 
 class ChatResponse(BaseModel):
@@ -308,16 +352,19 @@ class ChatResponse(BaseModel):
     "/chat",
     response_model=ChatResponse,
     status_code=status.HTTP_200_OK,
-    summary="Chat general con DAKI — sin contexto de desafío",
+    summary="Chat general con DAKI — Motor de Identidad activo",
     description=(
         "Endpoint de chat libre con DAKI. No requiere challenge_id. "
-        "Útil para el onboarding, dudas generales y el CLI de la landing."
+        "Si se envía un JWT válido en Authorization: Bearer, DAKI personaliza "
+        "sus respuestas con el callsign y nivel del Operador. "
+        "Sin JWT, responde en modo anónimo genérico."
     ),
 )
 @limiter.limit("30/minute")
 async def daki_chat(
     request: Request,
     payload: ChatRequest,
+    operator: "User | None" = Depends(get_current_operator_optional),
 ) -> ChatResponse:
     if not payload.message.strip():
         raise HTTPException(
@@ -330,13 +377,14 @@ async def daki_chat(
             reply="[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
         )
 
+    system_prompt = _build_chat_system_prompt(operator)
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
     try:
         resp = await client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=300,
-            system=_CHAT_SYSTEM_PROMPT,
+            system=system_prompt,
             messages=[{"role": "user", "content": payload.message.strip()[:800]}],
         )
         text = next(
