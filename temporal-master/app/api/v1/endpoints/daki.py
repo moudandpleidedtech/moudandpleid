@@ -98,20 +98,38 @@ class AskResponse(BaseModel):
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _call_haiku(user_msg: str, max_tokens: int = 120) -> str:
-    """Llama a Haiku con el DAKI_SYSTEM_PROMPT. Retorna texto o fallback offline."""
+    """
+    Llama a Haiku con el DAKI_SYSTEM_PROMPT.
+    Retorna texto o un mensaje de error específico — nunca lanza excepción.
+    """
     if not settings.ANTHROPIC_API_KEY:
-        return (
-            "// [DAKI] Red Central sin señal. "
-            "Operador: ejecuta cualquier cosa ahora. El movimiento rompe el bloqueo."
-        )
+        return "[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
+
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-    resp = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=max_tokens,
-        system=DAKI_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    return resp.content[0].text.strip()
+    try:
+        resp = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=max_tokens,
+            system=DAKI_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        text = next(
+            (b.text.strip() for b in resp.content if getattr(b, "type", None) == "text"),
+            None,
+        )
+        return text or "[DAKI_SYS] Respuesta vacía del satélite. Reintenta."
+
+    except anthropic.APITimeoutError:
+        return "[DAKI_SYS] Error de conexión con el satélite principal."
+
+    except anthropic.AuthenticationError:
+        return "[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
+
+    except anthropic.RateLimitError:
+        return "[DAKI_SYS] Límite de frecuencia alcanzado. Espera un momento, Operador."
+
+    except anthropic.APIError:
+        return "[DAKI_SYS] Error de conexión con el satélite principal."
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
@@ -264,3 +282,81 @@ async def ask_daki(
 
     daki_msg = await _call_haiku(user_msg, max_tokens=220)
     return AskResponse(daki_message=daki_msg)
+
+
+# ─── POST /api/v1/chat — Chat general sin contexto de desafío ─────────────────
+
+_CHAT_SYSTEM_PROMPT = """\
+Eres DAKI, una IA mentora táctica en un entorno militarizado de ingeniería de software \
+llamado DAKIedtech. Eres directa, exigente y hablas con terminología técnica y de operaciones. \
+No das las respuestas de código servidas; guías al Operador (usuario) mediante pistas y \
+razonamiento socrático. Si el usuario saluda o pide ayuda genérica, respóndele preguntando \
+cuál es su reporte de estado o en qué sector del código tiene la anomalía.\
+"""
+
+
+class ChatRequest(BaseModel):
+    message: str
+    user_id: str = ""
+
+
+class ChatResponse(BaseModel):
+    reply: str
+
+
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Chat general con DAKI — sin contexto de desafío",
+    description=(
+        "Endpoint de chat libre con DAKI. No requiere challenge_id. "
+        "Útil para el onboarding, dudas generales y el CLI de la landing."
+    ),
+)
+@limiter.limit("30/minute")
+async def daki_chat(
+    request: Request,
+    payload: ChatRequest,
+) -> ChatResponse:
+    if not payload.message.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="El mensaje no puede estar vacío.",
+        )
+
+    if not settings.ANTHROPIC_API_KEY:
+        return ChatResponse(
+            reply="[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
+        )
+
+    client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        resp = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system=_CHAT_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": payload.message.strip()[:800]}],
+        )
+        text = next(
+            (b.text.strip() for b in resp.content if getattr(b, "type", None) == "text"),
+            None,
+        )
+        return ChatResponse(reply=text or "[DAKI_SYS] Respuesta vacía del satélite. Reintenta.")
+
+    except anthropic.APITimeoutError:
+        return ChatResponse(reply="[DAKI_SYS] Error de conexión con el satélite principal.")
+
+    except anthropic.AuthenticationError:
+        return ChatResponse(
+            reply="[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
+        )
+
+    except anthropic.RateLimitError:
+        return ChatResponse(
+            reply="[DAKI_SYS] Límite de frecuencia alcanzado. Espera un momento, Operador."
+        )
+
+    except anthropic.APIError:
+        return ChatResponse(reply="[DAKI_SYS] Error de conexión con el satélite principal.")
