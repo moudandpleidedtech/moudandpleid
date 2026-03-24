@@ -1,14 +1,16 @@
 """
-security.py — JWT helpers para autenticación de administrador.
+security.py — JWT helpers para autenticación de usuarios y administrador.
 
-Flujo:
-  1. POST /api/v1/admin/auth/token  { username, password }
-     → verifica credenciales + is_admin=True
+Flujo usuario:
+  1. POST /api/v1/auth/register  { email, password }
+     POST /api/v1/auth/login     { email, password }
      → devuelve { access_token, token_type: "bearer" }
 
-  2. Todos los endpoints admin usan require_admin como dependencia.
-     require_admin extrae el token del header Authorization: Bearer <token>,
-     verifica firma + expiración, y confirma role=="ADMIN" en el payload.
+  2. Endpoints protegidos usan require_user como dependencia.
+
+Flujo admin:
+  1. POST /api/v1/admin/auth/token  { username, password }
+  2. Endpoints admin usan require_admin como dependencia.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -16,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,10 +30,36 @@ _bearer = HTTPBearer(auto_error=False)
 
 ADMIN_ROLE = "ADMIN"
 
+# ─── Password hashing ─────────────────────────────────────────────────────────
 
-# ─── Creación de token ────────────────────────────────────────────────────────
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_admin_token(user_id: str, username: str) -> str:
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+
+# ─── Creación de tokens ───────────────────────────────────────────────────────
+
+def create_user_token(user_id: str, level: int) -> str:
+    """JWT para usuarios normales — caduca en ACCESS_TOKEN_EXPIRE_MINUTES."""
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    payload = {
+        "sub":   user_id,
+        "level": level,
+        "role":  "USER",
+        "exp":   expire,
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def create_admin_token(user_id: str, callsign: str) -> str:
     """
     Crea un JWT firmado con SECRET_KEY que caduca en ADMIN_TOKEN_EXPIRE_MINUTES.
     Incluye role='ADMIN' en el payload para verificación explícita.
@@ -40,7 +69,7 @@ def create_admin_token(user_id: str, username: str) -> str:
     )
     payload = {
         "sub":      user_id,
-        "username": username,
+        "callsign": callsign,
         "role":     ADMIN_ROLE,
         "exp":      expire,
     }
@@ -97,5 +126,45 @@ async def require_admin(
 
     if user is None or not user.is_admin:
         raise _forbidden
+
+    return user
+
+
+# ─── Dependencia de usuario normal ────────────────────────────────────────────
+
+async def require_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Dependencia FastAPI para endpoints de usuario autenticado.
+    Verifica Bearer token firmado con SECRET_KEY y role == 'USER'.
+    """
+    _unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token inválido o ausente.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if not credentials:
+        raise _unauthorized
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+    except JWTError:
+        raise _unauthorized
+
+    user_id: str | None = payload.get("sub")
+    if not user_id:
+        raise _unauthorized
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise _unauthorized
 
     return user

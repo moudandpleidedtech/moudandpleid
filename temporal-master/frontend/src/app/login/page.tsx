@@ -3,7 +3,9 @@
 /**
  * /login — Terminal de Acceso Restringido · DAKI EdTech
  * ──────────────────────────────────────────────────────
- * Flujo: boot typewriter → input código Beta → fetch verify-beta-code → hub
+ * Modo ACCEDER  → POST /api/v1/auth/login     { email, password }
+ * Modo REGISTRAR → POST /api/v1/auth/register { email, password }
+ * En ambos casos: guarda JWT + cookie → redirige a /hub
  */
 
 import { useState, useEffect, useRef } from 'react'
@@ -17,10 +19,11 @@ const BOOT_LINES = [
   '> VERIFICANDO INTEGRIDAD DE NÚCLEOS...       [OK]',
   '> CARGANDO PROTOCOLOS DE SEGURIDAD...        [OK]',
   '> ESTABLECIENDO CANAL CIFRADO...             [OK]',
-  '> TERMINAL LISTA. INGRESE CÓDIGO DE OPERADOR.',
+  '> TERMINAL LISTA. INGRESE CREDENCIALES DE OPERADOR.',
 ]
 const BOOT_DELAYS = [0, 480, 920, 1360, 1800]
 
+type Mode        = 'login' | 'register'
 type ConsoleState = 'idle' | 'loading' | 'success' | 'error'
 
 interface ConsoleLine {
@@ -33,15 +36,18 @@ export default function LoginPage() {
 
   const [bootLines,    setBootLines]    = useState<string[]>([])
   const [bootDone,     setBootDone]     = useState(false)
-  const [inputCode,    setInputCode]    = useState('')
+  const [mode,         setMode]         = useState<Mode>('login')
+  const [email,        setEmail]        = useState('')
+  const [password,     setPassword]     = useState('')
   const [isLoading,    setIsLoading]    = useState(false)
-  const [inputFocused, setInputFocused] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
   const [console_,     setConsole]      = useState<ConsoleLine>({
     text:  'Esperando credenciales',
     state: 'idle',
   })
 
-  const inputRef = useRef<HTMLInputElement>(null)
+  const emailRef    = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
 
   // ── Boot typewriter ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -51,38 +57,54 @@ export default function LoginPage() {
     )
     timers.push(setTimeout(() => {
       setBootDone(true)
-      inputRef.current?.focus()
+      emailRef.current?.focus()
     }, BOOT_DELAYS[BOOT_LINES.length - 1] + 600))
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  // ── Ejecutar secuencia ───────────────────────────────────────────────────────
+  // ── Reset consola al cambiar de modo ────────────────────────────────────────
+  useEffect(() => {
+    setConsole({ text: 'Esperando credenciales', state: 'idle' })
+  }, [mode])
+
+  // ── Enviar ───────────────────────────────────────────────────────────────────
   const ejecutarSecuencia = async () => {
-    if (!inputCode.trim() || isLoading) return
+    if (!email.trim() || !password.trim() || isLoading) return
 
     setIsLoading(true)
     setConsole({ text: 'Autenticando credenciales...', state: 'loading' })
 
+    const endpoint = mode === 'login'
+      ? `${API_BASE}/api/v1/auth/login`
+      : `${API_BASE}/api/v1/auth/register`
+
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/verify-beta-code`, {
+      const res = await fetch(endpoint, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ code: inputCode.trim() }),
+        body:    JSON.stringify({ email: email.trim(), password }),
       })
 
       if (res.ok) {
-        const data = await res.json() as { token: string; message: string }
-        localStorage.setItem('beta_token', data.token)
+        const data = await res.json() as { access_token: string; user_id: string; level: number }
+        localStorage.setItem('daki_token',   data.access_token)
+        localStorage.setItem('daki_user_id', data.user_id)
+        localStorage.setItem('daki_level',   String(data.level))
+        // Cookie para middleware de Next.js
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
         setConsole({ text: 'ACCESO CONCEDIDO. Abriendo el Nexo...', state: 'success' })
         setTimeout(() => router.push('/hub'), 1000)
         return
       }
 
-      if (res.status === 404) {
-        setConsole({ text: 'ERROR 404: CREDENCIAL INVÁLIDA O INACTIVA', state: 'error' })
-      } else if (res.status === 403) {
-        setConsole({ text: 'ERROR 403: CÓDIGO AGOTADO. LÍMITE DE USOS ALCANZADO', state: 'error' })
+      const err = await res.json().catch(() => ({})) as { detail?: string }
+      if (res.status === 401) {
+        setConsole({ text: 'ERROR 401: CREDENCIALES INVÁLIDAS', state: 'error' })
+      } else if (res.status === 409) {
+        setConsole({ text: 'ERROR 409: EMAIL YA REGISTRADO EN EL SISTEMA', state: 'error' })
+      } else if (res.status === 422) {
+        const msg = err.detail ?? 'DATOS INVÁLIDOS'
+        setConsole({ text: `ERROR 422: ${String(msg).toUpperCase()}`, state: 'error' })
       } else {
         setConsole({ text: `ERROR ${res.status}: RESPUESTA INESPERADA DEL NEXO`, state: 'error' })
       }
@@ -98,7 +120,15 @@ export default function LoginPage() {
     ejecutarSecuencia()
   }
 
-  // ── Color de la consola según estado ─────────────────────────────────────────
+  const switchMode = (m: Mode) => {
+    if (isLoading) return
+    setMode(m)
+    setEmail('')
+    setPassword('')
+    setTimeout(() => emailRef.current?.focus(), 50)
+  }
+
+  // ── Color de consola ─────────────────────────────────────────────────────────
   const consoleColor = {
     idle:    'text-[#00FF41]/35',
     loading: 'text-[#FFB800]/70',
@@ -128,6 +158,25 @@ export default function LoginPage() {
         .blink        { animation: cursor-blink 1s step-end infinite; }
         .error-blink  { animation: error-blink 0.4s ease-in-out 2; }
 
+        .mode-btn {
+          border: 1px solid transparent;
+          background: transparent;
+          color: rgba(0,255,65,0.25);
+          transition: all 0.15s ease;
+          letter-spacing: 0.25em;
+          font-size: 9px;
+          text-transform: uppercase;
+          padding: 5px 12px;
+        }
+        .mode-btn.active {
+          border-color: rgba(0,255,65,0.5);
+          color: #00FF41;
+          background: rgba(0,255,65,0.05);
+        }
+        .mode-btn:not(.active):hover {
+          color: rgba(0,255,65,0.55);
+          border-color: rgba(0,255,65,0.2);
+        }
         .exec-btn {
           border: 1px solid rgba(0,255,65,0.55);
           color: #00FF41;
@@ -191,37 +240,82 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* ── Input de código Beta ────────────────────────────────────────────── */}
+        {/* ── Formulario ───────────────────────────────────────────────────── */}
         {bootDone && (
           <div className="mb-6">
-            <p className="text-xs text-[#00FF41]/50 tracking-[0.3em] uppercase mb-4">
-              {'> INTRODUZCA CÓDIGO DE OPERADOR'}
+
+            {/* Selector de modo */}
+            <div className="flex gap-2 mb-6">
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className={`mode-btn ${mode === 'login' ? 'active' : ''}`}
+              >
+                [[ ACCEDER ]]
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode('register')}
+                className={`mode-btn ${mode === 'register' ? 'active' : ''}`}
+              >
+                [[ REGISTRAR ]]
+              </button>
+            </div>
+
+            <p className="text-xs text-[#00FF41]/50 tracking-[0.3em] uppercase mb-5">
+              {mode === 'login'
+                ? '> INTRODUZCA CREDENCIALES DE OPERADOR'
+                : '> CREAR NUEVA CUENTA DE OPERADOR'}
             </p>
 
             <form onSubmit={handleSubmit}>
-              <div className={`input-line pb-2 mb-5 flex items-center gap-2 ${inputFocused ? 'focused' : ''}`}>
-                <span className="text-[#00FF41]/50 select-none text-xs">{'>'}</span>
+
+              {/* Email */}
+              <div className={`input-line pb-2 mb-5 flex items-center gap-2 ${focusedField === 'email' ? 'focused' : ''}`}>
+                <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.3em] w-20 shrink-0">EMAIL</span>
                 <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputCode}
-                  onChange={e => setInputCode(e.target.value)}
-                  onFocus={() => setInputFocused(true)}
-                  onBlur={() => setInputFocused(false)}
-                  placeholder="[ INGRESE CÓDIGO DE OPERADOR ]"
+                  ref={emailRef}
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); passwordRef.current?.focus() } }}
+                  placeholder="operador@nexo.io"
                   disabled={isLoading}
-                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-widest uppercase placeholder:text-[#00FF41]/20 placeholder:normal-case placeholder:tracking-wide disabled:opacity-40"
-                  autoComplete="off"
+                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-wide placeholder:text-[#00FF41]/15 placeholder:normal-case disabled:opacity-40"
+                  autoComplete="email"
                   spellCheck={false}
+                />
+              </div>
+
+              {/* Password */}
+              <div className={`input-line pb-2 mb-6 flex items-center gap-2 ${focusedField === 'password' ? 'focused' : ''}`}>
+                <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.3em] w-20 shrink-0">CLAVE</span>
+                <input
+                  ref={passwordRef}
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="mínimo 8 caracteres"
+                  disabled={isLoading}
+                  className="flex-1 bg-transparent text-[#00FF41] text-sm outline-none border-none caret-[#00FF41] tracking-widest placeholder:text-[#00FF41]/15 placeholder:normal-case placeholder:tracking-wide disabled:opacity-40"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading || !inputCode.trim()}
+                disabled={isLoading || !email.trim() || !password.trim()}
                 className="exec-btn w-full py-3 text-xs tracking-[0.4em] uppercase"
               >
-                {isLoading ? '[ PROCESANDO... ]' : '[[ EJECUTAR SECUENCIA ]]'}
+                {isLoading
+                  ? '[ PROCESANDO... ]'
+                  : mode === 'login'
+                    ? '[[ EJECUTAR SECUENCIA ]]'
+                    : '[[ CREAR CUENTA ]]'}
               </button>
             </form>
           </div>

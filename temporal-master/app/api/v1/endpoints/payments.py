@@ -73,8 +73,8 @@ async def _activate_user(db: AsyncSession, email: str, payment_id: str) -> User:
             detail=f"No existe ningún operador con el email '{email}'.",
         )
 
-    user.is_paid   = True
-    user.payment_id = payment_id
+    user.is_licensed = True
+    user.payment_id  = payment_id
     await db.flush()
     return user
 
@@ -192,8 +192,8 @@ async def payment_webhook(
         "received":   True,
         "processed":  True,
         "user_id":    str(user.id),
-        "username":   user.username,
-        "is_paid":    user.is_paid,
+        "callsign":   user.callsign,
+        "is_licensed": user.is_licensed,
         "payment_id": payment_id,
     }
 
@@ -239,10 +239,10 @@ async def manual_verify(
     asyncio.create_task(fire_sale_alert(payload.email))
 
     return {
-        "activated": True,
-        "user_id":   str(user.id),
-        "username":  user.username,
-        "email":     user.email,
-        "is_paid":   user.is_paid,
-        "payment_id": user.payment_id,
+        "activated":   True,
+        "user_id":     str(user.id),
+        "callsign":    user.callsign,
+        "email":       user.email,
+        "is_licensed": user.is_licensed,
+        "payment_id":  user.payment_id,
     }

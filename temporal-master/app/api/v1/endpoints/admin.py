@@ -38,9 +38,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class AdminLoginRequest(BaseModel):
-    username: str
-    password: str   # Se verifica contra hashed_password en el futuro;
-                    # por ahora acepta cualquier password si is_admin=True
+    callsign: str
+    password: str   # Verifica is_admin=True en BD.
                     # (el único admin sos vos, protegido por is_admin en BD).
 
 
@@ -48,7 +47,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in_minutes: int
-    username: str
+    callsign: str
 
 
 @router.post(
@@ -64,7 +63,7 @@ async def admin_login(
     payload: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
-    result = await db.execute(select(User).where(User.username == payload.username))
+    result = await db.execute(select(User).where(User.callsign == payload.callsign))
     user = result.scalar_one_or_none()
 
     if user is None or not user.is_admin:
@@ -73,11 +72,11 @@ async def admin_login(
             detail="Credenciales inválidas o usuario sin permisos de administrador.",
         )
 
-    token = create_admin_token(str(user.id), user.username)
+    token = create_admin_token(str(user.id), user.callsign)
     return TokenResponse(
         access_token=token,
         expires_in_minutes=settings.ADMIN_TOKEN_EXPIRE_MINUTES,
-        username=user.username,
+        callsign=user.callsign,
     )
 
 
@@ -123,7 +122,7 @@ async def get_overview(
     r = await db.execute(select(func.count()).select_from(User))
     total_users: int = r.scalar_one()
 
-    r = await db.execute(select(func.count()).select_from(User).where(User.is_paid == True))  # noqa: E712
+    r = await db.execute(select(func.count()).select_from(User).where(User.is_licensed == True))  # noqa: E712
     paid_users: int = r.scalar_one()
 
     # Usuarios con progreso (completaron ≥ 1 nivel)
@@ -375,11 +374,11 @@ async def get_daki_stats(
 
 class RecentUserItem(BaseModel):
     id: str
-    username: str
+    callsign: str
     email: str
     current_level: int
     total_xp: int
-    is_paid: bool
+    is_licensed: bool
     league_tier: str
     created_at: str
 
@@ -406,11 +405,11 @@ async def get_recent_users(
         users=[
             RecentUserItem(
                 id=str(u.id),
-                username=u.username,
+                callsign=u.callsign,
                 email=u.email,
                 current_level=u.current_level,
                 total_xp=u.total_xp,
-                is_paid=u.is_paid,
+                is_licensed=u.is_licensed,
                 league_tier=u.league_tier,
                 created_at=u.created_at.isoformat(),
             )

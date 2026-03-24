@@ -112,7 +112,7 @@ async def boss_execute(
             badge_earned = "SYSTEM_KILLER"
 
         await db.flush()
-        await activity_service.emit_boss_defeated(user.username)
+        await activity_service.emit_boss_defeated(user.callsign)
 
     return BossExecuteResponse(
         success=success,

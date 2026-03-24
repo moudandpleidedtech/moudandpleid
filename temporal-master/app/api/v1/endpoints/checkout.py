@@ -85,7 +85,7 @@ async def redeem_tactical_key(
 
     # ── 4. Activar licencia + consumir uso ────────────────────────────────────
     key.current_uses += 1
-    user.is_paid = True
+    user.is_licensed = True
 
     # ── 5. Respuesta ──────────────────────────────────────────────────────────
     return RedeemResponse(

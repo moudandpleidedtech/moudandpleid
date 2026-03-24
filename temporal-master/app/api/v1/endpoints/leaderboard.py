@@ -29,7 +29,7 @@ router = APIRouter()
 class LeaderboardEntry(BaseModel):
     rank: int
     user_id: uuid.UUID
-    username: str
+    callsign: str
     total_xp: int
     current_level: int
     streak_days: int
@@ -42,7 +42,7 @@ class UserRankInfo(BaseModel):
     total_xp: int
     league_tier: str
     xp_to_next: Optional[int] = None
-    next_username: Optional[str] = None
+    next_callsign: Optional[str] = None
 
 
 class LeaderboardResponse(BaseModel):
@@ -86,7 +86,7 @@ async def get_leaderboard(
             LeaderboardEntry(
                 rank=rank,
                 user_id=user_obj.id,
-                username=user_obj.username,
+                callsign=user_obj.callsign,
                 total_xp=user_obj.total_xp,
                 current_level=user_obj.current_level,
                 streak_days=user_obj.streak_days,
@@ -124,7 +124,7 @@ async def get_leaderboard(
                 total_xp=current_user.total_xp,
                 league_tier=current_user.league_tier,
                 xp_to_next=(next_user.total_xp - current_user.total_xp) if next_user else None,
-                next_username=next_user.username if next_user else None,
+                next_callsign=next_user.callsign if next_user else None,
             )
 
     return LeaderboardResponse(

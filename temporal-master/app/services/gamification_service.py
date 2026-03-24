@@ -137,9 +137,9 @@ class GamificationEngine:
 
         # Emitir eventos de actividad global (fire-and-forget)
         if is_success and not already_completed:
-            await activity_service.emit_challenge_complete(user.username, challenge.title)
+            await activity_service.emit_challenge_complete(user.callsign, challenge.title)
             if level_up:
-                await activity_service.emit_level_up(user.username, user.current_level)
+                await activity_service.emit_level_up(user.callsign, user.current_level)
 
         return ChallengeAttemptResult(
             user_id=user_id,

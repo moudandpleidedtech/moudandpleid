@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -14,38 +15,39 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    # Nombre de operador visible (único, gamertag estilo)
+    callsign: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     current_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    # Progreso granular por misión: { "alfa": { "completed": true, "attempts": 3 }, ... }
+    mission_state: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default="'{}'::jsonb"
+    )
+    # Licencia de acceso — False hasta que el pago sea verificado (o código redimido)
+    is_licensed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # ── Gamificación ───────────────────────────────────────────────────────────
+    total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     streak_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    # Liga competitiva (Prompt 19)
     league_tier: Mapped[str] = mapped_column(
         String(30), nullable=False, default="Bronce", server_default="Bronce"
     )
-    # Sistema PvP Elo (Prompt 20)
     elo_rating: Mapped[int] = mapped_column(Integer, default=1200, nullable=False, server_default="1200")
-    # Medallas de logro — JSON array, ej: ["SYSTEM_KILLER"]
     badges_json: Mapped[str] = mapped_column(String, nullable=False, default="[]", server_default="[]")
-    # Nivel evolutivo de DAKI (1=Robótico, 2=Amistoso, 3=Compañero)
     daki_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False, server_default="1")
-    # Licencia de acceso — False hasta que el pago sea verificado
-    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     # ID externo de la pasarela de pagos (Stripe charge_id, PayPal order_id, etc.)
     payment_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
-    # Rol administrativo — solo el CEO/admin tiene acceso al dashboard
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
 
-    # ── Sistema de Rangos (Prompt 54) ─────────────────────────────────────────
-    # points: acumula level_order por cada desafío completado (métrica curricular)
-    # current_rank: codename del rango actual (ve rank_service.py para la tabla)
+    # ── Sistema de Rangos ─────────────────────────────────────────────────────
     points: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     current_rank: Mapped[str] = mapped_column(
         String(60), nullable=False, default="Trainee", server_default="Trainee"
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

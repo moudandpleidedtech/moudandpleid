@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
+    callsign: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
 
 
@@ -14,7 +15,7 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    username: str | None = Field(None, min_length=3, max_length=50)
+    callsign: str | None = Field(None, min_length=3, max_length=50)
     email: EmailStr | None = None
 
 
@@ -25,8 +26,11 @@ class UserPublic(UserBase):
     total_xp: int
     current_level: int
     streak_days: int
+    is_licensed: bool
+    mission_state: dict[str, Any] = {}
     created_at: datetime
+    last_login: datetime | None = None
 
 
 class UserInDB(UserPublic):
-    hashed_password: str
+    password_hash: str

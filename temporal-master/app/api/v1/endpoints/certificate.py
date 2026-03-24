@@ -119,7 +119,7 @@ async def download_certificate(
 
     # ── 2. Genera el PDF en memoria ───────────────────────────────────────────
     pdf_bytes, cert_id = build_certificate_pdf(
-        username=user.username,
+        callsign=user.callsign,
         rank=user.current_rank or "Netzach Operative",
     )
 
@@ -133,7 +133,7 @@ async def download_certificate(
             "Content-Disposition":       f'attachment; filename="{filename}"',
             "Content-Length":            str(len(pdf_bytes)),
             "X-GG-Certificate-ID":       cert_id,
-            "X-GG-Operator":             user.username,
+            "X-GG-Operator":             user.callsign,
             "Cache-Control":             "no-store",
         },
     )

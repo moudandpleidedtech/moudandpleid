@@ -133,7 +133,7 @@ def _draw_title(c: Canvas, w: float, h: float) -> None:
     c.drawCentredString(w / 2, h - 54 * mm, "CERTIFICADO DE OPERADOR")
 
 
-def _draw_username(c: Canvas, w: float, h: float, username: str) -> None:
+def _draw_callsign(c: Canvas, w: float, h: float, callsign: str) -> None:
     # Separador
     sep_y = h - 64 * mm
     c.setStrokeColor(GOLD)
@@ -142,7 +142,7 @@ def _draw_username(c: Canvas, w: float, h: float, username: str) -> None:
 
     c.setFillColor(WHITE)
     c.setFont("Helvetica-Bold", 30)
-    c.drawCentredString(w / 2, h - 80 * mm, username.upper())
+    c.drawCentredString(w / 2, h - 80 * mm, callsign.upper())
 
 
 def _draw_rank_section(c: Canvas, w: float, h: float, rank: str) -> None:
@@ -253,14 +253,14 @@ def _draw_pixel_grid(c: Canvas, x: float, y: float, cols: int = 6, rows: int = 4
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def build_certificate_pdf(
-    username: str,
+    callsign: str,
     rank: str = "Netzach Operative",
 ) -> tuple[bytes, str]:
     """
     Genera el PDF del certificado en memoria.
 
     Args:
-        username: nombre del operador (se muestra en mayúsculas)
+        callsign: nombre del operador (se muestra en mayúsculas)
         rank:     codename del rango (default "Netzach Operative" para L100)
 
     Returns:
@@ -271,7 +271,7 @@ def build_certificate_pdf(
     w, h = page_size
 
     c = Canvas(buf, pagesize=page_size)
-    c.setTitle(f"DAKI EdTech — Certificado {rank}: {username}")
+    c.setTitle(f"DAKI EdTech — Certificado {rank}: {callsign}")
     c.setAuthor("DAKI Neuronal Authority")
     c.setSubject(f"Certificado oficial — {rank} — DAKI EdTech")
     c.setCreator("DAKI EdTech Platform v1.0")
@@ -286,7 +286,7 @@ def build_certificate_pdf(
     _draw_corner_accents(c, w, h)
     _draw_header_band(c, w, h)
     _draw_title(c, w, h)
-    _draw_username(c, w, h, username)
+    _draw_callsign(c, w, h, callsign)
     _draw_rank_section(c, w, h, rank)
     _draw_daki_badge(c, w, h)
     _draw_metadata_row(c, w, h, cert_id, date_str)

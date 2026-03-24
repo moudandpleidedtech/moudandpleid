@@ -3,7 +3,7 @@ access.py — Dependencias de acceso que protegen las rutas de niveles.
 
 Lógica Freemium (Gancho Narrativo):
   - Niveles con is_free=True  (L0–L10) → cualquier usuario puede acceder.
-  - Niveles con is_free=False (L11–L100) → requiere is_paid=True en el usuario.
+  - Niveles con is_free=False (L11–L100) → requiere is_licensed=True en el usuario.
 
 Uso en evaluate.py (ejemplo):
 
@@ -51,11 +51,11 @@ async def require_paid(
 ) -> Optional[User]:
     """
     Dependencia de licencia total — no distingue niveles gratuitos.
-    Útil para rutas que SIEMPRE requieren is_paid (admin, certificados, etc.).
+    Útil para rutas que SIEMPRE requieren is_licensed (admin, certificados, etc.).
 
     - user_id ausente → devuelve None (modo invitado, sin bloqueo).
-    - user_id presente, is_paid=False → 402 Payment Required.
-    - user_id presente, is_paid=True  → devuelve el objeto User.
+    - user_id presente, is_licensed=False → 402 Payment Required.
+    - user_id presente, is_licensed=True  → devuelve el objeto User.
     """
     if user_id is None:
         return None
@@ -69,7 +69,7 @@ async def require_paid(
             detail="Operador no encontrado.",
         )
 
-    if not user.is_paid:
+    if not user.is_licensed:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=_PAYWALL,
@@ -92,8 +92,8 @@ async def check_freemium_access(
       1. Si challenge.is_free=True  → devuelve None (acceso libre, sin validar usuario).
       2. Si challenge.is_free=False y user_id=None  → 402 (invitado intenta nivel de pago).
       3. Si challenge.is_free=False y usuario no encontrado → 404.
-      4. Si challenge.is_free=False y is_paid=False → 402.
-      5. Si challenge.is_free=False y is_paid=True  → devuelve el objeto User.
+      4. Si challenge.is_free=False y is_licensed=False → 402.
+      5. Si challenge.is_free=False y is_licensed=True  → devuelve el objeto User.
 
     Llamar directamente desde el cuerpo del endpoint (no como dependencia FastAPI,
     porque challenge_id está en el body y no en Query/Path).
@@ -126,7 +126,7 @@ async def check_freemium_access(
             detail="Operador no encontrado.",
         )
 
-    if not user.is_paid:
+    if not user.is_licensed:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=_PAYWALL,

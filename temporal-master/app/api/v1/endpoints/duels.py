@@ -77,7 +77,7 @@ class SubmitOut(BaseModel):
 class InboxItem(BaseModel):
     duel_id: uuid.UUID
     challenger_id: uuid.UUID
-    challenger_username: str
+    challenger_callsign: str
     challenger_elo: int
     challenge_title: str
     created_at: datetime
@@ -278,7 +278,7 @@ async def submit_duel(
             winner_user = challenger_user if winner_id == challenger_user.id else defender_user
             loser_user = defender_user if winner_id == challenger_user.id else challenger_user
             await activity_service.emit_duel_result(
-                winner_user.username, loser_user.username, delta
+                winner_user.callsign, loser_user.callsign, delta
             )
 
     return SubmitOut(
@@ -345,7 +345,7 @@ async def get_inbox(
                 InboxItem(
                     duel_id=d.id,
                     challenger_id=d.challenger_id,
-                    challenger_username=challenger.username,
+                    challenger_callsign=challenger.callsign,
                     challenger_elo=challenger.elo_rating,
                     challenge_title=challenge.title,
                     created_at=d.created_at,
