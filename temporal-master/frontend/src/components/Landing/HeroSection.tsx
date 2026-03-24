@@ -8,6 +8,8 @@
  */
 
 import Link from 'next/link'
+import GlitchTitle from '@/components/UI/GlitchTitle'
+import TypewriterText from '@/components/UI/TypewriterText'
 
 export default function HeroSection() {
 
@@ -26,16 +28,6 @@ export default function HeroSection() {
             border-color: #00FF41;
           }
         }
-        @keyframes title-flicker {
-          0%, 96%, 100% { opacity: 1; }
-          97%           { opacity: 0.85; }
-          98%           { opacity: 1; }
-          99%           { opacity: 0.7; }
-        }
-        @keyframes scanline-drift {
-          0%   { transform: translateY(0); }
-          100% { transform: translateY(4px); }
-        }
         .hero-btn-pulse {
           animation: btn-pulse 2.4s ease-in-out infinite;
         }
@@ -44,9 +36,6 @@ export default function HeroSection() {
           box-shadow: 0 0 32px rgba(0,255,65,0.8), 0 0 64px rgba(0,255,65,0.4);
           border-color: #00FF41;
           background-color: rgba(0,255,65,0.12);
-        }
-        .hero-title {
-          animation: title-flicker 8s ease-in-out infinite;
         }
       `}</style>
 
@@ -111,18 +100,12 @@ export default function HeroSection() {
             </span>
           </div>
 
-          {/* Título principal */}
-          <h1 className="hero-title text-4xl sm:text-5xl md:text-7xl font-bold tracking-[0.08em] uppercase leading-none mb-4 text-[#00FF41]">
-            EL SISTEMA
-            <br />
-            <span className="text-[#FF0033]" style={{ textShadow: '0 0 20px rgba(255,0,51,0.5)' }}>
-              TIENE FALLOS.
-            </span>
-          </h1>
+          {/* Título principal — aberración cromática */}
+          <GlitchTitle />
 
-          {/* Subtítulo */}
+          {/* Subtítulo — typewriter terminal */}
           <h2 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-[0.15em] uppercase mb-10 text-[#00FF41]/90 neon-glow">
-            TÚ ERES LA CORRECCIÓN.
+            <TypewriterText text="TÚ ERES LA CORRECCIÓN." delayMs={50} startDelay={500} />
           </h2>
 
           {/* Separador */}
