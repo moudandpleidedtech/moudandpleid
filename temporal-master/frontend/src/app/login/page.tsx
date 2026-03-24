@@ -113,7 +113,7 @@ export default function LoginPage() {
       : ''
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col items-center justify-center relative overflow-y-auto">
 
       {/* ── Keyframes ──────────────────────────────────────────────────────────── */}
       <style>{`
@@ -164,7 +164,7 @@ export default function LoginPage() {
       />
 
       {/* ── Terminal box ───────────────────────────────────────────────────────── */}
-      <div className="relative z-20 w-full max-w-lg px-6">
+      <div className="relative z-20 w-full max-w-lg px-6 py-10 pb-16">
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="border-b border-[#00FF41]/15 pb-4 mb-8">
@@ -228,7 +228,7 @@ export default function LoginPage() {
         )}
 
         {/* ── Consola de estado ──────────────────────────────────────────────── */}
-        <div className="border-t border-[#00FF41]/10 pt-4 mt-2 mb-8">
+        <div className="border-t border-[#00FF41]/10 pt-4 mt-2 mb-8 min-h-[50px]">
           <p className={`text-xs tracking-wide ${consoleColor} ${consoleGlow} ${console_.state === 'error' ? 'error-blink' : ''}`}>
             {'> Status: '}{console_.text}
             <span className="blink ml-0.5">_</span>
