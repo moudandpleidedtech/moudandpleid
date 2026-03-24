@@ -14,7 +14,7 @@ Ciclo de vida:
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,6 +37,13 @@ class TacticalAccessKey(Base):
     current_uses: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     # Si es False, el código no acepta más activaciones aunque no esté agotado
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    # Operador que reclamó este código — FK a users(id), NULL si no fue reclamado aún
+    claimed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        default=None,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

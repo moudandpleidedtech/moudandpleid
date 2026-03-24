@@ -40,6 +40,8 @@ export default function LoginPage() {
   const [email,        setEmail]        = useState('')
   const [callsign,     setCallsign]     = useState('')
   const [password,     setPassword]     = useState('')
+  const [founderCode,  setFounderCode]  = useState('')
+  const [showAlpha,    setShowAlpha]    = useState(false)
   const [isLoading,    setIsLoading]    = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [console_,     setConsole]      = useState<ConsoleLine>({
@@ -68,6 +70,8 @@ export default function LoginPage() {
   useEffect(() => {
     setConsole({ text: 'Esperando credenciales', state: 'idle' })
     setCallsign('')
+    setFounderCode('')
+    setShowAlpha(false)
   }, [mode])
 
   // ── Enviar ───────────────────────────────────────────────────────────────────
@@ -88,22 +92,33 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(
           mode === 'register'
-            ? { email: email.trim(), callsign: callsign.trim(), password }
+            ? {
+                email:    email.trim(),
+                callsign: callsign.trim(),
+                password,
+                ...(founderCode.trim() ? { founder_code: founderCode.trim() } : {}),
+              }
             : { email: email.trim(), password }
         ),
       })
 
       if (res.ok) {
-        const data = await res.json() as { access_token: string; user_id: string; callsign: string; level: number; is_licensed: boolean }
-        localStorage.setItem('daki_token',      data.access_token)
-        localStorage.setItem('daki_user_id',    data.user_id)
-        localStorage.setItem('daki_callsign',   data.callsign)
-        localStorage.setItem('daki_level',      String(data.level))
-        localStorage.setItem('daki_licensed',   String(data.is_licensed))
+        const data = await res.json() as {
+          access_token: string; user_id: string; callsign: string
+          level: number; is_licensed: boolean; founder_code_applied?: boolean
+        }
+        localStorage.setItem('daki_token',    data.access_token)
+        localStorage.setItem('daki_user_id',  data.user_id)
+        localStorage.setItem('daki_callsign', data.callsign)
+        localStorage.setItem('daki_level',    String(data.level))
+        localStorage.setItem('daki_licensed', String(data.is_licensed))
         // Cookie para middleware de Next.js
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
-        setConsole({ text: 'ACCESO CONCEDIDO. Abriendo el Nexo...', state: 'success' })
-        setTimeout(() => router.push('/hub'), 1000)
+        const msg = data.founder_code_applied
+          ? `LICENCIA DE FUNDADOR ACTIVADA. Bienvenido, ${data.callsign}.`
+          : 'ACCESO CONCEDIDO. Abriendo el Nexo...'
+        setConsole({ text: msg, state: 'success' })
+        setTimeout(() => router.push('/hub'), 1200)
         return
       }
 
@@ -343,6 +358,38 @@ export default function LoginPage() {
                   autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                 />
               </div>
+
+              {/* Alpha Tester section — solo en registro */}
+              {mode === 'register' && (
+                <div className="mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowAlpha(v => !v)}
+                    className="text-[9px] tracking-[0.35em] text-[#00FF41]/25 hover:text-[#00FF41]/50 transition-colors uppercase"
+                  >
+                    {showAlpha ? '[-]' : '[+]'} ¿Eres Alpha Tester? Ingresa tu código de Fundador
+                  </button>
+
+                  {showAlpha && (
+                    <div className={`input-line pb-2 mt-3 flex items-center gap-2 ${focusedField === 'founder' ? 'focused' : ''}`}>
+                      <span className="text-[#FFB800]/40 select-none text-[10px] tracking-[0.25em] w-20 shrink-0">CÓDIGO</span>
+                      <input
+                        type="text"
+                        value={founderCode}
+                        onChange={e => setFounderCode(e.target.value.toUpperCase())}
+                        onFocus={() => setFocusedField('founder')}
+                        onBlur={() => setFocusedField(null)}
+                        placeholder="GLITCH-GOLD-INIT"
+                        disabled={isLoading}
+                        className="flex-1 bg-transparent text-[#FFB800] text-xs outline-none border-none caret-[#FFB800] tracking-widest uppercase placeholder:text-[#FFB800]/20 placeholder:tracking-wide disabled:opacity-40"
+                        style={{ borderBottom: '1px solid rgba(255,184,0,0.25)' }}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <button
                 type="submit"
