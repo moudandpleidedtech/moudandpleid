@@ -1,122 +1,159 @@
 /**
- * TestimonialsSection.tsx — Señales del Campo · DAKI EdTech
- * ──────────────────────────────────────────────────────────
- * Testimonios en formato "reporte de misión". No son estudiantes
- * satisfechos — son Operadores con resultados medibles.
- * Gatillo mental: Prueba social específica + credibilidad del lenguaje.
- * Server Component: sin hooks. CSS en globals.css.
+ * TestimonialsSection.tsx — La Visión · DAKI EdTech
+ * ───────────────────────────────────────────────────
+ * No testimonios ficticios. La declaración directa de la disrupción.
+ * DAKI habla en primera persona sobre lo que está rompiendo y por qué.
+ * Server Component. Sin inline <style>. CSS en globals.css.
  */
 
-const OPERATORS = [
+const PARADIGM_SHIFTS = [
   {
-    codename: 'VARGA',
-    level:    34,
-    status:   'Desplegado en producción',
-    quote:
-      'Llegué con 6 meses de tutoriales de YouTube. En el Nivel 20 ya entendía por qué mi código anterior era un desastre. La IA no te da respuestas: te hace las preguntas correctas.',
-    metric:   'Primer PR fusionado en producción · Nivel 23',
-    tag:      'Python · Backend',
+    label:  'EL CONOCIMIENTO',
+    before: 'Te enseñamos sintaxis hasta que la recuerdes.',
+    after:  'Te hacemos necesitar la solución hasta que la descubras.',
+    accent: 'La fluidez no se memoriza — se forja bajo presión real.',
   },
   {
-    codename: 'NEXUS',
-    level:    57,
-    status:   'Arquitecto de Sistemas',
-    quote:
-      'El sistema no tiene piedad. Cada misión asume que puedes más. Ese nivel de exigencia me cambió la mentalidad frente a cada problema. Nunca volví a escribir código sin pensar en su arquitectura.',
-    metric:   'API REST en producción · Nivel 41',
-    tag:      'Python · Sistemas',
+    label:  'EL APRENDIZAJE',
+    before: 'Videos pregrabados que puedes pausar, rebobinar, ignorar.',
+    after:  'Un sistema adaptativo que ajusta la exigencia a tu lógica actual.',
+    accent: 'La IA no te espera. Tú la alcanzas.',
   },
   {
-    codename: 'ARIA',
-    level:    28,
-    status:   'Operadora Certificada',
-    quote:
-      'Venía de un bootcamp de miles de dólares. DAKI me enseñó más en 30 niveles que ese curso completo. La diferencia es simple: aquí construyes sistemas. Allá copias tutoriales.',
-    metric:   'Proyecto desplegado en GCP · Nivel 28',
-    tag:      'Python · Cloud',
+    label:  'EL RESULTADO',
+    before: 'Un certificado que valida que completaste un curso.',
+    after:  'Un sistema desplegado que valida que puedes construir uno.',
+    accent: 'El mercado no lee diplomas. Lee código en producción.',
   },
 ] as const
 
 export default function TestimonialsSection() {
   return (
-    <section className="bg-[#0A0A0A] font-mono px-6 md:px-12 py-24 relative overflow-hidden">
+    <section className="bg-[#080808] font-mono px-6 md:px-12 py-24 relative overflow-hidden">
 
-      <div className="max-w-6xl mx-auto">
+      {/* Grid táctica de fondo — muy sutil */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.015]"
+        style={{
+          backgroundImage:
+            'linear-gradient(#00FF41 1px,transparent 1px),linear-gradient(90deg,#00FF41 1px,transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-3">
-          <span className="text-[#00FF41] text-xs tracking-[0.5em]">{'▶'}</span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.1em] uppercase text-white">
-            SEÑALES DEL CAMPO
-          </h2>
-        </div>
-        <p className="text-[#00FF41]/25 text-[10px] tracking-[0.4em] uppercase mb-12 ml-8">
-          {'// OPERADORES ACTIVOS — TRANSMISIONES DE MISIÓN VERIFICADAS'}
+      <div className="max-w-5xl mx-auto relative z-10">
+
+        {/* Pre-label */}
+        <p className="text-[#FF0033]/45 text-[10px] tracking-[0.6em] uppercase mb-8">
+          {'// LA DISRUPCIÓN — POR QUÉ DAKI EXISTE'}
         </p>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {OPERATORS.map(({ codename, level, status, quote, metric, tag }) => (
-            <div key={codename} className="operator-card p-7 flex flex-col gap-5">
+        {/* Declaración central */}
+        <div className="mb-16 max-w-3xl">
+          <h2
+            className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-[0.06em] uppercase leading-tight text-white mb-6"
+            style={{ textShadow: '0 0 60px rgba(0,255,65,0.06)' }}
+          >
+            EL PROBLEMA NO ES QUE
+            <br />
+            APRENDER SEA{' '}
+            <span
+              className="text-[#FF0033]"
+              style={{ textShadow: '0 0 20px rgba(255,0,51,0.35)' }}
+            >
+              DIFÍCIL.
+            </span>
+          </h2>
+          <p className="text-[#C0C0C0]/55 text-base leading-8 tracking-wide">
+            El problema es que nos enseñaron a aprender{' '}
+            <span className="text-white/70">consumiendo</span> en lugar de{' '}
+            <span
+              className="text-[#00FF41]"
+              style={{ textShadow: '0 0 10px rgba(0,255,65,0.4)' }}
+            >
+              construyendo
+            </span>.
+            {' '}Décadas de cursos, tutoriales y bootcamps crearon ingenieros que saben
+            explicar el código pero no pueden desplegarlo.
+            DAKI existe para romper ese ciclo.
+          </p>
+        </div>
 
-              {/* Header del reporte */}
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[#00FF41]/35 text-[9px] tracking-[0.5em] uppercase mb-0.5">
-                    OPERADOR
-                  </p>
-                  <p
-                    className="text-[#00FF41] text-sm font-bold tracking-[0.3em]"
-                    style={{ textShadow: '0 0 8px rgba(0,255,65,0.4)' }}
-                  >
-                    {codename}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[#00FF41]/30 text-[9px] tracking-[0.4em] uppercase mb-0.5">
-                    RANGO
-                  </p>
-                  <p className="text-white/50 text-sm font-bold">
-                    NIV. {level}
-                  </p>
-                </div>
-              </div>
+        {/* Divisor */}
+        <div className="flex items-center gap-4 mb-16">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#00FF41]/12 to-transparent" />
+          <span className="text-[#00FF41]/20 text-[10px] tracking-[0.5em] uppercase shrink-0">
+            {'// CAMBIO DE PARADIGMA'}
+          </span>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[#00FF41]/12 to-transparent" />
+        </div>
 
-              {/* Status */}
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41]/60" />
-                <span className="text-[#00FF41]/40 text-[10px] tracking-[0.3em] uppercase">
-                  {status}
-                </span>
+        {/* Paradigm shift cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+          {PARADIGM_SHIFTS.map(({ label, before, after, accent }) => (
+            <div key={label} className="operator-card p-7 flex flex-col gap-5">
+
+              {/* Label */}
+              <p className="text-[#00FF41]/30 text-[9px] tracking-[0.6em] uppercase font-bold">
+                {label}
+              </p>
+
+              {/* Before */}
+              <div>
+                <p className="text-[#FF0033]/35 text-[9px] tracking-[0.4em] uppercase mb-2">
+                  AYER
+                </p>
+                <p className="text-white/30 text-[12px] leading-6 tracking-wide italic">
+                  &ldquo;{before}&rdquo;
+                </p>
               </div>
 
               <div className="h-px bg-[#00FF41]/08" />
 
-              {/* Quote */}
-              <blockquote className="text-[#C0C0C0]/65 text-sm leading-6 tracking-wide flex-1 italic">
-                &ldquo;{quote}&rdquo;
-              </blockquote>
-
-              <div className="h-px bg-[#00FF41]/06" />
-
-              {/* Métrica + Tag */}
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[#00FF41]/35 text-[10px] leading-5 tracking-wide">
-                  {metric}
+              {/* After */}
+              <div>
+                <p
+                  className="text-[#00FF41]/50 text-[9px] tracking-[0.4em] uppercase mb-2"
+                  style={{ textShadow: '0 0 6px rgba(0,255,65,0.3)' }}
+                >
+                  DAKI
                 </p>
-                <span className="text-[#00FF41]/20 text-[9px] tracking-[0.2em] border border-[#00FF41]/10 px-2 py-0.5 shrink-0">
-                  {tag}
-                </span>
+                <p className="text-white/75 text-[12px] leading-6 tracking-wide">
+                  {after}
+                </p>
               </div>
+
+              {/* Accent */}
+              <p className="text-[#00FF41]/40 text-[10px] leading-5 tracking-wide border-l-2 border-[#00FF41]/20 pl-3 mt-auto">
+                {accent}
+              </p>
 
             </div>
           ))}
         </div>
 
-        {/* Proof strip */}
-        <div className="mt-10 text-center">
-          <p className="text-[#00FF41]/15 text-[10px] tracking-[0.35em] uppercase">
-            {'[ 3 de cada 5 Operadores reportan su primer merge en producción antes del Nivel 30 ]'}
+        {/* Declaración de cierre — la frase que debe quedar */}
+        <div className="border border-[#00FF41]/10 bg-[#00FF41]/[0.02] p-8 md:p-12 text-center cta-section-border">
+          <p className="text-[#00FF41]/25 text-[10px] tracking-[0.6em] uppercase mb-6">
+            {'// NÚCLEO DEL SISTEMA'}
+          </p>
+          <p
+            className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.06em] uppercase text-white leading-tight"
+            style={{ textShadow: '0 0 40px rgba(0,255,65,0.08)' }}
+          >
+            PYTHON ES EL PRIMER PROTOCOLO DE PRUEBA.
+            <br />
+            <span
+              className="text-[#00FF41]"
+              style={{ textShadow: '0 0 24px rgba(0,255,65,0.45)' }}
+            >
+              LA FLUIDEZ LÓGICA ES EL PRODUCTO REAL.
+            </span>
+          </p>
+          <p className="text-[#C0C0C0]/35 text-sm leading-7 tracking-wide max-w-2xl mx-auto mt-6">
+            No entrenamos programadores de Python. Entrenamos ingenieros que piensan
+            en sistemas, diseñan con arquitectura y despliegan con confianza.
+            El lenguaje cambia. La lógica que construimos aquí, no.
           </p>
         </div>
 
