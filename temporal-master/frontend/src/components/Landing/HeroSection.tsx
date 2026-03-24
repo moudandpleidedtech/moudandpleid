@@ -118,14 +118,14 @@ export default function HeroSection() {
           <p className="text-sm md:text-base text-[#00FF41]/60 leading-7 tracking-wide max-w-2xl mb-12">
             <span className="text-[#00FF41]/90 font-bold">DAKIedtech:</span>
             {' '}No somos un curso. Somos tu entorno de despliegue.
-            Entrena con una IA que analiza tu código, desafía tu lógica
-            y te otorga el sello de calidad definitivo.
+            Entrena con una IA de grado industrial que analiza tu lógica
+            en tiempo real para otorgarte el sello de calidad definitivo.
           </p>
 
           {/* CTA Button */}
           <div className="flex flex-col items-start gap-4">
             <Link
-              href="/login"
+              href="/register"
               className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs md:text-sm tracking-[0.35em] uppercase px-8 py-4 transition-colors duration-150 w-full sm:w-auto text-center"
             >
               {`[[ INICIAR SECUENCIA DE ACCESO ]]`}
@@ -133,7 +133,7 @@ export default function HeroSection() {
 
             {/* Micro-copy */}
             <p className="text-[#00FF41]/30 text-xs tracking-[0.2em]">
-              {'[ Beta Testers: Ingresen su código de operador en el siguiente paso ]'}
+              {'[ Sin tarjeta de crédito · Acceso inmediato · Beta abierta ]'}
             </p>
           </div>
 

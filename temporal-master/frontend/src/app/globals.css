@@ -280,6 +280,33 @@ html, body {
   .elec-spark { animation: none; opacity: 0; }
 }
 
+/* ── ProblemSection — tarjetas de fallo ─────────────────────────────────── */
+.prob-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0A0A0A;
+  transition: border-color 0.22s ease;
+}
+.prob-card:hover {
+  border-color: rgba(255, 0, 51, 0.22);
+}
+
+/* ── FounderLicenseSection — columna de fundador ─────────────────────────── */
+.founder-active {
+  border: 1px solid rgba(0, 255, 65, 0.20);
+  animation: cta-border-pulse 2.4s ease-in-out infinite;
+}
+
+/* ── TestimonialsSection — operator cards ────────────────────────────────── */
+.operator-card {
+  border: 1px solid rgba(0, 255, 65, 0.07);
+  background: #0D0D0D;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.operator-card:hover {
+  border-color: rgba(0, 255, 65, 0.28);
+  box-shadow: 0 0 24px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.02);
+}
+
 /* ── Landing — BetaProtocol / FinalCTA border blink ────────────────────── */
 @keyframes cta-section-blink {
   0%, 85%, 100% { border-color: rgba(0, 255, 65, 0.12); }
