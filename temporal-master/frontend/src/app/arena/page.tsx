@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import { useRouter } from 'next/navigation'
+import MobileGate from '@/components/UI/MobileGate'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -341,6 +342,7 @@ export default function ArenaPage() {
   if (!userId) return null
 
   return (
+    <MobileGate>
     <div className="min-h-screen bg-[#050505] font-mono text-white flex flex-col items-center py-10 px-4">
 
       {/* Header */}
@@ -553,5 +555,6 @@ export default function ArenaPage() {
         </AnimatePresence>
       </div>
     </div>
+    </MobileGate>
   )
 }

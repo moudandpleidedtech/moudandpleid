@@ -7,6 +7,7 @@ import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
 import HubAudio from '@/components/UI/HubAudio'
 import DakiChatTerminal from '@/components/Hub/DakiChatTerminal'
+import MobileGate from '@/components/UI/MobileGate'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -206,6 +207,7 @@ export default function HubPage() {
   const newArchiveCount = countNewArchives(completedOrders)
 
   return (
+    <MobileGate>
     <div
       className="h-screen flex flex-col font-mono text-[#00FF41] overflow-hidden relative"
       style={{ background: 'radial-gradient(circle at 50% 45%, #001a0d 0%, #000000 65%)' }}
@@ -549,5 +551,6 @@ export default function HubPage() {
         </motion.div>
       </main>
     </div>
+    </MobileGate>
   )
 }

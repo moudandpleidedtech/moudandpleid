@@ -11,6 +11,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import DakiChatTerminal from '@/components/Hub/DakiChatTerminal'
+import MobileGate from '@/components/UI/MobileGate'
 
 // Monaco se carga solo en cliente (SSR no compatible)
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
@@ -95,6 +96,7 @@ export default function MissionAlfaPage() {
   }
 
   return (
+    <MobileGate>
     <div className="h-screen bg-[#0A0A0A] font-mono text-[#00FF41] flex flex-col overflow-hidden">
 
       {/* ── CRT overlay ──────────────────────────────────────────────────────── */}
@@ -247,5 +249,6 @@ export default function MissionAlfaPage() {
         </div>
       </main>
     </div>
+    </MobileGate>
   )
 }

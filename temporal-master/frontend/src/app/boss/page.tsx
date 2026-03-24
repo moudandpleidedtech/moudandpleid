@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import MobileGate from '@/components/UI/MobileGate'
 
 // Carga dinámica para evitar SSR (Monaco + framer-motion lo requieren)
 const TheInfiniteLooper = dynamic(
@@ -45,6 +46,7 @@ export default function BossPage() {
   if (!ready || !userId) return <BossLoading />
 
   return (
+    <MobileGate>
     <TheInfiniteLooper
       userId={userId}
       onVictory={(result) => {
@@ -56,5 +58,6 @@ export default function BossPage() {
         // Sin efecto secundario adicional — el componente muestra la pantalla de derrota
       }}
     />
+    </MobileGate>
   )
 }

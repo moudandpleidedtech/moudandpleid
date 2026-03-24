@@ -2,6 +2,7 @@
 
 import { use } from 'react'
 import SectorMap from '@/components/Game/SectorMap'
+import MobileGate from '@/components/UI/MobileGate'
 
 export default function SectorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -18,5 +19,9 @@ export default function SectorPage({ params }: { params: Promise<{ id: string }>
     )
   }
 
-  return <SectorMap sectorId={sectorId} challengeBasePath="/challenge" />
+  return (
+    <MobileGate>
+      <SectorMap sectorId={sectorId} challengeBasePath="/challenge" />
+    </MobileGate>
+  )
 }

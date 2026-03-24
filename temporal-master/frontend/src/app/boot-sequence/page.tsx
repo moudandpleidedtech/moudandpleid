@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
 import NeuralBoot from '@/components/UI/NeuralBoot'
+import MobileGate from '@/components/UI/MobileGate'
 
 export default function BootSequencePage() {
   const router = useRouter()
@@ -23,10 +24,12 @@ export default function BootSequencePage() {
   if (!userId) return null
 
   return (
-    <NeuralBoot
-      username={username}
-      dakiLevel={dakiLevel}
-      onComplete={handleComplete}
-    />
+    <MobileGate>
+      <NeuralBoot
+        username={username}
+        dakiLevel={dakiLevel}
+        onComplete={handleComplete}
+      />
+    </MobileGate>
   )
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import MissionBriefing from '@/components/Game/MissionBriefing'
+import MobileGate from '@/components/UI/MobileGate'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -58,6 +59,7 @@ export default function CodicePage() {
   const handleClose = useCallback(() => setSelected(null), [])
 
   return (
+    <MobileGate>
     <div className="min-h-screen bg-[#050A05] font-mono text-[#00FF41]">
 
       {/* Scanlines */}
@@ -249,5 +251,6 @@ export default function CodicePage() {
       </AnimatePresence>
 
     </div>
+    </MobileGate>
   )
 }

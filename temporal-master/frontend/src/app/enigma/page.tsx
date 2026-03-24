@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import GridCanvas, { type CellType, type Coord, type EnemyEvent } from '@/components/Game/GridCanvas'
 import GlitchTransition from '@/components/Game/GlitchTransition'
+import MobileGate from '@/components/UI/MobileGate'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
@@ -252,6 +253,7 @@ export default function EnigmaPage() {
   const currentMap = MAPS[mapIdx]
 
   return (
+    <MobileGate>
     <>
       <AnimatePresence>
         {showAwakening && (
@@ -434,5 +436,6 @@ export default function EnigmaPage() {
         </div> {/* end z-10 content wrapper */}
       </div>
     </>
+    </MobileGate>
   )
 }
