@@ -140,7 +140,7 @@ export default function ManifestoSection() {
         /* Con isolation: isolate, z-index: -1 queda ENTRE el fondo del
            panel y el contenido de texto — nunca cubre el texto. */
         .daki-card::before {
-          content: '';
+          content: "";
           position: absolute;
           inset: 0;
           z-index: -1;
