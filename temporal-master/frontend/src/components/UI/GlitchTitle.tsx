@@ -33,49 +33,48 @@ export default function GlitchTitle() {
   return (
     <div className="relative overflow-x-hidden mb-4">
       <style>{`
-        /* ── Phosphor title flicker (8 s, muy sutil) ────────────────── */
+        /* ── Phosphor title flicker (8 s) ───────────────────────────── */
         @keyframes title-flicker {
-          0%, 96%, 100% { opacity: 1;    }
-          97%           { opacity: 0.85; }
-          98%           { opacity: 1;    }
-          99%           { opacity: 0.70; }
+          0%, 90%, 100% { opacity: 1;    }
+          93%           { opacity: 0.80; }
+          96%           { opacity: 1;    }
+          98%           { opacity: 0.60; }
         }
-        .hero-title { animation: title-flicker 8s ease-in-out infinite; }
+        .hero-title { animation: title-flicker 6s ease-in-out infinite; }
 
-        /* ── Canal rojo ─────────────────────────────────────────────── */
+        /* ── Canal rojo: ciclo 2.8 s, glitch en 70-82 % ────────────── */
         @keyframes hero-glitch-r {
-          0%,  87.9% { clip-path: inset(100% 0 0 0); opacity: 0;    transform: translate(0);        }
-          88%        { clip-path: inset(42% 0 44% 0); opacity: 0.85; transform: translate(-4px, 0);  }
-          89%        { clip-path: inset(8%  0 80% 0); opacity: 0.85; transform: translate( 5px, 1px);}
-          90%        { clip-path: inset(70% 0 15% 0); opacity: 0.85; transform: translate(-3px,-1px);}
-          91%        { clip-path: inset(25% 0 55% 0); opacity: 0.85; transform: translate( 4px, 0);  }
-          92%        { clip-path: inset(56% 0 30% 0); opacity: 0.85; transform: translate(-5px, 2px);}
-          93%, 100%  { clip-path: inset(100% 0 0 0); opacity: 0;    transform: translate(0);        }
+          0%,   69.9% { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
+          70%         { clip-path: inset(38% 0 48% 0); opacity: 1;   transform: translate(-6px, 0);   }
+          72%         { clip-path: inset(5%  0 78% 0); opacity: 1;   transform: translate( 7px, 2px); }
+          74%         { clip-path: inset(65% 0 12% 0); opacity: 1;   transform: translate(-5px,-2px); }
+          76%         { clip-path: inset(22% 0 58% 0); opacity: 1;   transform: translate( 8px, 0);   }
+          78%         { clip-path: inset(50% 0 28% 0); opacity: 1;   transform: translate(-6px, 3px); }
+          80%         { clip-path: inset(30% 0 45% 0); opacity: 1;   transform: translate( 5px,-1px); }
+          82%, 100%   { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
         }
 
-        /* ── Canal verde (2 frames de retraso → aberración cromática) ─ */
+        /* ── Canal verde: 2 frames detrás ──────────────────────────── */
         @keyframes hero-glitch-g {
-          0%,  89.9% { clip-path: inset(100% 0 0 0); opacity: 0;    transform: translate(0);        }
-          90%        { clip-path: inset(20% 0 62% 0); opacity: 0.70; transform: translate( 4px, 0);  }
-          91%        { clip-path: inset(65% 0 18% 0); opacity: 0.70; transform: translate(-5px, 1px);}
-          92%        { clip-path: inset(38% 0 38% 0); opacity: 0.70; transform: translate( 3px,-2px);}
-          93%        { clip-path: inset(80% 0 5%  0); opacity: 0.70; transform: translate(-4px, 0);  }
-          95%, 100%  { clip-path: inset(100% 0 0 0); opacity: 0;    transform: translate(0);        }
+          0%,   73.9% { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
+          74%         { clip-path: inset(18% 0 60% 0); opacity: 0.9; transform: translate( 6px, 0);   }
+          76%         { clip-path: inset(62% 0 15% 0); opacity: 0.9; transform: translate(-7px, 2px); }
+          78%         { clip-path: inset(35% 0 40% 0); opacity: 0.9; transform: translate( 5px,-3px); }
+          80%         { clip-path: inset(78% 0 8%  0); opacity: 0.9; transform: translate(-6px, 0);   }
+          83%, 100%   { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
         }
 
         .hero-glitch-r {
           color: #FF0033;
-          text-shadow: 0 0 8px rgba(255,0,51,0.5);
-          animation: hero-glitch-r 4s linear infinite;
+          text-shadow: 0 0 12px rgba(255,0,51,0.8), 0 0 24px rgba(255,0,51,0.4);
+          animation: hero-glitch-r 2.8s linear infinite;
           will-change: transform, clip-path, opacity;
-          mix-blend-mode: screen;
         }
         .hero-glitch-g {
           color: #00FF41;
-          text-shadow: 0 0 8px rgba(0,255,65,0.4);
-          animation: hero-glitch-g 4s linear infinite;
+          text-shadow: 0 0 12px rgba(0,255,65,0.7), 0 0 24px rgba(0,255,65,0.3);
+          animation: hero-glitch-g 2.8s linear infinite;
           will-change: transform, clip-path, opacity;
-          mix-blend-mode: screen;
         }
 
         /* ── Accesibilidad ───────────────────────────────────────────── */

@@ -3,39 +3,42 @@
 /**
  * TypewriterText.tsx — Efecto máquina de escribir · DAKI EdTech
  * ──────────────────────────────────────────────────────────────
- * Escribe el texto carácter a carácter con un intervalo configurable.
- * Cursor _ verde: sólido mientras escribe, parpadeante (step-end) al
- * terminar — simula el cursor de terminal táctico.
+ * SSR: renderiza el texto completo (sin efecto) para evitar hydration
+ * mismatch y para que los motores de búsqueda indexen el contenido.
+ * Cliente: resetea a '' en useEffect y escribe letra a letra.
  *
- * Uso:
- *   <h2 className="text-xl ... text-[#00FF41]/90 neon-glow">
- *     <TypewriterText text="TÚ ERES LA CORRECCIÓN." />
- *   </h2>
- *
- * Props:
- *   text        — cadena a escribir
- *   delayMs     — ms por carácter          (default: 50)
- *   startDelay  — ms de espera antes de   (default: 500)
- *                 empezar a escribir
+ * Cursor _: sólido mientras escribe, blink step-end al terminar.
  */
 
 import { useState, useEffect } from 'react'
 
 interface TypewriterTextProps {
   text:        string
-  delayMs?:    number
-  startDelay?: number
+  delayMs?:    number   // ms por carácter  (default: 55)
+  startDelay?: number   // ms antes del primer carácter (default: 200)
 }
 
 export default function TypewriterText({
   text,
-  delayMs    = 50,
-  startDelay = 500,
+  delayMs    = 55,
+  startDelay = 200,
 }: TypewriterTextProps) {
-  const [displayed, setDisplayed] = useState('')
-  const [isDone,    setIsDone]    = useState(false)
+  // SSR initial state = texto completo (sin efecto, pero legible e indexable)
+  const [displayed, setDisplayed] = useState(text)
+  const [isDone,    setIsDone]    = useState(true)
+  const [mounted,   setMounted]   = useState(false)
 
+  // Paso 1: marcar hydration completa
+  useEffect(() => { setMounted(true) }, [])
+
+  // Paso 2: arrancar typewriter solo en cliente, DESPUÉS de hydration
   useEffect(() => {
+    if (!mounted) return
+
+    // Reset y empieza desde cero
+    setDisplayed('')
+    setIsDone(false)
+
     let charIndex = 0
     let typeTimer: ReturnType<typeof setInterval>
 
@@ -54,7 +57,7 @@ export default function TypewriterText({
       clearTimeout(startTimer)
       clearInterval(typeTimer)
     }
-  }, [text, delayMs, startDelay])
+  }, [mounted, text, delayMs, startDelay])
 
   return (
     <>
@@ -69,7 +72,7 @@ export default function TypewriterText({
         {displayed}
         <span
           aria-hidden="true"
-          className={`inline-block ml-px ${isDone ? 'tw-cursor-blink' : 'opacity-100'}`}
+          className={`inline-block ml-px ${isDone && mounted ? 'tw-cursor-blink' : 'opacity-100'}`}
         >
           _
         </span>

@@ -45,10 +45,10 @@ export default function BunkerAtmosphere() {
 
         /* ── 2. Grain flicker (steps = saltos discretos, no interpolación) */
         @keyframes bunker-grain-flicker {
-          0%   { opacity: 0.028; }
-          33%  { opacity: 0.017; }
-          66%  { opacity: 0.024; }
-          100% { opacity: 0.028; }
+          0%   { opacity: 0.045; }
+          33%  { opacity: 0.028; }
+          66%  { opacity: 0.040; }
+          100% { opacity: 0.045; }
         }
         .bunker-grain {
           animation: bunker-grain-flicker 0.20s steps(3, end) infinite;
@@ -69,18 +69,7 @@ export default function BunkerAtmosphere() {
         style={{
           top: 0,
           height: '38vh',
-          background: [
-            'linear-gradient(',
-            '  to bottom,',
-            '  transparent                      0%,',
-            '  rgba(0, 255, 65, 0.008)         20%,',
-            '  rgba(0, 255, 65, 0.016)         45%,',
-            '  rgba(0, 255, 65, 0.022)         50%,',
-            '  rgba(0, 255, 65, 0.016)         55%,',
-            '  rgba(0, 255, 65, 0.008)         80%,',
-            '  transparent                     100%',
-            ')',
-          ].join(''),
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(0,255,65,0.03) 20%, rgba(0,255,65,0.07) 45%, rgba(0,255,65,0.09) 50%, rgba(0,255,65,0.07) 55%, rgba(0,255,65,0.03) 80%, transparent 100%)',
         }}
       />
 
