@@ -367,7 +367,7 @@ export default function HubPage() {
               ))}
             </div>
             <button
-              onClick={() => navigateWithFade('/misiones')}
+              onClick={() => navigateWithFade('/mission/alfa')}
               className="w-full text-center text-[9px] tracking-[0.35em] uppercase border border-[#00FF41]/40 text-[#00FF41]/70 py-2 hover:bg-[#00FF41]/8 hover:border-[#00FF41]/70 transition-all duration-150"
             >
               {'[[ RETOMAR INFILTRACIÓN ]]'}
