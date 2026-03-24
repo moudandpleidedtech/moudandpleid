@@ -1,5 +1,11 @@
 import HeroSection from '@/components/Landing/HeroSection'
+import ManifestoSection from '@/components/Landing/ManifestoSection'
 
 export default function LandingPage() {
-  return <HeroSection />
+  return (
+    <main>
+      <HeroSection />
+      <ManifestoSection />
+    </main>
+  )
 }
