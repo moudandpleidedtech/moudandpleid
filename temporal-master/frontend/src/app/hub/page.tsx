@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
 import HubAudio from '@/components/UI/HubAudio'
+import DakiChatTerminal from '@/components/Hub/DakiChatTerminal'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -178,8 +179,6 @@ export default function HubPage() {
     document.cookie = 'enigma_user=; path=/; max-age=0; SameSite=Lax'
     router.push('/')
   }
-  const [quote] = useState(() => DAKI_QUOTES[Math.floor(Math.random() * DAKI_QUOTES.length)])
-  const { displayed, done } = useTypewriter(quote)
   const [isBitacoraOpen, setIsBitacoraOpen] = useState(false)
   const [completedOrders, setCompletedOrders] = useState<number[]>([])
   const [bgmFadeOut, setBgmFadeOut] = useState(false)
@@ -293,43 +292,13 @@ export default function HubPage() {
             <p className="text-[8px] tracking-[0.4em] text-[#00FF41]/30 mt-0.5">IA SIMBIONTE // v2.7.1</p>
           </motion.div>
 
-          {/* Caja de diálogo */}
+          {/* Terminal de chat con DAKI */}
           <motion.div
-            className="w-full max-w-sm"
+            className="w-full max-w-sm h-52"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.4 }}
           >
-            <div className="relative border border-[#00FF41]/25 bg-black/60 px-5 py-4 backdrop-blur-sm">
-              {/* Esquinas */}
-              <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#00FF41]/60" />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#00FF41]/60" />
-              <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#00FF41]/60" />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#00FF41]/60" />
-
-              <div className="flex items-center gap-2 mb-2">
-                <motion.span
-                  className="w-1.5 h-1.5 rounded-full bg-[#00FF41]"
-                  animate={{ opacity: [1, 0.15, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/35">DAKI // CANAL CIFRADO</span>
-              </div>
-
-              <p
-                className="text-[12px] leading-relaxed text-[#00FF41] min-h-[4rem]"
-                style={{ textShadow: '0 0 6px rgba(0,255,65,0.35)' }}
-              >
-                {displayed}
-                {!done && (
-                  <motion.span
-                    className="inline-block w-[8px] h-[14px] ml-0.5 align-middle bg-[#00FF41]"
-                    animate={{ opacity: [1, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
-                    style={{ boxShadow: '0 0 6px #00FF41' }}
-                  />
-                )}
-              </p>
-            </div>
+            <DakiChatTerminal userId={userId ?? ''} />
           </motion.div>
 
         </div>
@@ -350,6 +319,60 @@ export default function HubPage() {
             </p>
             <div className="h-px bg-[#00FF41]/10 w-full" />
           </div>
+
+          {/* ── Tarjeta de misión activa ── */}
+          <motion.div
+            className="border border-[#00FF41]/25 bg-[#00FF41]/3 px-4 py-4"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.48 }}
+            style={{ boxShadow: '0 0 20px rgba(0,255,65,0.05)' }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" />
+              <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/40 uppercase">MISIÓN ACTIVA</span>
+            </div>
+            <p className="text-[10px] font-bold tracking-[0.25em] text-[#00FF41] uppercase mb-1">
+              OPERACIÓN ALFA
+            </p>
+            <p className="text-[9px] text-[#00FF41]/50 tracking-wide mb-3">
+              Lógica y Sintaxis Core
+            </p>
+            {/* Barra de progreso */}
+            <div className="mb-3">
+              <div className="flex justify-between text-[8px] text-[#00FF41]/30 tracking-widest mb-1">
+                <span>PROGRESO</span>
+                <span>{Math.round((completedOrders.length / 10) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-[#00FF41]/8 w-full">
+                <motion.div
+                  className="h-full bg-[#00FF41]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min((completedOrders.length / 10) * 100, 100)}%` }}
+                  transition={{ delay: 0.8, duration: 0.6, ease: 'easeOut' }}
+                  style={{ boxShadow: '0 0 8px rgba(0,255,65,0.5)' }}
+                />
+              </div>
+            </div>
+            {/* Objetivos */}
+            <div className="space-y-1 mb-3">
+              <p className="text-[8px] tracking-[0.4em] text-[#00FF41]/20 uppercase mb-1.5">Objetivos</p>
+              {['Vulnerar el bucle For', 'Declarar variables seguras'].map((obj, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className={`w-1 h-1 rounded-full ${completedOrders.length > i ? 'bg-[#00FF41]' : 'bg-[#00FF41]/20'}`} />
+                  <span className={`text-[9px] tracking-wide ${completedOrders.length > i ? 'text-[#00FF41]/60 line-through' : 'text-[#00FF41]/35'}`}>
+                    {obj}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => navigateWithFade('/misiones')}
+              className="w-full text-center text-[9px] tracking-[0.35em] uppercase border border-[#00FF41]/40 text-[#00FF41]/70 py-2 hover:bg-[#00FF41]/8 hover:border-[#00FF41]/70 transition-all duration-150"
+            >
+              {'[[ RETOMAR INFILTRACIÓN ]]'}
+            </button>
+          </motion.div>
 
           {/* Botones principales */}
           <div className="flex flex-col gap-3">
