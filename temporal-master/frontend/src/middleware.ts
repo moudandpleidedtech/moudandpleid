@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Protección de rutas:
- * - Rutas privadas sin cookie → redirige a / (login)
- * - Usuario autenticado en login → redirige a /hub
+ * - /       → Landing pública (siempre accesible)
+ * - /login  → Si autenticado, redirige a /hub
+ * - Rutas privadas sin cookie → redirige a /login
  */
 
 const PRIVATE_ROUTES = ['/hub', '/misiones', '/challenge', '/enigma', '/boss', '/leaderboard', '/arena', '/codice']
@@ -13,14 +14,14 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.has('enigma_user')
 
   // Usuario autenticado intenta acceder al login → Centro de Mando
-  if (pathname === '/' && isAuthenticated) {
+  if (pathname === '/login' && isAuthenticated) {
     return NextResponse.redirect(new URL('/hub', request.url))
   }
 
   // Ruta privada sin sesión → login
   const isPrivate = PRIVATE_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
   if (isPrivate && !isAuthenticated) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()
@@ -28,7 +29,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
+    '/login',
     '/hub',
     '/misiones',
     '/challenge/:path*',
