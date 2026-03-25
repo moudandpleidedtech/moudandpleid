@@ -83,6 +83,7 @@ class TokenResponse(BaseModel):
     callsign:            str
     level:               int
     is_licensed:         bool
+    role:                str  = "USER"
     # Indica si el founder_code fue válido y activó la licencia
     founder_code_applied: bool = False
 
@@ -202,6 +203,7 @@ async def register(
         callsign=user.callsign,
         level=user.current_level,
         is_licensed=user.is_licensed,
+        role=user.role,
     )
     return TokenResponse(
         access_token=token,
@@ -209,6 +211,7 @@ async def register(
         callsign=user.callsign,
         level=user.current_level,
         is_licensed=user.is_licensed,
+        role=user.role,
         founder_code_applied=founder_code_applied,
     )
 
@@ -252,6 +255,7 @@ async def login(
         callsign=user.callsign,
         level=user.current_level,
         is_licensed=user.is_licensed,
+        role=user.role,
     )
     return TokenResponse(
         access_token=token,
@@ -259,4 +263,5 @@ async def login(
         callsign=user.callsign,
         level=user.current_level,
         is_licensed=user.is_licensed,
+        role=user.role,
     )

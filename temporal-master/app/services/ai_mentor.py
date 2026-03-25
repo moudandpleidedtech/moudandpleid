@@ -27,8 +27,10 @@ from app.core.config import settings
 from app.services import knowledge_base
 from app.services.daki_persona import (
     DAKI_SYSTEM_PROMPT,
+    get_concept_intel,
     get_escalation_directive,
     get_offline_response,
+    get_stage_addendum,
 )
 
 # ─── Tokens por nivel ────────────────────────────────────────────────────────
@@ -179,17 +181,66 @@ def _build_user_message(
     error_output: str,
     fail_count: int,
     operator_history: str = "",
+    concepts_taught: list[str] | None = None,
+    pedagogical_objective: str | None = None,
+    syntax_hint: str | None = None,
+    db_hints: list[str] | None = None,
+    stage_addendum: str = "",
+    concept_intel: str = "",
+    weak_concepts: list[str] | None = None,
 ) -> str:
     """
     Construye el mensaje del usuario que recibe el modelo.
 
-    Mejoras v2 (Prompt 62):
-    - Inyección estructurada del stacktrace con etiquetas claras.
-    - Detección de input() con argumentos → nota de plataforma.
-    - Separación entre tipo de error, línea y detalle.
+    v3 — Inyección de Intel de Misión:
+    - Conceptos evaluados, objetivo pedagógico, patrón estructural y pistas pre-cargadas.
+    - Etapa DAKI (comportamiento calibrado al nivel del Operador).
+    - Intel táctica por concepto (errores frecuentes pre-catalogados).
     """
     escalation = get_escalation_directive(fail_count)
     history_block = f"\n{operator_history}\n" if operator_history else ""
+
+    # ── Etapa DAKI y comportamiento calibrado ────────────────────────────────
+    stage_block = f"\n{stage_addendum}\n" if stage_addendum else ""
+
+    # ── Intel táctica por concepto ───────────────────────────────────────────
+    intel_block = f"\n{concept_intel}\n" if concept_intel else ""
+
+    # ── Intel de la misión: conceptos, objetivo, scaffold, pistas DB ─────────
+    mission_intel_parts: list[str] = []
+    if concepts_taught:
+        mission_intel_parts.append(f"Conceptos evaluados: {', '.join(concepts_taught)}")
+    if pedagogical_objective:
+        mission_intel_parts.append(f"Objetivo pedagógico: {pedagogical_objective}")
+    if syntax_hint:
+        mission_intel_parts.append(
+            f"Patrón estructural esperado (NO dar directamente — úsalo para calibrar el scaffold):\n"
+            f"```python\n{syntax_hint}\n```"
+        )
+    if db_hints and len(db_hints) >= fail_count:
+        # Pistas pre-escritas por nivel — guía a DAKI sobre la intención pedagógica
+        hint_idx = min(fail_count - 1, len(db_hints) - 1)
+        mission_intel_parts.append(
+            f"Pista pre-cargada para NIVEL-{min(fail_count, 3)} (orienta tu respuesta, "
+            f"NO la copies literalmente — reescríbela en voz DAKI táctica):\n"
+            f"  \"{db_hints[hint_idx]}\""
+        )
+
+    # ── DAKI Memory: conceptos con refuerzo pendiente ─────────────────────────
+    if weak_concepts:
+        top_weak = weak_concepts[:3]
+        mission_intel_parts.append(
+            f"MEMORIA DAKI — Conceptos con baja maestría en este Operador "
+            f"(reforzar sutilmente si aparecen en el código): {', '.join(top_weak)}"
+        )
+
+    mission_intel_block = ""
+    if mission_intel_parts:
+        mission_intel_block = (
+            "--- INTEL DE MISIÓN (pre-cargada en el Nexo) ---\n"
+            + "\n".join(mission_intel_parts)
+            + "\n--- FIN INTEL DE MISIÓN ---\n\n"
+        )
 
     # ── Análisis de patrones problemáticos de plataforma ─────────────────────
     platform_notes = _detect_platform_issues(source_code)
@@ -198,10 +249,6 @@ def _build_user_message(
         platform_block = "\n--- ANÁLISIS DE PLATAFORMA ---\n" + "\n".join(platform_notes) + "\n"
 
     # ── Formateo del error / stacktrace ──────────────────────────────────────
-    # El error_output puede contener:
-    # - Un stacktrace completo de Python (SyntaxError, TypeError, etc.)
-    # - Una diferencia de salida (expected vs got)
-    # - Vacío si fue correcto pero salida incorrecta
     if error_output.strip():
         error_block = (
             "--- STACKTRACE / ERROR REAL (leer obligatoriamente) ---\n"
@@ -217,7 +264,10 @@ def _build_user_message(
 
     return (
         f"{escalation}\n"
+        f"{stage_block}"
         f"{history_block}\n"
+        f"{mission_intel_block}"
+        f"{intel_block}\n"
         f"--- CONTEXTO DE INCURSIÓN ---\n"
         f"Nombre: {challenge_title}\n"
         f"Descripción: {challenge_description}\n\n"
@@ -262,35 +312,44 @@ async def get_execute_feedback(
     """
     Genera la reacción inmediata de DAKI a cada ejecución de código.
 
-    Diferencia con get_hint():
-    - No es andamiaje escalado — es observación táctica de 1-2 líneas.
-    - Se activa automáticamente en CADA ejecución (éxito o fallo).
-    - Para éxitos: reconocimiento breve sin spoon-feeding.
-    - Para fallos: señala el error específico del stacktrace real.
+    Economía de tokens:
+    - Éxito: respuesta estática — cero llamadas al LLM. El valor real ya llegó
+      (el Operador sabe que pasó). El LLM no añade información accionable.
+    - Fallo: cache semántico por (challenge_title, error_output[:200]).
+      El mismo error en la misma misión produce la misma reacción — sin duplicar tokens.
     """
+    # ── Éxito: respuesta estática, $0 en tokens ───────────────────────────────
+    if is_success:
+        return "Protocolo validado. Acceso concedido al siguiente sector."
+
+    # ── Fallo: check cache antes de llamar al LLM ─────────────────────────────
+    error_fingerprint = error_output.strip()[:200] if error_output.strip() else "output_mismatch"
+    cache_key = await semantic_cache_service.generate_cache_key(
+        mission_level=0,
+        user_code=f"exec_feedback|{challenge_title}",
+        compiler_error=error_fingerprint,
+    )
+    cached = await semantic_cache_service.get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
     if not settings.ANTHROPIC_API_KEY:
-        if is_success:
-            return "Protocolo validado. Acceso concedido al siguiente sector."
         return "// [DAKI] Anomalía detectada. El stacktrace contiene la coordenada del fallo."
 
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-    if is_success:
-        directive = _DIRECTIVE_EXEC_SUCCESS
-        error_block = ""
+    directive = _DIRECTIVE_EXEC_FAIL.replace("{attempt}", str(attempt_number))
+    if error_output.strip():
+        error_block = (
+            "--- STACKTRACE / ERROR REAL ---\n"
+            f"{error_output[:600]}\n"
+            "--- FIN ---\n"
+        )
     else:
-        directive = _DIRECTIVE_EXEC_FAIL.replace("{attempt}", str(attempt_number))
-        if error_output.strip():
-            error_block = (
-                "--- STACKTRACE / ERROR REAL ---\n"
-                f"{error_output[:600]}\n"
-                "--- FIN ---\n"
-            )
-        else:
-            error_block = (
-                "--- RESULTADO ---\n"
-                "Sin excepción Python. La salida no coincide con el protocolo esperado (output mismatch).\n"
-            )
+        error_block = (
+            "--- RESULTADO ---\n"
+            "Sin excepción Python. La salida no coincide con el protocolo esperado (output mismatch).\n"
+        )
 
     user_msg = (
         f"{directive}\n\n"
@@ -310,15 +369,30 @@ async def get_execute_feedback(
         text = next(
             (b.text.strip() for b in response.content if getattr(b, "type", None) == "text"),
             None,
-        )
-        return text or ("Protocolo validado." if is_success else "// [DAKI] Anomalía. Revisa el stacktrace.")
+        ) or "// [DAKI] Anomalía. Revisa el stacktrace."
+
+        # Guardar en caché — el mismo error no vuelve a costar tokens
+        await semantic_cache_service.save_to_cache(cache_key, text)
+        return text
+
     except Exception:
-        if is_success:
-            return "Protocolo validado. Acceso concedido."
         return "// [DAKI] Anomalía detectada. Revisa el stacktrace."
 
 
 # ─── Punto de entrada público ─────────────────────────────────────────────────
+
+def get_db_fallback_hint(db_hints: list[str] | None, fail_count: int) -> str | None:
+    """
+    Retorna la pista pre-escrita de la DB según el nivel de falla.
+    Índice 0 → fail_count=1, índice 1 → fail_count=2, índice 2+ → fail_count>=3.
+    Retorna None si no hay pistas disponibles.
+    """
+    if not db_hints:
+        return None
+    idx = min(max(fail_count - 1, 0), len(db_hints) - 1)
+    hint = db_hints[idx] if idx < len(db_hints) else None
+    return hint if hint else None
+
 
 async def get_hint(
     challenge_title: str,
@@ -327,27 +401,43 @@ async def get_hint(
     error_output: str,
     fail_count: int = 1,
     operator_history: str = "",
+    concepts_taught: list[str] | None = None,
+    pedagogical_objective: str | None = None,
+    syntax_hint: str | None = None,
+    db_hints: list[str] | None = None,
+    operator_level: int = 1,
+    weak_concepts: list[str] | None = None,
 ) -> str:
     """
-    Genera una pista táctica calibrada al nivel de falla del Operador.
+    Genera una pista táctica calibrada al nivel de falla y al nivel del Operador.
 
     Args:
         challenge_title:       Nombre de la misión activa.
         challenge_description: Descripción del desafío.
         source_code:           Código actual del Operador (truncado a 2000 chars).
         error_output:          Stacktrace o error real obtenido (truncado a 800 chars).
-        fail_count:            Número de intentos fallidos.
-                               1 → sutil | 2 → conceptual | ≥3 → reframe + estructura ficticia.
-        operator_history:      Sección OPERATOR_HISTORY formateada desde memory_service.
+        fail_count:            Intentos fallidos (1=sutil | 2=conceptual | ≥3=reframe).
+        operator_history:      Sección OPERATOR_HISTORY desde memory_service.
+        concepts_taught:       Conceptos evaluados en esta misión.
+        pedagogical_objective: Objetivo de aprendizaje del nivel.
+        syntax_hint:           Patrón estructural de la solución esperada.
+        db_hints:              Pistas pre-escritas de la DB (3 niveles).
+        operator_level:        Nivel actual del Operador (calibra etapa DAKI).
 
     Returns:
         Pista táctica como string calibrada al nivel de falla.
     """
     if not settings.ANTHROPIC_API_KEY:
-        return get_offline_response(fail_count)
+        # Fallback: usa pista pre-escrita de la DB si existe
+        db_hint = get_db_fallback_hint(db_hints, fail_count)
+        return db_hint or get_offline_response(fail_count)
 
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
     max_tokens = _MAX_TOKENS.get(min(fail_count, 3), 420)
+
+    # Construir contexto enriquecido
+    stage_addendum = get_stage_addendum(operator_level)
+    concept_intel = get_concept_intel(concepts_taught or [])
 
     user_msg = _build_user_message(
         challenge_title=challenge_title,
@@ -356,11 +446,301 @@ async def get_hint(
         error_output=error_output,
         fail_count=fail_count,
         operator_history=operator_history,
+        concepts_taught=concepts_taught,
+        pedagogical_objective=pedagogical_objective,
+        syntax_hint=syntax_hint,
+        db_hints=db_hints,
+        stage_addendum=stage_addendum,
+        concept_intel=concept_intel,
+        weak_concepts=weak_concepts,
     )
 
-    return await _run_with_tools(
-        client=client,
-        messages=[{"role": "user", "content": user_msg}],
-        max_tokens=max_tokens,
-        fallback_fail_count=fail_count,
+    try:
+        return await _run_with_tools(
+            client=client,
+            messages=[{"role": "user", "content": user_msg}],
+            max_tokens=max_tokens,
+            fallback_fail_count=fail_count,
+        )
+    except Exception:
+        # Fallback a pista pre-escrita de la DB antes del fallback genérico
+        db_hint = get_db_fallback_hint(db_hints, fail_count)
+        return db_hint or get_offline_response(fail_count)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AIMentorService — Orquestador de la Trinidad de Ahorro de Tokens
+#
+# Flujo:
+#   Cache hit  → respuesta $0, sin llamada al LLM
+#   Cache miss → PromptBuilder comprime → LLMRouter elige modelo → LLM → Cache save
+# ─────────────────────────────────────────────────────────────────────────────
+
+import time as _time
+from typing import Any
+
+from app.services.llm_router      import llm_router_service
+from app.services.semantic_cache  import semantic_cache_service
+from app.services.prompt_builder  import prompt_builder_service
+
+_NEXO_SATURADO = (
+    "// [DAKI] Nexo saturado. El canal de IA está temporalmente fuera de línea. "
+    "Reintenta en unos segundos, Operador."
+)
+
+_MENTOR_MAX_TOKENS = 420
+
+
+async def _call_llm(
+    model_id:   str,
+    messages:   list[dict[str, Any]],
+    fail_count: int = 1,
+) -> tuple[str, int]:
+    """
+    Llama al LLM real usando el cliente Anthropic existente.
+    Extrae el system message de la lista y lo pasa al parámetro `system`.
+
+    Returns:
+        (response_text, estimated_tokens_used)
+    """
+    from app.core.config import settings  # import diferido — evita circular
+
+    # Separar system del resto
+    system_content = next(
+        (m["content"] for m in messages if m.get("role") == "system"), ""
     )
+    user_messages = [m for m in messages if m.get("role") != "system"]
+
+    if not settings.ANTHROPIC_API_KEY:
+        return get_offline_response(fail_count), 0
+
+    client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    response = await client.messages.create(
+        model=model_id,
+        max_tokens=_MENTOR_MAX_TOKENS,
+        system=system_content,
+        messages=user_messages,
+    )
+
+    text_block = next(
+        (b for b in response.content if getattr(b, "type", None) == "text"), None
+    )
+    text            = text_block.text.strip() if text_block else get_offline_response(fail_count)
+    tokens_used_est = getattr(response.usage, "input_tokens", 0) + getattr(response.usage, "output_tokens", 0)
+    return text, tokens_used_est
+
+
+_ESCALATION_THRESHOLD: Final[int] = 3   # intentos fallidos antes de forzar PREMIUM
+
+_PROACTIVE_RULES = (
+    "El Operador no ha enviado un mensaje. Reacciona al evento de telemetría recibido. "
+    "Sé breve: máximo 2 líneas. Nombra el problema específico que sugiere el evento. "
+    "No preguntes — señala y orienta. Tono DAKI operacional."
+)
+
+_PROACTIVE_EVENTS: dict[str, str] = {
+    "idle_15_min":          "El Operador lleva 15 minutos sin avanzar en el código.",
+    "idle_30_min":          "El Operador lleva 30 minutos inactivo. Posible bloqueo cognitivo.",
+    "infinite_loop_warning":"El entorno detectó un bucle que no termina en el código activo.",
+    "repeated_same_error":  "El Operador repitió el mismo error 3 veces consecutivas.",
+    "copy_paste_detected":  "Se detectó un patrón de copy-paste sin modificaciones en el código.",
+    "no_tests_run":         "El Operador lleva 20 minutos sin ejecutar ninguna prueba.",
+}
+
+
+class AIMentorService:
+    """
+    Orquestador principal de la Trinidad de Ahorro de Tokens.
+
+    Flujo estricto (process_operator_request):
+      A. Cache lookup        → hit: retorno $0
+      B. Auto-escalada       → failed_attempts >= 3 fuerza PREMIUM_MODEL
+      C. PromptBuilder       → compresión de historial y reglas
+      D. LLMRouter           → selección de modelo (si no fue forzado)
+      E. LLM call            → llamada real
+      F. Cache save          → persiste para futuros hits
+      G. Return              → respuesta + métricas
+
+    Método adicional (generate_proactive_hint):
+      Telemetría de trinchera — DAKI habla sin que el Operador lo pida.
+    """
+
+    async def process_operator_request(
+        self,
+        user_id:         str,
+        mission_level:   int,
+        mission_rules:   str,
+        user_code:       str,
+        prompt:          str,
+        chat_history:    list[Any],
+        error_msg:       str = "",
+        failed_attempts: int = 0,
+    ) -> dict[str, Any]:
+        """
+        Punto de entrada unificado para todas las interacciones con el mentor IA.
+
+        Args:
+            failed_attempts: Intentos fallidos acumulados en la misión actual.
+                             Si >= ESCALATION_THRESHOLD (3), se fuerza PREMIUM_MODEL.
+
+        Returns dict con:
+            response          str   — texto de la respuesta
+            source            str   — "cache" | "llm"
+            model_used        str   — modelo seleccionado (vacío en cache hit)
+            cost              int   — 0 (cache) | 1 (llm llamado)
+            tokens_estimated  int   — tokens usados (0 en cache hit)
+            latency_ms        float — tiempo total de procesamiento
+            escalated         bool  — True si se forzó PREMIUM por frustración
+        """
+        t_start = _time.monotonic()
+
+        try:
+            # ── A. Cache lookup ───────────────────────────────────────────────
+            cache_key = await semantic_cache_service.generate_cache_key(
+                mission_level=mission_level,
+                user_code=user_code,
+                compiler_error=error_msg,
+            )
+            cached = await semantic_cache_service.get_cached_response(cache_key)
+
+            if cached is not None:
+                return {
+                    "response":         cached,
+                    "source":           "cache",
+                    "model_used":       "",
+                    "cost":             0,
+                    "tokens_estimated": 0,
+                    "latency_ms":       round((_time.monotonic() - t_start) * 1000, 2),
+                    "escalated":        False,
+                }
+
+            # ── B. Auto-escalada por frustración ──────────────────────────────
+            escalated = failed_attempts >= _ESCALATION_THRESHOLD
+            if escalated:
+                from app.services.llm_router import PREMIUM_MODEL
+                model_id = PREMIUM_MODEL
+                logger.info(
+                    "Auto-escalada activada → PREMIUM_MODEL | user=%s | intentos=%d",
+                    user_id, failed_attempts,
+                )
+            else:
+                model_id = None  # se resuelve en paso D
+
+            # ── C. Comprimir historial y reglas ───────────────────────────────
+            messages = prompt_builder_service.build_tactical_prompt(
+                current_mission_rules=mission_rules,
+                chat_history=chat_history,
+                new_user_message=prompt,
+            )
+
+            # ── D. Seleccionar modelo (solo si no fue forzado en B) ───────────
+            if model_id is None:
+                model_id = await llm_router_service.route_prompt(
+                    prompt_text=prompt,
+                    mission_level=mission_level,
+                )
+
+            # ── E. Llamada al LLM ─────────────────────────────────────────────
+            ai_response, tokens_used = await _call_llm(
+                model_id=model_id,
+                messages=messages,
+            )
+
+            # ── F. Guardar en caché ───────────────────────────────────────────
+            await semantic_cache_service.save_to_cache(cache_key, ai_response)
+
+            # ── G. Registrar frecuencia de error (anticipación) ───────────────
+            if error_msg:
+                error_type = error_msg.split(":")[0].strip()[:60]
+                semantic_cache_service.check_error_frequency(mission_level, error_type)
+
+            return {
+                "response":         ai_response,
+                "source":           "llm",
+                "model_used":       model_id,
+                "cost":             1,
+                "tokens_estimated": tokens_used,
+                "latency_ms":       round((_time.monotonic() - t_start) * 1000, 2),
+                "escalated":        escalated,
+            }
+
+        except Exception as exc:
+            import logging as _logging
+            _logging.getLogger(__name__).error(
+                "AIMentorService.process_operator_request falló: %s", exc, exc_info=True
+            )
+            return {
+                "response":         _NEXO_SATURADO,
+                "source":           "error",
+                "model_used":       "",
+                "cost":             0,
+                "tokens_estimated": 0,
+                "latency_ms":       round((_time.monotonic() - t_start) * 1000, 2),
+                "escalated":        False,
+            }
+
+    async def generate_proactive_hint(
+        self,
+        user_id:       str,
+        telemetry_event: str,
+        current_code:  str,
+    ) -> str:
+        """
+        Telemetría de Trinchera: DAKI interviene sin que el Operador envíe un mensaje.
+
+        El frontend dispara eventos como "idle_15_min" o "infinite_loop_warning".
+        DAKI construye un prompt corto usando FAST_MODEL y responde directamente
+        al canal de telemetría — no al chat principal.
+
+        Args:
+            user_id:          ID del Operador (para logging).
+            telemetry_event:  Clave del evento (ver _PROACTIVE_EVENTS).
+            current_code:     Snapshot del código actual en el IDE.
+
+        Returns:
+            Mensaje proactivo de DAKI (1-2 líneas).
+        """
+        try:
+            from app.services.llm_router import FAST_MODEL
+
+            # Resolver descripción del evento
+            event_description = _PROACTIVE_EVENTS.get(
+                telemetry_event,
+                f"Evento de telemetría recibido: {telemetry_event}",
+            )
+
+            # Construir prompt comprimido — sin historial, sin reglas de misión
+            proactive_prompt = (
+                f"EVENTO: {event_description}\n\n"
+                f"Código actual del Operador:\n"
+                f"```python\n{current_code[:800]}\n```"
+            )
+
+            messages = prompt_builder_service.build_tactical_prompt(
+                current_mission_rules=_PROACTIVE_RULES,
+                chat_history=[],          # sin historial — intervención puntual
+                new_user_message=proactive_prompt,
+            )
+
+            logger.info(
+                "Telemetría proactiva → evento=%s | user=%s",
+                telemetry_event, user_id,
+            )
+
+            response_text, _ = await _call_llm(
+                model_id=FAST_MODEL,      # siempre FAST — es una intervención, no análisis profundo
+                messages=messages,
+            )
+            return response_text
+
+        except Exception as exc:
+            logger.error(
+                "generate_proactive_hint falló: event=%s user=%s error=%s",
+                telemetry_event, user_id, exc, exc_info=True,
+            )
+            return "// [DAKI] Canal de telemetría momentáneamente fuera de línea."
+
+
+# Singleton
+ai_mentor_service = AIMentorService()

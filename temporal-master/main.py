@@ -32,10 +32,75 @@ async def _auto_seed() -> None:
         print(f"⚠️  [auto-seed] Error durante la inyección: {exc}")
 
 
+async def _seed_incursions() -> None:
+    """
+    Sincroniza el catálogo de Incursiones (D021 — Mapa de Niebla).
+    Idempotente: UPSERT por slug — nunca sobreescribe el campo `status`.
+    Se ejecuta en cada startup para propagar cambios de contenido.
+    """
+    from app.models.incursion import Incursion  # noqa: F401 — registrar modelo
+    try:
+        from scripts.seed_incursions import seed as seed_inc
+        await seed_inc()
+    except Exception as exc:  # pragma: no cover
+        print(f"⚠️  [seed-incursions] Error: {exc}")
+
+
+async def _ensure_dev_user() -> None:
+    """
+    Crea (o actualiza) el usuario de desarrollo NEXO con acceso total.
+    Idempotente: si ya existe, actualiza sus flags sin cambiar el UUID.
+
+    Credenciales locales:
+      Email    → admin@daki.dev
+      Callsign → NEXO
+      Password → DAKIadmin2025
+    """
+    from app.core.security import hash_password
+    from app.models.user import User
+
+    DEV_EMAIL    = "admin@daki.dev"
+    DEV_CALLSIGN = "NEXO"
+    DEV_PASSWORD = "DAKIadmin2025"
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.email == DEV_EMAIL))
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            user = User(
+                email=DEV_EMAIL,
+                callsign=DEV_CALLSIGN,
+                password_hash=hash_password(DEV_PASSWORD),
+                current_level=99,
+                total_xp=99_000,
+                is_licensed=True,
+                is_admin=True,
+                role="FOUNDER",
+                subscription_status="ACTIVE",
+                league_tier="Diamante",
+                current_rank="Comandante Supremo",
+            )
+            session.add(user)
+            print("🛡️  [dev-user] Usuario NEXO creado — admin@daki.dev / DAKIadmin2025 [FOUNDER]")
+        else:
+            # Garantiza flags correctos aunque el usuario ya existiera
+            user.is_licensed         = True
+            user.is_admin            = True
+            user.current_level       = 99
+            user.role                = "FOUNDER"
+            user.subscription_status = "ACTIVE"
+            print("🛡️  [dev-user] Usuario NEXO verificado y actualizado [FOUNDER].")
+
+        await session.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     await _auto_seed()
+    await _seed_incursions()
+    await _ensure_dev_user()
     yield
 
 

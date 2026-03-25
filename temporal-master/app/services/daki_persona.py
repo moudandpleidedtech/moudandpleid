@@ -317,3 +317,344 @@ def get_offline_response(fail_count: int) -> str:
     """Respuesta de fallback cuando la API no está disponible."""
     level = min(fail_count, 3)
     return DAKI_OFFLINE_RESPONSES[level]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# EVOLUCIÓN DE DAKI — 4 ETAPAS SEGÚN NIVEL DEL OPERADOR
+# ─────────────────────────────────────────────────────────────────────────────
+
+_STAGE_ADDENDA: dict[str, str] = {
+    "reclutador": (
+        "[ETAPA ACTIVA: RECLUTADOR — Operador Nivel 1-3]\n"
+        "El Operador es nuevo. Está aprendiendo sintaxis elemental.\n"
+        "- Si el error es trivial (falta comilla, paréntesis, indentación básica), señálalo sin dramatismo.\n"
+        "- Puedes incluir una frase explicativa breve antes de la pista táctica.\n"
+        "- Tolera preguntas conceptuales básicas sin redirigir agresivamente.\n"
+        "- Mantén el tono DAKI pero con densidad reducida."
+    ),
+    "tactico": (
+        "[ETAPA ACTIVA: TÁCTICO — Operador Nivel 4-7]\n"
+        "El Operador conoce fundamentos. Trabaja con lógica de flujo y operaciones.\n"
+        "- No expliques variables, print ni input — ya los domina.\n"
+        "- Señala la discrepancia entre la lógica que intentó y la lógica correcta.\n"
+        "- Usa una pregunta socrática para forzar la hipótesis del Operador."
+    ),
+    "comandante": (
+        "[ETAPA ACTIVA: COMANDANTE — Operador Nivel 8-11]\n"
+        "El Operador tiene base sólida. Trabaja con bucles, funciones y estructuras.\n"
+        "- Comprime las pistas al mínimo. El Operador debe auto-diagnosticarse.\n"
+        "- Señala la zona exacta del error sin contexto adicional.\n"
+        "- Si pregunta algo que debería saber, respóndele con pregunta de diagnóstico."
+    ),
+    "nexo": (
+        "[ETAPA ACTIVA: NEXO — Operador Nivel 12+]\n"
+        "El Operador es veterano. Trabaja con patrones complejos.\n"
+        "- Trátalo como par técnico, no como estudiante.\n"
+        "- Señala el problema directamente sin scaffolding.\n"
+        "- Puedes desafiar sus decisiones de diseño, no solo sus errores."
+    ),
+}
+
+
+def get_stage_addendum(current_level: int) -> str:
+    """Retorna el addendum de comportamiento de DAKI según el nivel del Operador."""
+    if current_level <= 3:
+        return _STAGE_ADDENDA["reclutador"]
+    elif current_level <= 7:
+        return _STAGE_ADDENDA["tactico"]
+    elif current_level <= 11:
+        return _STAGE_ADDENDA["comandante"]
+    else:
+        return _STAGE_ADDENDA["nexo"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTEL TÁCTICA POR CONCEPTO — Errores pre-catalogados + ganchos de intervención
+# ─────────────────────────────────────────────────────────────────────────────
+
+_CONCEPT_INTEL: dict[str, dict] = {
+    "print": {
+        "errors": [
+            ("SyntaxError: EOL while scanning string literal",
+             "Señal incompleta — la cadena no tiene comilla de cierre."),
+            ("NameError: name '...' is not defined",
+             "Sin comillas, Python interpreta el texto como variable. Añade comillas."),
+            ("output mismatch de mayúsculas/espacios",
+             "La salida es case-sensitive. Compara carácter por carácter con el protocolo esperado."),
+        ],
+        "stagnation": "print() espera texto entre paréntesis. Escribe el mensaje y ejecuta.",
+    },
+    "variables": {
+        "errors": [
+            ("NameError: name '...' is not defined",
+             "El registro no existe. ¿Fue declarado antes de usarse? ¿Nombre idéntico?"),
+            ("TypeError: can only concatenate str (not 'int') to str",
+             "Conflicto de tipo. Convierte el entero con str() antes de concatenar."),
+        ],
+        "stagnation": "Declara la variable con = y asígnale el valor: nombre = valor.",
+    },
+    "strings": {
+        "errors": [
+            ("TypeError: can only concatenate str (not 'int') to str",
+             "Solo str + str. Convierte el número con str() primero."),
+        ],
+        "stagnation": "El texto va entre comillas simples o dobles. Sin comillas es NameError.",
+    },
+    "int": {
+        "errors": [
+            ("TypeError: unsupported operand type(s) for +: 'str' and 'int'",
+             "input() devuelve str. Envuelve con int(): int(input())."),
+            ("ValueError: invalid literal for int()",
+             "El texto no es convertible a número. ¿Qué recibe int()?"),
+        ],
+        "stagnation": "Convierte el input a entero antes de operar: a = int(input())",
+    },
+    "input": {
+        "errors": [
+            ("output mismatch — stdout extra",
+             "En este entorno, input() sin argumento. Quita el texto del paréntesis."),
+            ("TypeError — operación sobre str",
+             "input() devuelve texto. Convierte con int() o float() antes de operar."),
+        ],
+        "stagnation": "Lee con input(). Si es número: int(input()). Sin argumento en el paréntesis.",
+    },
+    "concatenación": {
+        "errors": [
+            ("TypeError: can only concatenate str (not 'int') to str",
+             "Solo str + str. Convierte con str(numero) antes de usar +."),
+        ],
+        "stagnation": 'Para unir texto + variable: "Texto: " + variable (ambos deben ser str).',
+    },
+    "f-strings": {
+        "errors": [
+            ("SyntaxError en f-string",
+             "Falta la f antes de la comilla o las llaves mal usadas."),
+            ("se imprimió '{variable}' literal",
+             "Sin la f inicial las llaves no se evalúan. Agrega f antes de la comilla."),
+        ],
+        "stagnation": 'f-string: f"Texto {variable}" — f antes de la comilla, variable entre {}.',
+    },
+    "//": {
+        "errors": [
+            ("output mismatch — salida con decimales",
+             "/ produce float. // produce int. Usa el operador correcto."),
+        ],
+        "stagnation": "División entera: total // divisor. Resto: total % divisor.",
+    },
+    "%": {
+        "errors": [
+            ("output mismatch — imprimió el cociente, no el resto",
+             "% no es división — es el resto. 10 % 3 = 1 (10 = 3×3 + 1)."),
+        ],
+        "stagnation": "El módulo % calcula cuánto sobra. Prueba en papel antes de ejecutar.",
+    },
+    "if": {
+        "errors": [
+            ("IndentationError",
+             "El cuerpo del if necesita exactamente 4 espacios de sangría."),
+            ("SyntaxError: expected ':'",
+             "La bifurcación requiere : al final: if condicion:"),
+            ("output mismatch — siempre ejecuta el mismo bloque",
+             "== compara. = asigna. En la condición usa ==."),
+        ],
+        "stagnation": "Estructura: if condicion: (con :) y el bloque indentado 4 espacios.",
+    },
+    "else": {
+        "errors": [
+            ("IndentationError — else desalineado",
+             "else debe estar al mismo nivel de indentación que su if."),
+        ],
+        "stagnation": "else va al mismo nivel que if, también con : al final.",
+    },
+    "condicionales": {
+        "errors": [
+            ("output mismatch — condición invertida",
+             "Verifica el operador: > significa mayor que. ¿Es la dirección correcta?"),
+        ],
+        "stagnation": "Lee la condición en voz alta. ¿Coincide la dirección del operador?",
+    },
+    "comparación": {
+        "errors": [
+            ("output mismatch — condición siempre True o siempre False",
+             "Revisa el operador de comparación y los valores que compara."),
+        ],
+        "stagnation": "== compara igualdad. != diferencia. > < >= <= comparan magnitud.",
+    },
+    "for": {
+        "errors": [
+            ("IndentationError",
+             "El cuerpo del for necesita 4 espacios de sangría en cada línea."),
+            ("TypeError: 'int' object is not iterable",
+             "for requiere una secuencia. Para N iteraciones: for i in range(N)."),
+        ],
+        "stagnation": "Estructura: for elemento in secuencia: (con :) y cuerpo indentado.",
+    },
+    "while": {
+        "errors": [
+            ("TimeoutError — bucle infinito",
+             "El while no termina. Algo dentro debe modificar la condición de corte."),
+            ("IndentationError",
+             "El cuerpo del while necesita 4 espacios de sangría."),
+        ],
+        "stagnation": "¿Qué modifica la condición del while dentro del bucle? Eso detiene el loop.",
+    },
+    "range": {
+        "errors": [
+            ("output mismatch — más o menos iteraciones",
+             "range(n) genera 0 hasta n-1. El límite superior es exclusivo."),
+        ],
+        "stagnation": "range(5) produce 0,1,2,3,4. Para empezar en 1: range(1, n+1).",
+    },
+    "función": {
+        "errors": [
+            ("NameError — función llamada antes de def",
+             "El def debe aparecer antes de la llamada en el flujo del código."),
+            ("output mismatch — imprimió None",
+             "Sin return, el módulo devuelve None. Agrega return con el valor calculado."),
+            ("TypeError — número incorrecto de argumentos",
+             "Verifica cuántos parámetros espera el def y cuántos envías en la llamada."),
+        ],
+        "stagnation": "Estructura: def nombre(param): cuerpo indentado + return al final.",
+    },
+    "return": {
+        "errors": [
+            ("output mismatch — None impreso",
+             "Sin return explícito, el módulo retorna None. Agrega return valor."),
+        ],
+        "stagnation": "return va dentro del def y envía el valor al punto de llamada.",
+    },
+    "list": {
+        "errors": [
+            ("IndexError: list index out of range",
+             "El índice supera la longitud. Máximo: len(lista)-1."),
+            ("AttributeError — método inexistente",
+             "Verifica el método: .append() para añadir, lista[i] para acceder."),
+        ],
+        "stagnation": "Accede con lista[indice]. Itera con: for elemento in lista.",
+    },
+    "dict": {
+        "errors": [
+            ("KeyError — clave inexistente",
+             "La clave no está en el mapa. Usa .get('clave', default) para acceso seguro."),
+        ],
+        "stagnation": "Accede con dict['clave']. Itera con: for k, v in dict.items().",
+    },
+    "múltiples variables": {
+        "errors": [
+            ("NameError — variable no declarada",
+             "Cada variable debe declararse antes de usarse. ¿Falta alguna línea de asignación?"),
+        ],
+        "stagnation": "Declara cada variable en su propia línea antes de usarla.",
+    },
+    "break": {
+        "errors": [
+            ("TimeoutError — bucle no termina",
+             "break detiene el bucle inmediatamente. ¿Está dentro del bloque correcto?"),
+        ],
+        "stagnation": "break dentro del bucle lo detiene. ¿La condición de break es la correcta?",
+    },
+    "continue": {
+        "errors": [
+            ("output mismatch — saltó iteraciones incorrectas",
+             "continue salta al siguiente ciclo sin ejecutar el resto del cuerpo."),
+        ],
+        "stagnation": "continue salta al siguiente ciclo. ¿La condición que lo activa es la correcta?",
+    },
+}
+
+
+def get_concept_intel(concepts: list[str]) -> str:
+    """
+    Construye el bloque de Intel Táctica para los conceptos dados.
+    Retorna string vacío si ningún concepto tiene intel pre-cargada.
+    """
+    if not concepts:
+        return ""
+
+    lines: list[str] = ["[INTEL TÁCTICA — Errores frecuentes pre-catalogados para esta misión]"]
+    found = False
+
+    for concept in concepts:
+        data = _CONCEPT_INTEL.get(concept.lower())
+        if not data:
+            continue
+        found = True
+        lines.append(f"\n  Concepto [{concept}]:")
+        for symptom, signal in data.get("errors", []):
+            lines.append(f"    • {symptom}")
+            lines.append(f"      → {signal}")
+
+    if not found:
+        return ""
+
+    lines.append(
+        "\nPrioridad: el stacktrace real SIEMPRE tiene precedencia sobre estos patrones. "
+        "Úsalos para identificar la causa raíz, no para dar respuestas enlatadas."
+    )
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TONO DIFERENCIADO POR CONTEXTO DE SESIÓN — hora, racha, errores acumulados
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_tone_for_context(hour: int, streak_days: int, error_count: int) -> str:
+    """
+    Genera una directiva de tono contextual basada en:
+      - hour:        Hora local del Operador (0–23)
+      - streak_days: Días de racha activa
+      - error_count: Cantidad de tipos de error rastreados en la sesión actual
+
+    Propósito: inyectarse en el system context de apertura/cierre de sesión
+    para que DAKI calibre su tono sin cambiar su identidad táctica.
+    """
+    # ── Tiempo del día ────────────────────────────────────────────────────────
+    if 5 <= hour < 12:
+        time_ctx = "Sesión matutina. Cognición en peak — exige el máximo al Operador."
+    elif 12 <= hour < 17:
+        time_ctx = "Sesión diurna. Alta productividad esperada."
+    elif 17 <= hour < 22:
+        time_ctx = "Sesión nocturna. Posible fatiga cognitiva — simplifica la carga, no el rigor."
+    else:
+        time_ctx = "Sesión en madrugada. Máxima concisión — el Operador necesita claridad, no densidad."
+
+    # ── Racha ─────────────────────────────────────────────────────────────────
+    if streak_days >= 14:
+        streak_ctx = f"Racha élite: {streak_days} días consecutivos. El Operador está en zona de flow — desafíalo."
+    elif streak_days >= 7:
+        streak_ctx = f"Racha activa: {streak_days} días. Momentum consolidado — mantén el nivel de exigencia."
+    elif streak_days >= 3:
+        streak_ctx = f"Racha: {streak_days} días. Buen ritmo — refuerza el hábito."
+    elif streak_days == 1:
+        streak_ctx = "Primera sesión del ciclo. Calibra la apertura para retomar el ritmo."
+    else:
+        streak_ctx = "Sin racha activa. El Operador regresa tras una pausa — reconecta tácticamente."
+
+    # ── Errores acumulados → señal de frustración ─────────────────────────────
+    if error_count >= 5:
+        error_ctx = (
+            f"Alta frecuencia de errores en sesión ({error_count} tipos). "
+            "Activar sensibilidad táctica ante señales de frustración."
+        )
+    elif error_count >= 3:
+        error_ctx = f"Errores acumulados: {error_count}. Observa posible estancamiento."
+    else:
+        error_ctx = ""
+
+    parts = ["[CONTEXTO DE SESIÓN]", time_ctx, streak_ctx]
+    if error_ctx:
+        parts.append(error_ctx)
+
+    return "\n".join(parts)
+
+
+def get_stagnation_hook(concepts: list[str]) -> str:
+    """
+    Retorna el gancho de intervención por estancamiento para el primer concepto reconocido.
+    Usado por los endpoints de stagnation/intervene como base de contexto.
+    """
+    for concept in concepts:
+        data = _CONCEPT_INTEL.get(concept.lower())
+        if data and data.get("stagnation"):
+            return data["stagnation"]
+    return ""

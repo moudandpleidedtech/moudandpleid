@@ -16,6 +16,8 @@ import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
 import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
 import PaywallModal from '@/components/UI/PaywallModal'
+import AchievementToast, { type Achievement } from '@/components/UI/AchievementToast'
+import InsightFlash from '@/components/UI/InsightFlash'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
 import { useIdleDetection } from '@/hooks/useIdleDetection'
 
@@ -325,6 +327,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [loadingHint, setLoadingHint]     = useState(false)
   const [hintIndex, setHintIndex]         = useState(-1)   // -1 = oculto, 0/1/2 = pista visible
   const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
+  const [activeAchievements, setActiveAchievements] = useState<Achievement[]>([])
+  const [activeInsight, setActiveInsight] = useState<string | null>(null)
 
   // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
   const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
@@ -359,6 +363,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           current_code: code,
           error_output: lastErrorRef.current,
           idle_minutes: 2,
+          operator_level: level ?? 1,
         }),
       })
       if (!res.ok) return
@@ -612,6 +617,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           user_id: userId, challenge_id: challengeId,
           source_code: code, error_output: errorText,
           fail_count: Math.max(1, failStreak),
+          operator_level: level ?? 1,
         }),
       })
       const data = await res.json()
@@ -853,6 +859,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => setShowCombo(true), 320)
         }
 
+        // Logros desbloqueados
+        if (data.achievements_unlocked?.length) {
+          setTimeout(() => setActiveAchievements(data.achievements_unlocked), 400)
+        }
+
+        // Insight flash (conexión mundo real)
+        if (data.insight) {
+          setTimeout(() => setActiveInsight(data.insight), 800)
+        }
+
         // Modal de victoria
         const next = findNextChallenge(challengeId)
         setVictoryNext(next)
@@ -948,6 +964,21 @@ export default function CodeWorkspace({ challengeId }: Props) {
         userId={userId}
       />
 
+      {/* ── Logros desbloqueados ────────────────────────────────────────────── */}
+      <AchievementToast
+        achievements={activeAchievements}
+        onDismiss={(id) => setActiveAchievements((prev) => prev.filter((a) => a.id !== id))}
+      />
+
+      {/* ── Insight flash post-nivel ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {activeInsight && (
+          <InsightFlash
+            insight={activeInsight}
+            onClose={() => setActiveInsight(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Intel Drawer — Panel lateral deslizable con el Códice/Briefing ── */}
       <AnimatePresence>

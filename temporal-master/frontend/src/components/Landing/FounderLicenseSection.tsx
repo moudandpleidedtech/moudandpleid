@@ -31,7 +31,20 @@ const FOUNDER_FEATURES = [
 
 export default function FounderLicenseSection() {
   return (
-    <section className="bg-[#060606] font-mono px-6 md:px-12 py-24 relative overflow-hidden">
+    <section
+      className="font-mono px-6 md:px-12 py-24 relative overflow-hidden"
+      style={{
+        backgroundImage: 'url(/assets/founder-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      {/* Overlay oscuro — mantiene el tema DAKI sobre el fondo cálido */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'rgba(4,4,4,0.86)' }}
+      />
 
       {/* Vignette */}
       <div

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import activity, admin, analytics, auth, beta, boss, bounty, certificate, challenges, checkout, compiler, daki, duels, evaluate, gamification, health, hint, intercept, knowledge, leaderboard, payments, sectors, simulate, telemetry, users
+from app.api.v1.endpoints import achievements, activity, admin, alpha, analytics, auth, beta, boss, bounty, certificate, challenges, checkout, compiler, contracts, daki, duels, evaluate, gamification, health, hint, incursions, intel, intercept, knowledge, leaderboard, payments, sectors, session, simulate, telemetry, users
 
 router = APIRouter(prefix="/api/v1")
 
@@ -29,3 +29,9 @@ router.include_router(payments.router, tags=["payments"])
 router.include_router(checkout.router, tags=["checkout"])
 router.include_router(daki.router, tags=["daki"])
 router.include_router(knowledge.router, tags=["knowledge"])
+router.include_router(contracts.router, tags=["contracts"])
+router.include_router(achievements.router)
+router.include_router(session.router, tags=["session"])
+router.include_router(alpha.router, tags=["alpha"])
+router.include_router(intel.router)
+router.include_router(incursions.router, tags=["incursions"])

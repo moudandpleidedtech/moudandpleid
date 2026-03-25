@@ -1,71 +1,37 @@
-import HeroSection           from '@/components/Landing/HeroSection'
-import SocialProofSection    from '@/components/Landing/SocialProofSection'
-import ProblemSection        from '@/components/Landing/ProblemSection'
-import ManifestoSection      from '@/components/Landing/ManifestoSection'
-import NeuralDemoSection     from '@/components/Landing/NeuralDemoSection'
-import MissionsSection       from '@/components/Landing/MissionsSection'
-import FounderLicenseSection from '@/components/Landing/FounderLicenseSection'
-import TestimonialsSection   from '@/components/Landing/TestimonialsSection'
-import BetaProtocolSection   from '@/components/Landing/BetaProtocolSection'
-import Footer                from '@/components/Landing/Footer'
-import CircuitBoard          from '@/components/UI/CircuitBoard'
-import ElectricDivider       from '@/components/UI/ElectricDivider'
+import HeroSection        from '@/components/Landing/HeroSection'
+import VideoDemoSection   from '@/components/Landing/VideoDemoSection'
+import SolucionSection    from '@/components/Landing/SolucionSection'
+import ActivacionSection  from '@/components/Landing/ActivacionSection'
+import CircuitBoard       from '@/components/UI/CircuitBoard'
+import LandingSlider      from '@/components/Landing/LandingSlider'
+import HubAudio           from '@/components/UI/HubAudio'
+import type { Slide }     from '@/components/Landing/LandingSlider'
 
-/**
- * DAKI EdTech — Landing Page
- *
- * Funnel de conversión:
- *   Hero → Credibilidad → Problema → Solución → Demo → Operaciones →
- *   Distinción de Protocolo → Prueba Social → CTA Final
- */
+const SLIDES: Slide[] = [
+  { name: 'NEXO CENTRAL',   content: <HeroSection /> },
+  { name: 'DEMO EN VIVO',   content: <VideoDemoSection /> },
+  { name: 'EL SISTEMA',     content: <SolucionSection /> },
+  { name: 'ACCESO AL NEXO', content: <ActivacionSection /> },
+]
+
 export default function LandingPage() {
   return (
-    <main>
-      {/* Circuito eléctrico global — persiste en toda la página */}
+    <main
+      className="relative"
+      style={{
+        backgroundImage:      'url(/assets/daki-bg.jpg)',
+        backgroundAttachment: 'fixed',
+        backgroundSize:       'cover',
+        backgroundPosition:   'center',
+      }}
+    >
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{ background: 'rgba(4,6,4,0.88)' }}
+      />
+      <HubAudio buttonClass="fixed top-3 right-4" />
       <CircuitBoard />
-
-      {/* 1. EL PORTAL — Impacto inmediato, identidad */}
-      <HeroSection />
-
-      <ElectricDivider />
-
-      {/* 2. CREDIBILIDAD RÁPIDA — Python Misión 01, stats */}
-      <SocialProofSection />
-
-      <ElectricDivider />
-
-      {/* 3. EL PROBLEMA — Activa el dolor, valida la frustración */}
-      <ProblemSection />
-
-      <ElectricDivider />
-
-      {/* 4. LA SOLUCIÓN — Anatomía del Nexo DAKI */}
-      <ManifestoSection />
-
-      <ElectricDivider />
-
-      {/* 5. INTERFAZ NEURAL — Muestra antes de registrar */}
-      <NeuralDemoSection />
-
-      <ElectricDivider />
-
-      {/* 6. ZONAS DE OPERACIÓN — Python Misión 01 activa */}
-      <MissionsSection />
-
-      <ElectricDivider />
-
-      {/* 7. DISTINCIÓN DE PROTOCOLO — El paywall que convierte */}
-      <FounderLicenseSection />
-
-      <ElectricDivider />
-
-      {/* 8. SEÑALES DEL CAMPO — Prueba social táctica */}
-      <TestimonialsSection />
-
-      {/* 9. PROTOCOLO DE ACCESO — Dicotomía final, sin ruido */}
-      <BetaProtocolSection />
-
-      <Footer />
+      <LandingSlider slides={SLIDES} />
     </main>
   )
 }

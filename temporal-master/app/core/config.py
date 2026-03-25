@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     # En Stripe: copiar desde Dashboard → Webhooks → Signing secret
     PAYMENT_WEBHOOK_SECRET: str = "change-me-in-production"
 
+    # ── Stripe — Pasarela Global (Directiva 011) ──────────────────────────────
+    # sk_test_... (dev) o sk_live_... (producción)
+    STRIPE_SECRET_KEY: str = ""
+    # whsec_... — desde Stripe Dashboard → Developers → Webhooks → Signing secret
+    STRIPE_WEBHOOK_SECRET: str = ""
+    # price_... — ID del precio mensual $25 USD desde Stripe Dashboard → Products
+    STRIPE_PRICE_ID: str = ""
+
     # Precio de la Licencia de Operador en USD (para proyección de ingresos)
     LICENSE_PRICE_USD: float = 49.0
 

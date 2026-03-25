@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Boolean, Enum, Integer, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -63,3 +63,42 @@ class Challenge(Base):
     # is_free=True  → accesible sin licencia (L0–L10, demo de enganche)
     # is_free=False → requiere is_paid=True en el usuario (default para todos)
     is_free: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+    # ── Árbol de Habilidades — Correlatividades (D018) ─────────────────────────
+    #
+    # codex_id:
+    #   Agrupa challenges por Códice. Valores canónicos:
+    #   'python_core' | 'sales_mastery_v1' | 'tpm_mastery_v1' | None (legacy)
+    #   NULL = challenge del sistema original (Python Core, compatibilidad hacia atrás).
+    #
+    # prerequisite_challenge_id:
+    #   FK self-referencial simple. Expresa: "para entrar aquí, debes haber
+    #   completado esta otra incursión primero". Cubre el 95% de los casos
+    #   (cadena lineal dentro de un módulo, gate de fase).
+    #   Para prerrequisitos múltiples, usar la tabla challenge_prerequisites.
+    #
+    # is_phase_boss:
+    #   True en Boss Battles que actúan como gate de fase.
+    #   Cuando una incursión X tiene prerequisite_challenge_id → boss Y,
+    #   el check valida UserProgress.boss_completed (no solo .completed).
+    #
+    # Migración Alembic necesaria:
+    #   ALTER TABLE challenges ADD COLUMN codex_id VARCHAR(50);
+    #   ALTER TABLE challenges ADD COLUMN prerequisite_challenge_id UUID
+    #     REFERENCES challenges(id) ON DELETE SET NULL;
+    #   ALTER TABLE challenges ADD COLUMN is_phase_boss BOOLEAN NOT NULL DEFAULT FALSE;
+    #   CREATE INDEX ix_challenges_codex_id ON challenges(codex_id);
+    #   CREATE INDEX ix_challenges_prereq ON challenges(prerequisite_challenge_id);
+
+    codex_id: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, index=True
+    )
+    prerequisite_challenge_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("challenges.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    is_phase_boss: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )

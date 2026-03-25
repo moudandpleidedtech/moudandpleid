@@ -17,7 +17,12 @@ interface Message {
   ts:     number
 }
 
-export default function DakiChatTerminal({ userId }: { userId: string }) {
+interface Props {
+  userId:          string
+  openingMessage?: string
+}
+
+export default function DakiChatTerminal({ userId, openingMessage }: Props) {
   const [messages,  setMessages]  = useState<Message[]>([
     {
       from: 'daki',
@@ -27,8 +32,18 @@ export default function DakiChatTerminal({ userId }: { userId: string }) {
   ])
   const [input,     setInput]     = useState('')
   const [loading,   setLoading]   = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef  = useRef<HTMLInputElement>(null)
+  const [cooldown,  setCooldown]  = useState(false)
+  const bottomRef    = useRef<HTMLDivElement>(null)
+  const inputRef     = useRef<HTMLInputElement>(null)
+  const lastSentRef  = useRef(0)
+  const COOLDOWN_MS  = 2500
+
+  // Reemplaza el mensaje inicial con el opening message personalizado de DAKI
+  useEffect(() => {
+    if (openingMessage) {
+      setMessages([{ from: 'daki', text: openingMessage, ts: Date.now() }])
+    }
+  }, [openingMessage])
 
   // Auto-scroll al último mensaje
   useEffect(() => {
@@ -37,7 +52,14 @@ export default function DakiChatTerminal({ userId }: { userId: string }) {
 
   const sendMessage = async () => {
     const text = input.trim()
-    if (!text || loading) return
+    if (!text || loading || cooldown) return
+
+    // Cooldown anti-spam: 2.5s entre envíos para no quemar tokens en ráfagas
+    const now = Date.now()
+    if (now - lastSentRef.current < COOLDOWN_MS) return
+    lastSentRef.current = now
+    setCooldown(true)
+    setTimeout(() => setCooldown(false), COOLDOWN_MS)
 
     setInput('')
     setMessages(prev => [...prev, { from: 'operator', text, ts: Date.now() }])
@@ -99,6 +121,7 @@ export default function DakiChatTerminal({ userId }: { userId: string }) {
                   ? 'text-[#00FF41]/85'
                   : 'text-[#00FF41]/50'
               }`}
+              style={{ whiteSpace: 'pre-wrap' }}
             >
               {msg.text}
             </p>
@@ -128,18 +151,18 @@ export default function DakiChatTerminal({ userId }: { userId: string }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
-          disabled={loading}
-          placeholder="Escriba su reporte..."
+          disabled={loading || cooldown}
+          placeholder={cooldown ? 'Canal enfriándose...' : 'Escriba su reporte...'}
           className="flex-1 bg-transparent text-[#00FF41] text-xs outline-none border-none caret-[#00FF41] placeholder:text-[#00FF41]/15 disabled:opacity-40"
           autoComplete="off"
           spellCheck={false}
         />
         <button
           onClick={sendMessage}
-          disabled={loading || !input.trim()}
+          disabled={loading || cooldown || !input.trim()}
           className="text-[8px] tracking-[0.3em] text-[#00FF41]/30 hover:text-[#00FF41]/60 disabled:opacity-20 transition-colors"
         >
-          [SEND]
+          {cooldown ? '[···]' : '[SEND]'}
         </button>
       </div>
 

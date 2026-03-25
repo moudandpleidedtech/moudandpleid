@@ -1,0 +1,819 @@
+{
+  "codex_id": "tpm_mastery_v1",
+  "codex_name": "Technical Project Manager Mastery",
+  "codex_subtitle": "El Nexo del Comando Técnico — De Gerente a Arquitecto de Equipos",
+  "version": "1.0-architecture",
+  "status": "ARCHITECTURE_ONLY — lessons pending D017+",
+  "created": "2026-03-25",
+  "tier": "elite",
+  "domain": "Technical Project Management / Engineering Leadership",
+  "prerequisite_codex": null,
+  "target_operator_profile": "Gerente de proyectos, product manager o líder de área que gestiona equipos técnicos sin background de ingeniería profundo. El mercado sufre porque los gerentes no entienden a los ingenieros — y los ingenieros no confían en los gerentes que no los entienden.",
+  "description": "100+ misiones que transforman al gerente que 'gestiona recursos' en el líder técnico que debloquea equipos. No enseñamos a programar. Enseñamos Dolor de Código: por qué las cosas tardan lo que tardan, cuándo confiar en la estimación del dev y cuándo cuestionarla, y cómo hablar en juntas de C-Level sin traicionar al equipo de ingeniería que representas.",
+  "design_principles": [
+    "Empatía antes que autoridad — no puedes liderar lo que no entiendes",
+    "El contexto técnico es poder gerencial — quien entiende el stack, decide mejor",
+    "Cada nivel enseña una situación real, no un concepto abstracto",
+    "El TPM es el traductor entre el mundo del código y el mundo del negocio",
+    "Los Boss Battles son situaciones que los gerentes evitan — aquí las enfrentan"
+  ],
+
+  "challenge_taxonomy": {
+    "description": "Tipos de desafío disponibles en este Códice. Distintos de Python (ejecución) y Sales (roleplay de cierre). El TPM opera en el dominio de la decisión, la comunicación y el diagnóstico.",
+    "types": {
+      "incident_simulation": "Un incidente en producción se despliega en tiempo real. El Operador debe responder: triagear, comunicar, decidir, cerrar.",
+      "stakeholder_brief": "Escribir una actualización de estado para una audiencia específica (CEO, dev team, cliente externo). DAKI evalúa el nivel de técnico vs. negocio y la omisión de información crítica.",
+      "prioritization_matrix": "Backlog técnico desordenado. El Operador debe priorizar con criterios explícitos y defender las decisiones ante un stakeholder escéptico.",
+      "technical_translation": "Un documento técnico (PR, ADR, post-mortem) que el Operador debe convertir en lenguaje accionable para negocio.",
+      "estimation_exercise": "Dada una especificación de feature y un equipo, estimar con rangos, dependencias y riesgos. DAKI desafía los supuestos.",
+      "architecture_review": "Evaluar una propuesta de arquitectura desde el ángulo del impacto en equipo, timeline, y riesgo — sin ejecutar código.",
+      "risk_assessment": "Identificar, cuantificar y comunicar riesgos técnicos antes de un lanzamiento o decisión mayor.",
+      "post_mortem_facilitation": "Estructurar o facilitar un post-mortem blameless. DAKI evalúa si el resultado genera aprendizaje o solo narrativa.",
+      "dependency_mapping": "Mapear las dependencias entre equipos y módulos para un entregable dado. Identificar el camino crítico y los bloqueadores.",
+      "go_nogo_decision": "Con información parcial y presión de tiempo, tomar la decisión de lanzar o postponer un release. Defender la decisión.",
+      "budget_defense": "Justificar una línea de inversión técnica (cloud, tooling, headcount) ante un CFO/CEO con presupuesto limitado.",
+      "communication_audit": "Se provee una comunicación real de PM (email, Slack, Jira ticket). El Operador identifica qué está roto y lo reescribe.",
+      "boss_battle": "DAKI actúa como ejecutivo adversarial o ingeniero escéptico. Sin red de seguridad. Sin pistas."
+    }
+  },
+
+  "phases": [
+
+    {
+      "phase_id": 0,
+      "phase_codename": "DESAFÍO 00 — El Bautismo de Código",
+      "phase_title": "El Dolor de Código",
+      "level_range": { "start": 1, "end": 30 },
+      "level_count": 30,
+      "target_operator": "Líderes sin background técnico o con experiencia técnica superficial. El objetivo no es hacer devs — es hacer gerentes que entiendan por qué el código duele.",
+      "phase_objective": "Instalar empatía técnica real. Al terminar esta fase, el Operador puede participar en conversaciones técnicas sin perderse, puede detectar cuando una estimación es irreal, y sabe qué preguntas hacer (y cuáles no) a un equipo de ingeniería.",
+      "core_transformation": "De 'por qué tardáis tanto' a 'entiendo qué hace que esto sea complejo y sé cómo ayudar a desbloquearlo'.",
+      "modules": [
+        {
+          "module_id": "0.1",
+          "module_codename": "Protocolo API — El Fontanero Invisible",
+          "module_title": "Qué es una API realmente (y por qué 'agregar un campo' puede romper 5 cosas)",
+          "level_range": { "start": 1, "end": 5 },
+          "core_question": "¿Por qué una tarea que parece de 2 horas tarda 2 días cuando hay una API en el medio?",
+          "concept_cluster": [
+            "request_response_cycle",
+            "api_contracts_and_versioning",
+            "rate_limits_and_timeouts",
+            "backwards_compatibility",
+            "third_party_api_dependency_risk"
+          ],
+          "primary_challenge_types": [
+            "technical_translation",
+            "risk_assessment",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede evaluar el impacto real de cambios en integraciones antes de comprometer timelines.",
+          "mini_boss": null,
+          "prerequisite_module": null
+        },
+        {
+          "module_id": "0.2",
+          "module_codename": "Protocolo FRONTEND — El Territorio Incomprendido",
+          "module_title": "Por qué el frontend no es 'solo pintar botones' (y el costo oculto del diseño)",
+          "level_range": { "start": 6, "end": 10 },
+          "core_question": "¿Por qué cambiar el color de un botón puede costar 3 días de ingeniería?",
+          "concept_cluster": [
+            "state_management_complexity",
+            "responsive_design_and_browser_matrix",
+            "design_system_debt",
+            "performance_budget",
+            "the_designer_dev_handoff_gap"
+          ],
+          "primary_challenge_types": [
+            "estimation_exercise",
+            "communication_audit",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede escribir un brief de diseño que reduce la ambigüedad de implementación en al menos un 50%.",
+          "mini_boss": null,
+          "prerequisite_module": "0.1"
+        },
+        {
+          "module_id": "0.3",
+          "module_codename": "Protocolo DB — La Base de Datos Tiene Memoria",
+          "module_title": "Qué significa que la base de datos esté bloqueada (y por qué las migraciones dan miedo)",
+          "level_range": { "start": 11, "end": 15 },
+          "core_question": "¿Por qué 'agregar una columna a la tabla' puede necesitar una ventana de mantenimiento de 4 horas?",
+          "concept_cluster": [
+            "database_locks_and_blocking",
+            "migration_risk_and_rollback",
+            "data_consistency_tradeoffs",
+            "query_performance_for_pms",
+            "backup_and_recovery_concepts"
+          ],
+          "primary_challenge_types": [
+            "risk_assessment",
+            "go_nogo_decision",
+            "technical_translation"
+          ],
+          "tpm_skill_unlocked": "Puede evaluar si una migración de base de datos es 'segura' de hacer en horario de negocio — y cuándo exigir una ventana nocturna.",
+          "mini_boss": null,
+          "prerequisite_module": "0.2"
+        },
+        {
+          "module_id": "0.4",
+          "module_codename": "Protocolo DEUDA — El Fantasma que Cobra Intereses",
+          "module_title": "El costo real de la Deuda Técnica (y cómo comunicarlo al board sin que lo ignoren)",
+          "level_range": { "start": 16, "end": 20 },
+          "core_question": "¿Cómo convences al CEO de invertir un trimestre en algo que 'no agrega features'?",
+          "concept_cluster": [
+            "technical_debt_taxonomy",
+            "debt_compounding_effect",
+            "velocity_degradation_measurement",
+            "refactor_vs_rewrite_decision",
+            "communicating_debt_to_non_technical_stakeholders"
+          ],
+          "primary_challenge_types": [
+            "budget_defense",
+            "stakeholder_brief",
+            "prioritization_matrix"
+          ],
+          "tpm_skill_unlocked": "Puede construir un caso de negocio para un quarter de reducción de deuda técnica con métricas que el CFO entiende.",
+          "mini_boss": {
+            "level": 20,
+            "scenario": "El CEO te pregunta por qué el equipo quiere un mes sin features. Tienes 3 minutos en un pasillo.",
+            "win_condition": "Explica la deuda técnica con un número de costo y un número de riesgo. Sin jargon."
+          },
+          "prerequisite_module": "0.3"
+        },
+        {
+          "module_id": "0.5",
+          "module_codename": "Protocolo ESTIMACIÓN — El Arte de No Mentir",
+          "module_title": "Por qué los devs siempre se equivocan en las estimaciones (y por qué tú también)",
+          "level_range": { "start": 21, "end": 25 },
+          "core_question": "¿Cuándo la estimación del dev es realista, cuándo es optimista y cuándo es una señal de alerta?",
+          "concept_cluster": [
+            "planning_fallacy_and_cognitive_bias",
+            "story_points_vs_time",
+            "cone_of_uncertainty",
+            "task_dependency_and_hidden_work",
+            "buffer_frameworks"
+          ],
+          "primary_challenge_types": [
+            "estimation_exercise",
+            "risk_assessment",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede presentar un timeline con rangos de confianza explícitos — y defender por qué los rangos son más honestos que una fecha puntual.",
+          "mini_boss": null,
+          "prerequisite_module": "0.4"
+        },
+        {
+          "module_id": "0.6",
+          "module_codename": "Protocolo DEPLOY — El Bautismo del Entorno",
+          "module_title": "Dev → Staging → Producción: qué puede fallar en cada paso (y por qué los deploys del viernes están prohibidos)",
+          "level_range": { "start": 26, "end": 29 },
+          "core_question": "¿Por qué 'ya está listo en mi máquina' no es suficiente para lanzar?",
+          "concept_cluster": [
+            "environment_parity_and_drift",
+            "deployment_risk_windows",
+            "rollback_strategy_basics",
+            "feature_flag_introduction",
+            "the_cost_of_a_broken_build"
+          ],
+          "primary_challenge_types": [
+            "go_nogo_decision",
+            "risk_assessment",
+            "incident_simulation"
+          ],
+          "tpm_skill_unlocked": "Puede establecer una política de deployment windows para su equipo con criterios explícitos de go/no-go.",
+          "mini_boss": null,
+          "prerequisite_module": "0.5"
+        }
+      ],
+      "phase_boss": {
+        "level": 30,
+        "boss_codename": "EL SPRINT INFERNAL",
+        "boss_subtitle": "Todo lo que puede salir mal, saldrá mal. A la vez.",
+        "scenario": "Heredas un sprint a mitad de ejecución. El backend dev dice que la API externa que prometieron 'ya estaba hecha' resulta que no existe. El dev de frontend está bloqueado esperando esa API desde hace 3 días. La migración de BD del sprint anterior está causando errores intermitentes del 2% en producción que nadie priorizó. El Product Owner quiere demo el viernes. El stakeholder externo ya confirmó su asistencia a la demo. Tienes 4 días.",
+        "antagonist_persona": "DAKI actúa como equipo distribuido: 3 personas con problemas, bloqueos y prioridades contradictorias. Cada mensaje es una respuesta diferente del equipo.",
+        "antagonist_opening": "Dev Backend: 'La API externa que pusimos en el planning... resulta que tienen documentación pero los endpoints no están disponibles en su sandbox aún. Dijeron que 'en breve'. El frontend está esperando eso desde el martes.' / Dev Frontend: 'Llevo 3 días en blocked. Podría hacer otra cosa pero no hay tickets refinados.' / Dev Ops: 'Oye, los errores del 2% de anoche los revisé — hay una query lenta por la migración. Puedo parcharlo en 2h pero necesito aprobación para deployar hotfix.'",
+        "available_tactics": [
+          "Conflictos de prioridad entre arreglar prod y avanzar sprint",
+          "Scope creep del Product Owner en la demo",
+          "Falta de información del tercero externo (API externa)",
+          "El stakeholder externo no acepta retrasos fácilmente",
+          "El dev bloqueado quiere trabajar pero no hay tickets listos"
+        ],
+        "win_condition": "El Operador: (1) prioriza el hotfix de producción correctamente, (2) replantea el alcance de la demo con honestidad, (3) desbloquea al frontend con una solución alternativa (mock/stub), (4) comunica el estado al stakeholder externo sin prometer lo que no puede cumplir.",
+        "fail_conditions": [
+          "Ignorar el error del 2% en producción para no interrumpir el sprint",
+          "Comprometer la demo completa cuando el bloqueo no se puede resolver en 4 días",
+          "No comunicar el riesgo al stakeholder antes de que sea demasiado tarde",
+          "Resolver el bloqueo del frontend asignando al backend a hacer el mock (crea más deuda)"
+        ],
+        "evaluation_dimensions": [
+          "crisis_prioritization",
+          "honest_stakeholder_communication",
+          "creative_unblocking",
+          "risk_escalation_timing",
+          "team_morale_preservation"
+        ],
+        "phase_reward": {
+          "badge": "EMPATÍA TÉCNICA",
+          "badge_description": "Este Operador puede participar en conversaciones técnicas sin perderse, detecta estimaciones irreales, y sabe qué preguntas hacen a los ingenieros querer trabajar con él.",
+          "unlocks_phase": 1,
+          "xp_reward": 800
+        }
+      },
+      "phase_xp_budget": 3800
+    },
+
+    {
+      "phase_id": 1,
+      "phase_codename": "FASE 1 — The Tech Backbone",
+      "phase_title": "La Columna Vertebral Técnica",
+      "level_range": { "start": 31, "end": 60 },
+      "level_count": 30,
+      "target_operator": "Gerentes que ya superaron el Desafío 00 y tienen empatía técnica básica. Necesitan profundidad: entender arquitecturas, leer un PR sin ejecutarlo, y construir roadmaps técnicos creíbles.",
+      "phase_objective": "Convertir al Operador en un traductor técnico de alto nivel. No necesita saber programar — necesita saber qué preguntas arquitectónicas hacen que un roadmap sea realista vs. un castillo en el aire.",
+      "core_transformation": "De 'me fío de lo que dice el CTO' a 'puedo evaluar si una decisión técnica tiene sentido para los objetivos del negocio'.",
+      "modules": [
+        {
+          "module_id": "1.1",
+          "module_codename": "Módulo ARQUITECTURA — Monolito vs. El Cosmos Distribuido",
+          "module_title": "Microservicios vs. Monolito: cuándo cada uno es la decisión correcta (y el costo oculto de cada elección)",
+          "level_range": { "start": 31, "end": 35 },
+          "core_question": "¿Cuándo 'nos vamos a microservicios' es la decisión correcta y cuándo es la solución equivocada al problema equivocado?",
+          "concept_cluster": [
+            "monolith_characteristics_and_tradeoffs",
+            "microservices_distributed_systems_tax",
+            "service_boundaries_and_team_structure_conway_law",
+            "when_to_split_when_to_stay",
+            "architecture_as_business_decision"
+          ],
+          "primary_challenge_types": [
+            "architecture_review",
+            "technical_translation",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede evaluar una propuesta de migración a microservicios y hacer las 5 preguntas que ningún arquitecto quiere responder.",
+          "mini_boss": null,
+          "prerequisite_module": "0.6"
+        },
+        {
+          "module_id": "1.2",
+          "module_codename": "Módulo CODE REVIEW — Leer Sin Ejecutar",
+          "module_title": "Code Review desde el asiento del TPM: qué buscar, qué preguntar, cuándo bloquear",
+          "level_range": { "start": 36, "end": 40 },
+          "core_question": "¿Cómo evalúa un TPM si un Pull Request está listo para mergearse sin entender cada línea del código?",
+          "concept_cluster": [
+            "pr_anatomy_for_non_devs",
+            "what_good_pr_descriptions_contain",
+            "velocity_vs_quality_tension",
+            "review_bottlenecks_and_solutions",
+            "merge_risk_indicators"
+          ],
+          "primary_challenge_types": [
+            "communication_audit",
+            "risk_assessment",
+            "go_nogo_decision"
+          ],
+          "tpm_skill_unlocked": "Puede definir la política de code review del equipo con criterios de SLA, tamaño de PR y cobertura mínima — sin microgestionar el contenido técnico.",
+          "mini_boss": null,
+          "prerequisite_module": "1.1"
+        },
+        {
+          "module_id": "1.3",
+          "module_codename": "Módulo ESTIMACIÓN AVANZADA — La Ciencia de los Rangos",
+          "module_title": "Estimación técnica de alto nivel: T-shirt sizing, Cone of Uncertainty y por qué las fechas únicas son mentiras con fecha de expiración",
+          "level_range": { "start": 41, "end": 45 },
+          "core_question": "¿Cómo construyes un roadmap de 90 días que sea creíble para el negocio y honesto con el equipo?",
+          "concept_cluster": [
+            "t_shirt_sizing_with_technical_anchors",
+            "cone_of_uncertainty_communication",
+            "dependency_mapping_before_estimating",
+            "risk_adjusted_timelines",
+            "how_to_pressure_test_an_estimate"
+          ],
+          "primary_challenge_types": [
+            "estimation_exercise",
+            "stakeholder_brief",
+            "prioritization_matrix"
+          ],
+          "tpm_skill_unlocked": "Puede construir y presentar un roadmap de 90 días con rangos de confianza explícitos y criterios de revisión en hitos.",
+          "mini_boss": {
+            "level": 45,
+            "scenario": "El VP de Producto necesita una fecha de lanzamiento para el próximo quarter. El equipo tiene 4 dependencias externas y una migración pendiente. Tienes 1 semana para entregar el plan.",
+            "win_condition": "Entrega un plan con rangos, dependencias explícitas y 3 escenarios (optimista/base/pesimista) que el VP pueda usar para tomar decisiones."
+          },
+          "prerequisite_module": "1.2"
+        },
+        {
+          "module_id": "1.4",
+          "module_codename": "Módulo DICCIONARIO — El Vocabulario del Arquitecto",
+          "module_title": "Caching, load balancers, queues, CDN, sync vs. async: los conceptos que aparecen en todas las conversaciones técnicas importantes",
+          "level_range": { "start": 46, "end": 50 },
+          "core_question": "¿Qué significa cuando el CTO dice 'necesitamos una cola' y por qué eso cambia el timeline en 3 semanas?",
+          "concept_cluster": [
+            "caching_strategies_and_invalidation_problem",
+            "message_queues_and_async_processing",
+            "load_balancing_and_horizontal_scaling",
+            "CDN_and_static_vs_dynamic_content",
+            "sync_vs_async_impact_on_feature_timelines"
+          ],
+          "primary_challenge_types": [
+            "technical_translation",
+            "architecture_review",
+            "estimation_exercise"
+          ],
+          "tpm_skill_unlocked": "Puede participar en decisiones arquitectónicas y hacer las preguntas correctas sobre impacto en complejidad, costo y tiempo.",
+          "mini_boss": null,
+          "prerequisite_module": "1.3"
+        },
+        {
+          "module_id": "1.5",
+          "module_codename": "Módulo DOCUMENTACIÓN — Armamento Institucional",
+          "module_title": "ADRs, runbooks y post-mortems: por qué la documentación técnica es responsabilidad del TPM (no solo del dev)",
+          "level_range": { "start": 51, "end": 55 },
+          "core_question": "¿Por qué el equipo lleva 6 meses y nadie sabe por qué se tomó la decisión de arquitectura original?",
+          "concept_cluster": [
+            "architecture_decision_records_ADR",
+            "runbook_structure_and_ownership",
+            "post_mortem_facilitation_principles",
+            "documentation_as_velocity_enabler",
+            "knowledge_bus_factor_risk"
+          ],
+          "primary_challenge_types": [
+            "post_mortem_facilitation",
+            "communication_audit",
+            "technical_translation"
+          ],
+          "tpm_skill_unlocked": "Puede establecer y mantener un sistema mínimo de documentación técnica que sobrevive la rotación de personal.",
+          "mini_boss": null,
+          "prerequisite_module": "1.4"
+        },
+        {
+          "module_id": "1.6",
+          "module_codename": "Módulo SEGURIDAD — El Campo Minado",
+          "module_title": "OWASP, GDPR y compliance para PMs: lo que puede llevar a la empresa a juicio y por qué el TPM es el último filtro",
+          "level_range": { "start": 56, "end": 59 },
+          "core_question": "¿Cuándo debes bloquear un lanzamiento por razones de seguridad incluso cuando el negocio tiene presión para lanzar?",
+          "concept_cluster": [
+            "owasp_top10_for_product_decisions",
+            "gdpr_and_data_privacy_in_feature_planning",
+            "security_review_checklist_for_tpms",
+            "the_cost_of_a_data_breach",
+            "compliance_as_launch_blocker"
+          ],
+          "primary_challenge_types": [
+            "go_nogo_decision",
+            "risk_assessment",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede identificar los 5 flags de seguridad que justifican retrasar un lanzamiento y construir el argumento para el CEO.",
+          "mini_boss": null,
+          "prerequisite_module": "1.5"
+        }
+      ],
+      "phase_boss": {
+        "level": 60,
+        "boss_codename": "LA AUDITORÍA DEL CTO",
+        "boss_subtitle": "El que sabe todo lo que no sabes. Y tiene la sala.",
+        "scenario": "El nuevo CTO lleva 60 días en la empresa y convoca a todos los TPMs a una sesión de 'alineación técnica'. En realidad, es una auditoría. Quiere entender las decisiones arquitectónicas de los últimos 2 años, por qué el roadmap actual tiene las dependencias que tiene, y por qué ciertos proyectos están retrasados. Tiene la costumbre de hacer preguntas técnicas en medio de las respuestas gerenciales para ver quién realmente entiende lo que gestiona. Tú eres el primero en entrar.",
+        "antagonist_persona": "CTO nuevo, 20 años de experiencia técnica, implacable con la imprecisión. No hostil — peor: es preciso. Cada pregunta técnica es una trampa solo para quien no entiende realmente su área.",
+        "antagonist_opening": "Empecemos simple: ¿Por qué el módulo de pagos es un servicio separado y no está en el core del monolito? ¿Quién tomó esa decisión, cuándo, y hay documentación de por qué?",
+        "available_tactics": [
+          "Preguntas técnicas de segundo nivel sobre decisiones que el Operador no tomó",
+          "Solicitud de métricas que el Operador no tiene preparadas",
+          "Señalar inconsistencias entre el roadmap y la capacidad técnica del equipo",
+          "Preguntar por el bus factor del equipo (qué pasa si alguien se va)",
+          "Desafiar una estimación del roadmap con complejidad técnica real"
+        ],
+        "win_condition": "El Operador: (1) responde con honestidad cuando no sabe — y tiene un plan para averiguarlo, (2) defiende las decisiones que conoce con contexto de negocio real, (3) identifica al menos 2 riesgos técnicos del roadmap antes de que el CTO los señale, (4) sale con un plan de acción acordado.",
+        "fail_conditions": [
+          "Inventar respuestas técnicas cuando no las sabe",
+          "No tener documentación de ninguna decisión arquitectónica importante",
+          "No poder articular por qué el roadmap actual es el correcto dado el estado técnico",
+          "Prometer soluciones sin entender la complejidad técnica que implican"
+        ],
+        "evaluation_dimensions": [
+          "technical_honesty",
+          "architecture_context_awareness",
+          "risk_identification",
+          "business_technical_alignment",
+          "documentation_culture"
+        ],
+        "phase_reward": {
+          "badge": "ARQUITECTO DE CONTEXTO",
+          "badge_description": "Este Operador puede evaluar decisiones técnicas a nivel de roadmap, traducirlas al lenguaje del negocio, y defender o cuestionar propuestas técnicas con criterios de impacto real.",
+          "unlocks_phase": 2,
+          "xp_reward": 1200
+        }
+      },
+      "phase_xp_budget": 5700
+    },
+
+    {
+      "phase_id": 2,
+      "phase_codename": "FASE 2 — Ejecución Ágil y Gestión de Crisis",
+      "phase_title": "El Arte del Control en el Caos",
+      "level_range": { "start": 61, "end": 90 },
+      "level_count": 30,
+      "target_operator": "TPMs que tienen la base técnica. Ahora necesitan saber operar cuando las cosas fallan — y siempre fallan. Esta fase es la diferencia entre un PM que gestiona cuando todo va bien y un líder técnico que estabiliza cuando todo se rompe.",
+      "phase_objective": "Dominar la ejecución operacional: CI/CD como herramienta de velocidad, gestión de dependencias entre equipos, respuesta a incidentes, y la decisión más difícil del PM técnico: lanzar o no lanzar.",
+      "core_transformation": "De 'reacciono a los problemas' a 'diseño sistemas que reducen la frecuencia e impacto de los problemas, y tengo protocolos para los que no puedo evitar'.",
+      "modules": [
+        {
+          "module_id": "2.1",
+          "module_codename": "Operación CI/CD — La Línea de Suministro del Código",
+          "module_title": "CI/CD para TPMs: cómo el pipeline de deployment es la palanca de velocidad más importante del equipo",
+          "level_range": { "start": 61, "end": 65 },
+          "core_question": "¿Cómo identifica un TPM los cuellos de botella en el pipeline que están matando la velocidad del equipo?",
+          "concept_cluster": [
+            "cicd_pipeline_anatomy",
+            "build_time_as_velocity_metric",
+            "test_coverage_decisions_and_tradeoffs",
+            "feature_flags_decouple_deploy_from_release",
+            "pipeline_bottleneck_identification"
+          ],
+          "primary_challenge_types": [
+            "architecture_review",
+            "prioritization_matrix",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede auditar un pipeline de CI/CD e identificar los 3 cambios con mayor impacto en velocidad de entrega.",
+          "mini_boss": null,
+          "prerequisite_module": "1.6"
+        },
+        {
+          "module_id": "2.2",
+          "module_codename": "Operación DEPENDENCIAS — El Mapa de Bloqueos",
+          "module_title": "Gestión de dependencias entre equipos: por qué el equipo B siempre espera al equipo A y cómo romper el ciclo",
+          "level_range": { "start": 66, "end": 70 },
+          "core_question": "¿Cómo negocias prioridades entre equipos sin autoridad directa sobre ninguno de ellos?",
+          "concept_cluster": [
+            "dependency_matrix_construction",
+            "api_contracts_between_teams",
+            "platform_team_tax",
+            "critical_path_identification",
+            "cross_team_priority_negotiation"
+          ],
+          "primary_challenge_types": [
+            "dependency_mapping",
+            "stakeholder_brief",
+            "prioritization_matrix"
+          ],
+          "tpm_skill_unlocked": "Puede construir un mapa de dependencias de un entregable multi-equipo e identificar el camino crítico y los riesgos de bloqueo antes de que ocurran.",
+          "mini_boss": {
+            "level": 70,
+            "scenario": "Tu equipo está bloqueado esperando una API del equipo de Plataforma. El equipo de Plataforma tiene 3 proyectos de mayor prioridad según su VP. Tu lanzamiento es en 3 semanas.",
+            "win_condition": "Desbloquea al equipo sin escalar al CEO y sin comprometer el timeline del equipo de Plataforma."
+          },
+          "prerequisite_module": "2.1"
+        },
+        {
+          "module_id": "2.3",
+          "module_codename": "Operación OBSERVABILITY — Ver Dentro de la Caja Negra",
+          "module_title": "Logs, métricas, trazas y SLOs: cómo un TPM lee la salud del sistema sin ser SRE",
+          "level_range": { "start": 71, "end": 75 },
+          "core_question": "¿Cuándo un 2% de errores en producción es una emergencia y cuándo es ruido aceptable?",
+          "concept_cluster": [
+            "logs_metrics_traces_for_pms",
+            "slo_sla_error_budget_definition",
+            "on_call_culture_and_human_cost",
+            "alerting_thresholds_decision",
+            "when_to_declare_an_incident"
+          ],
+          "primary_challenge_types": [
+            "incident_simulation",
+            "risk_assessment",
+            "go_nogo_decision"
+          ],
+          "tpm_skill_unlocked": "Puede definir los SLOs del equipo y establecer los criterios de declaración de incidente — incluyendo a quién llamar a las 3am y por qué.",
+          "mini_boss": null,
+          "prerequisite_module": "2.2"
+        },
+        {
+          "module_id": "2.4",
+          "module_codename": "Operación INCIDENTES — El Teatro de Guerra",
+          "module_title": "Gestión de incidentes de producción: el rol del TPM desde la detección hasta el post-mortem",
+          "level_range": { "start": 76, "end": 80 },
+          "core_question": "¿Cuál es exactamente el rol del TPM durante un P0 — y cuándo debe quedarse callado?",
+          "concept_cluster": [
+            "incident_lifecycle_detection_to_retrospective",
+            "war_room_communication_protocols",
+            "tpm_role_vs_tl_role_during_incident",
+            "stakeholder_updates_under_pressure",
+            "blameless_postmortem_facilitation"
+          ],
+          "primary_challenge_types": [
+            "incident_simulation",
+            "stakeholder_brief",
+            "post_mortem_facilitation"
+          ],
+          "tpm_skill_unlocked": "Puede liderar la respuesta a un incidente P1/P0: mantener el canal de comunicación limpio, proteger al equipo técnico del ruido externo, y facilitar el post-mortem sin asignar culpa.",
+          "mini_boss": null,
+          "prerequisite_module": "2.3"
+        },
+        {
+          "module_id": "2.5",
+          "module_codename": "Operación RIESGO — La Decisión Imposible",
+          "module_title": "Go/No-Go: los criterios de lanzamiento que ningún PM quiere ser el primero en definir",
+          "level_range": { "start": 81, "end": 85 },
+          "core_question": "¿Cómo tomas la decisión de no lanzar cuando el CEO está esperando el release y el equipo lleva 6 meses?",
+          "concept_cluster": [
+            "go_nogo_criteria_framework",
+            "canary_and_percentage_rollout_strategies",
+            "rollback_vs_hotfix_decision_tree",
+            "risk_communication_to_business_stakeholders",
+            "launch_retrospective_triggers"
+          ],
+          "primary_challenge_types": [
+            "go_nogo_decision",
+            "stakeholder_brief",
+            "risk_assessment"
+          ],
+          "tpm_skill_unlocked": "Puede construir y defender un framework de Go/No-Go para su equipo que sea transparente para el negocio y respetado por ingeniería.",
+          "mini_boss": {
+            "level": 85,
+            "scenario": "Lanzamiento en 2 horas. Un dev encuentra un bug que afecta al 3% de los usuarios en un flujo no crítico. El CEO está en la sala de prensa. ¿Lanzas?",
+            "win_condition": "Toma la decisión con criterios explícitos y la comunica en 2 minutos a todas las partes correctas."
+          },
+          "prerequisite_module": "2.4"
+        },
+        {
+          "module_id": "2.6",
+          "module_codename": "Operación DORA — La Salud del Equipo Técnico",
+          "module_title": "DORA metrics, cycle time y señales de burnout: cómo el TPM es el primer sensor de la salud de ingeniería",
+          "level_range": { "start": 86, "end": 89 },
+          "core_question": "¿Cómo detectas que tu equipo está al borde del burnout antes de que empiece a renunciar?",
+          "concept_cluster": [
+            "dora_metrics_for_managers",
+            "cycle_time_lead_time_deployment_frequency",
+            "burnout_early_signals_in_technical_teams",
+            "technical_morale_and_pm_contribution",
+            "sustainable_pace_negotiation"
+          ],
+          "primary_challenge_types": [
+            "communication_audit",
+            "stakeholder_brief",
+            "prioritization_matrix"
+          ],
+          "tpm_skill_unlocked": "Puede presentar el estado de salud de ingeniería del equipo al C-Level con métricas reales y una propuesta de mejora sostenible.",
+          "mini_boss": null,
+          "prerequisite_module": "2.5"
+        }
+      ],
+      "phase_boss": {
+        "level": 90,
+        "boss_codename": "VIERNES NEGRO — CAÍDA EN PRODUCCIÓN",
+        "boss_subtitle": "Viernes. 4:47pm. El servicio de pagos está down. El CEO tiene un board call en 13 minutos.",
+        "scenario": "El monitor alerta: el servicio de pagos tiene una tasa de error del 78% desde hace 11 minutos. Revenue en caída libre. El on-call principal no responde — está volando. El segundo on-call está en una demo con un cliente enterprise. El dev que escribió el módulo afectado dejó la empresa el mes pasado. El último deploy fue hace 6 horas. El CEO entra en Slack: '¿Qué está pasando?'",
+        "antagonist_persona": "DAKI actúa como entorno multi-actor: CEO exigiendo actualizaciones, ingenieros diagnosticando bajo presión, cliente enterprise amenazando con escalar, y stakeholders internos entrando en pánico.",
+        "antagonist_opening": "CEO en Slack: '¿Qué está pasando con pagos? Tengo 3 clientes enterprise que me están llamando al personal.' / Dev on-call (segundo): 'Acabo de entrar — estoy mirando los logs pero el módulo tiene dependencias que no conozco bien. Dame 20 min.' / COO: 'Necesito un ETA para comunicarle a los clientes afectados. ¿Cuándo está resuelto?'",
+        "available_tactics": [
+          "Presión paralela de múltiples stakeholders con demandas contradictorias (CEO quiere ETA, CTO quiere silencio para diagnóstico)",
+          "Información incompleta — los logs apuntan a 3 posibles causas",
+          "El rollback es arriesgado porque la migración de BD no es reversible fácilmente",
+          "Cliente enterprise considera SLA breach y penalidad contractual",
+          "El dev más capacitado para resolver está en pleno vuelo"
+        ],
+        "win_condition": "El Operador: (1) protege al equipo técnico del ruido externo durante los primeros 20 minutos de diagnóstico, (2) entrega actualizaciones calibradas (no 'ya casi', no silencio), (3) toma la decisión de rollback o hotfix con criterios explícitos, (4) coordina la comunicación de cliente en paralelo sin comprometer el esfuerzo técnico, (5) tiene el post-mortem agendado antes de las 24h.",
+        "fail_conditions": [
+          "Dar un ETA de resolución sin base técnica para sostenerlo",
+          "Interrumpir al equipo técnico con actualizaciones de status cada 5 minutos durante el diagnóstico",
+          "Silencio total al CEO por más de 15 minutos sin actualización",
+          "No documentar el timeline del incidente en tiempo real",
+          "Prometer compensación a clientes sin autorización del COO/Legal"
+        ],
+        "evaluation_dimensions": [
+          "stakeholder_communication_under_pressure",
+          "team_protection_during_crisis",
+          "decision_quality_with_incomplete_information",
+          "rollback_escalation_judgment",
+          "post_incident_process_activation"
+        ],
+        "phase_reward": {
+          "badge": "COMANDANTE DE CRISIS",
+          "badge_description": "Este Operador puede liderar bajo presión de producción real, contener el daño comunicacional mientras el equipo técnico trabaja, y construir el aprendizaje institucional del incidente.",
+          "unlocks_phase": 3,
+          "xp_reward": 1500
+        }
+      },
+      "phase_xp_budget": 7500
+    },
+
+    {
+      "phase_id": 3,
+      "phase_codename": "FASE 3 — Comando Supremo",
+      "phase_title": "El Nivel de Decisión Estratégica",
+      "level_range": { "start": 91, "end": 100 },
+      "level_count": 10,
+      "expansion_levels": "L101-L110+ — Misiones de Élite (escenarios enterprise reales, desbloqueables post-certificación)",
+      "target_operator": "TPMs senior con los tres badges anteriores. Esta fase no enseña habilidades nuevas — integra todo lo anterior en el dominio donde las decisiones técnicas determinan la dirección de la empresa.",
+      "phase_objective": "Operar a nivel de C-Suite: gestionar presupuestos de nube, presentar inversiones técnicas ante el board, y alinear la estrategia de ingeniería con los objetivos corporativos. El TPM como voz técnica en la sala de liderazgo.",
+      "core_transformation": "De 'ejecuto la estrategia' a 'co-creo la estrategia con el equipo de liderazgo'.",
+      "modules": [
+        {
+          "module_id": "3.1",
+          "module_codename": "Comando CLOUD — El Presupuesto de la Nube",
+          "module_title": "AWS/Azure cost anatomy, FinOps básico y cuándo el crecimiento duele más que el estancamiento",
+          "level_range": { "start": 91, "end": 94 },
+          "core_question": "¿Cómo explicas al CFO por qué la factura de AWS creció un 40% este quarter cuando el revenue solo creció un 15%?",
+          "concept_cluster": [
+            "cloud_cost_anatomy_compute_storage_egress",
+            "finops_basics_ownership_and_accountability",
+            "cost_of_scaling_when_growth_hurts",
+            "build_vs_buy_vs_saas_decision_framework",
+            "cloud_budget_forecasting_for_pms"
+          ],
+          "primary_challenge_types": [
+            "budget_defense",
+            "technical_translation",
+            "stakeholder_brief"
+          ],
+          "tpm_skill_unlocked": "Puede presentar un análisis de costos de nube al CFO con propuestas de optimización priorizadas por impacto vs. esfuerzo.",
+          "mini_boss": null,
+          "prerequisite_module": "2.6"
+        },
+        {
+          "module_id": "3.2",
+          "module_codename": "Comando ESCALA — Gobernar el Crecimiento",
+          "module_title": "Escalabilidad como decisión de negocio: el 10x problem, capacity planning y por qué el éxito puede matar un sistema",
+          "level_range": { "start": 95, "end": 97 },
+          "core_question": "¿Qué pasa técnica y económicamente cuando tu producto pasa de 10,000 a 100,000 usuarios en 3 meses?",
+          "concept_cluster": [
+            "scalability_as_business_decision",
+            "10x_problem_what_breaks_at_scale",
+            "technical_capacity_planning",
+            "scaling_cost_curve",
+            "premature_optimization_vs_necessary_foundation"
+          ],
+          "primary_challenge_types": [
+            "architecture_review",
+            "risk_assessment",
+            "budget_defense"
+          ],
+          "tpm_skill_unlocked": "Puede construir un plan de capacidad técnica alineado con los escenarios de crecimiento del negocio para los próximos 12 meses.",
+          "mini_boss": {
+            "level": 97,
+            "scenario": "El equipo de marketing anuncia una campaña que podría traer 5x el tráfico normal en una semana. El equipo de ingeniería dice que el sistema soporta máximo 2x sin modificaciones. Tienes 6 días.",
+            "win_condition": "Diseña el plan de mitigación, comunica el riesgo a marketing y negocia el alcance de la campaña sin cancelarla."
+          },
+          "prerequisite_module": "3.1"
+        },
+        {
+          "module_id": "3.3",
+          "module_codename": "Comando C-LEVEL — El Idioma del Liderazgo",
+          "module_title": "OKRs técnicos, engineering como profit center y cómo presentar la inversión tecnológica al board",
+          "level_range": { "start": 98, "end": 99 },
+          "core_question": "¿Cómo conviertes la hoja de ruta técnica en un argumento estratégico que el CEO y el board pueden aprobar con convicción?",
+          "concept_cluster": [
+            "technical_okrs_alignment",
+            "engineering_as_profit_center_vs_cost_center",
+            "presenting_tech_investment_to_board",
+            "cto_cpo_ceo_triangle_navigation",
+            "technology_as_competitive_moat"
+          ],
+          "primary_challenge_types": [
+            "budget_defense",
+            "stakeholder_brief",
+            "technical_translation"
+          ],
+          "tpm_skill_unlocked": "Puede preparar y presentar el plan anual de inversión tecnológica al board, incluyendo justificación de headcount, tooling y arquitectura.",
+          "mini_boss": null,
+          "prerequisite_module": "3.2"
+        }
+      ],
+      "phase_boss": {
+        "level": 100,
+        "boss_codename": "EL CONSEJO DE GUERRA",
+        "boss_subtitle": "El CEO. El CFO. El CTO. Una sala. Una sola decisión.",
+        "scenario": "Es Q4. Tienes 20 minutos en el board trimestral para presentar el plan tecnológico del próximo año. El CFO quiere recortar el presupuesto de ingeniería un 20% — la empresa necesita reducir el burn rate. El CTO quiere aprobar una reescritura del sistema core que llevará 8 meses y bloqueará features nuevos. El CEO quiere 3 features nuevos en Q1 para un deal enterprise que podría ser el mayor de la historia de la empresa. Los tres están en la misma sala. Y tus 20 minutos ya empezaron.",
+        "antagonist_persona": "DAKI actúa como los tres executives en simultáneo, cada uno con agenda propia, interrupciones y preguntas de segundo nivel.",
+        "antagonist_opening": "CEO: 'Antes de empezar — el deal con Acme Corp depende de que tengamos el módulo de reportes avanzados en Q1. ¿Está en el plan?' / CFO: 'También quiero saber cómo vamos a compensar el crecimiento del 43% en la factura de AWS sin aumentar el budget de tech.' / CTO: 'Y necesito que aprueben el proyecto de modernización del core. Si no lo hacemos ahora, en 18 meses la deuda técnica va a bloquear todo.'",
+        "available_tactics": [
+          "El CFO bloquea cualquier incremento de presupuesto con datos de burn rate",
+          "El CEO prioriza el deal de corto plazo sobre la salud técnica de largo plazo",
+          "El CTO amenaza con renunciar si no se aprueba la modernización",
+          "Las tres agendas son incompatibles si se ejecutan en paralelo",
+          "Cualquier promesa al CEO sobre Q1 hace inviable la modernización del CTO"
+        ],
+        "win_condition": "El Operador construye una propuesta que: (1) identifica el camino crítico real (el deal de Acme), (2) propone un plan de deuda técnica que no bloquea Q1, (3) presenta una hoja de optimización de cloud que da margen al CFO sin recortar headcount, (4) sale con los tres executives alineados en UN próximo paso concreto.",
+        "fail_conditions": [
+          "Prometer el módulo de Q1 + la modernización sin mostrar el costo de hacerlos en paralelo",
+          "Ceder al recorte del CFO sin modelar el impacto en velocity",
+          "No tener datos de cloud cost listos cuando el CFO los pide",
+          "No proponer la priorización explícita — dejar que los tres executives decidan solos"
+        ],
+        "evaluation_dimensions": [
+          "strategic_prioritization_under_constraint",
+          "multi_stakeholder_alignment",
+          "financial_technical_fluency",
+          "honest_tradeoff_communication",
+          "executive_presence_and_conviction"
+        ],
+        "phase_reward": {
+          "badge": "COMANDO SUPREMO — TPM CERTIFICADO",
+          "badge_description": "Este Operador puede alinear ingeniería con C-Level, gestionar presupuestos cloud, defender inversiones técnicas ante el board, y navegar conflictos de prioridad entre executives sin perder la confianza de ninguno.",
+          "certification": "DAKI TPM Master Certificate — v1.0",
+          "unlocks": [
+            "elite_missions_expansion",
+            "tpm_to_vp_engineering_path",
+            "advanced_finops_codex"
+          ],
+          "xp_reward": 2500
+        }
+      },
+      "phase_xp_budget": 8000,
+      "expansion_module": {
+        "module_id": "3.EX",
+        "module_codename": "Misiones de Élite — El Teatro Real",
+        "module_title": "Escenarios enterprise reales: fusiones técnicas, due diligence de adquisición y gestión de equipos distribuidos globales",
+        "level_range": { "start": 101, "end": 110 },
+        "status": "PENDING_DESIGN — Directiva futura",
+        "concept_cluster": [
+          "technical_due_diligence_in_MA",
+          "distributed_global_team_management",
+          "engineering_org_design",
+          "technical_vendor_evaluation",
+          "board_level_technology_strategy"
+        ],
+        "note": "Estos niveles se diseñan bajo demanda con escenarios reales del Operador certificado."
+      }
+    }
+
+  ],
+
+  "skill_tree": {
+    "root_level": "TPM Aprendiz",
+    "progression": [
+      {
+        "phase": 0,
+        "badge_earned": "EMPATÍA TÉCNICA",
+        "capability": "Puede hablar con devs sin perder credibilidad, detectar estimaciones irreales y saber qué preguntas hacer — y cuáles destruyen la moral.",
+        "transforms_from": "Manager que pregunta '¿por qué tardáis tanto?'",
+        "transforms_to": "Manager que pregunta '¿qué necesitas para desbloquearte?'"
+      },
+      {
+        "phase": 1,
+        "badge_earned": "ARQUITECTO DE CONTEXTO",
+        "capability": "Puede evaluar decisiones técnicas a nivel de roadmap y traducirlas al lenguaje del negocio sin traicionar la complejidad real.",
+        "transforms_from": "Manager que ejecuta el plan del CTO",
+        "transforms_to": "Manager que co-diseña el plan con el CTO"
+      },
+      {
+        "phase": 2,
+        "badge_earned": "COMANDANTE DE CRISIS",
+        "capability": "Puede liderar bajo presión de producción real, contener el daño comunicacional mientras el equipo técnico trabaja, y convertir cada incidente en aprendizaje institucional.",
+        "transforms_from": "Manager que escala problemas hacia arriba",
+        "transforms_to": "Manager que absorbe el ruido externo y protege el foco técnico"
+      },
+      {
+        "phase": 3,
+        "badge_earned": "COMANDO SUPREMO — TPM CERTIFICADO",
+        "capability": "Puede alinear ingeniería con C-Level, gestionar presupuestos cloud, defender inversiones técnicas ante el board y navegar conflictos de prioridad ejecutivos.",
+        "transforms_from": "Manager que presenta lo que ingeniería le pide presentar",
+        "transforms_to": "Líder técnico que co-construye la estrategia de la empresa"
+      }
+    ]
+  },
+
+  "boss_summary": [
+    {
+      "level": 30,
+      "codename": "EL SPRINT INFERNAL",
+      "one_liner": "Todo el Bautismo de Código falla a la vez. En un sprint. Con demo el viernes.",
+      "core_skill_tested": "Triaje técnico + comunicación honesta bajo presión de entrega"
+    },
+    {
+      "level": 60,
+      "codename": "LA AUDITORÍA DEL CTO",
+      "one_liner": "El nuevo CTO sabe más técnico que tú y quiere saberlo. Demuestra que entiendes lo que gestionas.",
+      "core_skill_tested": "Honestidad técnica + defensa de roadmap con contexto de negocio"
+    },
+    {
+      "level": 90,
+      "codename": "VIERNES NEGRO",
+      "one_liner": "Pagos down. CEO en Slack. On-call en el avión. 4:47pm.",
+      "core_skill_tested": "Liderazgo de crisis + protección del equipo técnico + comunicación calibrada"
+    },
+    {
+      "level": 100,
+      "codename": "EL CONSEJO DE GUERRA",
+      "one_liner": "CEO + CFO + CTO en la misma sala con agendas incompatibles. Tienes 20 minutos.",
+      "core_skill_tested": "Alineación multi-ejecutivo + priorización estratégica bajo restricción"
+    }
+  ],
+
+  "metadata": {
+    "total_base_levels": 100,
+    "expansion_levels": "101-110+",
+    "total_modules": 21,
+    "boss_battles": 4,
+    "total_base_xp_budget": 25000,
+    "estimated_completion_hours": 35,
+    "challenge_types_used": 13,
+    "codex_certification": "DAKI TPM Master Certificate",
+    "directiva": "D016",
+    "status": "ARCHITECTURE COMPLETE — Lessons pending D017+",
+    "author": "DAKI EdTech — Directiva Táctica 016",
+    "created_by": "Claude Code — Prompt Engineering"
+  }
+}

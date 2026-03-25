@@ -147,7 +147,7 @@ export default function MissionsSection() {
 
           </div>
 
-          {/* TARJETA 3 — BLOQUEADA (QA Senior) */}
+          {/* TARJETA 3 — BLOQUEADA (Ciberseguridad) */}
           <div className="mission-locked p-7 flex flex-col gap-5 opacity-60">
 
             <div className="inline-flex items-center gap-2 self-start px-3 py-1 border border-[#FF0033]/20">
@@ -159,15 +159,15 @@ export default function MissionsSection() {
             <div>
               <p className="text-white/15 text-[10px] tracking-[0.4em] uppercase mb-1">Operación 03</p>
               <h3 className="text-white/50 text-sm font-bold tracking-[0.2em] uppercase leading-6">
-                Resiliencia<br />
-                <span className="text-white/35">QA Senior</span>
+                Agente de<br />
+                <span className="text-white/35">Ciberseguridad</span>
               </h3>
             </div>
 
             <div className="h-px bg-white/5" />
 
             <p className="text-[#888]/45 text-sm leading-6 tracking-wide flex-1">
-              Caos en producción. Blindaje de despliegues, testing avanzado y detección de fallos críticos a escala real.
+              Penetra sistemas antes de que otros lo hagan. Hacking ético, análisis de vulnerabilidades y hardening ofensivo — el perfil más codiciado del mercado tech.
             </p>
 
             <button

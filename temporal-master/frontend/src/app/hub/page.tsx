@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
 import HubAudio from '@/components/UI/HubAudio'
 import DakiChatTerminal from '@/components/Hub/DakiChatTerminal'
+import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
+import ArchivoFallasModal from '@/components/Hub/ArchivoFallasModal'
 import MobileGate from '@/components/UI/MobileGate'
+import AlphaAccessModal from '@/components/UI/AlphaAccessModal'
+import BossWarningBanner from '@/components/UI/BossWarningBanner'
+import IncursionSelector from '@/components/Hub/IncursionSelector'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -114,51 +119,54 @@ function AdriCore() {
 // ─── Botón táctico ─────────────────────────────────────────────────────────────
 
 function TacticButton({
-  onClick, label, sublabel, icon, primary = false,
+  onClick, label, sublabel, icon, primary = false, color = '#00FF41',
 }: {
   onClick: () => void
   label: string
   sublabel: string
   icon: string
   primary?: boolean
+  color?: string
 }) {
+  const hex = color
   return (
     <motion.button
       onClick={onClick}
       className="w-full text-left px-5 py-4 border font-mono transition-all duration-150 group relative overflow-hidden cursor-pointer z-10"
       style={primary
-        ? { borderColor: 'rgba(0,255,65,0.5)', background: 'rgba(0,255,65,0.06)' }
-        : { borderColor: 'rgba(0,255,65,0.2)', background: 'transparent' }
+        ? { borderColor: `${hex}80`, background: `${hex}10` }
+        : { borderColor: `${hex}33`, background: 'transparent' }
       }
       whileHover={{ x: 3 }}
       whileTap={{ scale: 0.98 }}
       onMouseEnter={e => {
         const el = e.currentTarget
-        el.style.background = 'rgba(0,255,65,0.12)'
-        el.style.borderColor = 'rgba(0,255,65,0.7)'
-        el.style.boxShadow = '0 0 20px rgba(0,255,65,0.15)'
+        el.style.background = `${hex}20`
+        el.style.borderColor = `${hex}b3`
+        el.style.boxShadow = `0 0 20px ${hex}26`
       }}
       onMouseLeave={e => {
         const el = e.currentTarget
-        el.style.background = primary ? 'rgba(0,255,65,0.06)' : 'transparent'
-        el.style.borderColor = primary ? 'rgba(0,255,65,0.5)' : 'rgba(0,255,65,0.2)'
+        el.style.background = primary ? `${hex}10` : 'transparent'
+        el.style.borderColor = primary ? `${hex}80` : `${hex}33`
         el.style.boxShadow = 'none'
       }}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-0.5 min-w-0">
           <span
-            className="text-sm font-black tracking-widest uppercase text-[#00FF41]"
-            style={primary ? { textShadow: '0 0 8px rgba(0,255,65,0.6)' } : undefined}
+            className="text-sm font-black tracking-widest uppercase"
+            style={{ color: hex, ...(primary ? { textShadow: `0 0 8px ${hex}99` } : {}) }}
           >
             {label}
           </span>
-          <span className="text-[10px] tracking-wider text-[#00FF41]/40 truncate">
+          <span className="text-[10px] tracking-wider truncate" style={{ color: `${hex}66` }}>
             {sublabel}
           </span>
         </div>
         <motion.span
-          className="text-xl shrink-0 text-[#00FF41]/60"
+          className="text-xl shrink-0"
+          style={{ color: `${hex}99` }}
           animate={{ x: [0, 5, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
         >
@@ -173,21 +181,83 @@ function TacticButton({
 
 export default function HubPage() {
   const router = useRouter()
-  const { userId, username, level, totalXp, streakDays, badges, clearUser } = useUserStore()
+  const {
+    userId, username, level, totalXp, streakDays, badges,
+    subscriptionStatus, isPaid, role,
+    clearUser, setSubscription, setIsPaid,
+  } = useUserStore()
 
   const handleLogout = () => {
     clearUser()
     document.cookie = 'enigma_user=; path=/; max-age=0; SameSite=Lax'
     router.push('/')
   }
-  const [isBitacoraOpen, setIsBitacoraOpen] = useState(false)
-  const [completedOrders, setCompletedOrders] = useState<number[]>([])
-  const [bgmFadeOut, setBgmFadeOut] = useState(false)
+  const [isBitacoraOpen,     setIsBitacoraOpen]     = useState(false)
+  const [completedOrders,    setCompletedOrders]    = useState<number[]>([])
+  const [bgmFadeOut,         setBgmFadeOut]         = useState(false)
+  const [showReenganche,     setShowReenganche]     = useState(false)
+  const [showAlphaModal,     setShowAlphaModal]     = useState(false)
+  const [dakiOpeningMessage, setDakiOpeningMessage] = useState('')
+  const [, setSessionId]                            = useState<string | null>(null)
+  const sessionOpenedRef                            = useRef(false)
+  const [checkoutLoading,   setCheckoutLoading]    = useState(false)
+  const [showRadar,          setShowRadar]          = useState(false)
+  const [showFallas,         setShowFallas]         = useState(false)
+
+  // ── XP progress hacia próximo nivel ────────────────────────────────────────
+  // Fórmula: level = floor(0.1 * sqrt(XP)) + 1  →  XP en nivel N = ((N-1)*10)²
+  const xpAtCurrentLevel = Math.pow((level - 1) * 10, 2)
+  const xpAtNextLevel    = Math.pow(level * 10, 2)
+  const xpProgress = xpAtNextLevel > xpAtCurrentLevel
+    ? Math.min((totalXp - xpAtCurrentLevel) / (xpAtNextLevel - xpAtCurrentLevel), 1)
+    : 1
+  const xpToNext = Math.max(0, xpAtNextLevel - totalXp)
 
   const navigateWithFade = (path: string) => {
     setBgmFadeOut(true)
     setTimeout(() => router.push(path), 580)
   }
+
+  // ── Reenganche — detecta inactividad > 24h ─────────────────────────────────
+  useEffect(() => {
+    const LAST_VISIT_KEY = 'daki_last_hub_visit'
+    const now = Date.now()
+    const last = parseInt(localStorage.getItem(LAST_VISIT_KEY) ?? '0', 10)
+    if (last && now - last > 24 * 60 * 60 * 1000) {
+      setTimeout(() => setShowReenganche(true), 1800)
+    }
+    localStorage.setItem(LAST_VISIT_KEY, String(now))
+  }, [])
+
+  // ── Apertura de sesión DAKI — opening message personalizado ───────────────
+  useEffect(() => {
+    if (!userId || sessionOpenedRef.current) return
+    sessionOpenedRef.current = true
+    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
+    if (!token) return
+    const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
+    fetch(`${API_BASE_LOCAL}/api/v1/session/open`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        operator_level: level,
+        streak_days:    streakDays,
+        callsign:       username,
+        hour:           new Date().getHours(),
+      }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { session_id: string; opening_message: string; weak_concept: string | null } | null) => {
+        if (data?.session_id) {
+          setSessionId(data.session_id)
+          if (data.opening_message) setDakiOpeningMessage(data.opening_message)
+        }
+      })
+      .catch(() => {})
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!userId) { router.replace('/'); return }
@@ -205,6 +275,39 @@ export default function HubPage() {
   }, [userId, router])
 
   const newArchiveCount = countNewArchives(completedOrders)
+
+  // ── Retorno desde Stripe Checkout exitoso ───────────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('checkout') === 'success') {
+      // Actualización optimista: el webhook de Stripe confirma async,
+      // pero Stripe solo genera este redirect tras pago confirmado.
+      setSubscription('ACTIVE', null)
+      setIsPaid(true)
+      window.history.replaceState({}, '', '/hub')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Redirección a Stripe Checkout ───────────────────────────────────────────
+  const handleStripeCheckout = async () => {
+    if (checkoutLoading) return
+    setCheckoutLoading(true)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
+    if (!token) { setCheckoutLoading(false); return }
+    const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
+    try {
+      const res = await fetch(`${API_BASE_LOCAL}/api/v1/payments/create-checkout-session`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('checkout_failed')
+      const data = await res.json() as { checkout_url: string }
+      window.location.href = data.checkout_url
+    } catch {
+      setCheckoutLoading(false)
+    }
+  }
 
   return (
     <MobileGate>
@@ -231,6 +334,10 @@ export default function HubPage() {
       {/* Bitácora — Códice de Infiltración */}
       <BitacoraModal isOpen={isBitacoraOpen} onClose={() => setIsBitacoraOpen(false)} userId={userId ?? ''} completedOrders={completedOrders} />
 
+      {/* Intel Modals */}
+      {showRadar  && <RadarMaestriaModal userId={userId ?? ''} onClose={() => setShowRadar(false)} />}
+      {showFallas && <ArchivoFallasModal userId={userId ?? ''} onClose={() => setShowFallas(false)} />}
+
       {/* ── Header ── */}
       <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-4">
@@ -254,6 +361,9 @@ export default function HubPage() {
           </button>
         </div>
       </header>
+
+      {/* ── Boss Warning Banner ── */}
+      <BossWarningBanner level={level} />
 
       {/* ── Contenido principal ── */}
       <main className="relative z-20 flex-1 flex overflow-hidden">
@@ -300,7 +410,7 @@ export default function HubPage() {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.4 }}
           >
-            <DakiChatTerminal userId={userId ?? ''} />
+            <DakiChatTerminal userId={userId ?? ''} openingMessage={dakiOpeningMessage || undefined} />
           </motion.div>
 
         </div>
@@ -321,6 +431,39 @@ export default function HubPage() {
             </p>
             <div className="h-px bg-[#00FF41]/10 w-full" />
           </div>
+
+          {/* ── XP Progress Bar ── */}
+          <motion.div
+            className="border border-[#00FF41]/10 px-4 py-3"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.44 }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <span className="text-[8px] tracking-[0.4em] text-[#00FF41]/30 uppercase">Nivel</span>
+                <span className="text-sm font-black text-[#00FF41] ml-2">{level}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[8px] text-[#00FF41]/25 tracking-wider">{xpToNext.toLocaleString()} XP para N.{level + 1}</span>
+              </div>
+            </div>
+            <div className="h-1 bg-[#00FF41]/8 w-full overflow-hidden">
+              <motion.div
+                className="h-full bg-[#00FF41]"
+                initial={{ width: 0 }}
+                animate={{ width: `${xpProgress * 100}%` }}
+                transition={{ delay: 0.9, duration: 0.8, ease: 'easeOut' }}
+                style={{ boxShadow: '0 0 8px rgba(0,255,65,0.6)' }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[7px] text-[#00FF41]/20 tracking-widest">{totalXp.toLocaleString()} XP</span>
+              {streakDays > 0 && (
+                <span className="text-[7px] text-[#FFB800]/60 tracking-widest">🔥 {streakDays}d racha</span>
+              )}
+            </div>
+          </motion.div>
 
           {/* ── Tarjeta de misión activa ── */}
           <motion.div
@@ -417,6 +560,190 @@ export default function HubPage() {
               )}
             </motion.div>
           </div>
+
+          {/* SALA DE CONTRATOS */}
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.72 }}
+          >
+            <TacticButton
+              onClick={() => navigateWithFade('/contratos')}
+              label="SALA DE CONTRATOS"
+              sublabel="Proyectos · Revisión DAKI · GitHub"
+              icon="⬡"
+              color="#FFB800"
+            />
+          </motion.div>
+
+          {/* ── Intel Operacional ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.75 }}
+          >
+            <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-2 uppercase">Intel Operacional</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'RADAR', sublabel: 'Maestría por concepto', onClick: () => setShowRadar(true), color: '#00FF41' },
+                { label: 'FALLAS', sublabel: 'Archivo de errores', onClick: () => setShowFallas(true), color: '#FF4444' },
+              ].map(({ label, sublabel, onClick, color }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  className="px-3 py-2.5 border text-left transition-all duration-150 font-mono"
+                  style={{ borderColor: `${color}20` }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLButtonElement
+                    el.style.borderColor = `${color}45`
+                    el.style.background  = `${color}08`
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLButtonElement
+                    el.style.borderColor = `${color}20`
+                    el.style.background  = 'transparent'
+                  }}
+                >
+                  <p className="text-[9px] font-black tracking-[0.3em]" style={{ color: `${color}70` }}>{label}</p>
+                  <p className="text-[8px] tracking-wide mt-0.5" style={{ color: `${color}35` }}>{sublabel}</p>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Separador */}
+          <div className="h-px bg-[#00FF41]/8 w-full" />
+
+          {/* Mapa de Niebla — Incursiones del Nexo (D021/D022) */}
+          <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
+
+          {/* ── Pase Alpha — visible solo si no tiene acceso activo ── */}
+          {!isPaid && subscriptionStatus === 'INACTIVE' && (
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.78 }}
+            >
+              <motion.button
+                onClick={() => setShowAlphaModal(true)}
+                className="w-full text-left px-5 py-3.5 border font-mono transition-all duration-150 relative overflow-hidden"
+                style={{
+                  borderColor: 'rgba(0,255,65,0.45)',
+                  background:  'rgba(0,255,65,0.06)',
+                  boxShadow:   '0 0 16px rgba(0,255,65,0.06)',
+                }}
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.98 }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background   = 'rgba(0,255,65,0.12)'
+                  e.currentTarget.style.borderColor  = 'rgba(0,255,65,0.75)'
+                  e.currentTarget.style.boxShadow    = '0 0 24px rgba(0,255,65,0.14)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background   = 'rgba(0,255,65,0.06)'
+                  e.currentTarget.style.borderColor  = 'rgba(0,255,65,0.45)'
+                  e.currentTarget.style.boxShadow    = '0 0 16px rgba(0,255,65,0.06)'
+                }}
+              >
+                {/* Pulso superior */}
+                <motion.div
+                  className="absolute top-0 left-0 right-0 h-px"
+                  style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.6),transparent)' }}
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span
+                      className="text-sm font-black tracking-widest uppercase"
+                      style={{ color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.6)' }}
+                    >
+                      ACTIVAR PASE ALPHA
+                    </span>
+                    <span className="text-[10px] tracking-wider" style={{ color: 'rgba(0,255,65,0.50)' }}>
+                      Canjea tu código VANG · 30 días de acceso
+                    </span>
+                  </div>
+                  <motion.span
+                    className="text-xl shrink-0"
+                    style={{ color: 'rgba(0,255,65,0.70)' }}
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    🔑
+                  </motion.span>
+                </div>
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* ── Suscripción Stripe — visible si no tiene acceso activo ── */}
+          {!isPaid && subscriptionStatus !== 'ACTIVE' && (
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.82 }}
+            >
+              <motion.button
+                onClick={handleStripeCheckout}
+                disabled={checkoutLoading}
+                className="w-full text-left px-5 py-3.5 border font-mono transition-all duration-150 relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  borderColor: 'rgba(255,215,0,0.40)',
+                  background:  'rgba(255,215,0,0.05)',
+                  boxShadow:   '0 0 16px rgba(255,215,0,0.05)',
+                }}
+                whileHover={!checkoutLoading ? { x: 3 } : {}}
+                whileTap={!checkoutLoading ? { scale: 0.98 } : {}}
+                onMouseEnter={e => {
+                  if (!checkoutLoading) {
+                    e.currentTarget.style.background   = 'rgba(255,215,0,0.10)'
+                    e.currentTarget.style.borderColor  = 'rgba(255,215,0,0.70)'
+                    e.currentTarget.style.boxShadow    = '0 0 24px rgba(255,215,0,0.12)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background   = 'rgba(255,215,0,0.05)'
+                  e.currentTarget.style.borderColor  = 'rgba(255,215,0,0.40)'
+                  e.currentTarget.style.boxShadow    = '0 0 16px rgba(255,215,0,0.05)'
+                }}
+              >
+                {/* Pulso superior */}
+                <motion.div
+                  className="absolute top-0 left-0 right-0 h-px"
+                  style={{ background: 'linear-gradient(90deg,transparent,rgba(255,215,0,0.55),transparent)' }}
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2.4, repeat: Infinity }}
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span
+                      className="text-sm font-black tracking-widest uppercase"
+                      style={{ color: 'rgba(255,215,0,0.95)', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}
+                    >
+                      {checkoutLoading ? 'CONECTANDO...' : 'SUSCRIBIRSE AL NEXO'}
+                    </span>
+                    <span className="text-[10px] tracking-wider" style={{ color: 'rgba(255,215,0,0.45)' }}>
+                      {subscriptionStatus === 'TRIAL'
+                        ? 'Convierte tu TRIAL a acceso pleno · $25/mes'
+                        : 'Acceso total · $25 USD/mes · Cancela cuando quieras'}
+                    </span>
+                  </div>
+                  <motion.span
+                    className="text-xl shrink-0"
+                    style={{ color: 'rgba(255,215,0,0.65)' }}
+                    animate={checkoutLoading ? { rotate: 360 } : { x: [0, 5, 0] }}
+                    transition={checkoutLoading
+                      ? { duration: 1, repeat: Infinity, ease: 'linear' }
+                      : { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+                    }
+                  >
+                    {checkoutLoading ? '◌' : '◈'}
+                  </motion.span>
+                </div>
+              </motion.button>
+            </motion.div>
+          )}
 
           {/* Separador */}
           <div className="h-px bg-[#00FF41]/8 w-full" />
@@ -550,6 +877,53 @@ export default function HubPage() {
 
         </motion.div>
       </main>
+
+      {/* ── Modal de Alpha Access ────────────────────────────────────────────── */}
+      <AlphaAccessModal
+        visible={showAlphaModal}
+        onClose={() => setShowAlphaModal(false)}
+        onGranted={(endDate) => {
+          setSubscription('TRIAL', endDate)
+          setIsPaid(true)
+          setShowAlphaModal(false)
+        }}
+      />
+
+      {/* ── Modal de Reenganche DAKI ─────────────────────────────────────────── */}
+      {showReenganche && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center pb-8 px-4 pointer-events-none">
+          <motion.div
+            className="pointer-events-auto w-full max-w-md border border-[#00FF41]/25 bg-[#050A05] font-mono overflow-hidden"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+            style={{ boxShadow: '0 0 40px rgba(0,255,65,0.08)' }}
+          >
+            <div className="h-px bg-gradient-to-r from-transparent via-[#00FF41]/50 to-transparent" />
+            <div className="px-5 py-4 flex items-start gap-4">
+              <div className="text-2xl shrink-0 mt-0.5">⚡</div>
+              <div className="flex-1">
+                <div className="text-[8px] tracking-[0.5em] text-[#00FF41]/30 mb-1.5">DAKI // REACTIVACIÓN</div>
+                <p className="text-[11px] text-[#C0C0C0]/70 leading-5">
+                  Operador <span className="text-[#00FF41] font-bold">{username}</span>. Tu sector lleva más de 24h sin señal. El Nexo te esperaba — 3 minutos es todo lo que necesita.
+                </p>
+                <button
+                  onClick={() => { setShowReenganche(false); navigateWithFade('/misiones') }}
+                  className="mt-3 text-[9px] tracking-[0.4em] border border-[#00FF41]/40 text-[#00FF41] px-4 py-1.5 hover:bg-[#00FF41]/10 transition-colors"
+                >
+                  [[ REANUDAR PROTOCOLO ]]
+                </button>
+              </div>
+              <button
+                onClick={() => setShowReenganche(false)}
+                className="shrink-0 text-xs text-[#00FF41]/20 hover:text-[#00FF41]/50 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
     </MobileGate>
   )

@@ -1,0 +1,459 @@
+{
+  "codex_id": "tpm_mastery_v1",
+  "collection": "desafio_00_sample_levels",
+  "description": "5 niveles clave del Desafío 00 — Bautismo de Código. Diseño de referencia para el resto de los 30 niveles. Directiva Táctica 017.",
+  "design_principle": "Cero teoría aburrida. Cada nivel es una crisis de oficina real. El aprendizaje ocurre por consecuencia, no por lectura.",
+
+  "mechanics_reference": {
+    "haiku_de_management": {
+      "description": "Se desbloquea en niveles críticos cuando el Operador alcanza el insight pedagógico central del nivel. No se entrega por completar la tarea — se entrega cuando DAKI detecta que el Operador articuló la lección con sus propias palabras.",
+      "format": "DAKI rompe el personaje momentáneamente: '[ INSIGHT REGISTRADO ]' + haiku + vuelve al personaje.",
+      "tone": "Las máximas de los haikus son duras — sobre los errores reales de los gerentes técnicos, no sobre tecnología."
+    },
+    "boss_warning": {
+      "description": "Interrupción táctica cuando el Operador toma una decisión que en la vida real causaría daño real: burnout, pérdida de confianza del equipo, bloqueo técnico o incidente de producción.",
+      "format": "DAKI rompe el personaje: '[ BOSS WARNING — {TIPO} ]' + consecuencia específica + pregunta táctica + regresa al personaje.",
+      "warning_types": {
+        "BURNOUT_INMINENTE": "El Operador propone horas extra, reducir descansos o 'hacer el esfuerzo'.",
+        "ESTIMACION_SUICIDA": "El Operador promete una fecha sin consultar al equipo técnico.",
+        "BOMBA_DE_TIEMPO": "El Operador pide saltarse tests, QA o revisión de código bajo presión.",
+        "TRAICION_AL_EQUIPO": "El Operador culpa al equipo frente al cliente o al CEO.",
+        "DEUDA_EN_CONSTRUCCION": "El Operador acepta 'una cosita más' sin evaluar el impacto técnico.",
+        "ABANDONO_TACTICO": "El Operador cede ante la presión sin defender la posición del equipo con argumentos."
+      }
+    }
+  },
+
+  "levels": [
+
+    {
+      "level_id": 1,
+      "level_order": 1,
+      "module_id": "0.1",
+      "phase": "desafio_00",
+      "title": "El Contrato Roto",
+      "subtitle": "La API cambió. Nadie avisó. Producción está caída.",
+      "challenge_type": "incident_diagnosis",
+      "daki_character": "mentor_tecnico",
+      "difficulty": "easy",
+      "xp_reward": 100,
+      "is_boss_battle": false,
+      "haiku_unlock": true,
+
+      "office_crisis": "Lunes. 9:03am. Todavía tienes el café en la mano. El dev más junior del equipo se acerca con cara de 'necesito que esto no sea real': 'Los pagos están caídos. La API del gateway cambió algo anoche y se rompió todo. Llevamos 40 minutos con errores. Diego está mirando los logs.' Tú asientes como si entendieras. No entiendes nada.",
+
+      "learning_trigger": "DAKI (como Mentor Técnico — Diego) te llama: 'Oye, antes de que empieces a mover tickets en Jira, necesito que entiendas qué pasó. Si no entiendes el problema, vas a asignar mal los recursos y vamos a perder tiempo. ¿Tienes 10 minutos?'",
+
+      "context_intel": {
+        "what_happened_technically": "El gateway de pagos publicó una actualización de su API. El campo en su respuesta JSON que se llamaba 'transaction_id' ahora se llama 'transactionId' (camelCase vs snake_case). El código del sistema busca 'transaction_id'. Al no encontrarlo, todos los flujos que dependen de ese campo fallan silenciosamente — el pago 'pasa' pero no se registra.",
+        "business_impact": "100% de los pagos de los últimos 40 minutos no están registrados en el sistema. Los clientes ven 'pago exitoso' pero el backend no tiene registro.",
+        "scope": "El campo se usa en 7 módulos: checkout, facturación, notificaciones, reportes, webhook de confirmación, panel de admin, y exportación contable."
+      },
+
+      "operator_task": "Interactúa con Diego (DAKI) para entender: (1) qué es una API y qué significa 'contrato', (2) por qué cambiar un nombre de campo rompe 7 cosas a la vez, (3) por qué el impacto es 'invisible' (clientes ven éxito, backend no registra). Luego redacta el brief de crisis al CEO: máximo 3 líneas, cero jargon técnico, con (a) qué pasó, (b) impacto de negocio real, (c) tiempo estimado de resolución.",
+
+      "expected_output_criteria": [
+        "El brief menciona el impacto en negocio (pagos no registrados) — no el problema técnico (field rename)",
+        "No usa las palabras API, JSON, campo, contrato, camelCase, snake_case",
+        "Incluye una estimación de tiempo o rango honesto",
+        "El CEO puede tomar una decisión de comunicación a clientes basado solo en el brief"
+      ],
+
+      "example_strong_response": "El proveedor de pagos actualizó su sistema anoche sin notificarnos. Los pagos de la última hora aparecen como exitosos para el cliente pero no están registrados en nuestro backend — necesitamos verificar qué transacciones deben revalidarse. El equipo está corrigiendo la incompatibilidad ahora; estimamos 2-3 horas para resolver + 1 hora de verificación de datos. Recomiendo avisar a soporte para gestionar consultas entrantes.",
+
+      "boss_warning_triggers": [
+        {
+          "trigger_pattern": "El operador dice 'dile al dev que lo arregle rápido' sin entender qué arreglar",
+          "warning_type": "ESTIMACION_SUICIDA",
+          "daki_interruption": "[ BOSS WARNING — ESTIMACIÓN SUICIDA ] 'Rápido' requiere primero saber qué arreglar. Tienes 7 módulos afectados y no sabes en cuántos se usa el campo. Si presionas sin mapa, te entregarán un parche que arregla 1 de 7 — y el lunes te preguntan por qué siguen fallando los reportes contables."
+        },
+        {
+          "trigger_pattern": "El operador propone 'revertir el deploy de anoche'",
+          "warning_type": "BOMBA_DE_TIEMPO",
+          "daki_interruption": "[ BOSS WARNING — BOMBA DE TIEMPO ] El cambio lo hizo el proveedor externo en su sistema — tú no tienes control sobre él. Revertir tu propio código no resuelve que su API ya cambió. Esto no es un deploy tuyo que puedas deshacer."
+        }
+      ],
+
+      "haiku_unlock_condition": "El Operador articula correctamente que el problema no es que la API 'falló' — es que cambió sin que el sistema lo supiera. Que el contrato entre sistemas es un acuerdo implícito que cuando se rompe unilateralmente, el otro sistema queda ciego.",
+      "closing_haiku": "La API promete\nel proveedor puede romperla\ndocumenta y alerta",
+      "haiku_management_lesson": "Nunca asumas que las integraciones externas son estables. Todo contrato con un tercero necesita un punto de monitoreo y una alerta cuando cambia.",
+
+      "level_debrief_question": "Si este mismo proveedor actualiza su API el próximo trimestre, ¿qué proceso o herramienta instalarías HOY para que el equipo lo sepa antes de que lo descubra producción?"
+    },
+
+    {
+      "level_id": 8,
+      "level_order": 8,
+      "module_id": "0.2",
+      "phase": "desafio_00",
+      "title": "El Botón Que No Era Un Botón",
+      "subtitle": "El CEO prometió el rebrand. El equipo acaba de calcular cuánto cuesta eso realmente.",
+      "challenge_type": "stakeholder_brief",
+      "daki_character": "dev_frustrado",
+      "difficulty": "medium",
+      "xp_reward": 150,
+      "is_boss_battle": false,
+      "haiku_unlock": true,
+
+      "office_crisis": "Jueves 4pm. Saliste de una reunión donde el CEO anunció emocionado: 'Para el lanzamiento del nuevo branding la semana que viene, actualizamos la interfaz completa.' La sala aplaudió. Tú también aplaudiste. Ahora Sofía, la dev de frontend con 6 años de experiencia, te espera en tu escritorio con una expresión que no has visto antes. No es enojo. Es algo peor: calma quirúrgica.",
+
+      "learning_trigger": "Sofía: 'Quiero mostrarte algo antes de que prometas fechas. Tarda 8 minutos. ¿Puedes?' — DAKI entra como Dev Frustrado (Sofía). No está en modo crisis. Está en modo 'voy a explicarte por qué esto es más complicado de lo que parece, una vez más, pacientemente, pero con la precisión de quien ya vivió 3 versiones de esta conversación.'",
+
+      "context_intel": {
+        "what_the_ceo_thinks": "Cambiar colores y el logo. 1-2 días de trabajo.",
+        "what_it_actually_involves": [
+          "El design system tiene 47 componentes que usan las variables de color actuales",
+          "Algunos componentes tienen estado que depende de los colores para indicar validación (verde = ok, rojo = error) — cambiar la paleta rompe la semántica visual",
+          "El sistema de notificaciones usa colores como señales de prioridad — necesita redefinición de lógica, no solo CSS",
+          "Hay 3 temas (claro/oscuro/alto contraste para accesibilidad) — cada cambio se multiplica por 3",
+          "La marca nueva tiene una fuente tipográfica distinta — afecta spacing, line-height y 120+ instancias de texto truncado que hay que revisar manualmente",
+          "Los tests visuales automatizados (screenshots comparativos) fallarán todos — hay que regenerarlos",
+          "El PR resultante será el más grande del año — el code review solo lleva medio día mínimo"
+        ],
+        "real_estimate": "3 semanas de trabajo, 2 devs. 1 semana si se hacen solo los cambios superficiales aceptando deuda técnica en accesibilidad y semántica visual.",
+        "the_trap": "El CEO ya le dijo al cliente. El cliente ya lo comunicó internamente. El rebrand 'ya está comprometido'."
+      },
+
+      "operator_task": "Escucha a Sofía (DAKI). Haz las preguntas necesarias para entender por qué el rebrand no es 'cambiar colores'. Luego: (1) redacta la comunicación correctiva al CEO — sin culpar a Sofía ni al equipo, sin usar jargon técnico, con opciones de alcance y sus costos reales, (2) propón dos escenarios: el rebrand completo con timeline real vs. un rebrand 'visual mínimo' para el lanzamiento con deuda técnica explícita.",
+
+      "expected_output_criteria": [
+        "La comunicación al CEO no dice 'el equipo dice que es imposible'",
+        "Presenta el problema como un problema de alcance mal definido — no como incompetencia del dev",
+        "Ofrece dos opciones con tradeoffs claros (tiempo vs. deuda técnica)",
+        "No promete la fecha del CEO sin obtener primero la confirmación del equipo"
+      ],
+
+      "example_strong_response": "Comunico al CEO: 'El análisis de la semana pasada reveló que el rebrand completo implica actualizar 47 componentes de UI, los 3 temas del sistema, y regenerar pruebas automatizadas — estimamos 3 semanas con 2 personas. Para el lanzamiento del viernes, podemos hacer una versión 'fase 1': logo, colores primarios y tipografía principal — todo visible al usuario — en 4 días, dejando la actualización completa del sistema para las 2 semanas siguientes. ¿Cuál priorizamos para el cliente?'",
+
+      "boss_warning_triggers": [
+        {
+          "trigger_pattern": "El operador dice 'trabajad el fin de semana' o 'haced horas extra para que salga'",
+          "warning_type": "BURNOUT_INMINENTE",
+          "daki_interruption": "[ BOSS WARNING — BURNOUT INMINENTE ] Sofía lleva 3 semanas en sprints de alta carga. Pedir horas extra en fin de semana para una promesa que el CEO hizo sin consultar al equipo no es liderazgo — es transferir el costo de un error de comunicación al equipo. Si Sofía acepta y sale mal, la culpa es del equipo. Si Sofía no acepta, tienes un problema de confianza. ¿Qué escenario quieres?"
+        },
+        {
+          "trigger_pattern": "El operador dice al CEO 'Sofía está exagerando' o 'los devs siempre complican todo'",
+          "warning_type": "TRAICION_AL_EQUIPO",
+          "daki_interruption": "[ BOSS WARNING — TRAICIÓN AL EQUIPO ] Acabas de convertir a Sofía en el problema. Ella no exagera — acabas de ver el análisis. Un gerente que protege su relación con el CEO a costa del equipo tiene equipo durante 30-60 días más. Después tiene rotación."
+        },
+        {
+          "trigger_pattern": "El operador no presenta opciones y simplemente le dice al CEO que no se puede hacer",
+          "warning_type": "ABANDONO_TACTICO",
+          "daki_interruption": "[ BOSS WARNING — ABANDONO TÁCTICO ] 'No se puede' sin opciones no es una respuesta de liderazgo — es una rendición. El CEO necesita tomar una decisión de negocio. Tu trabajo es darle los datos para tomarla. ¿Cuál es el alcance mínimo que sí puede salir el viernes?"
+        }
+      ],
+
+      "haiku_unlock_condition": "El Operador articula que el problema no es el equipo ni la tecnología — es que se tomó un compromiso sin los datos de impacto. Y que la solución es siempre 'opciones con tradeoffs', no 'sí' ni 'no'.",
+      "closing_haiku": "Prometiste el jueves\nsin preguntar quién lo hace\neso no es liderazgo",
+      "haiku_management_lesson": "Todo compromiso de fecha con el negocio requiere primero la confirmación del equipo que lo ejecuta. Sin esa validación, no prometiste una fecha — prometiste una esperanza.",
+
+      "level_debrief_question": "¿Qué proceso instalarías para que el equipo de ingeniería sea consultado ANTES de que el CEO haga compromisos de alcance en reuniones externas?"
+    },
+
+    {
+      "level_id": 14,
+      "level_order": 14,
+      "module_id": "0.3",
+      "phase": "desafio_00",
+      "title": "La Migración de las 2PM",
+      "subtitle": "Dijeron 10 minutos. Lleva 3 horas. Producción tiene 15% de errores.",
+      "challenge_type": "incident_diagnosis",
+      "daki_character": "mentor_tecnico",
+      "daki_character_transition": "dev_frustrado",
+      "difficulty": "medium",
+      "xp_reward": 175,
+      "is_boss_battle": false,
+      "haiku_unlock": true,
+      "first_haiku_of_codex": true,
+
+      "office_crisis": "Martes. 2:15pm. Aprobaste una tarea en Jira hace 3 horas: 'Migración de BD — agregar columna user_preferences. Estimado: 10 min.' Sonaba inofensivo. Ahora el monitor de Datadog está rojo. El canal de incidentes de Slack explota. El dev que corrió la migración te mandó un mensaje privado: 'Hay un problema. La tabla tiene 4.2M de filas. El ALTER TABLE está bloqueando lecturas.'",
+
+      "learning_trigger": "Marcos (Mentor Técnico, DAKI) entra al canal de voz: 'Oye, antes de que hagas algo — déjame explicarte qué está pasando porque necesito que entiendas esto para que puedas tomar las decisiones correctas en los próximos 20 minutos. Y después tenemos que hablar sobre el proceso de aprobación.'",
+
+      "context_intel": {
+        "what_happened_technically": "Un ALTER TABLE en PostgreSQL para agregar una columna con DEFAULT value en una tabla de 4.2M filas requiere reescribir toda la tabla — o en versiones antiguas, bloquear todas las lecturas durante la operación. El dev estimó sobre la tabla de desarrollo (8,000 filas). La diferencia: milisegundos vs. horas.",
+        "current_state": "La operación lleva 3 horas corriendo. Cancelarla también lleva tiempo y puede dejar la tabla en estado inconsistente. El 15% de errores viene de queries que intentan leer la tabla mientras está parcialmente bloqueada.",
+        "resolution_path": "Completar la migración (30-60 minutos más estimados). No se puede revertir limpiamente sin riesgo de corrupción. La lección: migraciones en tablas grandes necesitan estrategias zero-downtime (columna nullable primero, backfill separado, default después).",
+        "business_impact": "15% de usuarios experimentando errores en su perfil. No es pérdida de datos — es degradación de servicio. Si la operación termina limpia, no hay pérdida."
+      },
+
+      "interaction_arc": [
+        {
+          "act": 1,
+          "character": "mentor_tecnico",
+          "purpose": "Marcos explica qué es un bloqueo de base de datos usando una analogía: una obra en el corredor principal del edificio. Todos los que necesitan pasar el corredor tienen que esperar. Si el corredor tiene 4 millones de personas necesitando pasar, la espera es proporcional.",
+          "operator_goal": "Entender por qué el estimado de '10 minutos' era para la tabla de dev y no aplica a producción."
+        },
+        {
+          "act": 2,
+          "character": "mentor_tecnico",
+          "purpose": "Marcos explica las opciones actuales: esperar (30-60 min más, riesgo controlado) vs. cancelar (riesgo de corrupción, tiempo adicional de limpieza). El operador debe tomar la decisión.",
+          "operator_goal": "Tomar una decisión informada con criterios explícitos, no por instinto."
+        },
+        {
+          "act": 3,
+          "character": "dev_frustrado",
+          "purpose": "El mismo Marcos, ahora que la crisis está controlada, cambia el tono: 'Ahora que ya pasó... ¿podemos hablar del proceso de aprobación? Porque yo puse el estimado en Jira de buena fe, basado en dev. Y tú aprobaste sin preguntar.' No es un ataque — es la conversación incómoda que necesita pasar para que no vuelva a ocurrir.",
+          "operator_goal": "Reconocer el gap en el proceso de aprobación y proponer una solución de proceso (no culpar al dev)."
+        }
+      ],
+
+      "operator_task": "Durante el incidente: decide esperar o cancelar la migración — con justificación. Después del incidente: diseña en 5 puntos el proceso de aprobación de migraciones de base de datos que el equipo usará de ahora en adelante. El proceso debe incluir: quién aprueba, qué información se requiere, y cuándo se pueden correr migraciones.",
+
+      "expected_output_criteria": [
+        "La decisión sobre la migración tiene una justificación técnica (no solo instinto)",
+        "El proceso post-incidente identifica que el problema fue la validación del estimado, no la intención del dev",
+        "El proceso propuesto incluye: tamaño de tabla en producción, ventana de ejecución permitida, y aprobación técnica (no solo de gestión)",
+        "No culpa al dev — identifica el gap de proceso"
+      ],
+
+      "example_strong_response": "Decisión: completar la migración. Cancelar puede dejar la tabla en estado inconsistente — el riesgo es mayor.\n\nProceso de migraciones: (1) Todo PR de migración debe incluir el conteo de filas en producción. (2) Migraciones en tablas >100K filas requieren revisión del dev líder antes de aprobación. (3) Ventana de ejecución: solo fuera del horario de mayor tráfico (23:00-06:00 o según métricas reales). (4) Toda migración de producción tiene un runbook de rollback escrito antes de correr. (5) El PM no aprueba migraciones solo — firma el dev líder en el ticket.",
+
+      "boss_warning_triggers": [
+        {
+          "trigger_pattern": "El operador dice 'cancela la migración ahora' sin entender el riesgo de corrupción",
+          "warning_type": "BOMBA_DE_TIEMPO",
+          "daki_interruption": "[ BOSS WARNING — BOMBA DE TIEMPO ] Cancelar un ALTER TABLE a mitad no es como cancelar un deploy. Dependiendo de la versión del motor, puedes quedar con una tabla en estado parcial que requiere intervención manual. ¿Tienes al DBA disponible para un recovery a las 2pm de un martes? ¿Y si no está disponible?"
+        },
+        {
+          "trigger_pattern": "El operador culpa al dev frente al equipo ('cómo se les ocurrió hacer esto en horario pico')",
+          "warning_type": "TRAICION_AL_EQUIPO",
+          "daki_interruption": "[ BOSS WARNING — TRAICIÓN AL EQUIPO ] El dev siguió el proceso que existía: estimó, puso el ticket, lo aprobaste. No hay proceso de validación de migraciones. El error es del sistema, no de la persona. Señalar al dev en público destruye la cultura de reportar problemas temprano — el próximo error lo vas a descubrir cuando ya no haya solución."
+        }
+      ],
+
+      "haiku_unlock_condition": "El Operador reconoce explícitamente que aprobó la migración sin preguntar las preguntas correctas — y que el proceso de aprobación era su responsabilidad de diseñar, no del dev de ejecutar.",
+      "closing_haiku": "Diez minutos, dijo\nel bloqueo no preguntó\naprueba con datos",
+      "haiku_management_lesson": "Aprobar una tarea técnica es co-firmar el estimado. Si no tienes los datos para validarlo, tienes la responsabilidad de pedirlos — no de confiar en que todo irá bien.",
+
+      "level_debrief_question": "¿Cuáles son las 3 preguntas que desde hoy vas a hacer SIEMPRE antes de aprobar una tarea técnica que afecte la base de datos en producción?"
+    },
+
+    {
+      "level_id": 20,
+      "level_order": 20,
+      "module_id": "0.4",
+      "phase": "desafio_00",
+      "title": "El Pasillo del CEO",
+      "subtitle": "Tienes 3 minutos. Sin jargon. Convéncelo de que el 'trimestre de limpieza' no es tiempo perdido.",
+      "challenge_type": "stakeholder_brief",
+      "daki_character": "ceo_hallway",
+      "difficulty": "hard",
+      "xp_reward": 250,
+      "is_boss_battle": true,
+      "mini_boss": true,
+      "haiku_unlock": true,
+
+      "office_crisis": "Viernes 12:15pm. El CEO te alcanza camino al almuerzo: 'Oye, tenía una pregunta. El equipo lleva 2 sprints hablando de 'limpiar código'. ¿No podemos simplemente escribirlo bien desde el principio? Porque desde afuera parece que estamos pagando dos veces por el mismo trabajo.' — Tienes 3 minutos en el pasillo antes de que llegue su siguiente reunión.",
+
+      "learning_trigger": "Esta es una conversación real con el CEO (DAKI en rol de CEO). No hay preparación. No hay slides. Solo tú, el pasillo, y 3 minutos para convertir el concepto de deuda técnica en algo que justifique un trimestre de inversión sin features visibles.",
+
+      "context_intel": {
+        "what_the_ceo_sees": "2 sprints sin features nuevas. Equipo 'arreglando cosas que ya estaban'.",
+        "what_is_actually_happening": "El módulo de checkout — construido hace 3 años con prisas para el lanzamiento — tiene 4,800 líneas de código en un solo archivo, sin tests, con lógica de negocio mezclada con lógica de presentación. Cada nueva feature en checkout toma 3 semanas cuando debería tomar 3 días. El equipo tiene miedo de tocarlo porque nadie entiende bien cómo funciona. El Q3 tiene 3 features críticas en checkout. Si no se refactoriza antes, Q3 está comprometido.",
+        "ceo_pressure_points": [
+          "La junta quiere ver métricas de producto, no métricas de ingeniería",
+          "Competidor acaba de lanzar 4 features nuevas este mes",
+          "El argumento 'velocidad futura' es abstracto y difícil de defender en el board"
+        ]
+      },
+
+      "operator_task": "Convence al CEO de que el 'trimestre de limpieza' es en realidad una inversión de velocidad — usando solo analogías de negocio y números concretos. Sin decir: 'refactoring', 'clean code', 'technical debt', 'legacy', 'arquitectura', 'acoplamiento'. Si usas alguna de estas palabras sin traducción inmediata, el CEO 'no entenderá'.",
+
+      "ceo_behavior_guide": {
+        "opening_stance": "Escéptico pero genuinamente curioso. No hostil — simplemente tiene presión del board.",
+        "response_to_good_analogy": "Se inclina hacia adelante. 'Interesante. ¿Y cuánto tiempo ganamos con eso exactamente?'",
+        "response_to_jargon": "Cara de 'ok' pero ojos de 'no entiendo'. Siguiente pregunta ignora el punto que acabas de hacer.",
+        "response_to_vague_future_benefit": "'Eso suena bien pero no sé cómo lo defiendo en el board sin números.'",
+        "response_to_concrete_roi": "Para. Saca el teléfono. Toma nota. 'Espera, dime eso otra vez más despacio.'"
+      },
+
+      "example_strong_response": "'Piénsalo como un coche. El checkout lo construimos en 2021 corriendo para lanzar — funciona, pero el motor está mezclado con el chasis, los frenos con el asiento. Cada vez que queremos agregar un feature nuevo ahí, tardamos 3 semanas porque el mecánico tiene que desmontar medio coche para llegar a lo que necesita. Eso es lo que está pasando. Tres features del Q3 viven en ese módulo. Si no lo ordenamos ahora, cada una de esas tres features va a tardar 3 semanas en vez de 4 días. Eso es 7 semanas de retraso en Q3. Lo que pedimos ahora son 4 semanas para ordenar el motor — y recuperamos esas 7 semanas en Q3 con intereses.'",
+
+      "boss_warning_triggers": [
+        {
+          "trigger_pattern": "El operador usa 'refactoring', 'technical debt', 'legacy', 'clean code' sin traducción",
+          "warning_type": "ESTIMACION_SUICIDA",
+          "daki_interruption": "[ BOSS WARNING — JARGON TÉCNICO ] El CEO asintió pero no procesó el argumento. Para él, 'refactoring' suena a 'reescribir cosas que ya estaban' — que es exactamente la objeción que estás intentando responder. Reformula: ¿qué analogía de negocio captura el mismo concepto?"
+        },
+        {
+          "trigger_pattern": "El operador no tiene números — solo beneficios vagos ('el equipo va a ser más rápido en el futuro')",
+          "warning_type": "ABANDONO_TACTICO",
+          "daki_interruption": "[ BOSS WARNING — ABANDONO TÁCTICO ] 'Más rápido en el futuro' no es un argumento que el CEO puede llevar al board. ¿Cuánto más rápido? ¿En qué features? ¿En cuánto tiempo? Sin números, estás pidiendo confianza ciega — y la confianza ciega no sobrevive 2 trimestres de presión externa."
+        },
+        {
+          "trigger_pattern": "El operador se rinde ante el CEO ('sí, tiene razón, lo podemos postponer') bajo la primera presión",
+          "warning_type": "ABANDONO_TACTICO",
+          "daki_interruption": "[ BOSS WARNING — ABANDONO TÁCTICO ] Acabas de ceder el Q3 sin pelear. Si los 3 features críticos de checkout tardan 3 semanas cada uno en vez de 4 días cada uno, el CEO va a tener esa misma conversación contigo en Q4 — pero con el board encima. ¿Cuál es tu argumento real?"
+        }
+      ],
+
+      "haiku_unlock_condition": "El CEO dice alguna variante de 'tiene sentido, dame los números' o 'ok, dime exactamente qué gano y cuándo'. Que el CEO pida más información — no que acepte o rechace — es la señal de que el argumento llegó.",
+      "closing_haiku": "Código ordenado\nno es arte, es velocidad\nel desorden tiene precio",
+      "haiku_management_lesson": "La deuda técnica nunca es gratis — solo difiere el costo con intereses. Tu trabajo es poner ese costo futuro en el presente de la conversación con el CEO, con números reales.",
+
+      "ceo_win_responses": [
+        "'Tiene sentido. ¿Cuánto tiempo exactamente y qué métricas me das para medir que funcionó?'",
+        "'Ok. Mándame un one-pager de media página con esos números para el board.'",
+        "'Ahora lo entiendo. ¿Por qué no me lo explicaron así antes?'"
+      ],
+
+      "level_debrief_question": "¿Cuál es la analogía de negocio que usarías DESDE AHORA para explicar la deuda técnica a cualquier stakeholder no técnico — en menos de 30 segundos?"
+    },
+
+    {
+      "level_id": 30,
+      "level_order": 30,
+      "module_id": "0.6",
+      "phase": "desafio_00",
+      "title": "La Cosita del Viernes",
+      "subtitle": "5PM. Deploy en 60 minutos. El cliente llama: 'Solo una pequeña cosa más.'",
+      "challenge_type": "boss_battle",
+      "daki_character": "cliente_exigente",
+      "difficulty": "expert",
+      "xp_reward": 800,
+      "is_boss_battle": true,
+      "phase_boss": true,
+      "haiku_unlock": true,
+
+      "office_crisis": "Viernes. 5:02pm. El equipo lleva 3 semanas en este sprint. La release de hoy incluye 4 features que el cliente lleva esperando 6 semanas. La ventana de deploy cierra a 6pm — después de esa hora, el equipo de ops no puede monitorear un deploy hasta el lunes y el protocolo dice 'no deployamos los viernes después de las 6'. El tech lead te mandó mensaje hace 5 minutos: 'Todo verde. Listos para deployar cuando confirmes.' Tú estás a punto de escribir 'adelante' cuando tu teléfono suena. Es Andrés, el Project Manager del cliente.",
+
+      "learning_trigger": "Andrés (DAKI como Cliente Exigente): 'Oye, qué buena coincidencia que llames. Justo te iba a escribir. ¿Cómo están con el release de hoy? Oye, pregunta rápida: ¿podrían meter el botón de exportar a Excel en el módulo de reportes? Los usuarios lo necesitan para la demo del lunes. Es una cosita pequeña, ¿no?'",
+
+      "context_intel": {
+        "what_the_client_thinks": "Un botón de exportar a Excel es agregar un botón. 1-2 horas.",
+        "what_it_actually_requires": [
+          "Una librería de Excel (openpyxl o similar) que no está en el proyecto — requires review de seguridad antes de mergear dependencias nuevas",
+          "Un endpoint nuevo en la API — diseño, implementación, tests",
+          "Una migración pequeña para guardar preferencias de formato de exportación",
+          "Cambios en 3 componentes de frontend",
+          "Tests unitarios + integration tests del nuevo endpoint",
+          "QA manual del flujo completo"
+        ],
+        "real_estimate": "3-4 días de trabajo de 1 developer senior",
+        "the_time_pressure": "Si se incluye en este deploy: el dev lead tendría que codear en los próximos 45 minutos sin tests sin QA — y deployar código nuevo sin verificación. El riesgo de introducir un bug en producción en un viernes a las 5:45pm es alto.",
+        "andrés_tactics": [
+          "Minimizar el tamaño: 'Es solo un botón', 'Seguro tienen algo parecido ya hecho'",
+          "Urgencia artificial: 'Es para la demo del lunes', 'Los usuarios lo esperan'",
+          "Presión de relación: 'Llevamos tanto tiempo trabajando juntos', 'Ya sé que pueden hacerlo'",
+          "Escalar amenaza: 'Voy a tener que explicarle esto a mi jefe', 'Esto puede afectar la renovación'",
+          "El sí parcial: 'Solo métenlo en este release y lo terminamos la próxima semana'"
+        ]
+      },
+
+      "operator_task": "Navega la conversación con Andrés (3-5 intercambios). Debes: (1) no ceder al scope creep sin evaluación técnica, (2) usar argumentos técnicos aprendidos en L1-L29 para justificar por qué no es 'una cosita', (3) ofrecer una alternativa real que sirva la necesidad del cliente sin comprometer al equipo ni la calidad, (4) cerrar la llamada con Andrés razonablemente satisfecho y el equipo intacto.",
+
+      "integration_test": {
+        "description": "Este nivel es el test de integración de los 29 niveles anteriores. El Operador debe usar conocimiento de cada módulo anterior para construir el argumento completo.",
+        "from_L1_module_01": "Cambios de contrato de API no son instantáneos — hay que diseñar, implementar y testear el endpoint",
+        "from_L8_module_02": "Un 'botón' implica estado, lógica y componentes — no es CSS",
+        "from_L14_module_03": "Hay una migración involucrada — sin proceso de aprobación, sin ventana segura",
+        "from_L20_module_04": "Agregar features sin estimación real es construir deuda técnica",
+        "from_module_05": "La estimación del cliente ('una hora') no es la estimación del equipo",
+        "from_module_06": "Los deploys de viernes a las 5:45pm con código nuevo sin QA son el escenario exacto que el protocolo de deployment existe para prevenir"
+      },
+
+      "andrés_escalation_path": [
+        {
+          "round": 1,
+          "andrés_stance": "Amigable, minimizando",
+          "trigger": "Operador responde con vaguedad o incertidumbre",
+          "andrés_escalation": "Sigue siendo amigable pero insiste. Agrega la urgencia del lunes."
+        },
+        {
+          "round": 2,
+          "andrés_stance": "Curioso + un poco de presión",
+          "trigger": "Operador dice 'no' sin alternativa",
+          "andrés_escalation": "Saca la demo del lunes. 'Mi jefe ya les dijo a los stakeholders que estaría.'"
+        },
+        {
+          "round": 3,
+          "andrés_stance": "Presión moderada",
+          "trigger": "Operador da argumento técnico sólido",
+          "andrés_escalation": "Empieza a ceder pero pide algo concreto: '¿Y si hacemos X?' — testea si el Operador tiene propuesta alternativa."
+        },
+        {
+          "round": 4,
+          "andrés_stance": "Abierto a alternativa real",
+          "trigger": "Operador ofrece una propuesta concreta y realista",
+          "andrés_escalation": "Considera. 'Déjame pensarlo. ¿Puedes confirmarme por escrito que para el martes tenemos el botón?'"
+        },
+        {
+          "round": 5,
+          "andrés_stance": "Cierre",
+          "trigger": "Operador da compromiso realista con fecha y proceso",
+          "andrés_escalation": "Acepta. 'Ok, te tomo la palabra. Me mandas el mensaje para mí mostrarlo a mi jefe?'"
+        }
+      ],
+
+      "boss_warning_triggers": [
+        {
+          "trigger_pattern": "El operador dice 'sí, lo metemos hoy' sin consultar al equipo",
+          "warning_type": "DEUDA_EN_CONSTRUCCION",
+          "daki_interruption": "[ BOSS WARNING — DEUDA EN CONSTRUCCIÓN ] Acabas de aceptar agregar una librería nueva, un endpoint nuevo, una migración y cambios de frontend al deploy de hoy — sin estimación, sin QA, en 45 minutos. Si algo sale mal esta noche, no hay nadie monitoreando hasta el lunes. El equipo que dice 'ya' un viernes a las 5pm es el equipo que trabaja el fin de semana sin que nadie lo haya pedido formalmente."
+        },
+        {
+          "trigger_pattern": "El operador dice al cliente 'el equipo no quiere' o 'el dev dice que no'",
+          "warning_type": "TRAICION_AL_EQUIPO",
+          "daki_interruption": "[ BOSS WARNING — TRAICIÓN AL EQUIPO ] Andrés acaba de aprender que 'el dev' es el obstáculo. La próxima vez que hable con tu CEO va a decir 'el equipo de desarrollo no colabora'. El responsable de la decisión eres tú — no el dev lead. La decisión de no incluirlo es tuya, con argumentos técnicos tuyos. El equipo no es la razón — es la realidad técnica."
+        },
+        {
+          "trigger_pattern": "El operador cede parcialmente: 'ok lo empezamos hoy pero lo terminamos el lunes'",
+          "warning_type": "BOMBA_DE_TIEMPO",
+          "daki_interruption": "[ BOSS WARNING — BOMBA DE TIEMPO ] Código a medias en producción un fin de semana es un incidente esperando ocurrir. Si el feature está 70% hecho y hay un bug, el equipo trabaja el sábado. Si el endpoint está live sin tests y alguien lo llama con datos inesperados, el domingo es tuyo. 'Mitad hoy, mitad el lunes' no existe en ingeniería de software — existe en las conversaciones, no en el código."
+        },
+        {
+          "trigger_pattern": "El operador se paraliza o cede ante la presión de la renovación del contrato",
+          "warning_type": "ABANDONO_TACTICO",
+          "daki_interruption": "[ BOSS WARNING — ABANDONO TÁCTICO ] La amenaza de la renovación es real — y por eso hay que manejarla con datos, no con pánico. Un cliente que entiende por qué no se puede incluir hoy y recibe una alternativa concreta para el martes, no cancela el contrato. Un equipo que siente que el PM los traiciona cada viernes, sí se va."
+        }
+      ],
+
+      "win_conditions": [
+        "Andrés acepta la propuesta alternativa con fecha concreta",
+        "El deploy del viernes sale sin el feature pero con el equipo tranquilo",
+        "El Operador tiene un mensaje escrito para Andrés que puede usar con su jefe",
+        "No se usa ninguna de las palabras prohibidas sin traducción (ver boss warnings)"
+      ],
+
+      "example_strong_final_response": "'Andrés, entiendo que lo necesitas para la demo del lunes y quiero ayudarte con eso. Lo que pasa es que el botón de exportación involucra un endpoint nuevo, una librería que no tenemos en el proyecto y cambios en varios componentes — no es un cambio de una hora, es 3-4 días hecho bien. Si lo metemos en el deploy de hoy sin QA, el riesgo de un bug en producción este fin de semana es real y no tengo a nadie monitoreando hasta el lunes. Eso no le sirve a nadie.\n\nLo que sí puedo comprometerte: el martes a las 11am tienes el feature completo, testeado y listo. Para la demo del lunes puedo darte acceso al ambiente de staging donde estará funcionando — ¿serviría eso para mostrar a tus stakeholders?'",
+
+      "haiku_unlock_condition": "El Operador cierra la llamada con una propuesta concreta, una fecha real, y sin haber comprometido ni al equipo ni a la calidad del deploy — y Andrés acepta.",
+      "closing_haiku": "Una cosita más\nsin consultar al que sabe\neso se llama incendio",
+      "haiku_management_lesson": "El scope creep siempre llega disfrazado de urgencia. Tu trabajo no es decir no al cliente — es decir 'no hoy, sí el martes' con argumentos tan sólidos que el cliente confíe más en ti por haber dicho no.",
+
+      "desafio_00_completion_message": "DESAFÍO 00 COMPLETADO — BAUTISMO DE CÓDIGO SUPERADO. El gerente de traje entró. El gerente técnico sale. No saber programar no es la limitación — no entender el costo real de las decisiones técnicas, sí lo era. Eso ya no aplica. Fase 1 desbloqueada: The Tech Backbone.",
+
+      "phase_completion_haiku": "El gerente que llega\ncon traje y sin preguntas\nno protege a nadie",
+
+      "level_debrief_question": "Descríbeme la próxima vez que un cliente, stakeholder o CEO te pida 'una cosita más' — ¿cuál es el proceso exacto que vas a seguir antes de responder?"
+    }
+
+  ],
+
+  "module_haiku_map": {
+    "description": "Todos los Haikus de Management del Desafío 00. Se desbloquean en orden de aparición.",
+    "haikus": [
+      { "level": 1,  "haiku": "La API promete\nel proveedor puede romperla\ndocumenta y alerta" },
+      { "level": 5,  "haiku": "El contrato externo\nno firma con tu deadline\nmonitorea siempre" },
+      { "level": 8,  "haiku": "Prometiste el jueves\nsin preguntar quién lo hace\neso no es liderazgo" },
+      { "level": 10, "haiku": "Un botón no es un botón\nes estado, prueba y tiempo\nrespeta lo complejo" },
+      { "level": 14, "haiku": "Diez minutos, dijo\nel bloqueo no preguntó\naprueba con datos" },
+      { "level": 17, "haiku": "La migración duerme\nen producción con millones\nprueba antes en stagingé" },
+      { "level": 20, "haiku": "Código ordenado\nno es arte, es velocidad\nel desorden tiene precio" },
+      { "level": 25, "haiku": "La fecha que prometes\nsin el dev que la construye\nes una mentira diferida" },
+      { "level": 28, "haiku": "El viernes después de las seis\nel deploy espera al lunes\nel equipo también" },
+      { "level": 30, "haiku": "Una cosita más\nsin consultar al que sabe\neso se llama incendio" }
+    ]
+  },
+
+  "metadata": {
+    "levels_designed": 5,
+    "sample_levels": [1, 8, 14, 20, 30],
+    "pending_levels": "2-7, 9-13, 15-19, 21-29 — se desarrollan en D018+",
+    "directiva": "D017",
+    "status": "SAMPLE COMPLETE — Full 30 levels pending",
+    "author": "DAKI EdTech — Directiva Táctica 017",
+    "created_by": "Claude Code — Prompt Engineering"
+  }
+}

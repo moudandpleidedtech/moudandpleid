@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 
 interface Props {
-  src?: string
-  fadeOut?: boolean  // true = fade-out antes de navegar (pasado por el Hub)
+  src?:         string
+  fadeOut?:     boolean  // true = fade-out antes de navegar (pasado por el Hub)
+  buttonClass?: string   // override de posicionamiento del botón mute (default: hub position)
 }
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ function IconSpeakerOff() {
 
 // ─── HubAudio ─────────────────────────────────────────────────────────────────
 
-export default function HubAudio({ src = '/sounds/hub-ambient.mp3', fadeOut = false }: Props) {
+export default function HubAudio({ src = '/sounds/hub-ambient.mp3', fadeOut = false, buttonClass }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Estado inicial desde localStorage (hidratación segura)
@@ -52,7 +53,7 @@ export default function HubAudio({ src = '/sounds/hub-ambient.mp3', fadeOut = fa
     if (!mounted) return
     const audio = audioRef.current
     if (!audio) return
-    audio.volume = 0.28
+    audio.volume = 0.14
     if (!muted) {
       audio.play()
         .then(() => setPlaying(true))
@@ -82,7 +83,7 @@ export default function HubAudio({ src = '/sounds/hub-ambient.mp3', fadeOut = fa
     if (!audio) return
 
     if (muted || !playing) {
-      audio.volume = 0.28
+      audio.volume = 0.14
       audio.play()
         .then(() => { setPlaying(true); setMuted(false) })
         .catch(() => {})
@@ -109,7 +110,7 @@ export default function HubAudio({ src = '/sounds/hub-ambient.mp3', fadeOut = fa
         onClick={toggle}
         whileTap={{ scale: 0.85 }}
         title={muted || !playing ? '[ ACTIVAR BGM ]' : '[ SILENCIAR BGM ]'}
-        className="fixed top-3 right-[14rem] z-50 w-8 h-8 flex items-center justify-center border border-[#00FF41]/18 bg-black/50 backdrop-blur-sm text-[#00FF41]/45 hover:text-[#00FF41]/80 hover:border-[#00FF41]/35 transition-colors"
+        className={`${buttonClass ?? 'fixed top-3 right-[14rem]'} z-50 w-8 h-8 flex items-center justify-center border border-[#00FF41]/18 bg-black/50 backdrop-blur-sm text-[#00FF41]/45 hover:text-[#00FF41]/80 hover:border-[#00FF41]/35 transition-colors`}
         style={{ boxShadow: playing && !muted ? '0 0 8px rgba(0,255,65,0.12)' : 'none' }}
       >
         {muted || !playing ? <IconSpeakerOff /> : <IconSpeakerOn />}

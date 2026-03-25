@@ -1,3 +1,4 @@
+import json as _json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -10,6 +11,7 @@ from app.core.rate_limit import limiter
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
 from app.services import ai_mentor
+from app.services.mastery_service import get_reinforcement_concepts
 from app.services.memory_service import (
     format_operator_history,
     get_recent_events,
@@ -24,7 +26,8 @@ class HintRequest(BaseModel):
     challenge_id: uuid.UUID
     source_code: str
     error_output: str = ""
-    fail_count: int = 1    # número de intentos fallidos → calibra el nivel de pista DAKI
+    fail_count: int = 1        # número de intentos fallidos → calibra el nivel de pista DAKI
+    operator_level: int = 1    # nivel actual del Operador → calibra etapa DAKI
 
 
 class HintResponse(BaseModel):
@@ -88,6 +91,30 @@ async def request_hint(
     recent_events = await get_recent_events(db, payload.user_id, limit=5)
     operator_history = format_operator_history(recent_events)
 
+    # ── Extraer intel de la misión desde la DB ────────────────────────────────
+    concepts_taught: list[str] = []
+    try:
+        raw = challenge.concepts_taught_json
+        if raw:
+            parsed = _json.loads(raw)
+            if isinstance(parsed, list):
+                concepts_taught = [str(c) for c in parsed]
+    except Exception:
+        pass
+
+    db_hints: list[str] = []
+    try:
+        raw = challenge.hints_json
+        if raw:
+            parsed = _json.loads(raw)
+            if isinstance(parsed, list):
+                db_hints = [str(h) for h in parsed]
+    except Exception:
+        pass
+
+    # ── DAKI Memory: conceptos con baja maestría → refuerzo contextual ───────
+    weak_concepts: list[str] = await get_reinforcement_concepts(db, payload.user_id)
+
     hint = await ai_mentor.get_hint(
         challenge_title=challenge.title,
         challenge_description=challenge.description,
@@ -95,6 +122,12 @@ async def request_hint(
         error_output=payload.error_output,
         fail_count=max(1, payload.fail_count),
         operator_history=operator_history,
+        concepts_taught=concepts_taught,
+        pedagogical_objective=challenge.pedagogical_objective or None,
+        syntax_hint=challenge.syntax_hint or None,
+        db_hints=db_hints,
+        operator_level=max(1, payload.operator_level),
+        weak_concepts=weak_concepts or None,
     )
 
     return HintResponse(hint=hint)

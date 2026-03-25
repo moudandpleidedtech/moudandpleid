@@ -42,7 +42,26 @@ class User(Base):
     daki_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False, server_default="1")
     # ID externo de la pasarela de pagos (Stripe charge_id, PayPal order_id, etc.)
     payment_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
+
+    # ── Operación Vanguardia — Suscripción Alpha ───────────────────────────────
+    # Valores válidos: 'INACTIVE' | 'TRIAL' | 'ACTIVE'
+    # INACTIVE: sin acceso premium. TRIAL: período de prueba. ACTIVE: licencia plena.
+    subscription_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="INACTIVE", server_default="INACTIVE"
+    )
+    # Fecha de expiración del período TRIAL — NULL si no está en trial o si es ACTIVE
+    trial_end_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+    # Rol de acceso: 'USER' (default), 'FOUNDER' (God Mode — bypassa compuertas de catálogo)
+    # Alembic: ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'USER';
+    #          CREATE INDEX ix_users_role ON users(role);
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="USER", server_default="USER", index=True
+    )
+    # Stripe Customer ID — persiste entre sesiones de checkout para evitar crear clientes duplicados
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
 
     # ── Sistema de Rangos ─────────────────────────────────────────────────────
     points: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")

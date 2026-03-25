@@ -55,6 +55,11 @@ async def init_db() -> None:
     import app.models.daki_interception  # noqa: F401  — Protocolo Memoria Muscular
     import app.models.user_core_memory   # noqa: F401  — Módulo de Memoria Evolutiva
     import app.models.tactical_key       # noqa: F401  — Llaves de Override Táctico (Prompt 66)
+    import app.models.session_log        # noqa: F401  — Memoria persistente de sesión DAKI
+    import app.models.alpha_code             # noqa: F401  — Alpha Codes de un solo uso (Operación Vanguardia)
+    import app.models.beta_code              # noqa: F401  — Beta Codes de acceso
+    import app.models.incursion              # noqa: F401  — D021 Mapa de Niebla
+    import app.models.challenge_prerequisite # noqa: F401  — D018 Árbol de Habilidades (N:M)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -216,4 +221,59 @@ async def init_db() -> None:
         await conn.execute(text(
             "UPDATE challenges SET is_free = TRUE "
             "WHERE sector_id IN (0, 1) AND is_free = FALSE"
+        ))
+
+        # Operación Vanguardia — Suscripción Alpha (Directiva 005M)
+        for stmt in [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end_date TIMESTAMPTZ",
+        ]:
+            await conn.execute(text(stmt))
+        # Índice parcial: acelera las queries que filtran usuarios en TRIAL activos
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_users_subscription_status "
+            "ON users (subscription_status)"
+        ))
+        # alpha_codes se crea vía create_all (modelo registrado arriba).
+        # Índice en is_used para filtrar rápidamente códigos disponibles en dashboards admin.
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_alpha_codes_is_used "
+            "ON alpha_codes (is_used)"
+        ))
+
+        # Pasarela Global Stripe (Directiva 011)
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)"
+        ))
+
+        # Campos previos al sistema de suscripción (compatibilidad retroactiva)
+        for stmt in [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_id VARCHAR(255)",
+        ]:
+            await conn.execute(text(stmt))
+
+        # D018 — Árbol de Habilidades (Directiva 018)
+        for stmt in [
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS codex_id VARCHAR(50)",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS prerequisite_challenge_id UUID REFERENCES challenges(id)",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS is_phase_boss BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS strict_match BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS boss_completed BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS codex_id VARCHAR(50)",
+            "ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS score INTEGER",
+        ]:
+            await conn.execute(text(stmt))
+        for stmt in [
+            "CREATE INDEX IF NOT EXISTS ix_challenges_codex_id ON challenges (codex_id)",
+            "CREATE INDEX IF NOT EXISTS ix_user_progress_codex ON user_progress (user_id, codex_id)",
+        ]:
+            await conn.execute(text(stmt))
+
+        # D022 — Protocolo God Mode (rol FOUNDER)
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'USER'"
+        ))
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_users_role ON users (role)"
         ))

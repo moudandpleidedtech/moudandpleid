@@ -35,8 +35,9 @@ oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", aut
 # _bearer: para admin (HTTPBearer mantiene compatibilidad con el flujo existente)
 _bearer = HTTPBearer(auto_error=False)
 
-ADMIN_ROLE = "ADMIN"
-USER_ROLE  = "USER"
+ADMIN_ROLE   = "ADMIN"
+USER_ROLE    = "USER"
+FOUNDER_ROLE = "FOUNDER"
 
 # ─── Password hashing ─────────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ def create_user_token(
     callsign: str,
     level: int,
     is_licensed: bool,
+    role: str = USER_ROLE,
 ) -> str:
     """
     JWT para Operadores.  Payload enriquecido:
@@ -65,7 +67,7 @@ def create_user_token(
       callsign     → nombre de operador (para contexto de DAKI sin hit a BD)
       level        → nivel actual (para paywall y personalización)
       is_licensed  → acceso completo (para paywall de nivel 11+)
-      role         → USER (distingue de ADMIN)
+      role         → USER | FOUNDER (distingue de ADMIN; FOUNDER bypassa compuertas de catálogo)
     """
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
@@ -75,7 +77,7 @@ def create_user_token(
         "callsign":    callsign,
         "level":       level,
         "is_licensed": is_licensed,
-        "role":        USER_ROLE,
+        "role":        role,
         "exp":         expire,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
@@ -113,7 +115,7 @@ def _decode_user_token(token: str) -> str:
     except JWTError:
         raise _unauthorized
 
-    if payload.get("role") != USER_ROLE:
+    if payload.get("role") not in (USER_ROLE, FOUNDER_ROLE):
         raise _unauthorized
 
     user_id: str | None = payload.get("sub")

@@ -30,3 +30,6 @@ reportlab==4.2.5
 
 # Anthropic AI SDK
 anthropic>=0.50.0
+
+# Stripe — pasarela de pagos global
+stripe>=8.0.0

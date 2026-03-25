@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.models.challenge import Challenge
 from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
+from app.services.achievement_service import check_and_grant, get_insight_for_concepts
 from app.services.ai_mentor import get_execute_feedback
 from app.services.execution_service import execute_python_code
 from app.services.gamification_service import gamification_engine
@@ -64,6 +65,16 @@ class DakiIntervention(BaseModel):
     text: str
 
 
+class AchievementUnlocked(BaseModel):
+    id: str
+    name: str
+    description: str
+    icon: str
+    xp_bonus: int
+    rarity: str
+    unlocked_at: str
+
+
 class CodeExecuteResponse(BaseModel):
     stdout: str
     stderr: str
@@ -73,6 +84,8 @@ class CodeExecuteResponse(BaseModel):
     error_info: Optional[ErrorInfo] = None
     daki_intervention: Optional[DakiIntervention] = None   # pista automática por tolerancia
     daki_message: str = ""                                  # frase narrativa de DAKI Intel
+    achievements_unlocked: list[AchievementUnlocked] = []  # logros recién desbloqueados
+    insight: Optional[str] = None                          # conexión mundo real post-nivel
 
 
 async def _upsert_metric(
@@ -217,6 +230,38 @@ async def execute_challenge_code(
         is_success=is_success,
     )
 
+    # ── Logros + Insight (solo en primera compleción exitosa) ─────────────────
+    achievements_unlocked: list[dict] = []
+    insight: Optional[str] = None
+
+    if is_success:
+        try:
+            import json as _json
+            concepts: list[str] = _json.loads(challenge.concepts_taught_json or "[]") if hasattr(challenge, "concepts_taught_json") else []
+
+            # Insight de mundo real
+            insight = get_insight_for_concepts(concepts)
+
+            # Logros
+            achievements_unlocked = await check_and_grant(
+                db=db,
+                user_id=payload.user_id,
+                trigger="level_complete",
+                context={
+                    "already_completed": gamification_result.already_completed,
+                    "hints_used": payload.hints_used,
+                    "attempts": total_attempts,
+                    "execution_time_ms": exec_result["execution_time_ms"],
+                    "user_level": gamification_result.new_level,
+                    "user_streak": 0,  # streak se actualiza en login; aquí solo nivel
+                    "total_completed": gamification_result.new_level * 2,  # aproximación
+                    "level_order": challenge.level_order or 0,
+                },
+            )
+            await db.commit()
+        except Exception:
+            pass  # Logros no son críticos — nunca bloquean la respuesta
+
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],
         stderr=exec_result["stderr"],
@@ -226,4 +271,6 @@ async def execute_challenge_code(
         error_info=error_info,
         daki_intervention=daki_intervention,
         daki_message=daki_message,
+        achievements_unlocked=[AchievementUnlocked(**a) for a in achievements_unlocked],
+        insight=insight if (is_success and not gamification_result.already_completed) else None,
     )
