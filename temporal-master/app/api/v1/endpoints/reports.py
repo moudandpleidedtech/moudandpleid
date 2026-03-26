@@ -2,8 +2,8 @@
 app/api/v1/endpoints/reports.py — D026 Reporte de Inteligencia
 
 POST /reports         — Crear un reporte (requiere JWT)
-GET  /reports         — Listar reportes (solo admin)
-PATCH /reports/{id}   — Actualizar estado (solo admin)
+GET  /reports         — Listar reportes (admin ve todo, user ve los suyos)
+PATCH /reports/{id}   — Actualizar estado (solo FOUNDER/admin)
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_operator
 from app.models.intelligence_report import IntelligenceReport
 from app.models.user import User
 
@@ -31,21 +31,21 @@ ReportStatus   = Literal["OPEN", "IN_PROGRESS", "RESOLVED"]
 
 
 class ReportCreate(BaseModel):
-    type:                ReportType
-    severity:            ReportSeverity
-    description:         str = Field(..., min_length=10, max_length=2000)
-    steps_to_reproduce:  str | None = Field(None, max_length=2000)
+    type:               ReportType
+    severity:           ReportSeverity
+    description:        str = Field(..., min_length=10, max_length=2000)
+    steps_to_reproduce: str | None = Field(None, max_length=2000)
 
 
 class ReportOut(BaseModel):
-    id:                  uuid.UUID
-    user_id:             uuid.UUID
-    type:                str
-    severity:            str
-    description:         str
-    steps_to_reproduce:  str | None
-    status:              str
-    created_at:          str
+    id:                 uuid.UUID
+    user_id:            uuid.UUID
+    type:               str
+    severity:           str
+    description:        str
+    steps_to_reproduce: str | None
+    status:             str
+    created_at:         str
 
     model_config = {"from_attributes": True}
 
@@ -58,18 +58,18 @@ class ReportStatusUpdate(BaseModel):
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ReportOut)
 async def create_report(
-    payload:      ReportCreate,
-    current_user: User = Depends(get_current_user),
-    db:           AsyncSession = Depends(get_db),
+    payload:  ReportCreate,
+    operator: User = Depends(get_current_operator),
+    db:       AsyncSession = Depends(get_db),
 ) -> ReportOut:
     """Crea un reporte de inteligencia para el operador autenticado."""
     report = IntelligenceReport(
-        user_id             = current_user.id,
-        type                = payload.type,
-        severity            = payload.severity,
-        description         = payload.description,
-        steps_to_reproduce  = payload.steps_to_reproduce,
-        status              = "OPEN",
+        user_id            = operator.id,
+        type               = payload.type,
+        severity           = payload.severity,
+        description        = payload.description,
+        steps_to_reproduce = payload.steps_to_reproduce,
+        status             = "OPEN",
     )
     db.add(report)
     await db.commit()
@@ -89,20 +89,23 @@ async def create_report(
 
 @router.get("", response_model=list[ReportOut])
 async def list_reports(
-    current_user: User = Depends(get_current_user),
-    db:           AsyncSession = Depends(get_db),
+    operator: User = Depends(get_current_operator),
+    db:       AsyncSession = Depends(get_db),
 ) -> list[ReportOut]:
-    """Lista reportes. Admin ve todos; el operador ve solo los suyos."""
-    if getattr(current_user, "is_admin", False) or getattr(current_user, "role", "") == "FOUNDER":
+    """Lista reportes. FOUNDER/admin ve todos; el operador ve solo los suyos."""
+    is_admin = getattr(operator, "is_admin", False) or getattr(operator, "role", "") == "FOUNDER"
+
+    if is_admin:
         result = await db.execute(
             select(IntelligenceReport).order_by(IntelligenceReport.created_at.desc())
         )
     else:
         result = await db.execute(
             select(IntelligenceReport)
-            .where(IntelligenceReport.user_id == current_user.id)
+            .where(IntelligenceReport.user_id == operator.id)
             .order_by(IntelligenceReport.created_at.desc())
         )
+
     reports = result.scalars().all()
     return [
         ReportOut(
@@ -121,13 +124,14 @@ async def list_reports(
 
 @router.patch("/{report_id}", response_model=ReportOut)
 async def update_report_status(
-    report_id:    uuid.UUID,
-    payload:      ReportStatusUpdate,
-    current_user: User = Depends(get_current_user),
-    db:           AsyncSession = Depends(get_db),
+    report_id: uuid.UUID,
+    payload:   ReportStatusUpdate,
+    operator:  User = Depends(get_current_operator),
+    db:        AsyncSession = Depends(get_db),
 ) -> ReportOut:
-    """Actualiza el estado de un reporte. Solo admin/FOUNDER."""
-    if not (getattr(current_user, "is_admin", False) or getattr(current_user, "role", "") == "FOUNDER"):
+    """Actualiza el estado de un reporte. Solo FOUNDER/admin."""
+    is_admin = getattr(operator, "is_admin", False) or getattr(operator, "role", "") == "FOUNDER"
+    if not is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
 
     result = await db.execute(
