@@ -477,7 +477,7 @@ async def get_hint(
 # ─────────────────────────────────────────────────────────────────────────────
 
 import time as _time
-from typing import Any
+from typing import Any, Final
 
 from app.services.llm_router      import llm_router_service
 from app.services.semantic_cache  import semantic_cache_service
