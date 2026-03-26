@@ -68,7 +68,7 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
         {[1, 2, 3, 4].map(i => (
           <motion.div
             key={i}
-            className="h-10 rounded"
+            className="h-20 rounded"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.15 }}
@@ -100,14 +100,12 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
               transition={{ delay: i * 0.07, duration: 0.3, ease: 'easeOut' }}
             >
               {isActive ? (
-                // ── ACTIVE: verde neón, botón de entrada ──────────────────────
                 <ActiveCard
                   inc={inc}
                   color={color}
                   onEnter={() => inc.ruta && onNavigate(inc.ruta)}
                 />
               ) : (
-                // ── ENCRYPTED: nodo fantasma — candado dorado (FOUNDER) o rojo (USER) ──
                 <EncryptedCard
                   inc={inc}
                   color={color}
@@ -156,7 +154,7 @@ function ActiveCard({
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Indicador de estado ACTIVO */}
+      {/* Badge ACTIVO */}
       <div className="absolute top-2 right-2 flex items-center gap-1">
         <motion.span
           className="w-1.5 h-1.5 rounded-full"
@@ -169,29 +167,37 @@ function ActiveCard({
         </span>
       </div>
 
-      <div className="px-3 pt-2.5 pb-2">
+      <div className="px-3 pt-2.5 pb-2.5">
         {/* Ícono + Título */}
-        <div className="flex items-center gap-1.5 mb-0.5 pr-14">
-          <span style={{ color, fontSize: '11px' }}>{inc.icono}</span>
+        <div className="flex items-start gap-1.5 mb-1.5 pr-14">
+          <span style={{ color, fontSize: '11px', marginTop: '1px', flexShrink: 0 }}>{inc.icono}</span>
           <span
-            className="text-[9px] font-black tracking-widest uppercase truncate font-mono"
+            className="text-[9px] font-black tracking-widest uppercase font-mono leading-tight"
             style={{ color, textShadow: `0 0 6px ${color}66` }}
           >
-            {inc.titulo.length > 28 ? inc.titulo.slice(0, 27) + '…' : inc.titulo}
+            {inc.titulo}
           </span>
         </div>
+
+        {/* Descripción */}
+        <p
+          className="text-[7px] leading-relaxed font-mono mb-2.5 line-clamp-2"
+          style={{ color: `${color}60` }}
+        >
+          {inc.descripcion}
+        </p>
 
         {/* Botón de entrada */}
         <motion.button
           onClick={onEnter}
-          className="mt-2 w-full text-center text-[8px] tracking-[0.25em] uppercase font-mono py-1.5"
+          className="w-full text-center text-[8px] tracking-[0.25em] uppercase font-mono py-1.5"
           style={{
             border:     `1px solid ${color}55`,
             color:      color,
             background: `${color}10`,
           }}
           whileHover={{
-            background: `${color}20`,
+            background:  `${color}20`,
             borderColor: `${color}99`,
             boxShadow:   `0 0 12px ${color}25`,
           }}
@@ -217,38 +223,30 @@ function EncryptedCard({
   glitching: boolean
   isFounder: boolean
 }) {
-  // FOUNDER: candado dorado + opacidad completa + badge "ACCESO FOUNDER"
-  // USER:    candado rojo + opacidad reducida + badge "ENCRIPTADO"
-  const lockColor   = isFounder ? '#FFC700' : '#FF2D78'
-  const borderAlpha = isFounder ? '0.25'    : '0.12'
-  const bgAlpha     = isFounder ? '0.04'    : '0.02'
-  const opacity     = isFounder ? 1         : 0.55
-  const lockIcon    = isFounder ? '🔓'      : '🔒'
-  const lockFilter  = isFounder
-    ? 'drop-shadow(0 0 4px #FFC70099)'
-    : 'drop-shadow(0 0 3px #FF2D7866)'
+  const lockColor = isFounder ? '#FFC700' : color
+  const dimFactor = isFounder ? 1 : 0.65
 
   return (
     <motion.div
       className="relative overflow-hidden"
       style={{
-        border:     `1px solid rgba(${isFounder ? '255,199,0' : '255,45,120'},${borderAlpha})`,
-        background: `rgba(${isFounder ? '255,199,0' : '255,45,120'},${bgAlpha})`,
-        opacity,
+        border:     `1px solid ${color}${isFounder ? '35' : '22'}`,
+        background: `${color}${isFounder ? '06' : '03'}`,
+        opacity:    dimFactor,
       }}
       animate={
         glitching && !isFounder
-          ? { x: [-2, 3, -1, 2, 0], opacity: [0.55, 0.8, 0.4, 0.7, 0.55] }
+          ? { x: [-2, 3, -1, 2, 0], opacity: [0.65, 0.9, 0.45, 0.75, 0.65] }
           : {}
       }
       transition={{ duration: 0.25, ease: 'linear' }}
     >
-      {/* Scanline de cifrado (solo en USER) */}
+      {/* Scanline de cifrado (solo en USER durante glitch) */}
       {glitching && !isFounder && (
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-10"
           style={{
-            background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,45,120,0.06) 2px, rgba(255,45,120,0.06) 3px)',
+            background: `repeating-linear-gradient(0deg, transparent, transparent 2px, ${color}08 2px, ${color}08 3px)`,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1, 0] }}
@@ -256,58 +254,95 @@ function EncryptedCard({
         />
       )}
 
-      {/* Línea de pulso dorado (solo FOUNDER) */}
-      {isFounder && (
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, #FFC70060, transparent)' }}
-          animate={{ opacity: [0.3, 0.9, 0.3] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      {/* Línea de pulso superior (FOUNDER: dorado | USER: color del acento dimmed) */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{
+          background: isFounder
+            ? 'linear-gradient(90deg, transparent, #FFC70055, transparent)'
+            : `linear-gradient(90deg, transparent, ${color}25, transparent)`,
+        }}
+        animate={{ opacity: [0.2, 0.7, 0.2] }}
+        transition={{ duration: isFounder ? 2.5 : 4, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Overlay de cifrado — rejilla sutil (solo USER) */}
+      {!isFounder && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.008) 8px, rgba(255,255,255,0.008) 9px)',
+          }}
         />
       )}
 
-      <div className="px-3 pt-2.5 pb-2">
-        {/* Ícono + Título cifrado */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span style={{ color: isFounder ? `${color}aa` : `${color}55`, fontSize: '11px' }}>{inc.icono}</span>
-            <span
-              className="text-[9px] font-black tracking-widest uppercase truncate font-mono"
-              style={{ color: isFounder ? `${color}99` : `${color}50` }}
+      {/* Badge de estado — esquina superior derecha */}
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        {isFounder ? (
+          <>
+            <motion.span
+              className="text-[8px]"
+              style={{ filter: 'drop-shadow(0 0 4px #FFC70099)' }}
+              animate={{ opacity: [1, 0.6, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
             >
-              {inc.titulo.length > 22 ? inc.titulo.slice(0, 21) + '…' : inc.titulo}
+              🔓
+            </motion.span>
+            <span className="text-[6px] tracking-widest font-mono" style={{ color: '#FFC70077' }}>
+              GOD MODE
             </span>
-          </div>
+          </>
+        ) : (
+          <>
+            <span className="text-[8px]" style={{ filter: `drop-shadow(0 0 3px ${color}55)` }}>
+              🔒
+            </span>
+          </>
+        )}
+      </div>
 
-          {/* Candado — dorado (FOUNDER) o rojo (USER) */}
+      <div className="px-3 pt-2.5 pb-2.5">
+        {/* Ícono + Título */}
+        <div className="flex items-start gap-1.5 mb-1.5 pr-14">
+          <span style={{ color: `${color}${isFounder ? 'bb' : '66'}`, fontSize: '11px', marginTop: '1px', flexShrink: 0 }}>
+            {inc.icono}
+          </span>
           <span
-            className="text-[10px] shrink-0"
-            style={{ color: lockColor, filter: lockFilter }}
+            className="text-[9px] font-black tracking-widest uppercase font-mono leading-tight"
+            style={{
+              color:      isFounder ? `${color}cc` : `${color}77`,
+              textShadow: isFounder ? `0 0 6px ${color}44` : 'none',
+            }}
           >
-            {lockIcon}
+            {inc.titulo}
           </span>
         </div>
 
-        {/* Status badge */}
+        {/* Descripción */}
+        <p
+          className="text-[7px] leading-relaxed font-mono mb-2.5 line-clamp-2"
+          style={{ color: isFounder ? `${color}55` : `${color}35` }}
+        >
+          {inc.descripcion}
+        </p>
+
+        {/* CTA — deshabilitado pero visualmente consistente */}
         <div
-          className="inline-flex items-center gap-1 px-1.5 py-0.5"
+          className="w-full text-center text-[8px] tracking-[0.2em] uppercase font-mono py-1.5 select-none"
           style={{
-            border:     `1px solid rgba(${isFounder ? '255,199,0' : '255,45,120'},0.25)`,
-            background: `rgba(${isFounder ? '255,199,0' : '255,45,120'},0.06)`,
+            border:     isFounder
+              ? `1px solid #FFC70030`
+              : `1px solid ${color}18`,
+            color:      isFounder ? '#FFC70055' : `${color}35`,
+            background: isFounder ? '#FFC70008' : `${color}04`,
           }}
         >
-          <motion.span
-            className="w-1 h-1 rounded-full"
-            style={{ background: lockColor }}
-            animate={{ opacity: [1, 0.2, 1] }}
-            transition={{ duration: isFounder ? 1.2 : 2, repeat: Infinity }}
-          />
-          <span
-            className="text-[7px] tracking-widest font-mono uppercase"
-            style={{ color: `${lockColor}99` }}
-          >
-            {isFounder ? 'ACCESO FOUNDER · GOD MODE ACTIVO' : 'ESTADO: ENCRIPTADO · DESBLOQUEO EN FASE BETA'}
-          </span>
+          {isFounder
+            ? '🔓 ACCESO FOUNDER — EN CONSTRUCCIÓN'
+            : `▸ ${inc.slug === 'tpm-mastery'      ? 'PRÓXIMAMENTE · FASE 2'
+                : inc.slug === 'red-team'           ? 'PRÓXIMAMENTE · FASE 3'
+                :                                    'PRÓXIMAMENTE · FASE 4'}`
+          }
         </div>
       </div>
     </motion.div>
