@@ -419,7 +419,7 @@ export default function HubPage() {
             PANEL DERECHO — Navegación Táctica
         ══════════════════════════════════════════════ */}
         <motion.div
-          className="w-80 shrink-0 flex flex-col justify-center gap-5 px-8 py-8"
+          className="w-80 shrink-0 flex flex-col justify-start gap-5 px-8 py-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.45 }}
