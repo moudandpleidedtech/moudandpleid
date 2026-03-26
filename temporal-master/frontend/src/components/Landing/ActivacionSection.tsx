@@ -1,55 +1,28 @@
 'use client'
 
 /**
- * ActivacionSection — Slide 4 del Landing (reemplaza slides 7, 8, 9)
+ * ActivacionSection — Slide 4 del Landing · Cierre de conversión
  *
- * Fusiona en una sola pantalla scrolleable:
- *   1. Paradigm shifts (condensado de TestimonialsSection)
- *   2. Pricing: Modo Exploración vs Licencia de Fundador
- *   3. CTA final + footer
+ * Rediseño D025: de pricing page a máquina de registro.
+ * Sin precios. Sin pricing cards. Un solo objetivo: crear cuenta.
+ * El upsell a membresía sucede desde adentro del Hub — no aquí.
  */
 
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
-const SHIFTS = [
-  {
-    label: 'EL CONOCIMIENTO',
-    before: 'Copias sintaxis hasta que la recuerdas.',
-    after:  'Necesitas la solución hasta que la descubres.',
-    color:  '#00FF41',
-  },
-  {
-    label: 'EL APRENDIZAJE',
-    before: 'Videos que puedes pausar, rebobinar, ignorar.',
-    after:  'Un sistema que ajusta la exigencia a tu lógica.',
-    color:  '#00B4D8',
-  },
-  {
-    label: 'EL RESULTADO',
-    before: 'Un certificado que valida que completaste un curso.',
-    after:  'Un sistema desplegado que valida que puedes construir uno.',
-    color:  '#FFB800',
-  },
+const FREE_ACCESS = [
+  { icon: '⬡', label: 'Operación Vanguardia',      detail: 'Python Core completo — los 100 niveles' },
+  { icon: '◈', label: 'IA Simbionte DAKI',           detail: 'Tu instructor que nunca duerme ni te da respuestas gratis' },
+  { icon: '◎', label: 'Mapa de Incursiones',         detail: 'Ves el ecosistema completo desde el primer login' },
+  { icon: '⬟', label: 'Leaderboard de Operadores',   detail: 'Tu rango real vs el resto del Nexo' },
+  { icon: '◆', label: 'Bitácora táctica',            detail: 'Tu historial de errores convertido en inteligencia' },
 ]
 
-const FOUNDER_FEATURES = [
-  'Acceso a todas las Formaciones del Nexo',
-  'IA de grado industrial · sin límites',
-  'Misiones Clasificadas · proyectos reales',
-  'Leaderboard + Insignias de Rango Operativo',
-  'Mentoría directa con los creadores',
-  'Sello de Operador Certificado',
-  'Acceso de por vida · precio de lanzamiento',
-]
-
-const FREE_FEATURES = [
-  { text: 'Operación Python — acceso completo',   ok: true  },
-  { text: 'IA limitada · 20 consultas / día',     ok: true  },
-  { text: 'Misiones de calibración estándar',     ok: true  },
-  { text: 'Leaderboard de Operadores',            ok: true  },
-  { text: 'Formaciones avanzadas del Nexo',       ok: false },
-  { text: 'Mentoría directa con creadores',       ok: false },
-  { text: 'Sello de Operador Certificado',        ok: false },
+const WHAT_AWAITS = [
+  { label: 'PROTOCOLO TPM',          color: '#FF6B35', status: 'Encriptado' },
+  { label: 'PROTOCOLO ARES',         color: '#FF2D78', status: 'Clasificado' },
+  { label: 'TECHNICAL SALES MASTERY', color: '#FFC700', status: 'Clasificado' },
 ]
 
 const FOOTER_LINKS = [
@@ -65,174 +38,198 @@ export default function ActivacionSection() {
 
       {/* Scanlines */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.02]"
+        className="absolute inset-0 pointer-events-none opacity-[0.015]"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,#00FF41 3px,#00FF41 4px)' }}
       />
 
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto px-6 pb-4 pt-6 min-h-0" style={{ scrollbarWidth: 'none' }}>
+      {/* Scrollable */}
+      <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4 min-h-0" style={{ scrollbarWidth: 'none' }}>
 
-        {/* ── Paradigm shifts ────────────────────────────────────────────────── */}
-        <p className="text-[8px] tracking-[0.6em] text-[#FF0033]/40 uppercase mb-4">
-          {'// LA DISRUPCIÓN — POR QUÉ DAKI EXISTE'}
-        </p>
+        {/* ── Gancho de identidad ─────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-8"
+        >
+          <p className="text-[8px] tracking-[0.6em] text-[#FF0033]/40 uppercase mb-4">
+            {'// PROTOCOLO DE ACTIVACIÓN — PASO FINAL'}
+          </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-          {SHIFTS.map(({ label, before, after, color }) => (
-            <div
-              key={label}
-              className="p-4 relative overflow-hidden"
-              style={{ border: `1px solid ${color}20`, background: `${color}03` }}
-            >
-              <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg,transparent,${color}50,transparent)` }} />
-              <p className="text-[8px] tracking-[0.45em] font-bold uppercase mb-3" style={{ color: `${color}45` }}>
-                {label}
-              </p>
-              <p className="text-white/22 text-[10px] leading-5 italic mb-2">
-                &ldquo;{before}&rdquo;
-              </p>
-              <div className="h-px mb-2" style={{ background: `${color}14` }} />
-              <p className="text-[11px] leading-5 font-bold text-white/85">
-                {after}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Pricing ────────────────────────────────────────────────────────── */}
-        <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/22 uppercase mb-4">
-          {'// CHECKPOINT DE ACCESO — SELECCIONA TU PROTOCOLO'}
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
-
-          {/* Fundador */}
           <div
-            className="relative p-5 flex flex-col gap-4"
-            style={{ border: '1px solid rgba(0,255,65,0.30)', background: 'rgba(0,255,65,0.03)' }}
+            className="relative p-6 border-l-2 mb-4"
+            style={{ borderColor: '#FF0033', background: 'rgba(255,0,51,0.025)' }}
           >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00FF41] px-3 py-0.5">
-              <span className="text-[#0A0A0A] text-[8px] tracking-[0.4em] uppercase font-bold">
-                ⚡ CUPOS BETA LIMITADOS
-              </span>
-            </div>
-            <div className="pt-1">
-              <p className="text-[#00FF41] text-[10px] tracking-[0.5em] uppercase font-bold mb-0.5"
-                style={{ textShadow: '0 0 10px rgba(0,255,65,0.4)' }}>
-                LICENCIA DE FUNDADOR
-              </p>
-              <p className="text-white/30 text-[9px] tracking-[0.3em] uppercase">Experiencia Completa</p>
-            </div>
-            <ul className="space-y-2 flex-1">
-              {FOUNDER_FEATURES.map((f, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-[#00FF41] font-bold text-xs shrink-0 mt-0.5"
-                    style={{ textShadow: '0 0 8px rgba(0,255,65,0.5)' }}>✓</span>
-                  <span className="text-[#C0C0C0]/75 text-[10px] leading-5 tracking-wide">{f}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="border-t border-[#00FF41]/12 pt-4">
-              <p className="text-[#00FF41]/30 text-[8px] tracking-[0.5em] uppercase mb-1">PRECIO BETA</p>
-              <p className="text-[#00FF41] text-xl font-bold mb-3"
-                style={{ textShadow: '0 0 16px rgba(0,255,65,0.4)' }}>
-                ACCESO DE POR VIDA
-              </p>
-              <Link
-                href="/register"
-                className="block text-center border border-[#00FF41]/25 bg-[#00FF41]/[0.07] text-[#00FF41] text-[10px] tracking-[0.4em] uppercase py-3 w-full hover:bg-[#00FF41]/12 transition-colors duration-200"
-              >
-                {'[[ OBTENER LICENCIA DE FUNDADOR ]]'}
-              </Link>
-              <p className="text-white/10 text-[8px] tracking-[0.2em] text-center mt-2">
-                Este precio no vuelve una vez termine la Beta.
-              </p>
-            </div>
-          </div>
-
-          {/* Free */}
-          <div
-            className="p-5 flex flex-col gap-4 opacity-60"
-            style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(10,10,10,0.6)' }}
-          >
-            <div>
-              <p className="text-white/30 text-[10px] tracking-[0.5em] uppercase font-bold mb-0.5">MODO EXPLORACIÓN</p>
-              <p className="text-white/18 text-[9px] tracking-[0.3em] uppercase">Prueba de Lógica</p>
-            </div>
-            <ul className="space-y-2 flex-1">
-              {FREE_FEATURES.map((f, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className={`font-bold text-xs shrink-0 mt-0.5 ${f.ok ? 'text-white/30' : 'text-white/12'}`}>
-                    {f.ok ? '✓' : '—'}
-                  </span>
-                  <span className={`text-[10px] leading-5 tracking-wide ${f.ok ? 'text-white/38' : 'text-white/14 line-through decoration-white/10'}`}>
-                    {f.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <div className="border-t border-white/[0.05] pt-4">
-              <p className="text-white/15 text-[8px] tracking-[0.5em] uppercase mb-1">ACCESO BASE</p>
-              <p className="text-white/28 text-xl font-bold mb-3">GRATIS</p>
-              <Link
-                href="/register"
-                className="block text-center border border-white/10 text-white/20 text-[10px] tracking-[0.35em] uppercase py-3 w-full hover:border-white/20 hover:text-white/35 transition-colors duration-200"
-              >
-                {'[ Explorar el Nexo → ]'}
-              </Link>
-              <p className="text-white/08 text-[8px] tracking-[0.2em] text-center mt-2">
-                Sin tarjeta de crédito · Acceso inmediato
-              </p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── CTA final ─────────────────────────────────────────────────────── */}
-        <div className="text-center py-6 border border-[#00FF41]/08 mb-6" style={{ background: 'rgba(0,255,65,0.01)' }}>
-          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.25),transparent)' }} />
-          <h2
-            className="text-2xl sm:text-3xl font-bold tracking-[0.05em] uppercase leading-tight mb-2 text-white"
-            style={{ textShadow: '0 0 60px rgba(0,255,65,0.06)' }}
-          >
-            ¿VAS A <span className="text-white/22">OBSERVAR</span> EL SISTEMA,
-          </h2>
-          <h2
-            className="text-2xl sm:text-3xl font-bold tracking-[0.05em] uppercase leading-tight mb-6"
-          >
-            O VAS A{' '}
-            <span
-              className="text-[#00FF41]"
-              style={{ textShadow: '0 0 28px rgba(0,255,65,0.55), 0 0 56px rgba(0,255,65,0.18)' }}
-            >
-              CONSTRUIRLO?
-            </span>
-          </h2>
-          <div className="flex flex-col items-center gap-2">
-            <Link
-              href="/register"
-              className="border border-[#00FF41]/25 bg-[#00FF41]/[0.06] text-[#00FF41] text-[10px] tracking-[0.45em] uppercase px-10 py-4 hover:bg-[#00FF41]/10 transition-colors duration-200 inline-block"
-            >
-              {'[[ OBTENER LICENCIA DE FUNDADOR ]]'}
-            </Link>
-            <Link
-              href="/register"
-              className="text-[#00FF41]/20 text-[9px] tracking-[0.35em] uppercase hover:text-[#00FF41]/50 transition-colors duration-200"
-            >
-              {'[ Entrar al Nexo gratis → ]'}
-            </Link>
-            <p className="text-white/10 text-[8px] tracking-[0.3em] mt-1">
-              Sin tarjeta de crédito · Sin subscripciones · Acceso inmediato
+            <p className="text-base sm:text-lg font-black tracking-[0.05em] text-white/80 uppercase leading-snug mb-2">
+              La mayoría termina el curso.
+            </p>
+            <p className="text-base sm:text-lg font-black tracking-[0.05em] uppercase leading-snug">
+              <span className="text-[#FF0033]">Muy pocos</span>{' '}
+              <span className="text-white/80">aprenden a construir sistemas.</span>
+            </p>
+            <p className="text-[10px] text-[#00FF41]/40 tracking-[0.25em] mt-3 uppercase">
+              DAKI no te enseña a completar ejercicios. Te forja hasta que no los necesitás.
             </p>
           </div>
-        </div>
+        </motion.div>
 
-        {/* ── Footer ────────────────────────────────────────────────────────── */}
+        {/* ── Lo que obtenés gratis ────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.06 }}
+          className="mb-8"
+        >
+          <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 uppercase mb-4">
+            {'// ACCESO INMEDIATO — SIN TARJETA DE CRÉDITO'}
+          </p>
+
+          <div className="flex flex-col gap-2 mb-5">
+            {FREE_ACCESS.map(({ icon, label, detail }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + i * 0.05, duration: 0.2 }}
+                className="flex items-start gap-3 px-4 py-3 border border-[#00FF41]/10 bg-[#00FF41]/[0.025] transition-all duration-150"
+                onMouseEnter={e => {
+                  ;(e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,65,0.25)'
+                  ;(e.currentTarget as HTMLDivElement).style.background   = 'rgba(0,255,65,0.05)'
+                }}
+                onMouseLeave={e => {
+                  ;(e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,65,0.10)'
+                  ;(e.currentTarget as HTMLDivElement).style.background   = 'rgba(0,255,65,0.025)'
+                }}
+              >
+                <span className="text-[#00FF41] font-black text-xs shrink-0 mt-0.5"
+                  style={{ textShadow: '0 0 8px rgba(0,255,65,0.5)' }}>
+                  ✓
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black tracking-[0.2em] text-[#00FF41]/80 uppercase">{icon} {label}</span>
+                  <p className="text-[9px] text-[#00FF41]/40 tracking-wide mt-0.5">{detail}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Lo que te espera adentro (tease de membresía — sin precio) */}
+          <div
+            className="relative px-4 py-4 border border-dashed overflow-hidden"
+            style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(0,0,0,0.4)' }}
+          >
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.005) 8px, rgba(255,255,255,0.005) 9px)' }}
+            />
+            <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-3">
+              {'// UNA VEZ DENTRO — PRÓXIMAS FORMACIONES'}
+            </p>
+            <div className="flex flex-col gap-2">
+              {WHAT_AWAITS.map(({ label, color, status }) => (
+                <div key={label} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px]">🔒</span>
+                    <span className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: `${color}55` }}>
+                      {label}
+                    </span>
+                  </div>
+                  <span
+                    className="text-[7px] tracking-[0.3em] px-2 py-0.5 border"
+                    style={{ color: `${color}55`, borderColor: `${color}20`, background: `${color}05` }}
+                  >
+                    {status}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[8px] text-white/15 tracking-[0.25em] mt-3 italic">
+              Los verás en el Hub. Cuando quieras acceder, sabés dónde encontrarnos.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* ── CTA Principal ────────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
+          className="relative py-8 text-center border border-[#00FF41]/12 mb-6"
+          style={{ background: 'rgba(0,255,65,0.015)' }}
+        >
+          {/* Línea de pulso */}
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.4),transparent)' }}
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          />
+
+          <p className="text-xl sm:text-2xl font-black tracking-[0.04em] uppercase text-white/85 mb-1">
+            ¿VAS A SEGUIR MIRANDO
+          </p>
+          <p className="text-xl sm:text-2xl font-black tracking-[0.04em] uppercase mb-5">
+            O{' '}
+            <span
+              className="text-[#00FF41]"
+              style={{ textShadow: '0 0 24px rgba(0,255,65,0.55), 0 0 48px rgba(0,255,65,0.2)' }}
+            >
+              VAS A ENTRAR?
+            </span>
+          </p>
+
+          <div className="flex flex-col items-center gap-3">
+            <Link
+              href="/register"
+              className="group inline-block border text-[10px] tracking-[0.45em] uppercase px-10 py-4 transition-all duration-200"
+              style={{
+                borderColor: 'rgba(0,255,65,0.50)',
+                color:       '#00FF41',
+                background:  'rgba(0,255,65,0.07)',
+                boxShadow:   '0 0 20px rgba(0,255,65,0.08)',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLAnchorElement
+                el.style.background  = 'rgba(0,255,65,0.14)'
+                el.style.borderColor = '#00FF41'
+                el.style.boxShadow   = '0 0 32px rgba(0,255,65,0.22)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLAnchorElement
+                el.style.background  = 'rgba(0,255,65,0.07)'
+                el.style.borderColor = 'rgba(0,255,65,0.50)'
+                el.style.boxShadow   = '0 0 20px rgba(0,255,65,0.08)'
+              }}
+            >
+              {'[[ CREAR CREDENCIALES — ACCESO INMEDIATO ]]'}
+            </Link>
+
+            <Link
+              href="/login"
+              className="text-[#00FF41]/22 text-[9px] tracking-[0.35em] uppercase hover:text-[#00FF41]/50 transition-colors duration-200"
+            >
+              {'[ Ya tengo credenciales → Ingresar ]'}
+            </Link>
+
+            <p className="text-white/12 text-[8px] tracking-[0.3em] mt-1">
+              Sin tarjeta de crédito · Sin subscripción · Sin excusas
+            </p>
+          </div>
+
+          {/* Línea de pulso inferior */}
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 h-px"
+            style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.25),transparent)' }}
+            animate={{ opacity: [0.2, 0.7, 0.2] }}
+            transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+          />
+        </motion.div>
+
+        {/* ── Footer ──────────────────────────────────────────────────────────── */}
         <div className="border-t border-white/[0.04] pt-4 pb-2">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-5">
-              <p className="text-[#00FF41] text-xs font-bold tracking-[0.4em] uppercase"
-                style={{ textShadow: '0 0 8px rgba(0,255,65,0.3)' }}>
+            <div className="flex items-center gap-4">
+              <p
+                className="text-[#00FF41] text-xs font-black tracking-[0.4em] uppercase"
+                style={{ textShadow: '0 0 8px rgba(0,255,65,0.3)' }}
+              >
                 DAKIedtech
               </p>
               <p className="text-[#00FF41]/15 text-[9px] tracking-[0.25em] hidden sm:block">
