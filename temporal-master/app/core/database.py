@@ -277,3 +277,35 @@ async def init_db() -> None:
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_users_role ON users (role)"
         ))
+
+        # Columnas faltantes en DB legada (existían en el modelo pero no en el ALTER TABLE)
+        for stmt in [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS mission_state JSONB NOT NULL DEFAULT '{}'",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ",
+        ]:
+            await conn.execute(text(stmt))
+
+        # ── Migración de esquema legado → esquema canónico ────────────────────
+        # Renombra columnas del esquema v0 (alpha) al esquema v1 (producción).
+        # Idempotente: solo ejecuta si la columna vieja todavía existe.
+        for old_col, new_col in [
+            ("username",        "callsign"),
+            ("hashed_password", "password_hash"),
+            ("is_paid",         "is_licensed"),
+        ]:
+            await conn.execute(text(f"""
+                DO $$ BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='users' AND column_name='{old_col}'
+                    ) THEN
+                        ALTER TABLE users RENAME COLUMN {old_col} TO {new_col};
+                    END IF;
+                END $$;
+            """))
+
+        # Limpia emails con sufijo @quest.local del alpha (idempotente)
+        await conn.execute(text(
+            "UPDATE users SET email = REPLACE(email, '@quest.local', '') "
+            "WHERE email LIKE '%@quest.local'"
+        ))
