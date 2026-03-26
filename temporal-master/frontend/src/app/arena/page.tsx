@@ -6,7 +6,7 @@ import { useUserStore } from '@/store/userStore'
 import { useRouter } from 'next/navigation'
 import MobileGate from '@/components/UI/MobileGate'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

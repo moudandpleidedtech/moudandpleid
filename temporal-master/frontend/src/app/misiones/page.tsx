@@ -7,7 +7,7 @@ import { useUserStore } from '@/store/userStore'
 import MissionBriefingModal from '@/components/Game/MissionBriefingModal'
 import HackingTransition from '@/components/Game/HackingTransition'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 

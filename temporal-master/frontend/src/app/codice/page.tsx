@@ -7,7 +7,7 @@ import { useUserStore } from '@/store/userStore'
 import MissionBriefing from '@/components/Game/MissionBriefing'
 import MobileGate from '@/components/UI/MobileGate'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 interface KnowledgeEntry {
   id: string

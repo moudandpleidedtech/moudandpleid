@@ -13,7 +13,7 @@ export default function HealthCheckPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? ''
 
     fetch(`${apiUrl}/api/v1/health`)
       .then((res) => {
@@ -28,7 +28,7 @@ export default function HealthCheckPage() {
   return (
     <main style={{ fontFamily: 'monospace', padding: '2rem', background: '#0d0d0d', minHeight: '100vh', color: '#00FF41' }}>
       <h1>End-to-End Health Check</h1>
-      <p>Target: <code>{process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}/api/v1/health</code></p>
+      <p>Target: <code>{process.env.NEXT_PUBLIC_API_URL ?? ''}/api/v1/health</code></p>
       <hr style={{ borderColor: '#00FF4130', margin: '1rem 0' }} />
 
       {loading && <p>⏳ Connecting...</p>}

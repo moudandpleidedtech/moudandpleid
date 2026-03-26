@@ -7,7 +7,7 @@ import GridCanvas, { type CellType, type Coord, type EnemyEvent } from '@/compon
 import GlitchTransition from '@/components/Game/GlitchTransition'
 import MobileGate from '@/components/UI/MobileGate'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 // ─── Backgrounds por mapa ─────────────────────────────────────────────────────
 const MAP_BACKGROUNDS: Record<number, string> = {

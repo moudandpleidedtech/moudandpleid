@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import MobileGate from '@/components/UI/MobileGate'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 // ─── Concept list ─────────────────────────────────────────────────────────────
 
