@@ -33,7 +33,7 @@ const SHIFTS = [
 ]
 
 const FOUNDER_FEATURES = [
-  '100 Niveles completos — de Python a sistemas',
+  'Acceso a todas las Formaciones del Nexo',
   'IA de grado industrial · sin límites',
   'Misiones Clasificadas · proyectos reales',
   'Leaderboard + Insignias de Rango Operativo',
@@ -43,11 +43,11 @@ const FOUNDER_FEATURES = [
 ]
 
 const FREE_FEATURES = [
-  { text: 'Niveles 1 – 10 de 100',               ok: true  },
+  { text: 'Operación Python — acceso completo',   ok: true  },
   { text: 'IA limitada · 20 consultas / día',     ok: true  },
   { text: 'Misiones de calibración estándar',     ok: true  },
   { text: 'Leaderboard de Operadores',            ok: true  },
-  { text: 'Misiones Clasificadas',                ok: false },
+  { text: 'Formaciones avanzadas del Nexo',       ok: false },
   { text: 'Mentoría directa con creadores',       ok: false },
   { text: 'Sello de Operador Certificado',        ok: false },
 ]
@@ -236,7 +236,7 @@ export default function ActivacionSection() {
                 DAKIedtech
               </p>
               <p className="text-[#00FF41]/15 text-[9px] tracking-[0.25em] hidden sm:block">
-                Aprende Python como un Operador.
+                Entrena. Despliega. Domina el ecosistema.
               </p>
             </div>
             <div className="flex items-center gap-5">

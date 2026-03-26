@@ -342,10 +342,10 @@ export default function HubPage() {
       <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <span className="font-black tracking-widest text-sm" style={{ textShadow: '0 0 8px #00FF41' }}>
-            PYTHON QUEST
+            NEXO CENTRAL
           </span>
           <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 hidden sm:block">
-            {'// CENTRO DE MANDO ACTIVO'}
+            {'// ECOSISTEMA DE FORMACIONES ACTIVO'}
           </span>
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/45">
@@ -427,10 +427,16 @@ export default function HubPage() {
           {/* Label */}
           <div className="mb-2">
             <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/20 mb-1">
-              NAVEGACIÓN TÁCTICA
+              CATÁLOGO DE FORMACIONES
             </p>
             <div className="h-px bg-[#00FF41]/10 w-full" />
           </div>
+
+          {/* ── Mapa de Incursiones — visible al tope del panel ── */}
+          <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
+
+          {/* Separador */}
+          <div className="h-px bg-[#00FF41]/8 w-full" />
 
           {/* ── XP Progress Bar ── */}
           <motion.div
@@ -610,12 +616,6 @@ export default function HubPage() {
               ))}
             </div>
           </motion.div>
-
-          {/* Separador */}
-          <div className="h-px bg-[#00FF41]/8 w-full" />
-
-          {/* Mapa de Niebla — Incursiones del Nexo (D021/D022) */}
-          <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
 
           {/* ── Pase Alpha — visible solo si no tiene acceso activo ── */}
           {!isPaid && subscriptionStatus === 'INACTIVE' && (
