@@ -13,6 +13,7 @@ import MobileGate from '@/components/UI/MobileGate'
 import AlphaAccessModal from '@/components/UI/AlphaAccessModal'
 import BossWarningBanner from '@/components/UI/BossWarningBanner'
 import IncursionSelector from '@/components/Hub/IncursionSelector'
+import IntelReportModal from '@/components/Hub/IntelReportModal'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ export default function HubPage() {
   const [checkoutLoading,   setCheckoutLoading]    = useState(false)
   const [showRadar,          setShowRadar]          = useState(false)
   const [showFallas,         setShowFallas]         = useState(false)
+  const [showIntelReport,    setShowIntelReport]    = useState(false)
 
   // ── XP progress hacia próximo nivel ────────────────────────────────────────
   // Fórmula: level = floor(0.1 * sqrt(XP)) + 1  →  XP en nivel N = ((N-1)*10)²
@@ -337,6 +339,7 @@ export default function HubPage() {
       {/* Intel Modals */}
       {showRadar  && <RadarMaestriaModal userId={userId ?? ''} onClose={() => setShowRadar(false)} />}
       {showFallas && <ArchivoFallasModal userId={userId ?? ''} onClose={() => setShowFallas(false)} />}
+      <IntelReportModal isOpen={showIntelReport} onClose={() => setShowIntelReport(false)} userId={userId ?? ''} />
 
       {/* ── Header ── */}
       <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm">
@@ -353,9 +356,19 @@ export default function HubPage() {
           <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
           {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
+          <motion.button
+            onClick={() => setShowIntelReport(true)}
+            className="border px-3 py-1 text-[9px] font-mono tracking-widest cursor-pointer transition-all duration-150"
+            style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'rgba(255,184,0,0.65)' }}
+            whileHover={{ borderColor: 'rgba(255,184,0,0.70)', color: 'rgba(255,184,0,0.95)' }}
+            whileTap={{ scale: 0.96 }}
+            title="Reporte de Inteligencia — reportar bug o sugerencia"
+          >
+            ⚑ INTEL
+          </motion.button>
           <button
             onClick={handleLogout}
-            className="ml-4 text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all"
+            className="ml-1 text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all"
           >
             [ ABORTAR CONEXIÓN ]
           </button>

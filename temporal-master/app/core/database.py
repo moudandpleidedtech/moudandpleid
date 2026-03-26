@@ -60,6 +60,7 @@ async def init_db() -> None:
     import app.models.beta_code              # noqa: F401  — Beta Codes de acceso
     import app.models.incursion              # noqa: F401  — D021 Mapa de Niebla
     import app.models.challenge_prerequisite # noqa: F401  — D018 Árbol de Habilidades (N:M)
+    import app.models.intelligence_report    # noqa: F401  — D026 Reporte de Inteligencia
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
