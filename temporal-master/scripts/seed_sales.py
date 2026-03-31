@@ -12,48 +12,32 @@ except Exception as e:
 
 SALES_MASTERY = []
 
-# Extraer todos los niveles de levels_data
-# codex_sales_mastery.json tiene "phases" y dentro "modules" o "boss_challenges"
-for phase in arch.get("phases", []):
-    for module in phase.get("modules", []):
-        for lvl in module.get("sample_levels", []):
-            SALES_MASTERY.append({
-                "codex_id": "sales_mastery_v1",
-                "level_order": lvl.get("level"),
-                "title": lvl.get("title", ""),
-                "description": lvl.get("business_context", "Sin descripción"),
-                "difficulty": lvl.get("difficulty", "medium"),
-                "difficulty_tier": 2 if lvl.get("difficulty") == "medium" else (3 if lvl.get("difficulty") == "expert" else 1),
-                "base_xp_reward": lvl.get("xp_reward", 100),
-                "is_project": False,
-                "challenge_type": lvl.get("format", "scenario"),
-                "phase": phase.get("phase_codename", "desafio_sales"),
-                "lore_briefing": lvl.get("scenario", ""),
-                "pedagogical_objective": lvl.get("operator_task", ""),
-                "initial_code": "",
-                "expected_output": "",
-                "hints_json": "[]",
-                "test_inputs_json": "[]",
-                "concepts_taught_json": "[]"
-            })
-    boss = phase.get("phase_boss")
-    if boss:
+def _tier(difficulty: str) -> int:
+    return {"easy": 1, "medium": 2, "hard": 3, "expert": 3}.get(difficulty, 2)
+
+# codex_sales_mastery.json: sectors → levels
+for sector in arch.get("sectors", []):
+    phase_name = sector.get("sector_name", "sales")
+    for lvl in sector.get("levels", []):
+        import json as _json
+        concepts = lvl.get("concepts_taught", [])
         SALES_MASTERY.append({
-            "codex_id": "sales_mastery_v1",
-            "level_order": boss.get("level"),
-            "title": boss.get("boss_codename", ""),
-            "description": boss.get("scenario", "Boss Battle"),
-            "difficulty": "expert",
-            "difficulty_tier": 3,
-            "base_xp_reward": boss.get("phase_reward", {}).get("xp_reward", 800),
-            "is_project": True,
-            "challenge_type": "boss_battle",
-            "phase": phase.get("phase_codename", "desafio_sales"),
-            "lore_briefing": boss.get("scenario", ""),
-            "pedagogical_objective": boss.get("win_condition", ""),
-            "initial_code": "",
-            "expected_output": "",
-            "hints_json": "[]",
-            "test_inputs_json": "[]",
-            "concepts_taught_json": "[]"
+            "codex_id":             "sales_mastery_v1",
+            "level_order":          lvl.get("level_order"),
+            "title":                lvl.get("title", ""),
+            "description":          lvl.get("subtitle", lvl.get("lore_briefing", "Sin descripción")),
+            "difficulty":           lvl.get("difficulty", "medium"),
+            "difficulty_tier":      _tier(lvl.get("difficulty", "medium")),
+            "base_xp_reward":       lvl.get("xp_reward", 100),
+            "is_project":           lvl.get("is_boss_battle", False),
+            "challenge_type":       lvl.get("challenge_type", "scenario"),
+            "phase":                phase_name,
+            "lore_briefing":        lvl.get("lore_briefing", ""),
+            "pedagogical_objective": lvl.get("pedagogical_objective", ""),
+            "theory_content":       lvl.get("example_strong_response", ""),
+            "initial_code":         "",
+            "expected_output":      "",
+            "hints_json":           "[]",
+            "test_inputs_json":     "[]",
+            "concepts_taught_json": _json.dumps(concepts, ensure_ascii=False),
         })
