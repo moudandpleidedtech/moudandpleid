@@ -4,12 +4,13 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.challenge import Challenge
 from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
@@ -154,7 +155,9 @@ async def _upsert_metric(
         "and automatically triggers gamification scoring."
     ),
 )
+@limiter.limit("20/minute")
 async def execute_challenge_code(
+    request: Request,
     payload: CodeExecuteRequest,
     db: AsyncSession = Depends(get_db),
 ) -> CodeExecuteResponse:

@@ -54,7 +54,8 @@ INCURSIONS: list[dict] = [
         "descripcion": (
             "Aprende a gestionar equipos de ingeniería desde las trincheras. "
             "Crisis de oficina, decisiones bajo presión, stakeholders imposibles. "
-            "El Desafío 00 te convertirá en el gerente que ningún equipo quiere perder."
+            "El Desafío 00 te convertirá en el gerente que ningún equipo quiere perder. "
+            "[ACCESO ANTICIPADO — contenido en expansión activa]"
         ),
         "status":           "ACTIVE",
         "system_prompt_id": "tpm",

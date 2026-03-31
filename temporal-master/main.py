@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -11,6 +12,23 @@ from app.api.v1.router import router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.core.rate_limit import limiter
+
+# ── Sentry (error tracking) ───────────────────────────────────────────────────
+# Activar: agregar SENTRY_DSN en las env vars de Render.
+# Obtener DSN: sentry.io → nuevo proyecto → Python → DSN.
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if _SENTRY_DSN:
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            traces_sample_rate=0.2,   # 20% de requests trackeadas (bajo impacto)
+            profiles_sample_rate=0.1,
+            environment="production" if not settings.DEBUG else "development",
+        )
+        print("✅  [sentry] Error tracking activo.")
+    except ImportError:
+        print("⚠️  [sentry] sentry-sdk no instalado — pip install sentry-sdk")
 
 
 async def _auto_seed() -> None:
@@ -107,10 +125,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    # Documentación interactiva solo en modo DEBUG; ocultarla en producción
-    # evita exponer la superficie de la API a actores no deseados.
+    # Documentación interactiva y schema solo en modo DEBUG.
+    # En producción ocultamos toda la superficie de la API a actores no deseados.
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
