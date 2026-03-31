@@ -70,25 +70,26 @@ export default function AlphaAccessModal({ visible, onClose, onGranted }: Props)
         body: JSON.stringify({ code }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as { detail?: string }))
         setRedeemState('error')
         setFeedbackMsg(
-          ERROR_MESSAGES[res.status] ?? data.detail ?? 'Error desconocido. Intenta de nuevo.'
+          ERROR_MESSAGES[res.status] ?? errBody.detail ?? 'Error desconocido. Intenta de nuevo.'
         )
         return
       }
 
-      // Éxito
+      const data = await res.json() as { trial_end_date?: string; message?: string }
+
+      // Store actualizado ANTES del delay visual — previene pérdida de estado
+      // si el operador cierra el modal durante el período de feedback
+      onGranted(data.trial_end_date ?? '')
+
       setTrialEndDate(data.trial_end_date ?? '')
       setRedeemState('success')
       setFeedbackMsg(data.message ?? 'Acceso Nivel Vanguardia Concedido. Bienvenido al Nexo.')
 
-      setTimeout(() => {
-        onGranted(data.trial_end_date ?? '')
-        onClose()
-      }, 1800)
+      setTimeout(() => { onClose() }, 1800)
 
     } catch {
       setRedeemState('error')

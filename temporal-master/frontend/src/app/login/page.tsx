@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -27,6 +28,12 @@ interface ConsoleLine { text: string; state: ConsoleState }
 
 export default function LoginPage() {
   const router = useRouter()
+  const { _hasHydrated, userId, setUser } = useUserStore()
+
+  // Guard inverso: sesión activa en el store → no mostrar login
+  useEffect(() => {
+    if (_hasHydrated && userId) router.replace('/hub')
+  }, [_hasHydrated, userId, router])
 
   const [bootLines,    setBootLines]    = useState<string[]>([])
   const [bootDone,     setBootDone]     = useState(false)
@@ -71,13 +78,22 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json() as {
           access_token: string; user_id: string; callsign: string
-          level: number; is_licensed: boolean
+          level: number; is_licensed: boolean; role?: string
         }
         localStorage.setItem('daki_token',    data.access_token)
         localStorage.setItem('daki_user_id',  data.user_id)
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))
         localStorage.setItem('daki_licensed', String(data.is_licensed))
+        setUser({
+          id:           data.user_id,
+          username:     data.callsign,
+          current_level: data.level,
+          total_xp:     0,
+          streak_days:  0,
+          is_paid:      data.is_licensed,
+          role:         data.role,
+        })
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
         setConsole({ text: `ACCESO CONCEDIDO. BIENVENIDO, ${data.callsign}.`, state: 'success' })
         setTimeout(() => router.push('/hub'), 1000)

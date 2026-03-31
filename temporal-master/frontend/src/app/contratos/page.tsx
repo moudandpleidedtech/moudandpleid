@@ -45,18 +45,19 @@ const CONTRACT_COLORS: Record<number, { border: string; glow: string; accent: st
 
 export default function ContratosPage() {
   const router = useRouter()
-  const { userId, username, level } = useUserStore()
+  const { _hasHydrated, userId, username, level } = useUserStore()
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!userId) { router.replace('/'); return }
+    if (!_hasHydrated) return
+    if (!userId) { router.replace('/login'); return }
     fetch(`${API_BASE}/api/v1/contracts?user_id=${userId}`)
       .then(r => r.json())
       .then((data: Contract[]) => setContracts(data))
       .catch(() => setContracts([]))
       .finally(() => setLoading(false))
-  }, [userId, router])
+  }, [_hasHydrated, userId, router])
 
   const completed = contracts.filter(c => c.completed).length
   const total = contracts.length

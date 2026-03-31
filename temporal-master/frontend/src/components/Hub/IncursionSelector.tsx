@@ -19,9 +19,7 @@ interface IncursionData {
 }
 
 interface Props {
-  /** Callback de navegación — recibe la ruta destino (ej. "/misiones") */
   onNavigate: (path: string) => void
-  /** True si el usuario autenticado tiene rol FOUNDER — muestra candado dorado en nodos ENCRYPTED */
   isFounder?: boolean
 }
 
@@ -30,6 +28,7 @@ interface Props {
 export default function IncursionSelector({ onNavigate, isFounder = false }: Props) {
   const [incursions, setIncursions] = useState<IncursionData[]>([])
   const [loading,    setLoading]    = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const [glitching,  setGlitching]  = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,14 +36,21 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
     const controller = new AbortController()
 
     fetch(`${API}/api/v1/incursions`, { signal: controller.signal })
-      .then(r => r.ok ? r.json() as Promise<IncursionData[]> : [])
-      .then(data => { setIncursions(data); setLoading(false) })
-      .catch(e => { if (e.name !== 'AbortError') setLoading(false) })
+      .then(r => r.json() as Promise<unknown>)
+      .then(data => {
+        console.log('DATA DEL BACKEND:', data)
+        setIncursions(Array.isArray(data) ? data as IncursionData[] : [])
+        setLoading(false)
+      })
+      .catch(e => {
+        if (e.name === 'AbortError') return
+        setFetchError(true)
+        setLoading(false)
+      })
 
     return () => controller.abort()
   }, [])
 
-  // Activa efecto glitch aleatorio en nodos ENCRYPTED cada ~5 segundos
   useEffect(() => {
     const encrypted = incursions.filter(i => i.status === 'ENCRYPTED')
     if (!encrypted.length) return
@@ -58,65 +64,104 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
     return () => clearInterval(iv)
   }, [incursions])
 
-  // ── Loading skeleton ────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1 font-mono">
-          MÓDULOS DE ESPECIALIZACIÓN
+          CARGANDO INTEL...
         </p>
-        {[1, 2, 3, 4].map(i => (
-          <motion.div
-            key={i}
-            className="h-20 rounded"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.15 }}
-          />
-        ))}
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <motion.div
+              key={i}
+              className="h-[160px] rounded-sm"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+              animate={{ opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.2 }}
+            />
+          ))}
+        </div>
       </div>
     )
   }
 
+  if (fetchError) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1 font-mono">
+          MÓDULOS DE FORMACIÓN
+        </p>
+        <div className="flex items-center justify-center py-10">
+          <p className="text-[9px] tracking-[0.3em] font-mono" style={{ color: 'rgba(255,80,50,0.55)' }}>
+            SIN SEÑAL CON EL NEXO — RECARGA PARA REINTENTAR
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ACTIVE primero (ordenadas por `orden`), luego ENCRYPTED — todas visibles
+  const visible = [
+    ...incursions.filter(i => i.status === 'ACTIVE'),
+    ...incursions.filter(i => i.status === 'ENCRYPTED'),
+  ]
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Header */}
-      <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1 font-mono uppercase">
-        Módulos de Especialización
-      </p>
+    <div className="flex flex-col gap-3">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between">
+        <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/20 font-mono uppercase">
+          Módulos de Formación
+        </p>
+        <span className="text-[7px] tracking-[0.3em] font-mono" style={{ color: 'rgba(0,255,65,0.18)' }}>
+          {incursions.filter(i => i.status === 'ACTIVE').length} ACTIVOS · {incursions.filter(i => i.status === 'ENCRYPTED').length} PRÓXIMOS
+        </span>
+      </div>
 
-      {/* Incursion cards */}
-      <AnimatePresence>
-        {incursions.map((inc, i) => {
-          const isActive    = inc.status === 'ACTIVE'
-          const isGlitching = glitching === inc.slug
-          const color       = inc.color_acento
+      {/* ── Grid de tarjetas — todas visibles ── */}
+      <div className="grid grid-cols-2 gap-4 min-h-[200px]">
+        <AnimatePresence mode="popLayout">
+          {visible.map((inc, i) => {
+            const isActive    = inc.status === 'ACTIVE'
+            const isGlitching = glitching === inc.slug
 
-          return (
+            return (
+              <motion.div
+                key={inc.slug}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ delay: i * 0.06, duration: 0.25, ease: 'easeOut' }}
+              >
+                {isActive ? (
+                  <ActiveCard
+                    inc={inc}
+                    onEnter={() => inc.ruta && onNavigate(inc.ruta)}
+                  />
+                ) : (
+                  <EncryptedCard
+                    inc={inc}
+                    glitching={isGlitching}
+                    isFounder={isFounder}
+                    onEnter={() => inc.ruta && onNavigate(inc.ruta)}
+                  />
+                )}
+              </motion.div>
+            )
+          })}
+          {visible.length === 0 && (
             <motion.div
-              key={inc.slug}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.3, ease: 'easeOut' }}
+              key="empty"
+              className="col-span-2 flex items-center justify-center py-10"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             >
-              {isActive ? (
-                <ActiveCard
-                  inc={inc}
-                  color={color}
-                  onEnter={() => inc.ruta && onNavigate(inc.ruta)}
-                />
-              ) : (
-                <EncryptedCard
-                  inc={inc}
-                  color={color}
-                  glitching={isGlitching}
-                  isFounder={isFounder}
-                />
-              )}
+              <p className="text-[9px] tracking-[0.4em] text-[#00FF41]/20 font-mono">
+                SIN FORMACIONES DISPONIBLES
+              </p>
             </motion.div>
-          )
-        })}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
@@ -125,85 +170,95 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
 
 function ActiveCard({
   inc,
-  color,
   onEnter,
 }: {
   inc:     IncursionData
-  color:   string
   onEnter: () => void
 }) {
+  const color = inc.color_acento
+
   return (
     <motion.div
-      className="relative overflow-hidden"
+      className="relative overflow-hidden flex flex-col cursor-pointer"
       style={{
-        border:     `1px solid ${color}40`,
-        background: `${color}06`,
-        boxShadow:  `0 0 14px ${color}10`,
+        border:     `1px solid ${color}55`,
+        background: `${color}08`,
+        boxShadow:  `0 0 24px ${color}12, inset 0 0 20px ${color}04`,
+        minHeight:  '200px',
       }}
       whileHover={{
-        borderColor: `${color}88`,
-        boxShadow:   `0 0 22px ${color}20`,
+        borderColor: `${color}cc`,
+        boxShadow:   `0 0 32px ${color}30, inset 0 0 20px ${color}08`,
       }}
+      whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.15 }}
+      onClick={onEnter}
     >
       {/* Línea de pulso superior */}
       <motion.div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }}
-        animate={{ opacity: [0.3, 0.9, 0.3] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-0 left-0 right-0 h-[2px]"
+        style={{ background: `linear-gradient(90deg, transparent, ${color}cc, transparent)` }}
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
       />
 
       {/* Badge ACTIVO */}
-      <div className="absolute top-2 right-2 flex items-center gap-1">
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
         <motion.span
-          className="w-1.5 h-1.5 rounded-full"
+          className="w-2 h-2 rounded-full"
           style={{ background: color }}
-          animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
+          animate={{ opacity: [1, 0.3, 1], scale: [1, 1.5, 1] }}
           transition={{ duration: 1.6, repeat: Infinity }}
         />
-        <span className="text-[7px] tracking-widest font-mono" style={{ color: `${color}77` }}>
+        <span className="text-[8px] tracking-widest font-mono" style={{ color: `${color}99` }}>
           ACTIVO
         </span>
       </div>
 
-      <div className="px-3 pt-2.5 pb-2.5">
-        {/* Ícono + Título */}
-        <div className="flex items-start gap-1.5 mb-1.5 pr-14">
-          <span style={{ color, fontSize: '11px', marginTop: '1px', flexShrink: 0 }}>{inc.icono}</span>
-          <span
-            className="text-[9px] font-black tracking-widest uppercase font-mono leading-tight"
-            style={{ color, textShadow: `0 0 6px ${color}66` }}
-          >
-            {inc.titulo}
-          </span>
-        </div>
-
-        {/* Descripción */}
-        <p
-          className="text-[7px] leading-relaxed font-mono mb-2.5 line-clamp-2"
-          style={{ color: `${color}60` }}
+      <div className="flex flex-col flex-1 p-5 pt-4">
+        {/* Ícono */}
+        <motion.span
+          className="text-3xl mb-2 block leading-none select-none"
+          style={{ filter: `drop-shadow(0 0 12px ${color}aa)` }}
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 3, repeat: Infinity }}
         >
-          {inc.descripcion}
+          {inc.icono}
+        </motion.span>
+
+        {/* Título */}
+        <span
+          className="text-base font-black tracking-widest uppercase font-mono leading-snug mb-1 block"
+          style={{ color, textShadow: `0 0 12px ${color}66` }}
+        >
+          {inc.titulo}
+        </span>
+
+        {/* Teaser Description */}
+        <p
+          className="text-[11px] leading-relaxed font-mono opacity-80 line-clamp-3 mb-auto"
+          style={{ color }}
+        >
+          {inc.descripcion || 'Módulo de formación confidencial en estado activo.'}
         </p>
 
-        {/* Botón de entrada */}
+        {/* Botón INGRESAR */}
         <motion.button
-          onClick={onEnter}
-          className="w-full text-center text-[8px] tracking-[0.25em] uppercase font-mono py-1.5"
+          onClick={(e) => { e.stopPropagation(); onEnter() }}
+          className="mt-4 w-full text-center text-[10px] tracking-[0.35em] uppercase font-mono py-2.5 relative overflow-hidden"
           style={{
-            border:     `1px solid ${color}55`,
+            border:     `1px solid ${color}66`,
             color:      color,
-            background: `${color}10`,
+            background: `${color}12`,
           }}
           whileHover={{
-            background:  `${color}20`,
-            borderColor: `${color}99`,
-            boxShadow:   `0 0 12px ${color}25`,
+            background:  `${color}28`,
+            borderColor: `${color}cc`,
+            boxShadow:   `0 0 14px ${color}30`,
           }}
-          whileTap={{ scale: 0.97 }}
+          whileTap={{ scale: 0.96 }}
         >
-          ▶ INICIAR INCURSIÓN
+          ▶ INGRESAR
         </motion.button>
       </div>
     </motion.div>
@@ -214,39 +269,42 @@ function ActiveCard({
 
 function EncryptedCard({
   inc,
-  color,
   glitching,
   isFounder,
+  onEnter,
 }: {
   inc:       IncursionData
-  color:     string
   glitching: boolean
   isFounder: boolean
+  onEnter:   () => void
 }) {
-  const lockColor = isFounder ? '#FFC700' : color
-  const dimFactor = isFounder ? 1 : 0.65
+  const color = inc.color_acento
 
   return (
     <motion.div
-      className="relative overflow-hidden"
+      className={`relative overflow-hidden flex flex-col group${isFounder ? ' cursor-pointer' : ''}`}
       style={{
-        border:     `1px solid ${color}${isFounder ? '35' : '22'}`,
-        background: `${color}${isFounder ? '06' : '03'}`,
-        opacity:    dimFactor,
+        border:     `1px solid ${isFounder ? color + '55' : 'rgba(60,60,80,0.5)'}`,
+        background: isFounder ? `${color}08` : 'rgba(8,8,14,0.7)',
+        minHeight:  '200px',
+        boxShadow:  isFounder ? `0 0 24px ${color}12` : 'none',
       }}
       animate={
         glitching && !isFounder
-          ? { x: [-2, 3, -1, 2, 0], opacity: [0.65, 0.9, 0.45, 0.75, 0.65] }
+          ? { x: [-2, 3, -1, 2, 0], opacity: [0.55, 0.85, 0.45, 0.65, 0.55] }
           : {}
       }
-      transition={{ duration: 0.25, ease: 'linear' }}
+      whileHover={isFounder ? { borderColor: `${color}cc`, boxShadow: `0 0 32px ${color}30` } : { borderColor: 'rgba(90,90,120,0.6)' }}
+      whileTap={isFounder ? { scale: 0.98 } : {}}
+      transition={{ duration: 0.15, ease: 'linear' }}
+      onClick={isFounder ? onEnter : undefined}
     >
-      {/* Scanline de cifrado (solo en USER durante glitch) */}
+      {/* Scanlines de cifrado (solo durante glitch) */}
       {glitching && !isFounder && (
         <motion.div
           className="absolute inset-0 pointer-events-none z-10"
           style={{
-            background: `repeating-linear-gradient(0deg, transparent, transparent 2px, ${color}08 2px, ${color}08 3px)`,
+            background: `repeating-linear-gradient(0deg, transparent, transparent 2px, ${color}0a 2px, ${color}0a 3px)`,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1, 0] }}
@@ -254,96 +312,124 @@ function EncryptedCard({
         />
       )}
 
-      {/* Línea de pulso superior (FOUNDER: dorado | USER: color del acento dimmed) */}
+      {/* Línea superior */}
       <motion.div
         className="absolute top-0 left-0 right-0 h-px"
         style={{
           background: isFounder
-            ? 'linear-gradient(90deg, transparent, #FFC70055, transparent)'
-            : `linear-gradient(90deg, transparent, ${color}25, transparent)`,
+            ? 'linear-gradient(90deg, transparent, #FFC70044, transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(60,60,80,0.5), transparent)',
         }}
         animate={{ opacity: [0.2, 0.7, 0.2] }}
-        transition={{ duration: isFounder ? 2.5 : 4, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: isFounder ? 2.5 : 5, repeat: Infinity }}
       />
 
-      {/* Overlay de cifrado — rejilla sutil (solo USER) */}
-      {!isFounder && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.008) 8px, rgba(255,255,255,0.008) 9px)',
-          }}
-        />
-      )}
-
-      {/* Badge de estado — esquina superior derecha */}
-      <div className="absolute top-2 right-2 flex items-center gap-1">
+      {/* Badge */}
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
         {isFounder ? (
           <>
             <motion.span
-              className="text-[8px]"
-              style={{ filter: 'drop-shadow(0 0 4px #FFC70099)' }}
-              animate={{ opacity: [1, 0.6, 1] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-            >
-              🔓
-            </motion.span>
-            <span className="text-[6px] tracking-widest font-mono" style={{ color: '#FFC70077' }}>
-              GOD MODE
+              className="w-2 h-2 rounded-full"
+              style={{ background: color }}
+              animate={{ opacity: [1, 0.3, 1], scale: [1, 1.5, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity }}
+            />
+            <span className="text-[8px] tracking-widest font-mono" style={{ color: `${color}99` }}>
+              FOUNDER
             </span>
           </>
         ) : (
-          <>
-            <span className="text-[8px]" style={{ filter: `drop-shadow(0 0 3px ${color}55)` }}>
-              🔒
-            </span>
-          </>
+          <span className="text-sm leading-none" style={{ opacity: 0.25 }}>🔒</span>
         )}
       </div>
 
-      <div className="px-3 pt-2.5 pb-2.5">
-        {/* Ícono + Título */}
-        <div className="flex items-start gap-1.5 mb-1.5 pr-14">
-          <span style={{ color: `${color}${isFounder ? 'bb' : '66'}`, fontSize: '11px', marginTop: '1px', flexShrink: 0 }}>
-            {inc.icono}
-          </span>
+      <div className="flex flex-col flex-1 p-5 pt-4 z-10 relative">
+        {/* Ícono y Lock */}
+        <div className="flex justify-between items-start mb-2 group">
           <span
-            className="text-[9px] font-black tracking-widest uppercase font-mono leading-tight"
+            className="text-3xl leading-none select-none transition-opacity duration-300"
             style={{
-              color:      isFounder ? `${color}cc` : `${color}77`,
-              textShadow: isFounder ? `0 0 6px ${color}44` : 'none',
+              color:   isFounder ? color : 'rgba(80,80,110,0.8)',
+              opacity: isFounder ? 0.6 : 1,
+              filter:  isFounder ? `drop-shadow(0 0 8px ${color}55)` : 'none',
             }}
           >
-            {inc.titulo}
+            {inc.icono}
           </span>
+          {!isFounder && (
+            <span className="text-[rgba(60,60,80,0.8)] transition-colors duration-300 group-hover:text-[rgba(255,184,0,0.75)]">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+          )}
         </div>
 
-        {/* Descripción */}
-        <p
-          className="text-[7px] leading-relaxed font-mono mb-2.5 line-clamp-2"
-          style={{ color: isFounder ? `${color}55` : `${color}35` }}
-        >
-          {inc.descripcion}
-        </p>
-
-        {/* CTA — deshabilitado pero visualmente consistente */}
-        <div
-          className="w-full text-center text-[8px] tracking-[0.2em] uppercase font-mono py-1.5 select-none"
+        {/* Título */}
+        <span
+          className="text-base font-black tracking-widest uppercase font-mono leading-snug mb-1 block"
           style={{
-            border:     isFounder
-              ? `1px solid #FFC70030`
-              : `1px solid ${color}18`,
-            color:      isFounder ? '#FFC70055' : `${color}35`,
-            background: isFounder ? '#FFC70008' : `${color}04`,
+            color: isFounder ? `${color}88` : 'rgba(110,110,130,0.9)',
           }}
         >
-          {isFounder
-            ? '🔓 ACCESO FOUNDER — EN CONSTRUCCIÓN'
-            : `▸ ${inc.slug === 'tpm-mastery'      ? 'PRÓXIMAMENTE · FASE 2'
-                : inc.slug === 'red-team'           ? 'PRÓXIMAMENTE · FASE 3'
-                :                                    'PRÓXIMAMENTE · FASE 4'}`
-          }
-        </div>
+          {inc.titulo}
+        </span>
+
+        {/* Teaser Description */}
+        <p
+          className="text-[11px] leading-relaxed font-mono opacity-80 line-clamp-3 mb-auto"
+          style={{ color: isFounder ? `${color}aa` : 'rgba(90,90,110,0.85)' }}
+        >
+          {inc.descripcion || 'Archivo clasificado. Se requiere autorización de Nivel Superior para visibilidad.'}
+        </p>
+
+        {/* CTA Hover Efecto */}
+        {isFounder ? (
+          <motion.button
+            onClick={(e) => { e.stopPropagation(); onEnter() }}
+            className="mt-4 w-full text-center text-[10px] tracking-[0.35em] uppercase font-mono py-2.5"
+            style={{
+              border:     `1px solid ${color}66`,
+              color:      color,
+              background: `${color}12`,
+            }}
+            whileHover={{
+              background:  `${color}28`,
+              borderColor: `${color}cc`,
+              boxShadow:   `0 0 14px ${color}30`,
+            }}
+            whileTap={{ scale: 0.96 }}
+          >
+            ▶ INGRESAR
+          </motion.button>
+        ) : (
+          <div className="relative mt-4">
+            <div
+              className="w-full text-center text-[10px] tracking-[0.2em] uppercase font-mono py-2.5 select-none transition-opacity duration-300 opacity-100 group-hover:opacity-0"
+              style={{
+                border:     '1px solid rgba(60,60,80,0.35)',
+                color:      'rgba(80,80,100,0.75)',
+                background: 'transparent',
+              }}
+            >
+              {inc.slug === 'tpm-mastery' || inc.slug.includes('tpm') ? 'EXPANSIÓN PENDIENTE'
+              : inc.slug === 'red-team' || inc.slug.includes('sales')  ? 'ACCESO RESTRINGIDO'
+              : 'PRÓXIMAMENTE'}
+            </div>
+            
+            <div
+              className="absolute inset-0 flex items-center justify-center w-full text-center text-[9px] tracking-[0.1em] uppercase font-mono py-2.5 select-none transition-all duration-300 opacity-0 group-hover:opacity-100 scale-[0.98] group-hover:scale-100"
+              style={{
+                border:     '1px dashed rgba(255,184,0,0.4)',
+                color:      'rgba(255,184,0,0.85)',
+                background: 'rgba(255,184,0,0.08)',
+              }}
+            >
+              [ DESBLOQUEA DOMINANDO EL NIVEL ANTERIOR ]
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   )

@@ -31,9 +31,9 @@ interface Props {
 
 // ── SVG Radar Chart ────────────────────────────────────────────────────────────
 
-const CX = 140
-const CY = 140
-const MAX_R = 100
+const CX = 240
+const CY = 220
+const MAX_R = 110
 const RINGS = [25, 50, 75, 100]
 const RING_LABELS = ['25', '50', '75', '100']
 
@@ -63,7 +63,7 @@ function RadarSVG({ axes }: { axes: Axis[] }) {
   }
 
   return (
-    <svg width="280" height="280" viewBox="0 0 280 280" className="mx-auto">
+    <svg width="100%" height="auto" viewBox="0 0 480 440" className="mx-auto overflow-visible" style={{ maxWidth: '480px' }}>
       {/* Anillos de referencia */}
       {RINGS.map((r, i) => (
         <path
@@ -81,8 +81,8 @@ function RadarSVG({ axes }: { axes: Axis[] }) {
           key={label}
           x={CX + 3}
           y={CY - ((RINGS[i] / 100) * MAX_R) + 4}
-          fill="rgba(0,255,65,0.20)"
-          fontSize="7"
+          fill="rgba(0,255,65,0.40)"
+          fontSize="9"
           fontFamily="monospace"
         >
           {label}
@@ -125,7 +125,7 @@ function RadarSVG({ axes }: { axes: Axis[] }) {
 
       {/* Etiquetas de categorías */}
       {axes.map((a, i) => {
-        const [x, y] = polarToXY(angles[i], MAX_R + 18)
+        const [x, y] = polarToXY(angles[i], MAX_R + 25)
         const anchor = x < CX - 5 ? 'end' : x > CX + 5 ? 'start' : 'middle'
         return (
           <text
@@ -134,12 +134,14 @@ function RadarSVG({ axes }: { axes: Axis[] }) {
             y={y.toFixed(1)}
             textAnchor={anchor}
             dominantBaseline="middle"
-            fill={a.needs_reinforcement ? 'rgba(255,184,0,0.75)' : 'rgba(0,255,65,0.55)'}
-            fontSize="8"
+            fill={a.needs_reinforcement ? '#FFB800' : '#00FF41'}
+            fontSize="12"
             fontFamily="monospace"
             fontWeight="bold"
+            letterSpacing="0.05em"
+            style={{ textShadow: '0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,1)' }}
           >
-            {a.category}
+            {a.category.toUpperCase()}
           </text>
         )
       })}
@@ -175,7 +177,7 @@ export default function RadarMaestriaModal({ userId, onClose }: Props) {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative w-full max-w-md bg-[#060D06] border border-[#00FF41]/25 font-mono overflow-hidden"
+            className="relative w-full max-w-lg bg-[#060D06] border border-[#00FF41]/25 font-mono overflow-hidden"
             style={{ boxShadow: '0 0 60px rgba(0,255,65,0.10)' }}
             initial={{ scale: 0.90, y: 20 }} animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0 }}

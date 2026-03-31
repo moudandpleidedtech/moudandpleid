@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import BitacoraModal, { countNewArchives } from '@/components/Game/BitacoraModal'
 import HubAudio from '@/components/UI/HubAudio'
@@ -178,20 +178,79 @@ function TacticButton({
   )
 }
 
+// ─── Glitch CTA ────────────────────────────────────────────────────────────────
+
+function GlitchCTA({ onClick }: { onClick: () => void }) {
+  const [flash, setFlash] = useState(false)
+  return (
+    <motion.button
+      onClick={onClick}
+      onHoverStart={() => { setFlash(true); setTimeout(() => setFlash(false), 380) }}
+      className="relative w-full max-w-xs px-6 py-4 border font-mono overflow-hidden mx-auto block"
+      style={{
+        borderColor: 'rgba(0,255,65,0.55)',
+        background:  'rgba(0,255,65,0.07)',
+        boxShadow:   '0 0 24px rgba(0,255,65,0.08)',
+      }}
+      whileHover={{
+        borderColor: 'rgba(0,255,65,0.95)',
+        boxShadow:   '0 0 36px rgba(0,255,65,0.22)',
+      }}
+      whileTap={{ scale: 0.97 }}
+    >
+      {/* Línea pulso superior */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-[2px]"
+        style={{ background: 'linear-gradient(90deg, transparent, #00FF41cc, transparent)' }}
+        animate={{ opacity: [0.3, 1, 0.3] }}
+        transition={{ duration: 1.8, repeat: Infinity }}
+      />
+      {/* Flash glitch al hover */}
+      <AnimatePresence>
+        {flash && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'rgba(0,255,65,0.18)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.5, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+          />
+        )}
+      </AnimatePresence>
+      <span
+        className="relative text-[11px] font-black tracking-[0.4em] uppercase"
+        style={{ color: '#00FF41', textShadow: '0 0 10px rgba(0,255,65,0.8)' }}
+      >
+        [[ CONTINUAR MISIÓN ACTUAL ]]
+      </span>
+      {/* Línea pulso inferior */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,255,65,0.5), transparent)' }}
+        animate={{ opacity: [0.2, 0.8, 0.2] }}
+        transition={{ duration: 2.2, repeat: Infinity, delay: 0.6 }}
+      />
+    </motion.button>
+  )
+}
+
 // ─── Página Hub ────────────────────────────────────────────────────────────────
 
 export default function HubPage() {
   const router = useRouter()
   const {
+    _hasHydrated,
     userId, username, level, totalXp, streakDays, badges,
     subscriptionStatus, isPaid, role,
     clearUser, setSubscription, setIsPaid,
   } = useUserStore()
 
   const handleLogout = () => {
+    ;['daki_token', 'daki_user_id', 'daki_callsign', 'daki_level', 'daki_licensed'].forEach(k => localStorage.removeItem(k))
     clearUser()
     document.cookie = 'enigma_user=; path=/; max-age=0; SameSite=Lax'
-    router.push('/')
+    router.replace('/login')
   }
   const [isBitacoraOpen,     setIsBitacoraOpen]     = useState(false)
   const [completedOrders,    setCompletedOrders]    = useState<number[]>([])
@@ -262,7 +321,8 @@ export default function HubPage() {
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!userId) { router.replace('/'); return }
+    if (!_hasHydrated) return
+    if (!userId) { router.replace('/login'); return }
     // Fetch completed missions to drive Bitácora unlock + ping
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
@@ -274,7 +334,7 @@ export default function HubPage() {
         setCompletedOrders(orders)
       })
       .catch(() => {})
-  }, [userId, router])
+  }, [_hasHydrated, userId, router])
 
   const newArchiveCount = countNewArchives(completedOrders)
 
@@ -330,8 +390,8 @@ export default function HubPage() {
         style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%)' }}
       />
 
-      {/* BGM ambiental del Hub */}
-      <HubAudio fadeOut={bgmFadeOut} />
+      {/* BGM ambiental del Hub (audio manager) */}
+
 
       {/* Bitácora — Códice de Infiltración */}
       <BitacoraModal isOpen={isBitacoraOpen} onClose={() => setIsBitacoraOpen(false)} userId={userId ?? ''} completedOrders={completedOrders} />
@@ -342,23 +402,31 @@ export default function HubPage() {
       <IntelReportModal isOpen={showIntelReport} onClose={() => setShowIntelReport(false)} userId={userId ?? ''} />
 
       {/* ── Header ── */}
-      <header className="relative z-20 shrink-0 flex items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
+      <header className="relative z-20 shrink-0 flex flex-wrap items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <span className="font-black tracking-widest text-sm" style={{ textShadow: '0 0 8px #00FF41' }}>
             NEXO CENTRAL
           </span>
-          <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 hidden sm:block">
+          <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 hidden md:block">
             {'// ECOSISTEMA DE FORMACIONES ACTIVO'}
           </span>
         </div>
-        <div className="flex items-center gap-5 text-xs text-[#00FF41]/45">
-          <span className="text-[#00FF41]/30 hidden sm:block">{username}</span>
-          <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
-          <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
-          {streakDays > 0 && <span>🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
+        
+        {/* Panel de Controles & Rango (CSS Flex con wrapping y gaps fijos) */}
+        <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-5 text-xs text-[#00FF41]/45">
+          <span className="text-[#00FF41]/30 hidden lg:block whitespace-nowrap">{username}</span>
+          <span className="whitespace-nowrap">RANGO <strong className="text-[#00FF41]">{level}</strong></span>
+          <span className="whitespace-nowrap">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
+          {streakDays > 0 && <span className="whitespace-nowrap">🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}
+          
+          {/* Componente de Audio (reubicado dentro del flujo flex) */}
+          <div className="flex items-center justify-center shrink-0">
+            <HubAudio fadeOut={bgmFadeOut} buttonClass="relative" />
+          </div>
+
           <motion.button
             onClick={() => setShowIntelReport(true)}
-            className="border px-3 py-1 text-[9px] font-mono tracking-widest cursor-pointer transition-all duration-150"
+            className="border px-3 py-1 text-[9px] font-mono tracking-widest cursor-pointer transition-all duration-150 shrink-0"
             style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'rgba(255,184,0,0.65)' }}
             whileHover={{ borderColor: 'rgba(255,184,0,0.70)', color: 'rgba(255,184,0,0.95)' }}
             whileTap={{ scale: 0.96 }}
@@ -366,9 +434,10 @@ export default function HubPage() {
           >
             ⚑ INTEL
           </motion.button>
+          
           <button
             onClick={handleLogout}
-            className="ml-1 text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all"
+            className="text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all shrink-0"
           >
             [ ABORTAR CONEXIÓN ]
           </button>
@@ -382,46 +451,117 @@ export default function HubPage() {
       <main className="relative z-20 flex-1 flex overflow-hidden">
 
         {/* ══════════════════════════════════════════════
-            PANEL IZQUIERDO — DAKI el Simbionte
+            PANEL IZQUIERDO — Bienvenida + DAKI
         ══════════════════════════════════════════════ */}
-        <div className="flex-1 flex flex-col items-center justify-center px-8 py-6 border-r border-[#00FF41]/8">
+        <div className="w-[300px] shrink-0 flex flex-col items-center justify-center px-6 py-6 border-r border-[#00FF41]/8 gap-0">
 
-          {/* Etiqueta superior */}
+          {/* ── WELCOME SECTION ── */}
           <motion.div
-            className="text-[8px] tracking-[0.6em] text-[#00FF41]/20 mb-6 text-center"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+            className="w-full max-w-sm mb-7 text-center"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5, ease: 'easeOut' }}
+          >
+            <p className="text-[8px] tracking-[0.7em] text-[#00FF41]/30 mb-2 font-mono">
+              BIENVENIDO, OPERADOR
+            </p>
+            <h2
+              className="text-3xl font-black tracking-[0.15em] mb-3 font-mono"
+              style={{
+                color:      '#00FF41',
+                textShadow: '0 0 20px rgba(0,255,65,0.55), 0 0 50px rgba(0,255,65,0.18)',
+              }}
+            >
+              {username?.toUpperCase() ?? '—'}
+            </h2>
+
+            {/* Rol / Rango */}
+            {role === 'FOUNDER' ? (
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-1.5 border mb-5 mx-auto"
+                style={{
+                  borderColor: 'rgba(255,199,0,0.40)',
+                  background:  'rgba(255,199,0,0.06)',
+                  boxShadow:   '0 0 16px rgba(255,199,0,0.08)',
+                }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                <motion.span
+                  className="text-sm leading-none"
+                  style={{ color: '#FFC700', textShadow: '0 0 10px rgba(255,199,0,0.9)' }}
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
+                >
+                  ◈
+                </motion.span>
+                <span
+                  className="text-[10px] font-black tracking-[0.5em] font-mono"
+                  style={{ color: '#FFC700', textShadow: '0 0 8px rgba(255,199,0,0.5)' }}
+                >
+                  FOUNDER
+                </span>
+                <span className="text-[8px] font-mono" style={{ color: 'rgba(255,199,0,0.40)' }}>
+                  // ACCESO TOTAL
+                </span>
+              </motion.div>
+            ) : (
+              <motion.div
+                className="inline-flex items-center gap-2 px-4 py-1.5 border mb-5 mx-auto"
+                style={{ borderColor: 'rgba(0,255,65,0.22)', background: 'rgba(0,255,65,0.04)' }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.35 }}
+              >
+                <span className="text-[10px] font-black tracking-[0.5em] text-[#00FF41]/70 font-mono">
+                  OPERADOR
+                </span>
+                <span className="text-[8px] text-[#00FF41]/35 font-mono">// NIV. {level}</span>
+              </motion.div>
+            )}
+            {/* Espacio base — sin CTA aquí */}
+            <div className="mb-1" />
+
+          </motion.div>
+
+          {/* Divisor */}
+          <div className="w-full max-w-sm h-px bg-[#00FF41]/8 mb-6" />
+
+          {/* ── DAKI — compacto ── */}
+          <motion.div
+            className="text-[7px] tracking-[0.6em] text-[#00FF41]/18 mb-4 text-center font-mono"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           >
             SIMBIONTE // UNIDAD DAKI // CONEXIÓN ACTIVA
           </motion.div>
 
-          {/* Núcleo de DAKI */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="transform scale-75 origin-center mb-1"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 0.75 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
           >
             <AdriCore />
           </motion.div>
 
-          {/* Nombre */}
           <motion.div
-            className="mt-3 mb-5 text-center"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+            className="mb-4 text-center"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
           >
             <span
-              className="text-xs font-black tracking-[0.5em] text-[#00FF41]"
-              style={{ textShadow: '0 0 10px rgba(0,255,65,0.5)' }}
+              className="text-[10px] font-black tracking-[0.5em] text-[#00FF41]"
+              style={{ textShadow: '0 0 8px rgba(0,255,65,0.4)' }}
             >
               D A K I
             </span>
-            <p className="text-[8px] tracking-[0.4em] text-[#00FF41]/30 mt-0.5">IA SIMBIONTE // v2.7.1</p>
+            <p className="text-[7px] tracking-[0.4em] text-[#00FF41]/25 mt-0.5 font-mono">IA SIMBIONTE // v2.7.1</p>
           </motion.div>
 
-          {/* Terminal de chat con DAKI */}
           <motion.div
-            className="w-full max-w-sm h-52"
+            className="w-full max-w-sm h-48"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.4 }}
+            transition={{ delay: 0.65, duration: 0.4 }}
           >
             <DakiChatTerminal userId={userId ?? ''} openingMessage={dakiOpeningMessage || undefined} />
           </motion.div>
@@ -432,199 +572,228 @@ export default function HubPage() {
             PANEL DERECHO — Navegación Táctica
         ══════════════════════════════════════════════ */}
         <motion.div
-          className="w-80 shrink-0 flex flex-col justify-start gap-5 px-8 py-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="flex-1 flex flex-col justify-start gap-5 px-10 py-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.45 }}
         >
-          {/* Label */}
-          <div className="mb-2">
-            <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/20 mb-1">
-              CATÁLOGO DE FORMACIONES
-            </p>
-            <div className="h-px bg-[#00FF41]/10 w-full" />
-          </div>
+          {/* ── Badge de Rango ── */}
+          <motion.div
+            className="border px-4 py-3.5 relative overflow-hidden"
+            style={{
+              borderColor: role === 'FOUNDER' ? 'rgba(255,199,0,0.30)' : 'rgba(0,255,65,0.18)',
+              background:  role === 'FOUNDER' ? 'rgba(255,199,0,0.04)' : 'rgba(0,255,65,0.03)',
+              boxShadow:   role === 'FOUNDER' ? '0 0 20px rgba(255,199,0,0.06)' : '0 0 16px rgba(0,255,65,0.04)',
+            }}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* Esquinas decorativas */}
+            <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l" style={{ borderColor: role === 'FOUNDER' ? 'rgba(255,199,0,0.5)' : 'rgba(0,255,65,0.3)' }} />
+            <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r" style={{ borderColor: role === 'FOUNDER' ? 'rgba(255,199,0,0.5)' : 'rgba(0,255,65,0.3)' }} />
+            <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l" style={{ borderColor: role === 'FOUNDER' ? 'rgba(255,199,0,0.5)' : 'rgba(0,255,65,0.3)' }} />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r" style={{ borderColor: role === 'FOUNDER' ? 'rgba(255,199,0,0.5)' : 'rgba(0,255,65,0.3)' }} />
 
-          {/* ── Mapa de Incursiones — visible al tope del panel ── */}
-          <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
+            <p className="text-[9px] tracking-[0.5em] font-mono mb-3"
+              style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.45)' : 'rgba(0,255,65,0.35)' }}>
+              RANGO OPERACIONAL
+            </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <motion.span
+                  className="text-3xl leading-none"
+                  style={{
+                    color:      role === 'FOUNDER' ? '#FFC700' : '#00FF41',
+                    textShadow: role === 'FOUNDER' ? '0 0 18px rgba(255,199,0,0.9)' : '0 0 12px rgba(0,255,65,0.7)',
+                  }}
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2.2, repeat: Infinity }}
+                >
+                  {role === 'FOUNDER' ? '◈' : '◇'}
+                </motion.span>
+                <div>
+                  <p
+                    className="text-xl font-black tracking-[0.35em] leading-none font-mono"
+                    style={{
+                      color:      role === 'FOUNDER' ? '#FFC700' : '#00FF41',
+                      textShadow: role === 'FOUNDER' ? '0 0 12px rgba(255,199,0,0.6)' : '0 0 10px rgba(0,255,65,0.5)',
+                    }}
+                  >
+                    {role === 'FOUNDER' ? 'FOUNDER' : 'OPERADOR'}
+                  </p>
+                  <p className="text-[10px] tracking-[0.3em] mt-1 font-mono"
+                    style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.55)' : 'rgba(0,255,65,0.45)' }}>
+                    {role === 'FOUNDER' ? 'ACCESO ILIMITADO' : `NIVEL ${level}`}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-black font-mono" style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.85)' : 'rgba(0,255,65,0.75)' }}>
+                  {totalXp.toLocaleString()}
+                </p>
+                <p className="text-[9px] tracking-[0.3em] font-mono" style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.35)' : 'rgba(0,255,65,0.30)' }}>
+                  XP TOTAL
+                </p>
+                {streakDays > 0 && (
+                  <p className="text-[7px] text-[#FFB800]/60 tracking-widest mt-0.5">🔥 {streakDays}d</p>
+                )}
+              </div>
+            </div>
+            {/* XP bar */}
+            <div className="mt-3 h-0.5 w-full overflow-hidden" style={{ background: role === 'FOUNDER' ? 'rgba(255,199,0,0.08)' : 'rgba(0,255,65,0.08)' }}>
+              <motion.div
+                className="h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${xpProgress * 100}%` }}
+                transition={{ delay: 1, duration: 0.9, ease: 'easeOut' }}
+                style={{
+                  background: role === 'FOUNDER' ? '#FFC700' : '#00FF41',
+                  boxShadow:  role === 'FOUNDER' ? '0 0 8px rgba(255,199,0,0.7)' : '0 0 8px rgba(0,255,65,0.6)',
+                }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[7px] font-mono tracking-widest" style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.25)' : 'rgba(0,255,65,0.20)' }}>
+                NIV. {level}
+              </span>
+              <span className="text-[7px] font-mono tracking-widest" style={{ color: role === 'FOUNDER' ? 'rgba(255,199,0,0.25)' : 'rgba(0,255,65,0.20)' }}>
+                {xpToNext.toLocaleString()} XP → N.{level + 1}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* ── CTA Primario único ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <motion.button
+              onClick={() => navigateWithFade('/misiones')}
+              className="w-full py-4 font-black text-base tracking-[0.2em] uppercase font-mono relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF41]/50"
+              style={{
+                background:  'rgba(0,255,65,0.10)',
+                border:      '2px solid rgba(0,255,65,0.65)',
+                color:       '#00FF41',
+                textShadow:  '0 0 12px rgba(0,255,65,0.8)',
+                boxShadow:   '0 0 32px rgba(0,255,65,0.12)',
+              }}
+              whileHover={{
+                background:  'rgba(0,255,65,0.18)',
+                borderColor: 'rgba(0,255,65,0.95)',
+                boxShadow:   '0 0 40px rgba(0,255,65,0.25)',
+              }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <motion.div
+                className="absolute top-0 left-0 right-0 h-[2px]"
+                style={{ background: 'linear-gradient(90deg,transparent,#00FF41,transparent)' }}
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.8, repeat: Infinity }}
+              />
+              <span className="flex items-center justify-center gap-3">
+                <span>▶</span>
+                <span>CONTINUAR MISIÓN</span>
+                <span className="text-[10px] text-[#00FF41]/50 font-normal tracking-widest">
+                  {Math.min(Math.round((completedOrders.length / 10) * 100), 100)}% completado
+                </span>
+              </span>
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-px"
+                style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.4),transparent)' }}
+                animate={{ opacity: [0.2, 0.8, 0.2] }}
+                transition={{ duration: 2.2, repeat: Infinity, delay: 0.5 }}
+              />
+            </motion.button>
+          </motion.div>
+
+          {/* ── Formaciones — Tabs + Grid ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
+          </motion.div>
 
           {/* Separador */}
           <div className="h-px bg-[#00FF41]/8 w-full" />
 
-          {/* ── XP Progress Bar ── */}
-          <motion.div
-            className="border border-[#00FF41]/10 px-4 py-3"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.44 }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <span className="text-[8px] tracking-[0.4em] text-[#00FF41]/30 uppercase">Nivel</span>
-                <span className="text-sm font-black text-[#00FF41] ml-2">{level}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[8px] text-[#00FF41]/25 tracking-wider">{xpToNext.toLocaleString()} XP para N.{level + 1}</span>
-              </div>
-            </div>
-            <div className="h-1 bg-[#00FF41]/8 w-full overflow-hidden">
-              <motion.div
-                className="h-full bg-[#00FF41]"
-                initial={{ width: 0 }}
-                animate={{ width: `${xpProgress * 100}%` }}
-                transition={{ delay: 0.9, duration: 0.8, ease: 'easeOut' }}
-                style={{ boxShadow: '0 0 8px rgba(0,255,65,0.6)' }}
-              />
-            </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[7px] text-[#00FF41]/20 tracking-widest">{totalXp.toLocaleString()} XP</span>
-              {streakDays > 0 && (
-                <span className="text-[7px] text-[#FFB800]/60 tracking-widest">🔥 {streakDays}d racha</span>
-              )}
-            </div>
-          </motion.div>
-
-          {/* ── Tarjeta de misión activa ── */}
-          <motion.div
-            className="border border-[#00FF41]/25 bg-[#00FF41]/3 px-4 py-4"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.48 }}
-            style={{ boxShadow: '0 0 20px rgba(0,255,65,0.05)' }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" />
-              <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/40 uppercase">MISIÓN ACTIVA</span>
-            </div>
-            <p className="text-[10px] font-bold tracking-[0.25em] text-[#00FF41] uppercase mb-1">
-              OPERACIÓN ALFA
-            </p>
-            <p className="text-[9px] text-[#00FF41]/50 tracking-wide mb-3">
-              Lógica y Sintaxis Core
-            </p>
-            {/* Barra de progreso */}
-            <div className="mb-3">
-              <div className="flex justify-between text-[8px] text-[#00FF41]/30 tracking-widest mb-1">
-                <span>PROGRESO</span>
-                <span>{Math.round((completedOrders.length / 10) * 100)}%</span>
-              </div>
-              <div className="h-1.5 bg-[#00FF41]/8 w-full">
-                <motion.div
-                  className="h-full bg-[#00FF41]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((completedOrders.length / 10) * 100, 100)}%` }}
-                  transition={{ delay: 0.8, duration: 0.6, ease: 'easeOut' }}
-                  style={{ boxShadow: '0 0 8px rgba(0,255,65,0.5)' }}
-                />
-              </div>
-            </div>
-            {/* Objetivos */}
-            <div className="space-y-1 mb-3">
-              <p className="text-[8px] tracking-[0.4em] text-[#00FF41]/20 uppercase mb-1.5">Objetivos</p>
-              {['Vulnerar el bucle For', 'Declarar variables seguras'].map((obj, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className={`w-1 h-1 rounded-full ${completedOrders.length > i ? 'bg-[#00FF41]' : 'bg-[#00FF41]/20'}`} />
-                  <span className={`text-[9px] tracking-wide ${completedOrders.length > i ? 'text-[#00FF41]/60 line-through' : 'text-[#00FF41]/35'}`}>
-                    {obj}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => navigateWithFade('/mission/alfa')}
-              className="w-full text-center text-[9px] tracking-[0.35em] uppercase border border-[#00FF41]/40 text-[#00FF41]/70 py-2 hover:bg-[#00FF41]/8 hover:border-[#00FF41]/70 transition-all duration-150"
-            >
-              {'[[ RETOMAR INFILTRACIÓN ]]'}
-            </button>
-          </motion.div>
-
-          {/* Botones principales */}
-          <div className="flex flex-col gap-3">
-            <motion.div
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.55 }}
-            >
-              <TacticButton
-                onClick={() => navigateWithFade('/misiones')}
-                label="INICIAR AUDITORÍA"
-                sublabel="Desplegar dron · Ir a misiones"
-                icon="▶"
-                primary
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.68 }}
-              className="relative"
-            >
-              <TacticButton
-                onClick={() => setIsBitacoraOpen(true)}
-                label="BASE DE DATOS TÁCTICA"
-                sublabel="Códice de infiltración · Archivos DAKI"
-                icon="◎"
-              />
-              {/* Ping dot — nuevo archivo desbloqueado */}
-              {newArchiveCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20 pointer-events-none">
-                  <motion.span
-                    className="absolute inline-flex h-full w-full rounded-full bg-[#00FF41] opacity-75"
-                    animate={{ scale: [1, 1.8, 1], opacity: [0.75, 0, 0.75] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
-                  />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#00FF41]" />
-                </span>
-              )}
-            </motion.div>
-          </div>
-
-          {/* SALA DE CONTRATOS */}
+          {/* ── Accesos Rápidos — barra compacta 3×2 ── */}
           <motion.div
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.72 }}
+            transition={{ delay: 0.45 }}
           >
-            <TacticButton
-              onClick={() => navigateWithFade('/contratos')}
-              label="SALA DE CONTRATOS"
-              sublabel="Proyectos · Revisión DAKI · GitHub"
-              icon="⬡"
-              color="#FFB800"
-            />
-          </motion.div>
-
-          {/* ── Intel Operacional ── */}
-          <motion.div
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.75 }}
-          >
-            <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-2 uppercase">Intel Operacional</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/18 mb-3 font-mono uppercase">Accesos Rápidos</p>
+            <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'RADAR', sublabel: 'Maestría por concepto', onClick: () => setShowRadar(true), color: '#00FF41' },
-                { label: 'FALLAS', sublabel: 'Archivo de errores', onClick: () => setShowFallas(true), color: '#FF4444' },
-              ].map(({ label, sublabel, onClick, color }) => (
+                {
+                  label: 'BITÁCORA', icon: '◎', color: '#00FF41',
+                  onClick: () => setIsBitacoraOpen(true),
+                  ping: newArchiveCount > 0,
+                },
+                {
+                  label: 'CONTRATOS', icon: '⬡', color: '#FFB800',
+                  onClick: () => navigateWithFade('/contratos'),
+                  ping: false,
+                },
+                {
+                  label: 'LEADERBOARD', icon: '▲', color: '#FF6B6B',
+                  onClick: () => navigateWithFade('/leaderboard'),
+                  ping: false,
+                },
+                {
+                  label: 'RADAR', icon: '◉', color: '#00FF41',
+                  onClick: () => setShowRadar(true),
+                  ping: false,
+                },
+                {
+                  label: 'FALLAS', icon: '⚠', color: '#FF4444',
+                  onClick: () => setShowFallas(true),
+                  ping: false,
+                },
+                {
+                  label: 'INTEL', icon: '⚑', color: '#FFB800',
+                  onClick: () => setShowIntelReport(true),
+                  ping: false,
+                },
+              ].map(({ label, icon, color, onClick, ping }) => (
                 <button
                   key={label}
                   onClick={onClick}
-                  className="px-3 py-2.5 border text-left transition-all duration-150 font-mono"
-                  style={{ borderColor: `${color}20` }}
+                  className="relative flex flex-col items-center gap-1.5 py-3 border transition-all duration-150 font-mono focus:outline-none focus-visible:ring-2 group"
+                  style={{
+                    borderColor: `${color}22`,
+                    color:       `${color}55`,
+                  }}
                   onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = `${color}45`
+                    const el = e.currentTarget
+                    el.style.borderColor = `${color}55`
                     el.style.background  = `${color}08`
+                    el.style.color       = `${color}99`
                   }}
                   onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = `${color}20`
+                    const el = e.currentTarget
+                    el.style.borderColor = `${color}22`
                     el.style.background  = 'transparent'
+                    el.style.color       = `${color}55`
                   }}
                 >
-                  <p className="text-[9px] font-black tracking-[0.3em]" style={{ color: `${color}70` }}>{label}</p>
-                  <p className="text-[8px] tracking-wide mt-0.5" style={{ color: `${color}35` }}>{sublabel}</p>
+                  {ping && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 z-10 pointer-events-none">
+                      <motion.span
+                        className="absolute inline-flex h-full w-full rounded-full opacity-75"
+                        style={{ background: color }}
+                        animate={{ scale: [1, 1.8, 1], opacity: [0.75, 0, 0.75] }}
+                        transition={{ duration: 1.4, repeat: Infinity }}
+                      />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ background: color }} />
+                    </span>
+                  )}
+                  <span className="text-base leading-none">{icon}</span>
+                  <span className="text-[7px] tracking-[0.3em] uppercase">{label}</span>
                 </button>
               ))}
             </div>
@@ -758,37 +927,6 @@ export default function HubPage() {
             </motion.div>
           )}
 
-          {/* Separador */}
-          <div className="h-px bg-[#00FF41]/8 w-full" />
-
-          {/* Accesos secundarios */}
-          <div className="flex flex-col gap-2">
-            <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1">ACCESOS SECUNDARIOS</p>
-            {[
-              { label: 'LEADERBOARD', path: '/leaderboard', color: '#FF6B6B' },
-            ].map(({ label, path, color }) => (
-              <button
-                key={path}
-                onClick={() => navigateWithFade(path)}
-                className="text-left px-4 py-2 border transition-all duration-150 text-[10px] tracking-widest font-bold"
-                style={{ borderColor: `${color}20`, color: `${color}50` }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget
-                  el.style.borderColor = `${color}50`
-                  el.style.color = `${color}90`
-                  el.style.background = `${color}08`
-                }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget
-                  el.style.borderColor = `${color}20`
-                  el.style.color = `${color}50`
-                  el.style.background = 'transparent'
-                }}
-              >
-                ↳ {label}
-              </button>
-            ))}
-          </div>
 
           {/* ── Registro de Conquistas ── */}
           {badges.length > 0 && (

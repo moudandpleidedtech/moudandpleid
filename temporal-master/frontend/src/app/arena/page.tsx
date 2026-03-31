@@ -226,7 +226,7 @@ function ResultScreen({
 
 export default function ArenaPage() {
   const router = useRouter()
-  const { userId } = useUserStore()
+  const { _hasHydrated, userId } = useUserStore()
 
   const [phase, setPhase] = useState<DuelPhase>('idle')
   const [duel, setDuel] = useState<DuelData | null>(null)
@@ -240,8 +240,9 @@ export default function ArenaPage() {
 
   // Redirect if not logged in
   useEffect(() => {
-    if (!userId) router.replace('/')
-  }, [userId, router])
+    if (!_hasHydrated) return
+    if (!userId) router.replace('/login')
+  }, [_hasHydrated, userId, router])
 
   // Fetch inbox on mount
   useEffect(() => {

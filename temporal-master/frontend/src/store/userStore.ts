@@ -7,6 +7,7 @@ interface GamificationResult {
 }
 
 interface UserState {
+  _hasHydrated: boolean
   userId: string
   username: string
   level: number
@@ -22,6 +23,7 @@ interface UserState {
   subscriptionStatus: string  // 'INACTIVE' | 'TRIAL' | 'ACTIVE'
   trialEndDate: string | null // ISO 8601 — fecha de expiración del TRIAL
   role: string                // 'USER' | 'FOUNDER' — FOUNDER bypassa compuertas de catálogo
+  setHasHydrated: (_val: boolean) => void
   setUser: (_user: {
     id: string
     username: string
@@ -47,6 +49,7 @@ interface UserState {
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
+      _hasHydrated: false,
       userId: '',
       username: '',
       level: 1,
@@ -62,6 +65,8 @@ export const useUserStore = create<UserState>()(
       subscriptionStatus: 'INACTIVE',
       trialEndDate: null,
       role: 'USER',
+
+      setHasHydrated: (val: boolean) => set({ _hasHydrated: val }),
 
       setUser: ({ id, username, current_level, total_xp, streak_days, current_rank, points, is_paid, subscription_status, trial_end_date, role }) =>
         set({
@@ -126,6 +131,9 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'pq-user',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
       partialize: (state) => ({
         userId:                state.userId,
         username:              state.username,

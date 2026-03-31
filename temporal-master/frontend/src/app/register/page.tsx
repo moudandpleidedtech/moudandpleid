@@ -14,6 +14,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -73,6 +74,7 @@ function scanLocalSession(): DetectedSession {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { setUser } = useUserStore()
 
   const [bootLines,    setBootLines]    = useState<string[]>([])
   const [bootDone,     setBootDone]     = useState(false)
@@ -83,7 +85,6 @@ export default function RegisterPage() {
   const [founderCode,  setFounderCode]  = useState('')
   const [showFounder,  setShowFounder]  = useState(false)
   const [paseAlpha,    setPaseAlpha]    = useState('')
-  const [showPaseAlpha,setShowPaseAlpha] = useState(false)
   const [isLoading,    setIsLoading]    = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [console_,     setConsole]      = useState<ConsoleLine>({
@@ -117,6 +118,10 @@ export default function RegisterPage() {
   // ── Enviar registro ─────────────────────────────────────────────────────────
   const ejecutarRegistro = async () => {
     if (!email.trim() || !callsign.trim() || !password.trim() || isLoading) return
+    if (!paseAlpha.trim()) {
+      setConsole({ text: 'ACCESO DENEGADO: SE REQUIERE CÓDIGO ALPHA VANG-XXXX-XXXX PARA OPERAR EN EL NEXO.', state: 'error' })
+      return
+    }
 
     setIsLoading(true)
     setConsole({ text: 'Transmitiendo datos al Nexo...', state: 'loading' })
@@ -149,7 +154,7 @@ export default function RegisterPage() {
       if (res.ok) {
         const data = await res.json() as {
           access_token: string; user_id: string; callsign: string
-          level: number; is_licensed: boolean; founder_code_applied?: boolean
+          level: number; is_licensed: boolean; founder_code_applied?: boolean; role?: string
         }
 
         // ── Limpiar keys legacy antes de guardar las nuevas ────────────────
@@ -161,6 +166,15 @@ export default function RegisterPage() {
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))
         localStorage.setItem('daki_licensed', String(data.is_licensed))
+        setUser({
+          id:            data.user_id,
+          username:      data.callsign,
+          current_level: data.level,
+          total_xp:      0,
+          streak_days:   0,
+          is_paid:       data.is_licensed,
+          role:          data.role,
+        })
 
         // Cookie para middleware de Next.js
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
@@ -477,34 +491,28 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* ── Pase Alpha Vanguardia toggle ─────────────────────── */}
+              {/* ── Pase Alpha Vanguardia — requerido ───────────────── */}
               <div className="mb-6">
-                <button
-                  type="button"
-                  onClick={() => setShowPaseAlpha(v => !v)}
-                  className="text-[9px] tracking-[0.35em] text-[#00FF41]/25 hover:text-[#00FF41]/55 transition-colors uppercase"
-                >
-                  {showPaseAlpha ? '[-]' : '[+]'} ¿Tienes un Pase Alpha? Ingresar código VANG-XXXX-XXXX
-                </button>
+                <p className="text-[9px] tracking-[0.35em] text-[#00FF41]/40 uppercase mb-2">
+                  {'// ACCESO RESTRINGIDO — CÓDIGO ALPHA REQUERIDO'}
+                </p>
 
-                {showPaseAlpha && (
-                  <div className={`input-line pb-2 mt-3 flex items-center gap-2 ${focusedField === 'pase-alpha' ? 'focused' : ''}`}>
-                    <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.25em] w-24 shrink-0">PASE ALPHA</span>
-                    <input
-                      type="text"
-                      value={paseAlpha}
-                      onChange={e => setPaseAlpha(e.target.value.toUpperCase().replace(/\s/g, ''))}
-                      onFocus={() => setFocusedField('pase-alpha')}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder="VANG-XXXX-XXXX"
-                      disabled={isLoading}
-                      maxLength={14}
-                      className="flex-1 bg-transparent text-[#00FF41] text-xs outline-none border-none caret-[#00FF41] tracking-widest uppercase placeholder:text-[#00FF41]/15 placeholder:tracking-wide disabled:opacity-40"
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                  </div>
-                )}
+                <div className={`input-line pb-2 mt-3 flex items-center gap-2 ${focusedField === 'pase-alpha' ? 'focused' : ''}`}>
+                  <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.25em] w-24 shrink-0">PASE ALPHA</span>
+                  <input
+                    type="text"
+                    value={paseAlpha}
+                    onChange={e => setPaseAlpha(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                    onFocus={() => setFocusedField('pase-alpha')}
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="VANG-XXXX-XXXX"
+                    disabled={isLoading}
+                    maxLength={14}
+                    className="flex-1 bg-transparent text-[#00FF41] text-xs outline-none border-none caret-[#00FF41] tracking-widest uppercase placeholder:text-[#00FF41]/15 placeholder:tracking-wide disabled:opacity-40"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
               </div>
 
               <button

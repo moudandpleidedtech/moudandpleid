@@ -8,12 +8,13 @@ import MobileGate from '@/components/UI/MobileGate'
 
 export default function BootSequencePage() {
   const router = useRouter()
-  const { userId, username, dakiLevel } = useUserStore()
+  const { _hasHydrated, userId, username, dakiLevel } = useUserStore()
 
   // Guard: sin sesión → login
   useEffect(() => {
-    if (!userId) router.replace('/')
-  }, [userId, router])
+    if (!_hasHydrated) return
+    if (!userId) router.replace('/login')
+  }, [_hasHydrated, userId, router])
 
   const handleComplete = () => {
     localStorage.setItem('boot_seen', '1')
@@ -21,7 +22,7 @@ export default function BootSequencePage() {
     router.push('/misiones')
   }
 
-  if (!userId) return null
+  if (!_hasHydrated || !userId) return null
 
   return (
     <MobileGate>

@@ -75,7 +75,10 @@ def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
         ("scripts.seed_sector_08", "SECTOR_08"),
         ("scripts.seed_sector_09", "SECTOR_09"),
         ("scripts.seed_sector_10", "SECTOR_10"),
-        ("scripts.seed_contratos",  "CONTRATOS"),
+        ("scripts.seed_contratos",      "CONTRATOS"),
+        ("scripts.seed_qa_architect",   "QA_ARCHITECT"),
+        ("scripts.seed_tpm",            "TPM_MASTERY"),
+        ("scripts.seed_sales",          "SALES_MASTERY"),
     ]
 
     for module, attr in sources:
@@ -150,10 +153,10 @@ async def upsert_challenges(
     """
     # Carga todos los challenges existentes en memoria (evita N+1 queries)
     result = await session.execute(select(Challenge))
-    existing: dict[tuple[int, int], Challenge] = {
-        (ch.sector_id, ch.level_order): ch
+    existing: dict[tuple[int | str, int], Challenge] = {
+        (ch.sector_id if ch.sector_id is not None else ch.codex_id, ch.level_order): ch
         for ch in result.scalars().all()
-        if ch.sector_id is not None and ch.level_order is not None
+        if (ch.sector_id is not None or ch.codex_id is not None) and ch.level_order is not None
     }
 
     created = updated = skipped = 0
@@ -161,15 +164,16 @@ async def upsert_challenges(
 
     for data in catalog:
         sector_id   = data.get("sector_id")
+        codex_id    = data.get("codex_id")
         level_order = data.get("level_order")
         title       = data.get("title", "?")
 
-        if sector_id is None or level_order is None:
-            print(f"  ⚠️  SKIP — '{title}' no tiene sector_id/level_order.")
+        if (sector_id is None and codex_id is None) or level_order is None:
+            print(f"  ⚠️  SKIP — '{title}' no tiene sector_id/codex_id o level_order.")
             skipped += 1
             continue
 
-        key = (sector_id, level_order)
+        key = (sector_id if sector_id is not None else codex_id, level_order)
 
         try:
             if key in existing:
@@ -189,15 +193,17 @@ async def upsert_challenges(
 
                 if changed_fields:
                     status = "[DRY-RUN] " if dry_run else ""
+                    id_tag = f"S{sector_id:02d}" if sector_id is not None else f"C[{codex_id}]"
                     print(
-                        f"  {status}🔄  S{sector_id:02d}-L{level_order:02d}  "
+                        f"  {status}🔄  {id_tag}-L{level_order:02d}  "
                         f"{title:<40}  ACTUALIZADO  ({', '.join(changed_fields[:4])}"
                         f"{'…' if len(changed_fields) > 4 else ''})"
                     )
                     updated += 1
                 else:
+                    id_tag = f"S{sector_id:02d}" if sector_id is not None else f"C[{codex_id}]"
                     print(
-                        f"  ✅  S{sector_id:02d}-L{level_order:02d}  "
+                        f"  ✅  {id_tag}-L{level_order:02d}  "
                         f"{title:<40}  sin cambios"
                     )
 
@@ -208,15 +214,17 @@ async def upsert_challenges(
                     session.add(challenge)
 
                 status = "[DRY-RUN] " if dry_run else ""
+                id_tag = f"S{sector_id:02d}" if sector_id is not None else f"C[{codex_id}]"
                 print(
-                    f"  {status}➕  S{sector_id:02d}-L{level_order:02d}  "
+                    f"  {status}➕  {id_tag}-L{level_order:02d}  "
                     f"{title:<40}  CREADO  ({data.get('difficulty', '?').upper()}, "
                     f"{data.get('base_xp_reward', 0)} XP)"
                 )
                 created += 1
 
         except Exception as exc:
-            msg = f"S{sector_id:02d}-L{level_order:02d} '{title}' — {exc}"
+            id_tag = f"S{sector_id:02d}" if sector_id is not None else f"C[{codex_id}]"
+            msg = f"{id_tag}-L{level_order:02d} '{title}' — {exc}"
             print(f"  ❌  ERROR: {msg}")
             errors.append(msg)
 

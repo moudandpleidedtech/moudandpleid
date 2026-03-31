@@ -92,7 +92,7 @@ type Props = { params: { id: string } }
 
 export default function ContractIDEPage({ params }: Props) {
   const router = useRouter()
-  const { userId, level } = useUserStore()
+  const { _hasHydrated, userId, level } = useUserStore()
   const consoleRef = useRef<HTMLDivElement>(null)
 
   const [contract, setContract] = useState<Contract | null>(null)
@@ -115,7 +115,8 @@ export default function ContractIDEPage({ params }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!userId) { router.replace('/'); return }
+    if (!_hasHydrated) return
+    if (!userId) { router.replace('/login'); return }
     fetch(`${API_BASE}/api/v1/challenges/${params.id}?user_id=${userId}`)
       .then(r => r.json())
       .then((data: Contract) => {
@@ -123,7 +124,7 @@ export default function ContractIDEPage({ params }: Props) {
         setCode(data.initial_code || '')
       })
       .catch(() => router.push('/contratos'))
-  }, [params.id, userId, router])
+  }, [_hasHydrated, params.id, userId, router])
 
   // ── Ejecutar código (evaluación normal) ───────────────────────────────────
   const ejecutar = async () => {

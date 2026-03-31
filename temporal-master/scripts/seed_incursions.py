@@ -53,10 +53,10 @@ INCURSIONS: list[dict] = [
         "titulo":           "Technical Project Manager (TPM)",
         "descripcion": (
             "Aprende a gestionar equipos de ingeniería desde las trincheras. "
-            "Crises de oficina, decisiones bajo presión, stakeholders imposibles. "
+            "Crisis de oficina, decisiones bajo presión, stakeholders imposibles. "
             "El Desafío 00 te convertirá en el gerente que ningún equipo quiere perder."
         ),
-        "status":           "ENCRYPTED",
+        "status":           "ACTIVE",
         "system_prompt_id": "tpm",
         "ruta":             "/codex/tpm",
         "color_acento":     "#FF6B35",
@@ -88,12 +88,45 @@ INCURSIONS: list[dict] = [
             "20 niveles. 2 Boss Battles. 20 Haikus de Cierre. "
             "Para el ingeniero que quiere cruzar al otro lado de la mesa."
         ),
-        "status":           "ENCRYPTED",
+        "status":           "ACTIVE",
         "system_prompt_id": "sales",
         "ruta":             "/codex/sales",
         "color_acento":     "#FFC700",
         "icono":            "◈",
         "orden":            4,
+    },
+    {
+        "slug":             "qa-senior-architect",
+        "titulo":           "QA Senior Architect",
+        "descripcion": (
+            "Protocolo CENTINELA — Formación de élite en Quality Assurance. "
+            "Aprende a diseñar escudos para ecosistemas donde el fallo no es opción: "
+            "fintech, healthcare, infraestructura cloud. "
+            "Análisis de causa raíz, test cases letales, automatización con pytest. "
+            "Para el ingeniero que quiere ser la última línea de defensa."
+        ),
+        "status":           "ACTIVE",
+        "system_prompt_id": "qa",
+        "ruta":             "/codex/qa-senior-architect",
+        "color_acento":     "#00D4FF",
+        "icono":            "🛡",
+        "orden":            5,
+    },
+    {
+        "slug":             "qa-automation-ops",
+        "titulo":           "QA Automation: Operaciones Especiales",
+        "descripcion": (
+            "Protocolo SPECTRE — La transición definitiva de QA Manual a Automation Engineer. "
+            "TypeScript, Playwright, API Testing y CI/CD con GitHub Actions. "
+            "5 Fases Operativas. 100 misiones. 5 Pruebas de Fuego. "
+            "Para el QA consolidado que quiere programar la defensa, no solo describirla."
+        ),
+        "status":           "ACTIVE",
+        "system_prompt_id": "qa-automation",
+        "ruta":             "/codex/qa-automation-ops",
+        "color_acento":     "#7B61FF",
+        "icono":            "⚙",
+        "orden":            6,
     },
 ]
 
@@ -102,12 +135,11 @@ INCURSIONS: list[dict] = [
 
 async def seed() -> None:
     """
-    UPSERT idempotente de las 4 Incursiones canónicas.
+    UPSERT idempotente de las Incursiones canónicas.
 
-    Regla de oro: el campo `status` NUNCA se sobreescribe en un UPDATE.
-    Preservar activaciones manuales hechas en producción es prioritario.
-    El resto de los campos (titulo, descripcion, etc.) sí se actualizan
-    para permitir correcciones de contenido sin perder el estado operativo.
+    Todos los campos —incluyendo `status`— se sincronizan con INCURSIONS en cada
+    ejecución. Esto permite abrir o cerrar Incursiones editando este archivo y
+    volviendo a desplegar sin intervención manual en la BD.
     """
     async with AsyncSessionLocal() as session:
         for data in INCURSIONS:
@@ -121,7 +153,7 @@ async def seed() -> None:
                 session.add(Incursion(**data))
                 print(f"  ➕ [seed_incursions] INSERT: {data['slug']} [{data['status']}]")
             else:
-                # UPDATE — preserva status intacto
+                # UPDATE — sincroniza todos los campos incluyendo status
                 await session.execute(
                     update(Incursion)
                     .where(Incursion.slug == data["slug"])
@@ -133,10 +165,10 @@ async def seed() -> None:
                         color_acento     = data["color_acento"],
                         icono            = data["icono"],
                         orden            = data["orden"],
-                        # status NO se toca — regla de oro
+                        status           = data["status"],
                     )
                 )
-                print(f"  ♻️  [seed_incursions] UPDATE: {data['slug']} (status preservado: {existing.status})")
+                print(f"  ♻️  [seed_incursions] UPDATE: {data['slug']} → status={data['status']}")
 
         await session.commit()
 

@@ -264,3 +264,61 @@ async def list_sectors(
         prev_sector_completed = is_completed
 
     return summaries
+
+
+@router.get(
+    "/codex/{codex_id}",
+    response_model=list[LevelOut],
+    summary="Niveles de un codex (formación) por codex_id",
+    description=(
+        "Devuelve los niveles de una formación filtrando por codex_id "
+        "(ej: 'qa_senior_architect', 'tpm_mastery_v1'). "
+        "El desbloqueo es secuencial: nivel N requiere completar N-1. "
+        "El primer nivel siempre está desbloqueado."
+    ),
+)
+async def get_codex_levels(
+    codex_id: str,
+    user_id: Optional[uuid.UUID] = Query(None, description="UUID del operador para calcular progreso"),
+    db: AsyncSession = Depends(get_db),
+) -> list[LevelOut]:
+    # Carga los niveles del codex ordenados por level_order
+    result = await db.execute(
+        select(Challenge)
+        .where(Challenge.codex_id == codex_id)
+        .order_by(Challenge.level_order)
+    )
+    levels = list(result.scalars().all())
+
+    if not levels:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El codex '{codex_id}' no existe o no tiene niveles cargados.",
+        )
+
+    # Progreso del usuario
+    progress_map: dict[uuid.UUID, UserProgress] = {}
+    if user_id:
+        prog_result = await db.execute(
+            select(UserProgress).where(UserProgress.user_id == user_id)
+        )
+        progress_map = _build_progress_map(prog_result.scalars().all())
+
+    # Desbloqueo secuencial simple: primer nivel siempre desbloqueado
+    out: list[LevelOut] = []
+    prev_completed = True
+    for level in levels:
+        prog = progress_map.get(level.id)
+        completed = prog.completed if prog else False
+        attempts = prog.attempts if prog else 0
+        lvl_status = "completed" if completed else ("unlocked" if prev_completed else "locked")
+        out.append(_build_level(
+            level,
+            completed=completed,
+            attempts=attempts,
+            unlocked=(prev_completed),
+            level_status=lvl_status,
+        ))
+        prev_completed = completed
+
+    return out

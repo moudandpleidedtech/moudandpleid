@@ -269,7 +269,7 @@ function BriefingPanel({
 
 export default function MisionesPage() {
   const router = useRouter()
-  const { userId, username, level, totalXp, streakDays, completedChallengeIds } = useUserStore()
+  const { _hasHydrated, userId, username, level, totalXp, streakDays, completedChallengeIds } = useUserStore()
   const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
@@ -277,13 +277,9 @@ export default function MisionesPage() {
   const [briefingMission, setBriefingMission] = useState<Mission | null>(null)
   const [isHacking, setIsHacking] = useState(false)
   const [hackingTitle, setHackingTitle] = useState('')
-  // Esperar a que Zustand hidrate desde localStorage antes de evaluar userId
-  const [hydrated, setHydrated] = useState(false)
-  useEffect(() => { setHydrated(true) }, [])
-
   useEffect(() => {
-    if (!hydrated) return
-    if (!userId) { router.replace('/'); setLoading(false); return }
+    if (!_hasHydrated) return
+    if (!userId) { router.replace('/login'); setLoading(false); return }
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
       .then(r => r.json())
       .then((data: Mission[]) => {
@@ -297,7 +293,7 @@ export default function MisionesPage() {
       })
       .catch(err => { console.log('[Misiones] Error:', err); setFetchError(true) })
       .finally(() => setLoading(false))
-  }, [hydrated, userId, router])
+  }, [_hasHydrated, userId, router])
 
   const completadas = missions.filter(m => m.completed).length
   const tutorial = missions.find(m => m.challenge_type === 'tutorial')
