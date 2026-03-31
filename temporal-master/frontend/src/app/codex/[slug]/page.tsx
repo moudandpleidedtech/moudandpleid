@@ -47,6 +47,7 @@ const SLUG_TO_CODEX: Record<string, { codex_id: string; label: string; color: st
   'tpm': { codex_id: 'tpm_mastery_v1', label: 'TPM MASTERY', color: '#FF6B35' },
   'red-team': { codex_id: 'cybersecurity', label: 'RED TEAM', color: '#FF2D78' },
   'sales': { codex_id: 'sales_mastery_v1', label: 'SALES MASTERY', color: '#FFC700' },
+  'qa-automation-ops': { codex_id: 'qa_automation_ops', label: 'QA AUTOMATION OPS', color: '#7B61FF' },
 }
 
 // ─── Constantes UI ─────────────────────────────────────────────────────────────
