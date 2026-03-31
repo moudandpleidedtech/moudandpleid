@@ -670,7 +670,11 @@ export default function HubPage() {
             transition={{ delay: 0.25 }}
           >
             <motion.button
-              onClick={() => navigateWithFade('/misiones')}
+              onClick={() => {
+                const access = isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER'
+                if (!access) { setShowAlphaModal(true); return }
+                navigateWithFade('/misiones')
+              }}
               className="w-full py-4 font-black text-base tracking-[0.2em] uppercase font-mono relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF41]/50"
               style={{
                 background:  'rgba(0,255,65,0.10)',
@@ -714,7 +718,12 @@ export default function HubPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <IncursionSelector onNavigate={navigateWithFade} isFounder={role === 'FOUNDER'} />
+            <IncursionSelector
+              onNavigate={navigateWithFade}
+              isFounder={role === 'FOUNDER'}
+              hasAccess={isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER'}
+              onAccessDenied={() => setShowAlphaModal(true)}
+            />
           </motion.div>
 
           {/* Separador */}

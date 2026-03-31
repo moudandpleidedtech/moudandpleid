@@ -19,13 +19,15 @@ interface IncursionData {
 }
 
 interface Props {
-  onNavigate: (path: string) => void
-  isFounder?: boolean
+  onNavigate:      (path: string) => void
+  isFounder?:      boolean
+  hasAccess?:      boolean   // TRIAL | ACTIVE | FOUNDER
+  onAccessDenied?: () => void // muestra AlphaAccessModal
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export default function IncursionSelector({ onNavigate, isFounder = false }: Props) {
+export default function IncursionSelector({ onNavigate, isFounder = false, hasAccess = false, onAccessDenied }: Props) {
   const [incursions, setIncursions] = useState<IncursionData[]>([])
   const [loading,    setLoading]    = useState(true)
   const [fetchError, setFetchError] = useState(false)
@@ -136,7 +138,10 @@ export default function IncursionSelector({ onNavigate, isFounder = false }: Pro
                 {isActive ? (
                   <ActiveCard
                     inc={inc}
-                    onEnter={() => inc.ruta && onNavigate(inc.ruta)}
+                    onEnter={() => {
+                      if (!hasAccess && !isFounder) { onAccessDenied?.(); return }
+                      if (inc.ruta) onNavigate(inc.ruta)
+                    }}
                   />
                 ) : (
                   <EncryptedCard

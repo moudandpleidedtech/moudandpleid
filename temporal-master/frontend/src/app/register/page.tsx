@@ -84,7 +84,6 @@ export default function RegisterPage() {
   const [password,     setPassword]     = useState('')
   const [founderCode,  setFounderCode]  = useState('')
   const [showFounder,  setShowFounder]  = useState(false)
-  const [paseAlpha,    setPaseAlpha]    = useState('')
   const [isLoading,    setIsLoading]    = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [console_,     setConsole]      = useState<ConsoleLine>({
@@ -118,10 +117,6 @@ export default function RegisterPage() {
   // ── Enviar registro ─────────────────────────────────────────────────────────
   const ejecutarRegistro = async () => {
     if (!email.trim() || !callsign.trim() || !password.trim() || isLoading) return
-    if (!paseAlpha.trim()) {
-      setConsole({ text: 'ACCESO DENEGADO: SE REQUIERE CÓDIGO ALPHA VANG-XXXX-XXXX PARA OPERAR EN EL NEXO.', state: 'error' })
-      return
-    }
 
     setIsLoading(true)
     setConsole({ text: 'Transmitiendo datos al Nexo...', state: 'loading' })
@@ -179,52 +174,12 @@ export default function RegisterPage() {
         // Cookie para middleware de Next.js
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
 
-        // Canje de Pase Alpha Vanguardia si fue ingresado
-        let alphaActivated = false
-        let alphaErrorMsg  = ''
-
-        if (paseAlpha.trim()) {
-          try {
-            const alphaRes = await fetch(`${API_BASE}/api/v1/alpha/redeem`, {
-              method:  'POST',
-              headers: {
-                'Content-Type':  'application/json',
-                'Authorization': `Bearer ${data.access_token}`,
-              },
-              body: JSON.stringify({ code: paseAlpha.trim().toUpperCase() }),
-            })
-
-            if (alphaRes.ok) {
-              alphaActivated = true
-            } else {
-              const alphaErr = await alphaRes.json().catch(() => ({})) as { detail?: string }
-              const ALPHA_ERRORS: Record<number, string> = {
-                404: 'CÓDIGO NO ENCONTRADO EN LA BÓVEDA ALPHA.',
-                409: 'CÓDIGO YA UTILIZADO POR OTRO OPERADOR.',
-                429: 'DEMASIADOS INTENTOS — ESPERA 60 SEGUNDOS.',
-              }
-              alphaErrorMsg = ALPHA_ERRORS[alphaRes.status]
-                ?? (typeof alphaErr.detail === 'string'
-                    ? alphaErr.detail.toUpperCase()
-                    : 'ERROR AL CANJEAR EL PASE ALPHA.')
-            }
-          } catch {
-            alphaErrorMsg = 'SIN SEÑAL CON LA BÓVEDA ALPHA. PODRÁS CANJEAR DESDE EL HUB.'
-          }
-        }
-
         const msg = data.founder_code_applied
           ? `LICENCIA DE FUNDADOR ACTIVADA — BIENVENIDO, ${data.callsign}.`
-          : alphaActivated
-          ? `PASE ALPHA ACTIVADO — ACCESO TRIAL CONCEDIDO. BIENVENIDO AL NEXO, ${data.callsign}.`
-          : alphaErrorMsg
-          ? `REGISTRO OK · PASE ALPHA RECHAZADO: ${alphaErrorMsg}`
           : `OPERADOR ${data.callsign} REGISTRADO. ABRIENDO EL NEXO...`
 
-        // Estado: error solo cuando hay fallo de alpha (registro siempre exitoso aquí)
-        setConsole({ text: msg, state: alphaErrorMsg ? 'error' : 'success' })
-        // Delay extra cuando hay error de alpha para que el operador lo lea
-        setTimeout(() => router.push('/hub'), alphaErrorMsg ? 2400 : 1400)
+        setConsole({ text: msg, state: 'success' })
+        setTimeout(() => router.push('/hub'), 1400)
         return
       }
 
@@ -469,7 +424,7 @@ export default function RegisterPage() {
                   onClick={() => setShowFounder(v => !v)}
                   className="text-[9px] tracking-[0.35em] text-[#FFB800]/30 hover:text-[#FFB800]/60 transition-colors uppercase"
                 >
-                  {showFounder ? '[-]' : '[+]'} Alpha Tester — ingresar Código de Fundador
+                  {showFounder ? '[-]' : '[+]'} ¿Tienes Licencia de Fundador? (código distinto al VANG)
                 </button>
 
                 {showFounder && (
@@ -491,29 +446,6 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {/* ── Pase Alpha Vanguardia — requerido ───────────────── */}
-              <div className="mb-6">
-                <p className="text-[9px] tracking-[0.35em] text-[#00FF41]/40 uppercase mb-2">
-                  {'// ACCESO RESTRINGIDO — CÓDIGO ALPHA REQUERIDO'}
-                </p>
-
-                <div className={`input-line pb-2 mt-3 flex items-center gap-2 ${focusedField === 'pase-alpha' ? 'focused' : ''}`}>
-                  <span className="text-[#00FF41]/35 select-none text-[10px] tracking-[0.25em] w-24 shrink-0">PASE ALPHA</span>
-                  <input
-                    type="text"
-                    value={paseAlpha}
-                    onChange={e => setPaseAlpha(e.target.value.toUpperCase().replace(/\s/g, ''))}
-                    onFocus={() => setFocusedField('pase-alpha')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="VANG-XXXX-XXXX"
-                    disabled={isLoading}
-                    maxLength={14}
-                    className="flex-1 bg-transparent text-[#00FF41] text-xs outline-none border-none caret-[#00FF41] tracking-widest uppercase placeholder:text-[#00FF41]/15 placeholder:tracking-wide disabled:opacity-40"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-              </div>
 
               <button
                 type="submit"
