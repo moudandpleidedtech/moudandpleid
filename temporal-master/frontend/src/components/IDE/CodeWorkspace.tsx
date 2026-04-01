@@ -748,7 +748,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
         if (stepPassed && tutorialStep < 4) {
           const nextStep    = tutorialStep + 1
-          const nextProgress = nextStep * 25
+          const nextProgress = (nextStep - 1) * 25   // progress = completed steps, not current step
           lines.push({ text: `> [DAKI]: Fase ${tutorialStep} completada — Sincronización al ${nextProgress}%.`, kind: 'success' })
           setOutput(lines)
           scrollConsole()
