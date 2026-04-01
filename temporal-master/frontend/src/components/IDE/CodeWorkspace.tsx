@@ -1169,7 +1169,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                          tracking-widest hover:border-orange-400/80 hover:text-orange-300 hover:bg-orange-500/10
                          active:scale-95 transition-all duration-150"
             >
-              <span className="text-orange-400/60">◀</span> ABORTAR MISIÓN
+              <span className="text-orange-400/60">◀</span> VOLVER A MISIONES
             </button>
             {challenge && (
               <button

@@ -338,6 +338,32 @@ export default function HubPage() {
 
   const newArchiveCount = countNewArchives(completedOrders)
 
+  // ── Sincronizar subscription_status desde backend al montar ─────────────────
+  // Evita que Zustand muestre 'INACTIVE' cuando el usuario ya tiene TRIAL/ACTIVE.
+  useEffect(() => {
+    if (!userId) return
+    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
+    if (!token) return
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+    fetch(`${API_BASE}/api/v1/user/me`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { subscription_status?: string; trial_end_date?: string | null; role?: string } | null) => {
+        if (!data) return
+        if (data.subscription_status && data.subscription_status !== 'INACTIVE') {
+          setSubscription(data.subscription_status, data.trial_end_date ?? null)
+          if (data.subscription_status === 'ACTIVE') setIsPaid(true)
+        }
+        // Sync FOUNDER role so hasAccess check also covers role-based bypass
+        if (data.role === 'FOUNDER') {
+          setSubscription(data.subscription_status ?? 'ACTIVE', null)
+          setIsPaid(true)
+        }
+      })
+      .catch(() => {})
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Retorno desde Stripe Checkout exitoso ───────────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined') return
