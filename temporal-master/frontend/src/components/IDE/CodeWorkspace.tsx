@@ -590,13 +590,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const scrollConsole = () =>
     setTimeout(() => consoleRef.current?.scrollTo(0, consoleRef.current.scrollHeight), 60)
 
-  // Detecta el siguiente nodo en la lista ordenada
+  // Detecta el siguiente nodo en la lista ordenada.
+  // optimisticUnlock=true cuando acabamos de completar el nivel actual por primera vez
+  // — el backend ya desbloqueó el siguiente, pero allChallenges está en caché.
   const findNextChallenge = useCallback(
-    (currentId: string): VictoryNext | null => {
+    (currentId: string, optimisticUnlock = false): VictoryNext | null => {
       const idx = allChallenges.findIndex((c) => c.id === currentId)
       if (idx === -1 || idx >= allChallenges.length - 1) return null
       const next = allChallenges[idx + 1]
-      return { id: next.id, title: next.title, isDrone: next.challenge_type === 'drone' }
+      const isLocked = !optimisticUnlock && !next.unlocked
+      return { id: next.id, title: next.title, isDrone: next.challenge_type === 'drone', isLocked }
     },
     [allChallenges]
   )
@@ -731,7 +734,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
               setShowParticles(true)
               setTimeout(() => setShowParticles(false), 1400)
               setVictoryXp(data.gamification.xp_earned)
-              setVictoryNext(findNextChallenge(challengeId))
+              setVictoryNext(findNextChallenge(challengeId, true))
               lines.push({ text: '> [DAKI]: ¡Calibración completada! Acceso al Nexo concedido.', kind: 'success' })
               setTimeout(() => setShowVictory(true), 700)
             } else if (data.gamification.already_completed) {
@@ -811,9 +814,14 @@ export default function CodeWorkspace({ challengeId }: Props) {
       }
       // ─────────────────────────────────────────────────────────────────────────
 
+      // Diferenciar "error de ejecución" (excepción Python) de "salida incorrecta" (output mismatch)
       lines.push({
         text: `${data.execution_time_ms.toFixed(1)}ms  |  ${
-          data.output_matched ? 'Salida correcta ✓' : 'Salida incorrecta ✗'
+          data.output_matched
+            ? 'Salida correcta ✓'
+            : data.error_info
+            ? 'Error de ejecución ✗'
+            : 'Salida incorrecta ✗'
         }`,
         kind: data.output_matched ? 'success' : 'info',
       })
@@ -869,8 +877,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => setActiveInsight(data.insight), 800)
         }
 
-        // Modal de victoria
-        const next = findNextChallenge(challengeId)
+        // Modal de victoria — primer compleción: asume que el backend ya desbloqueó el siguiente
+        const next = findNextChallenge(challengeId, true)
         setVictoryNext(next)
         setVictoryXp(data.gamification.xp_earned)
         setTimeout(() => setShowVictory(true), 700)
@@ -883,8 +891,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (!data.output_matched) {
         const newStreak = failStreak + 1
         setFailStreak(newStreak)
-        // Auto-revelar siguiente pista DAKI en los umbrales 2, 4, 6
-        if (newStreak % 2 === 0) {
+        // Niveles BEGINNER (tier 1): pistas en el 1er, 3er y 5to fallo — el principiante no puede esperar
+        // Niveles INTERMEDIATE/ADVANCED: pistas en el 2do, 4to y 6to fallo
+        const isEasy = (challenge?.difficulty_tier ?? 2) === 1
+        const hintTriggers = isEasy ? [1, 3, 5] : [2, 4, 6]
+        if (hintTriggers.includes(newStreak)) {
           setHintIndex((prev: number) => {
             const maxIdx = (challenge?.hints?.length ?? 1) - 1
             return Math.min(prev + 1, maxIdx)
@@ -912,7 +923,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
     setShowVictory(false)
-    if (!victoryNext) {
+    if (!victoryNext || victoryNext.isLocked) {
       router.push('/misiones')
       return
     }

@@ -9,6 +9,7 @@ export interface VictoryNext {
   id: string
   title: string
   isDrone: boolean
+  isLocked?: boolean
 }
 
 interface Props {
@@ -138,9 +139,15 @@ export default function VictoryModal({ visible, xpEarned, next, onNext, onReview
               {next && (
                 <button
                   onClick={onNext}
-                  className="w-full py-2.5 text-[#00FF41]/65 text-xs font-bold tracking-[0.18em] border border-[#00FF41]/28 hover:border-[#00FF41]/65 hover:text-[#00FF41] transition-all duration-150 truncate px-3"
+                  className={`w-full py-2.5 text-xs font-bold tracking-[0.18em] border transition-all duration-150 truncate px-3 ${
+                    next.isLocked
+                      ? 'text-[#00FF41]/35 border-[#00FF41]/15 hover:border-[#00FF41]/30 hover:text-[#00FF41]/50'
+                      : 'text-[#00FF41]/65 border-[#00FF41]/28 hover:border-[#00FF41]/65 hover:text-[#00FF41]'
+                  }`}
                 >
-                  SIGUIENTE NODO → {next.title.toUpperCase()}
+                  {next.isLocked
+                    ? 'VER LISTA DE MISIONES →'
+                    : `SIGUIENTE NODO → ${next.title.toUpperCase()}`}
                 </button>
               )}
 
