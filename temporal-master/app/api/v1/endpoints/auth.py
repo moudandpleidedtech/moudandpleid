@@ -245,10 +245,28 @@ async def login(
     if user is None or not verify_password(payload.password, user.password_hash):
         raise _invalid
 
-    # ── Actualizar last_login ────────────────────────────────────────────────
-    user.last_login = datetime.now(timezone.utc)
+    # ── Actualizar streak y last_login ──────────────────────────────────────
+    now_utc = datetime.now(timezone.utc)
+    if user.last_login:
+        delta_days = (now_utc.date() - user.last_login.date()).days
+        if delta_days == 1:
+            user.streak_days = (user.streak_days or 0) + 1
+        elif delta_days > 1:
+            user.streak_days = 1
+        # delta_days == 0: mismo día — no cambia la racha
+    else:
+        user.streak_days = 1
+    user.last_login = now_utc
     await db.commit()
     await db.refresh(user)
+
+    # ── Logros de racha ──────────────────────────────────────────────────────
+    try:
+        from app.services.achievement_service import check_and_grant
+        await check_and_grant(db, user.id, "login", {"user_streak": user.streak_days})
+        await db.commit()
+    except Exception:
+        pass  # logros no son críticos — no bloquean el login
 
     token = create_user_token(
         user_id=str(user.id),

@@ -100,11 +100,32 @@ ACHIEVEMENTS: dict[str, dict] = {
         "xp_bonus": 200,
         "rarity": "rare",
     },
-    # ── Hitos de nivel ───────────────────────────────────────────────────────
+    # ── Hitos de nivel (cada 5 niveles) ──────────────────────────────────────
+    "nivel_5": {
+        "name": "Primer Salto",
+        "description": "Alcanzaste el Nivel 5. La señal es estable.",
+        "icon": "📡",
+        "xp_bonus": 150,
+        "rarity": "common",
+    },
     "nivel_10": {
         "name": "Agente Confirmado",
         "description": "Alcanzaste el Nivel 10.",
         "icon": "🔟",
+        "xp_bonus": 500,
+        "rarity": "uncommon",
+    },
+    "nivel_15": {
+        "name": "Agente en Misión",
+        "description": "Alcanzaste el Nivel 15. El Nexo te reconoce.",
+        "icon": "🔵",
+        "xp_bonus": 300,
+        "rarity": "uncommon",
+    },
+    "nivel_20": {
+        "name": "Operador Forjado",
+        "description": "Alcanzaste el Nivel 20. Forjado en código.",
+        "icon": "⚙️",
         "xp_bonus": 500,
         "rarity": "uncommon",
     },
@@ -115,11 +136,67 @@ ACHIEVEMENTS: dict[str, dict] = {
         "xp_bonus": 1000,
         "rarity": "rare",
     },
+    "nivel_30": {
+        "name": "Especialista del Nexo",
+        "description": "Alcanzaste el Nivel 30.",
+        "icon": "🎯",
+        "xp_bonus": 800,
+        "rarity": "rare",
+    },
+    "nivel_35": {
+        "name": "Combatiente Élite",
+        "description": "Alcanzaste el Nivel 35.",
+        "icon": "⚔️",
+        "xp_bonus": 1000,
+        "rarity": "rare",
+    },
+    "nivel_40": {
+        "name": "Cuarenta Protocolos",
+        "description": "Alcanzaste el Nivel 40.",
+        "icon": "🔐",
+        "xp_bonus": 1200,
+        "rarity": "rare",
+    },
+    "nivel_45": {
+        "name": "A un Paso del Comando",
+        "description": "Alcanzaste el Nivel 45. El rango máximo está cerca.",
+        "icon": "🔥",
+        "xp_bonus": 1500,
+        "rarity": "rare",
+    },
     "nivel_50": {
         "name": "Comandante del Nexo",
         "description": "Alcanzaste el Nivel 50. Eres élite.",
         "icon": "⭐",
         "xp_bonus": 2500,
+        "rarity": "epic",
+    },
+    "nivel_55": {
+        "name": "Más allá del Límite",
+        "description": "Alcanzaste el Nivel 55.",
+        "icon": "🌐",
+        "xp_bonus": 2000,
+        "rarity": "epic",
+    },
+    "nivel_60": {
+        "name": "Maestría Confirmada",
+        "description": "Alcanzaste el Nivel 60.",
+        "icon": "💎",
+        "xp_bonus": 2500,
+        "rarity": "epic",
+    },
+    "nivel_65": {
+        "name": "Sesenta y Cinco Nodos",
+        "description": "Alcanzaste el Nivel 65.",
+        "icon": "🧬",
+        "xp_bonus": 3000,
+        "rarity": "epic",
+    },
+    "nivel_70": {
+        "name": "Operador de Leyenda",
+        "description": "Alcanzaste el Nivel 70.",
+        "icon": "🌟",
+        "xp_bonus": 3500,
         "rarity": "epic",
     },
     "nivel_75": {
@@ -128,6 +205,41 @@ ACHIEVEMENTS: dict[str, dict] = {
         "icon": "🏗️",
         "xp_bonus": 5000,
         "rarity": "epic",
+    },
+    "nivel_80": {
+        "name": "Ochenta Protocolos",
+        "description": "Alcanzaste el Nivel 80.",
+        "icon": "🛡️",
+        "xp_bonus": 4000,
+        "rarity": "epic",
+    },
+    "nivel_85": {
+        "name": "Gran Maestro del Nexo",
+        "description": "Alcanzaste el Nivel 85.",
+        "icon": "🏆",
+        "xp_bonus": 5000,
+        "rarity": "epic",
+    },
+    "nivel_90": {
+        "name": "Noventa Nodos",
+        "description": "Alcanzaste el Nivel 90. La cima está cerca.",
+        "icon": "⬡",
+        "xp_bonus": 6000,
+        "rarity": "legendary",
+    },
+    "nivel_95": {
+        "name": "Pre-NEXO Ascendido",
+        "description": "Alcanzaste el Nivel 95. Un protocolo más.",
+        "icon": "🌌",
+        "xp_bonus": 8000,
+        "rarity": "legendary",
+    },
+    "nivel_100": {
+        "name": "NEXO ASCENDIDO",
+        "description": "100 niveles. El pináculo del Nexo.",
+        "icon": "👑",
+        "xp_bonus": 10000,
+        "rarity": "legendary",
     },
     # ── Progreso global ───────────────────────────────────────────────────────
     "diez_completados": {
@@ -321,15 +433,10 @@ async def check_and_grant(
             if distinct_sectors >= 3:
                 candidates.append("explorador")
 
-        # Hitos de nivel (pueden otorgarse en rein tento también)
-        if user_level >= 10:
-            candidates.append("nivel_10")
-        if user_level >= 25:
-            candidates.append("nivel_25")
-        if user_level >= 50:
-            candidates.append("nivel_50")
-        if user_level >= 75:
-            candidates.append("nivel_75")
+        # Hitos de nivel — cada 5 niveles (pueden otorgarse en reintento también)
+        for lvl in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]:
+            if user_level >= lvl:
+                candidates.append(f"nivel_{lvl}")
 
         # Rachas
         if user_streak >= 3:

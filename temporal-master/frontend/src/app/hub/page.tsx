@@ -14,6 +14,7 @@ import AlphaAccessModal from '@/components/UI/AlphaAccessModal'
 import BossWarningBanner from '@/components/UI/BossWarningBanner'
 import IncursionSelector from '@/components/Hub/IncursionSelector'
 import IntelReportModal from '@/components/Hub/IntelReportModal'
+import DistincionesPanel from '@/components/Hub/DistincionesPanel'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -833,6 +834,17 @@ export default function HubPage() {
               ))}
             </div>
           </motion.div>
+
+          {/* ── Distinciones — logros desbloqueados ── */}
+          {userId && (
+            <motion.div
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <DistincionesPanel userId={userId} />
+            </motion.div>
+          )}
 
           {/* ── Pase Alpha — visible solo si no tiene acceso activo ── */}
           {!isPaid && subscriptionStatus === 'INACTIVE' && (
