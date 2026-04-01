@@ -418,9 +418,7 @@ function EncryptedCard({
                 background: 'transparent',
               }}
             >
-              {inc.slug === 'tpm-mastery' || inc.slug.includes('tpm') ? 'EXPANSIÓN PENDIENTE'
-              : inc.slug === 'red-team' || inc.slug.includes('sales')  ? 'ACCESO RESTRINGIDO'
-              : 'PRÓXIMAMENTE'}
+              {inc.slug === 'red-team' ? 'ACCESO RESTRINGIDO' : 'PRÓXIMAMENTE'}
             </div>
             
             <div

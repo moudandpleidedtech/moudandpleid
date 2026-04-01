@@ -55,9 +55,9 @@ INCURSIONS: list[dict] = [
             "Aprende a gestionar equipos de ingeniería desde las trincheras. "
             "Crisis de oficina, decisiones bajo presión, stakeholders imposibles. "
             "El Desafío 00 te convertirá en el gerente que ningún equipo quiere perder. "
-            "[ACCESO ANTICIPADO — contenido en expansión activa]"
+            "[EN CONSTRUCCIÓN — disponible pronto]"
         ),
-        "status":           "ACTIVE",
+        "status":           "ENCRYPTED",
         "system_prompt_id": "tpm",
         "ruta":             "/codex/tpm",
         "color_acento":     "#FF6B35",
@@ -89,7 +89,7 @@ INCURSIONS: list[dict] = [
             "20 niveles. 2 Boss Battles. 20 Haikus de Cierre. "
             "Para el ingeniero que quiere cruzar al otro lado de la mesa."
         ),
-        "status":           "ACTIVE",
+        "status":           "ENCRYPTED",
         "system_prompt_id": "sales",
         "ruta":             "/codex/sales",
         "color_acento":     "#FFC700",
@@ -106,7 +106,7 @@ INCURSIONS: list[dict] = [
             "Análisis de causa raíz, test cases letales, automatización con pytest. "
             "Para el ingeniero que quiere ser la última línea de defensa."
         ),
-        "status":           "ACTIVE",
+        "status":           "ENCRYPTED",
         "system_prompt_id": "qa",
         "ruta":             "/codex/qa-senior-architect",
         "color_acento":     "#00D4FF",
@@ -122,7 +122,7 @@ INCURSIONS: list[dict] = [
             "5 Fases Operativas. 100 misiones. 5 Pruebas de Fuego. "
             "Para el QA consolidado que quiere programar la defensa, no solo describirla."
         ),
-        "status":           "ACTIVE",
+        "status":           "ENCRYPTED",
         "system_prompt_id": "qa-automation",
         "ruta":             "/codex/qa-automation-ops",
         "color_acento":     "#7B61FF",
