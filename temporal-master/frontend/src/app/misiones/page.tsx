@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
@@ -274,6 +274,7 @@ export default function MisionesPage() {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(false)
   const [selected, setSelected] = useState<Mission | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const [briefingMission, setBriefingMission] = useState<Mission | null>(null)
   const [isHacking, setIsHacking] = useState(false)
   const [hackingTitle, setHackingTitle] = useState('')
@@ -288,8 +289,21 @@ export default function MisionesPage() {
           completedChallengeIds.includes(m.id) ? { ...m, completed: true } : m
         )
         setMissions(merged)
-        const first = merged.find(m => m.unlocked && !m.completed) ?? merged[0]
-        if (first) setSelected(first)
+        // Restaurar selección desde URL param ?selected=<UUID>
+        const params = new URLSearchParams(window.location.search)
+        const selectedParam = params.get('selected')
+        const target = selectedParam ? merged.find(m => m.id === selectedParam && m.unlocked) : null
+        const first = target ?? merged.find(m => m.unlocked && !m.completed) ?? merged[0]
+        if (first) {
+          setSelected(first)
+          // Scroll al item seleccionado tras render
+          if (target) {
+            setTimeout(() => {
+              const el = listRef.current?.querySelector(`[data-mission-id="${target.id}"]`) as HTMLElement | null
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }, 120)
+          }
+        }
       })
       .catch(err => { console.log('[Misiones] Error:', err); setFetchError(true) })
       .finally(() => setLoading(false))
@@ -408,7 +422,7 @@ export default function MisionesPage() {
           </div>
 
           {/* Lista scrollable */}
-          <div className="flex-1 overflow-y-auto py-2">
+          <div ref={listRef} className="flex-1 overflow-y-auto py-2">
             {loading ? (
               <p className="text-[#00FF41]/25 text-[10px] tracking-widest animate-pulse px-5 py-6">
                 CARGANDO INCURSIONES...
@@ -458,6 +472,7 @@ export default function MisionesPage() {
                   return (
                     <motion.button
                       key={m.id}
+                      data-mission-id={m.id}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.06 }}

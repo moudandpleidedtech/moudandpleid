@@ -17,13 +17,14 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.core.security import create_admin_token, require_admin
 from app.models.challenge import Challenge
 from app.models.user import User
@@ -59,7 +60,9 @@ class TokenResponse(BaseModel):
         "Devuelve un JWT válido por ADMIN_TOKEN_EXPIRE_MINUTES minutos (default 8h)."
     ),
 )
+@limiter.limit("5/minute")
 async def admin_login(
+    request: Request,
     payload: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
@@ -415,6 +418,78 @@ async def get_recent_users(
             )
             for u in users
         ]
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 5 — Users Progress: listado completo de usuarios con su progreso
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class UserProgressItem(BaseModel):
+    id: str
+    callsign: str
+    email: str
+    current_level: int
+    total_xp: int
+    subscription_status: str
+    last_login: str | None
+    created_at: str
+    challenges_completed: int
+    streak_days: int
+
+
+class UsersProgressResponse(BaseModel):
+    total: int
+    users: list[UserProgressItem]
+
+
+@router.get(
+    "/users-progress",
+    response_model=UsersProgressResponse,
+    summary="Progreso de todos los usuarios — email, nivel, XP, completados",
+    dependencies=[Depends(require_admin)],
+)
+async def get_users_progress(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> UsersProgressResponse:
+    from sqlalchemy import and_
+
+    completed_sq = (
+        select(func.count())
+        .select_from(UserProgress)
+        .where(
+            and_(
+                UserProgress.user_id == User.id,
+                UserProgress.completed == True,  # noqa: E712
+            )
+        )
+        .scalar_subquery()
+    )
+
+    result = await db.execute(
+        select(User, completed_sq.label("completed_count"))
+        .order_by(User.last_login.desc().nulls_last())
+    )
+    rows = result.all()
+
+    return UsersProgressResponse(
+        total=len(rows),
+        users=[
+            UserProgressItem(
+                id=str(u.id),
+                callsign=u.callsign,
+                email=u.email,
+                current_level=u.current_level,
+                total_xp=u.total_xp,
+                subscription_status=u.subscription_status,
+                last_login=u.last_login.isoformat() if u.last_login else None,
+                created_at=u.created_at.isoformat(),
+                challenges_completed=int(cnt or 0),
+                streak_days=u.streak_days,
+            )
+            for u, cnt in rows
+        ],
     )
 
 

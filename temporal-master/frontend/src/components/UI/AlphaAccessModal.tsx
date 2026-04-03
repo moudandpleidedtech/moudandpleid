@@ -50,23 +50,11 @@ export default function AlphaAccessModal({ visible, onClose, onGranted }: Props)
     setRedeemState('loading')
     setFeedbackMsg('')
 
-    const token = typeof window !== 'undefined'
-      ? localStorage.getItem('daki_token')
-      : null
-
-    if (!token) {
-      setRedeemState('error')
-      setFeedbackMsg(ERROR_MESSAGES[401])
-      return
-    }
-
     try {
       const res = await fetch(`${API_BASE}/api/v1/alpha/redeem`, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        method:      'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
 

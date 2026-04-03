@@ -114,20 +114,23 @@ INCURSIONS: list[dict] = [
         "orden":            5,
     },
     {
-        "slug":             "qa-automation-ops",
-        "titulo":           "QA Automation: Operaciones Especiales",
+        "slug":                       "qa-automation-ops",
+        "titulo":                     "QA Automation: Operaciones Especiales",
         "descripcion": (
             "Protocolo SPECTRE — La transición definitiva de QA Manual a Automation Engineer. "
             "TypeScript, Playwright, API Testing y CI/CD con GitHub Actions. "
             "5 Fases Operativas. 100 misiones. 5 Pruebas de Fuego. "
             "Para el QA consolidado que quiere programar la defensa, no solo describirla."
         ),
-        "status":           "ENCRYPTED",
-        "system_prompt_id": "qa-automation",
-        "ruta":             "/codex/qa-automation-ops",
-        "color_acento":     "#7B61FF",
-        "icono":            "⚙",
-        "orden":            6,
+        "status":                     "ACTIVE",
+        "system_prompt_id":           "qa-automation",
+        "ruta":                       "/codex/qa-automation-ops",
+        "color_acento":               "#06B6D4",
+        "icono":                      "⚙",
+        "orden":                      6,
+        # D030 — Progresión entre Incursiones
+        "prerequisite_incursion_slug": "python-core",
+        "total_levels":                10,
     },
 ]
 
@@ -154,19 +157,21 @@ async def seed() -> None:
                 session.add(Incursion(**data))
                 print(f"  ➕ [seed_incursions] INSERT: {data['slug']} [{data['status']}]")
             else:
-                # UPDATE — sincroniza todos los campos incluyendo status
+                # UPDATE — sincroniza todos los campos incluyendo status y D030
                 await session.execute(
                     update(Incursion)
                     .where(Incursion.slug == data["slug"])
                     .values(
-                        titulo           = data["titulo"],
-                        descripcion      = data["descripcion"],
-                        system_prompt_id = data["system_prompt_id"],
-                        ruta             = data["ruta"],
-                        color_acento     = data["color_acento"],
-                        icono            = data["icono"],
-                        orden            = data["orden"],
-                        status           = data["status"],
+                        titulo                       = data["titulo"],
+                        descripcion                  = data["descripcion"],
+                        system_prompt_id             = data["system_prompt_id"],
+                        ruta                         = data["ruta"],
+                        color_acento                 = data["color_acento"],
+                        icono                        = data["icono"],
+                        orden                        = data["orden"],
+                        status                       = data["status"],
+                        prerequisite_incursion_slug  = data.get("prerequisite_incursion_slug"),
+                        total_levels                 = data.get("total_levels"),
                     )
                 )
                 print(f"  ♻️  [seed_incursions] UPDATE: {data['slug']} → status={data['status']}")

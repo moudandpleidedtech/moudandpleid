@@ -69,16 +69,11 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
     if (submitState === 'loading' || description.trim().length < 10) return
     setSubmitState('loading')
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
-    if (!token) { setSubmitState('error'); return }
-
     try {
       const res = await fetch(`${API_BASE}/api/v1/reports`, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        method:      'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
           severity,

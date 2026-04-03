@@ -80,7 +80,6 @@ export default function LoginPage() {
           access_token: string; user_id: string; callsign: string
           level: number; is_licensed: boolean; role?: string
         }
-        localStorage.setItem('daki_token',    data.access_token)
         localStorage.setItem('daki_user_id',  data.user_id)
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))
@@ -96,7 +95,8 @@ export default function LoginPage() {
         })
         document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
         setConsole({ text: `ACCESO CONCEDIDO. BIENVENIDO, ${data.callsign}.`, state: 'success' })
-        setTimeout(() => router.push('/hub'), 1000)
+        const destination = localStorage.getItem('boot_seen') ? '/hub' : '/boot-sequence'
+        setTimeout(() => router.push(destination), 1000)
         return
       }
 

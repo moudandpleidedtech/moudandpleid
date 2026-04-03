@@ -2,20 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ShieldCheck, Zap, Lock, GitBranch, Terminal } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface IncursionData {
-  id:               string
-  slug:             string
-  titulo:           string
-  descripcion:      string
-  status:           'ACTIVE' | 'ENCRYPTED'
-  system_prompt_id: string | null
-  ruta:             string | null
-  color_acento:     string
-  icono:            string
-  orden:            number
+  id:                          string
+  slug:                        string
+  titulo:                      string
+  descripcion:                 string
+  status:                      'ACTIVE' | 'ENCRYPTED'
+  system_prompt_id:            string | null
+  ruta:                        string | null
+  color_acento:                string
+  icono:                       string
+  orden:                       number
+  // D030 — Progresión entre Incursiones
+  prerequisite_incursion_slug: string | null
+  total_levels:                number | null
+  is_unlocked:                 boolean
 }
 
 interface Props {
@@ -23,11 +28,12 @@ interface Props {
   isFounder?:      boolean
   hasAccess?:      boolean   // TRIAL | ACTIVE | FOUNDER
   onAccessDenied?: () => void // muestra AlphaAccessModal
+  userId?:         string    // D030 — para calcular is_unlocked por incursión
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export default function IncursionSelector({ onNavigate, isFounder = false, hasAccess = false, onAccessDenied }: Props) {
+export default function IncursionSelector({ onNavigate, isFounder = false, hasAccess = false, onAccessDenied, userId }: Props) {
   const [incursions, setIncursions] = useState<IncursionData[]>([])
   const [loading,    setLoading]    = useState(true)
   const [fetchError, setFetchError] = useState(false)
@@ -36,8 +42,11 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL ?? ''
     const controller = new AbortController()
+    const url = userId
+      ? `${API}/api/v1/incursions?user_id=${userId}`
+      : `${API}/api/v1/incursions`
 
-    fetch(`${API}/api/v1/incursions`, { signal: controller.signal })
+    fetch(url, { signal: controller.signal })
       .then(r => r.json() as Promise<unknown>)
       .then(data => {
         console.log('DATA DEL BACKEND:', data)
@@ -135,7 +144,12 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ delay: i * 0.06, duration: 0.25, ease: 'easeOut' }}
               >
-                {isActive ? (
+                {inc.slug === 'qa-automation-ops' ? (
+                  <QAAutomationCard
+                    isUnlocked={inc.is_unlocked || isFounder}
+                    onEnter={() => inc.ruta && onNavigate(inc.ruta)}
+                  />
+                ) : isActive ? (
                   <ActiveCard
                     inc={inc}
                     onEnter={() => {
@@ -265,6 +279,246 @@ function ActiveCard({
         >
           ▶ INGRESAR
         </motion.button>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Tarjeta QA Automation (Especialidad) ─────────────────────────────────────
+
+const QA_STACK_BADGES = ['Python', 'TypeScript', 'Playwright', 'CI/CD']
+
+const BADGE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  Python:     { bg: 'rgba(6,182,212,0.12)',  text: '#67E8F9', border: 'rgba(6,182,212,0.35)' },
+  TypeScript: { bg: 'rgba(16,185,129,0.12)', text: '#6EE7B7', border: 'rgba(16,185,129,0.35)' },
+  Playwright: { bg: 'rgba(139,92,246,0.12)', text: '#C4B5FD', border: 'rgba(139,92,246,0.35)' },
+  'CI/CD':    { bg: 'rgba(251,191,36,0.10)', text: '#FDE68A', border: 'rgba(251,191,36,0.30)' },
+}
+
+function QAAutomationCard({
+  isUnlocked,
+  onEnter,
+}: {
+  isUnlocked: boolean
+  onEnter:    () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  // Bloqueada hasta que el backend confirme acceso (SYSTEM_KILLER badge o FOUNDER)
+  const locked = !isUnlocked
+
+  const CYAN    = '#06B6D4'
+  const EMERALD = '#10B981'
+
+  return (
+    <motion.div
+      className="relative overflow-hidden flex flex-col group"
+      style={{
+        background:  hovered
+          ? 'linear-gradient(135deg, rgba(6,182,212,0.10) 0%, rgba(16,185,129,0.07) 100%)'
+          : 'linear-gradient(135deg, rgba(6,182,212,0.05) 0%, rgba(16,185,129,0.03) 100%)',
+        border:      hovered
+          ? `1px solid rgba(6,182,212,0.70)`
+          : `1px solid rgba(6,182,212,0.28)`,
+        boxShadow:   hovered
+          ? `0 0 32px rgba(6,182,212,0.18), 0 0 64px rgba(16,185,129,0.08), inset 0 0 24px rgba(6,182,212,0.06)`
+          : `0 0 16px rgba(6,182,212,0.06), inset 0 0 12px rgba(6,182,212,0.02)`,
+        minHeight:   '200px',
+        cursor:      locked ? 'default' : 'pointer',
+        transition:  'all 0.2s ease',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={locked ? undefined : onEnter}
+      whileTap={locked ? {} : { scale: 0.98 }}
+    >
+      {/* ── Línea superior de pulso dual-color ── */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${CYAN}cc, ${EMERALD}cc, transparent)`,
+        }}
+        animate={{ opacity: hovered ? [0.6, 1, 0.6] : [0.2, 0.5, 0.2] }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* ── Partículas de fondo (hex grid) ── */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage: `radial-gradient(circle, ${CYAN} 1px, transparent 1px)`,
+          backgroundSize:  '18px 18px',
+        }}
+      />
+
+      {/* ── Badge de estado (top-right) ── */}
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+        {locked ? (
+          <>
+            <motion.span
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2.4, repeat: Infinity }}
+            >
+              <Lock size={11} color="#FFC700" strokeWidth={2.5} />
+            </motion.span>
+            <span className="text-[8px] tracking-[0.25em] font-mono" style={{ color: '#FFC70099' }}>
+              BLOQUEADO
+            </span>
+          </>
+        ) : (
+          <>
+            <motion.span
+              className="w-2 h-2 rounded-full"
+              style={{ background: CYAN, boxShadow: `0 0 6px ${CYAN}` }}
+              animate={{ opacity: [1, 0.3, 1], scale: [1, 1.5, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity }}
+            />
+            <span className="text-[8px] tracking-widest font-mono" style={{ color: `${CYAN}aa` }}>
+              ACTIVO
+            </span>
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col flex-1 p-5 pt-4 z-10 relative">
+
+        {/* ── Íconos Lucide ── */}
+        <div className="flex items-center gap-2 mb-3">
+          <motion.div
+            animate={hovered
+              ? { filter: [`drop-shadow(0 0 6px ${CYAN})`, `drop-shadow(0 0 14px ${CYAN})`, `drop-shadow(0 0 6px ${CYAN})`] }
+              : { filter: `drop-shadow(0 0 4px ${CYAN}66)` }
+            }
+            transition={{ duration: 1.4, repeat: hovered ? Infinity : 0 }}
+          >
+            <ShieldCheck size={26} color={locked ? '#334155' : CYAN} strokeWidth={1.8} />
+          </motion.div>
+          <motion.div
+            animate={hovered
+              ? { y: [-1, 1, -1], filter: [`drop-shadow(0 0 4px ${EMERALD})`, `drop-shadow(0 0 10px ${EMERALD})`, `drop-shadow(0 0 4px ${EMERALD})`] }
+              : { y: 0, filter: `drop-shadow(0 0 3px ${EMERALD}55)` }
+            }
+            transition={{ duration: 1.2, repeat: hovered ? Infinity : 0 }}
+          >
+            <Zap size={18} color={locked ? '#1e3a3a' : EMERALD} strokeWidth={2} />
+          </motion.div>
+        </div>
+
+        {/* ── Título ── */}
+        <span
+          className="text-sm font-black tracking-widest uppercase font-mono leading-snug mb-1 block"
+          style={{
+            color:      locked ? 'rgba(100,140,150,0.7)' : CYAN,
+            textShadow: locked ? 'none' : `0 0 14px ${CYAN}55`,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          QA Automation
+        </span>
+        <span
+          className="text-[9px] tracking-[0.2em] font-mono mb-2 block"
+          style={{ color: locked ? 'rgba(70,100,110,0.6)' : `${EMERALD}aa` }}
+        >
+          STACK MODERNO · PLAYWRIGHT + TS
+        </span>
+
+        {/* ── Descripción (aparece en hover) ── */}
+        <div className="mb-2 overflow-hidden" style={{ height: hovered ? 'auto' : '2.8rem' }}>
+          <AnimatePresence>
+            {hovered ? (
+              <motion.p
+                key="desc-full"
+                className="text-[10px] leading-relaxed font-mono"
+                style={{ color: locked ? 'rgba(100,140,150,0.55)' : `${CYAN}cc` }}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+              >
+                Domina el asedio de software moderno. De scripts locales a Pipelines de élite.
+              </motion.p>
+            ) : (
+              <motion.p
+                key="desc-short"
+                className="text-[10px] leading-relaxed font-mono line-clamp-2"
+                style={{ color: locked ? 'rgba(80,110,120,0.5)' : `${CYAN}88` }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                Automatización de pruebas, CI/CD pipelines y cobertura de calidad a escala.
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Stack Badges ── */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {QA_STACK_BADGES.map((tag) => {
+            const c = BADGE_COLORS[tag]
+            return (
+              <span
+                key={tag}
+                className="text-[8px] font-mono tracking-widest px-2 py-0.5"
+                style={{
+                  background:   locked ? 'rgba(30,50,60,0.5)' : c.bg,
+                  color:        locked ? 'rgba(60,80,90,0.7)' : c.text,
+                  border:       `1px solid ${locked ? 'rgba(40,60,70,0.4)' : c.border}`,
+                  transition:   'all 0.2s ease',
+                }}
+              >
+                {tag}
+              </span>
+            )
+          })}
+        </div>
+
+        {/* ── CTA / Lock message ── */}
+        {locked ? (
+          <div className="mt-auto">
+            <div
+              className="w-full text-center py-2.5 font-mono relative overflow-hidden"
+              style={{
+                border:     '1px solid rgba(255,199,0,0.25)',
+                background: 'rgba(255,199,0,0.04)',
+              }}
+            >
+              {/* Texto base */}
+              <span
+                className="text-[9px] tracking-[0.18em] uppercase block transition-opacity duration-200 group-hover:opacity-0"
+                style={{ color: 'rgba(255,199,0,0.55)' }}
+              >
+                <Lock size={9} className="inline mr-1.5 mb-0.5" />
+                REQUIERE: OPERACIÓN PYTHON FINALIZADA
+              </span>
+              {/* Texto hover */}
+              <span
+                className="absolute inset-0 flex items-center justify-center text-[9px] tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                style={{ color: 'rgba(255,199,0,0.85)', background: 'rgba(255,199,0,0.06)' }}
+              >
+                🔒 COMPLETA EL CORE PYTHON PRIMERO
+              </span>
+            </div>
+          </div>
+        ) : (
+          <motion.button
+            onClick={(e) => { e.stopPropagation(); onEnter() }}
+            className="mt-auto w-full text-center text-[10px] tracking-[0.35em] uppercase font-mono py-2.5"
+            style={{
+              border:     `1px solid ${CYAN}66`,
+              color:      CYAN,
+              background: `${CYAN}12`,
+            }}
+            whileHover={{ background: `${CYAN}28`, borderColor: `${CYAN}cc`, boxShadow: `0 0 14px ${CYAN}30` }}
+            whileTap={{ scale: 0.96 }}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Terminal size={11} />
+              INGRESAR AL SECTOR
+            </div>
+          </motion.button>
+        )}
       </div>
     </motion.div>
   )

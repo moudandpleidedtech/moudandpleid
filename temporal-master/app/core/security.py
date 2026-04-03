@@ -16,7 +16,7 @@ Flujo admin:
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -128,17 +128,25 @@ def _decode_user_token(token: str) -> str:
 # ─── Dependencias de usuario ──────────────────────────────────────────────────
 
 async def get_current_operator(
-    token: str = Depends(oauth2_scheme),
+    token: str | None = Depends(oauth2_scheme_optional),
+    daki_auth: str | None = Cookie(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """
-    Dependencia estándar — requiere JWT válido.
+    Dependencia estándar — requiere JWT válido (cookie httpOnly o Authorization header).
     Uso: endpoints que SIEMPRE necesitan un usuario autenticado.
 
         @router.get("/secure")
         async def endpoint(operator: User = Depends(get_current_operator)): ...
     """
-    user_id = _decode_user_token(token)
+    resolved = token or daki_auth
+    if not resolved:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de operador inválido o expirado.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user_id = _decode_user_token(resolved)
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -153,20 +161,19 @@ async def get_current_operator(
 
 async def get_current_operator_optional(
     token: str | None = Depends(oauth2_scheme_optional),
+    daki_auth: str | None = Cookie(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> User | None:
     """
     Dependencia opcional — no falla si no hay token.
+    Acepta cookie httpOnly o Authorization header.
     Devuelve el User si el token es válido, None si no hay token o es inválido.
-    Uso: endpoints que personalizan la respuesta cuando hay sesión, pero no la exigen.
-
-        @router.post("/chat")
-        async def chat(operator: User | None = Depends(get_current_operator_optional)): ...
     """
-    if token is None:
+    resolved = token or daki_auth
+    if resolved is None:
         return None
     try:
-        user_id = _decode_user_token(token)
+        user_id = _decode_user_token(resolved)
         result  = await db.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
     except HTTPException:

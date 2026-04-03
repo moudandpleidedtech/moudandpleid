@@ -115,10 +115,17 @@ async def _ensure_dev_user() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail fast si SECRET_KEY no fue cambiada del valor por defecto
+    if settings.SECRET_KEY in ("change-me-in-production", ""):
+        raise RuntimeError(
+            "SECRET_KEY no configurada. Define la variable de entorno SECRET_KEY antes de iniciar."
+        )
     await init_db()
     await _auto_seed()
     await _seed_incursions()
-    await _ensure_dev_user()
+    # Usuario de desarrollo solo en modo DEBUG — nunca en producción
+    if settings.DEBUG:
+        await _ensure_dev_user()
     yield
 
 

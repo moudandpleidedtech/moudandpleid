@@ -121,6 +121,394 @@ SELECT code, is_used FROM alpha_codes ORDER BY created_at DESC LIMIT 10;
 
 ---
 
+## REFERENCIA TÉCNICA COMPLETA — DAKI EdTech
+> Generada el 2026-04-02. Consultar antes de explorar el codebase.
+
+---
+
+### RT-1 · API ENDPOINTS (Backend FastAPI)
+
+#### AUTENTICACIÓN — `/api/v1/auth`
+| Método | Ruta | Auth | Body | Respuesta clave |
+|--------|------|------|------|----------------|
+| POST | `/auth/register` | No | `email, callsign, password, [founder_code]` | `access_token, user_id, callsign, level, role` + cookie `daki_auth` |
+| POST | `/auth/login` | No | `email, password` | idem + actualiza `streak_days` + otorga logro login |
+| POST | `/auth/logout` | No | — | 204, elimina cookie `daki_auth` |
+
+#### DESAFÍOS — `/api/v1/challenges`
+| Método | Ruta | Auth | Params | Respuesta clave |
+|--------|------|------|--------|----------------|
+| GET | `/challenges` | Opcional | `user_id?` | Lista de `ChallengeOut` con `unlocked`, `completed`, `status` |
+| GET | `/challenges/{id}` | Opcional | `user_id?` | `ChallengeOut` completo (hints, theory_content, lore_briefing, test_inputs) |
+
+`ChallengeOut` incluye: `id, title, description, difficulty_tier (1/2/3), base_xp_reward, initial_code, test_inputs, completed, unlocked, level_order, challenge_type, theory_content, lore_briefing, hints[], is_free, codex_id, sector_id`
+
+#### EJECUCIÓN — `/api/v1`
+| Método | Ruta | Auth | Body | Respuesta clave |
+|--------|------|------|------|----------------|
+| POST | `/execute` | Cookie/Bearer | `user_id, challenge_id, source_code (max 20KB), test_inputs, time_spent_ms, daki_level (1-3)` | `output_matched, stdout, stderr, execution_time_ms, error_info{type,line,detail}, daki_message, gamification{xp_earned, new_level, new_total_xp, already_completed, efficiency_bonus_applied}, achievements_unlocked[], insight` |
+| POST | `/evaluate` | Opcional | `challenge_id, code (max 20KB), daki_level?, user_id?` | `status, output_matched, stdout, stderr, execution_time_ms, error_info, daki_message` |
+| POST | `/compiler/execute` | Cookie/Bearer | `user_id, challenge_id, source_code, daki_level, hints_used` | Similar a `/execute` |
+| POST | `/hint` | No | `user_id, challenge_id, source_code, error_output?, fail_count, operator_level` | `hint` (texto, gen. por Claude Haiku). Rate limit: 10/min |
+
+#### USUARIOS — `/api/v1`
+| Método | Ruta | Auth | Respuesta clave |
+|--------|------|------|----------------|
+| GET | `/user/me` | Cookie/Bearer | `UserOut` completo |
+| POST | `/users/login` | No | `UserOut` por `callsign` (legacy) |
+
+`UserOut`: `id, callsign, email, total_xp, current_level, streak_days, is_licensed, points, current_rank, subscription_status, trial_end_date, role, league_tier`
+
+#### DAKI IA — `/api/v1/daki`
+| Método | Ruta | Body | Respuesta |
+|--------|------|------|-----------|
+| POST | `/daki/stagnation` | `user_id, challenge_id, idle_minutes, operator_level` | `daki_message` |
+| POST | `/daki/intervene` | `user_id, challenge_id, current_code, error_output?, idle_minutes, operator_level` | `daki_message` (max 120 tokens) |
+| POST | `/daki/ask` | `user_id, challenge_id, question` | `daki_message` (consulta conceptual libre) |
+
+Motor: Claude Haiku + `context_router` (selecciona persona: DAKI, SALES, TPM) + `memory_service` (últimos 5 eventos del usuario).
+
+#### PvP y ARENA — `/api/v1/duels`
+| Método | Ruta | Body | Respuesta |
+|--------|------|------|-----------|
+| POST | `/duels/challenge` | `user_id` | `DuelOut` (duel_id, challenger, defender, challenge) |
+| POST | `/duels/{id}/submit` | `user_id, source_code` | `SubmitOut` (correct, execution_time_ms, elo_delta, winner_id) |
+| GET | `/duels/inbox` | `user_id` | Lista duelos pendientes como defensor |
+| GET | `/duels/{id}` | — | Estado actual del duelo |
+
+Elo: K=32, emparejamiento ±200 puntos. Ganador = más rápido si ambos correctos.
+
+#### BOSS — `/api/v1/boss`
+- POST `/boss/execute` → valida `factorial_iterativo(7) == 5040`, otorga 1500 XP + badge `SYSTEM_KILLER`.
+
+#### ADMIN — `/api/v1/admin`
+| Método | Ruta | Auth | Respuesta |
+|--------|------|------|-----------|
+| POST | `/admin/auth/token` | callsign+pass (is_admin=True) | JWT admin (8h). Rate limit: 5/min |
+| GET | `/admin/overview` | JWT admin | total_users, paid_users, conversion_rate, active_last_24h |
+| GET | `/admin/drop-off` | JWT admin | Usuarios estancados por nivel |
+| GET | `/admin/daki-stats` | JWT admin | Uso de IA por nivel |
+| GET | `/admin/recent-users` | JWT admin | Últimos 10 usuarios |
+
+#### PAGOS — `/api/v1/payments`
+| Método | Ruta | Auth | Respuesta |
+|--------|------|------|-----------|
+| POST | `/payments/create-checkout-session` | Cookie/Bearer | `checkout_url` (Stripe) |
+| POST | `/payments/webhook` | Stripe-Signature | 200 OK — activa `subscription_status=ACTIVE` |
+| POST | `/payments/verify` | X-Admin-Key | Activación manual |
+
+#### ALPHA CODES — `/api/v1/alpha`
+- POST `/alpha/redeem` → `{code}` — SELECT FOR UPDATE (bloqueo pesimista), activa TRIAL 30 días.
+
+#### INCURSIONES — `/api/v1/incursions`
+- GET `/incursions` — Catálogo de 6 paths: `{id, slug, titulo, status (ACTIVE/ENCRYPTED), ruta, color_acento, icono, orden}`
+
+#### SALUD
+- GET `/health` → `{status, app, version}`
+
+---
+
+### RT-2 · PÁGINAS FRONTEND (Next.js 14 App Router)
+
+| Ruta | Acceso | Fetch principal | Renderiza |
+|------|--------|-----------------|-----------|
+| `/` | Público | Ninguno | HeroSection, VideoDemoSection, SolucionSection, ActivacionSection |
+| `/login` | Público | POST `/auth/login` | Terminal de autenticación |
+| `/register` | Público | POST `/auth/register` | Protocolo de reclutamiento + migración sesión anterior |
+| `/boot-sequence` | Privado | Ninguno | NeuralBoot (onboarding cinematic → `/misiones`) |
+| `/hub` | Privado | GET `/user/me`, GET `/incursions` | CampaignMap (6 zonas), DakiChatTerminal, IncursionSelector, DistincionesPanel, RadarMaestriaModal |
+| `/misiones` | Privado | GET `/challenges?user_id=` | Lista scrollable + briefing derecho. Soporta `?selected=<id>` para scroll y auto-selección |
+| `/challenge/[id]` | Privado | GET `/challenges/{id}`, POST `/execute` | CodeWorkspace completo (Monaco + consola + hints + HUD) |
+| `/enigma` | Privado | POST `/enigma/submit` | Grid-based pathfinding (5 mapas, mini-juego dron) |
+| `/arena` | Privado | POST `/duels/challenge`, POST `/duels/{id}/submit` | Duelo PvP en tiempo real con timer y elo_delta |
+| `/leaderboard` | Privado | GET `/leaderboard` | Top 50 por XP, badges de liga (Bronce/Plata/Oro/Diamante/Arquitecto) |
+| `/boss` | Privado | POST `/boss/execute` | TheInfiniteLooper (boss final, 1500 XP, SYSTEM_KILLER) |
+| `/bounty` | Privado | — | Generador DDA de misiones personalizadas |
+| `/codex/[slug]` | Privado | GET `/incursions` | Módulo de curso secundario (Sales, TPM, QA) |
+| `/sector/[id]` | Privado | GET `/sectors/{id}` | Mapa de sector con nodos desbloqueables |
+| `/admin/dashboard` | Privado (admin) | GET `/admin/overview`, `/admin/drop-off` | KPIs, moderación, estadísticas |
+| `/god-mode` | Privado (FOUNDER) | — | Panel de debug/override total |
+| `/contratos/[id]` | Privado | GET `/contracts/{id}` | Contrato individual |
+| `/certificado` | Privado | — | Descarga de certificado PDF |
+
+**Middleware (`src/middleware.ts`):** Cookie `enigma_user` requerida para rutas privadas → redirige a `/login`. Si autenticado accede a `/login` o `/register` → redirige a `/hub`.
+
+---
+
+### RT-3 · ZUSTAND STORE (`pq-user`)
+
+```
+Campos persistidos en localStorage (key: "pq-user"):
+  userId, username, level, previousLevel, totalXp, streakDays,
+  completedChallengeIds[], badges[], dakiLevel (1|2|3),
+  currentRank, points, isPaid, subscriptionStatus, trialEndDate, role
+
+Actions principales:
+  setUser({id, username, current_level, total_xp, streak_days, ...})
+  applyGamificationResult({new_level, new_total_xp})  ← llamado tras cada ejecución
+  markChallengeCompleted(id)
+  earnBadge(badge)
+  setIsPaid(bool)
+  setSubscription(status, endDate)
+  clearUser()  ← logout
+```
+
+---
+
+### RT-4 · LOCALSTORAGE KEYS
+
+| Key | Contenido | Cuándo se usa |
+|-----|-----------|---------------|
+| `pq-user` | Zustand store serializado | Siempre (persist automático) |
+| `boot_seen` | `"1"` | Login/Hub: si absent → redirige a `/boot-sequence` |
+| `daki_tutorial_step_<challengeId>` | Número de paso (1-4) | Persistir progreso del tutorial tutorial entre recargas |
+| `code_draft_<challengeId>` | Código fuente del usuario | Auto-guardado cada 800ms en IDE; limpiado al completar |
+
+---
+
+### RT-5 · MODELOS DE BASE DE DATOS
+
+#### Tabla `users` (campos clave)
+`id (UUID PK), email (UNIQUE), callsign (UNIQUE), password_hash, current_level, total_xp, streak_days, elo_rating (default 1200), league_tier, subscription_status (INACTIVE/TRIAL/ACTIVE), trial_end_date, is_licensed, is_admin, role (USER/FOUNDER/ADMIN), stripe_customer_id, daki_level (1-3), badges_json, points, current_rank, mission_state (JSONB), created_at, last_login`
+
+#### Tabla `challenges` (campos clave)
+`id (UUID PK), title, description, difficulty_tier (1/2/3), base_xp_reward, initial_code, expected_output, test_inputs_json, level_order, challenge_type, theory_content, lore_briefing, hints_json (array de 3), sector_id, codex_id, is_free, is_phase_boss, prerequisite_challenge_id (FK), strict_match`
+
+#### Tabla `user_progress`
+`id, user_id (FK), challenge_id (FK), completed, attempts, hints_used, completed_at, boss_completed, codex_id, score`
+
+#### Tabla `alpha_codes`
+`id, code (UNIQUE, formato VANG-XXXX-XXXX), is_used, used_by_user_id (FK), used_at`
+
+#### Tabla `incursions`
+`id, slug (UNIQUE), titulo, status (ACTIVE/ENCRYPTED), system_prompt_id, ruta, color_acento, icono, orden`
+
+#### Tabla `duels`
+`id, challenger_id (FK), defender_id (FK), challenge_id (FK), status (active/completed/expired), winner_id, elo_delta, challenger_code, defender_code, challenger_time_ms, defender_time_ms`
+
+#### Tabla `daki_interceptions`
+`id, user_id (FK), concept_name, mision_flash_json, daki_message, status (pending/passed/expired), expires_at`
+
+#### Otras tablas
+`user_metrics, concept_mastery, user_core_memory (event_type: error_frecuente/exito_rapido/tiempo_estancado/subida_rango), daki_session_logs, user_achievements, intelligence_reports, tactical_access_keys, beta_codes, challenge_prerequisites`
+
+---
+
+### RT-6 · SERVICIOS BACKEND (app/services/)
+
+| Servicio | Función principal |
+|----------|-------------------|
+| `execution_service.py` | Ejecuta código via Piston API (timeout 3s); fallback local solo en DEBUG |
+| `gamification_service.py` | XP → Level: `floor(0.1 * sqrt(XP)) + 1`. Bonus eficiencia +20% si time < 50ms (BEGINNER) |
+| `elo_service.py` | K=32, expected = `1/(1+10^((loser-winner)/400))`, delta = `max(1, round(32*(1-exp)))` |
+| `mastery_service.py` | ConceptMastery: <3 att → +15pts; 3-5 att → +5pts; >5 att → +2pts. Refuerzo si score<40 |
+| `achievement_service.py` | Triggers: login, boss_defeated, level_up, challenge_completed |
+| `memory_service.py` | CRUD de UserCoreMemory; `format_operator_history()` inyecta contexto en prompts DAKI |
+| `context_router.py` | Selecciona persona DAKI según `incursion_id` y `operator_level` |
+| `ai_mentor.py` | `get_execute_feedback()` y `get_hint()` — Claude Haiku |
+| `league_service.py` | `compute_tier(elo_rating)` → Bronce/Plata/Oro/Diamante |
+| `rank_service.py` | `compute_rank(points)` → "Trainee" → "Comandante Supremo" |
+| `semantic_cache.py` | Cache LLM en memoria; interfaz Redis-ready (swap transparente) |
+| `llm_router.py` | Haiku si nivel≤10 y prompt<150 chars; Sonnet si nivel>10 o Boss Battle |
+| `daki_session_service.py` | Abre/cierra sesiones DAKI con opening_message y closing_briefing |
+| `alerts.py` | `fire_sale_alert()` → Discord/Telegram al confirmar pago |
+
+---
+
+### RT-7 · COMPONENTES IDE (CodeWorkspace.tsx)
+
+**Refs clave:**
+- `editorRef.current` — Instancia Monaco Editor
+- `decorationsRef.current` — IEditorDecorationsCollection (error/victory line highlights)
+- `challengeStartMs.current` — `Date.now()` al cambiar de challenge (para `time_spent_ms`)
+- `handleEjecutarRef.current` — Ref estable para Ctrl+Enter (evita stale closure)
+- `audioVictoryRef`, `audioRunRef`, `audioHintRef`, `audioAmbientRef` — HTMLAudioElement refs
+
+**Estado de gaming:**
+- `focusMode` — Oculta header; Escape para salir; botón ⊞ en header
+- `ambientOn` — Música ambiente loop (`/sounds/hub-ambient.mp3`); botón ♪ en header
+- `soundEnabled` — Efectos de sonido; botón SFX en header
+- `sessionSecs` — Timer en header (`⏱ MM:SS`), reset al cambiar challenge
+- `failStreak` — Intentos fallidos (`N✕` en header); dispara hints en posiciones [1,3,5] (tier 1) o [2,4,6] (tier 2/3)
+
+**Decoraciones Monaco:**
+- `.daki-error-line` — Fondo rojo + borde izquierdo (se limpia automáticamente a los 4s)
+- `.daki-victory-line` — Fondo verde + borde izquierdo en todas las líneas (2.2s)
+
+**Tutorial multi-step (challenge_type = "tutorial"):**
+- 4 pasos: TUTORIAL_STEP_CODES[1..4]
+- `syncProgress` barra de calibración: 0% / 25% / 50% / 75% / 100%
+- Paso 4 usa evaluación normal del backend (`output_matched`)
+
+**Flujo de ejecución:**
+1. Ctrl+Enter o botón EJECUTAR → `handleEjecutar()`
+2. `playSound(audioRunRef)` + `resetIdleTimer()`
+3. POST `/execute` con `credentials: 'include'`
+4. Si `output_matched && !already_completed` → victoria: partículas, `applyVictoryDecoration()`, `playSound(audioVictoryRef)`, combo si ≤ par lines, VictoryModal 700ms después
+5. Si error → `triggerShake()`, `anim-error-flash`, `applyErrorDecoration(line)`
+
+---
+
+### RT-8 · FLUJOS DE USUARIO COMPLETOS
+
+#### Flujo 1 — Registro nuevo operador
+```
+/register → POST /auth/register {email, callsign, password, [founder_code]}
+  → cookie daki_auth (httpOnly) + Zustand setUser()
+  → si !localStorage.boot_seen → /boot-sequence → /misiones
+  → si localStorage.boot_seen → /hub
+```
+
+#### Flujo 2 — Login operador existente
+```
+/login → POST /auth/login {email, password}
+  → backend actualiza streak_days + last_login
+  → cookie daki_auth + Zustand setUser()
+  → si !boot_seen → /boot-sequence → /misiones
+  → si boot_seen → /hub
+  (Hub: si level > 1 → localStorage.setItem('boot_seen', '1') para retrocompatibilidad)
+```
+
+#### Flujo 3 — Misión completa
+```
+/misiones → GET /challenges?user_id → seleccionar misión
+  → /challenge/[id]
+  → GET /challenges/{id} → cargar challenge (teoría si theory_content y no completado)
+  → Restaurar borrador: localStorage.getItem('code_draft_{id}') ?? initial_code
+  → Editar código en Monaco → Ctrl+Enter o EJECUTAR
+  → POST /execute → evaluar
+  → Si correcto: partículas + victory glow + applyVictoryDecoration + VictoryModal
+  → VictoryModal: "CONTINUAR" → /challenge/{next_id} ó /enigma (si challenge_type=drone)
+  → VOLVER → /misiones?selected={id} (scroll automático al nodo)
+```
+
+#### Flujo 4 — Tutorial
+```
+/challenge/[tutorial_id] (challenge_type="tutorial")
+  → Restaura paso desde localStorage.daki_tutorial_step_{id}
+  → 4 pasos: Paso 1 (ejecutar), 2 (sin SyntaxError), 3 (variable operador=), 4 (función correcta)
+  → Barra de calibración: 0→25→50→75→100%
+  → Al completar: clearItem(daki_tutorial_step_{id}), VictoryModal especial
+```
+
+#### Flujo 5 — Pago / desbloqueo premium
+```
+/hub → nivel 11+ bloqueado → PaywallModal
+  → POST /payments/create-checkout-session → checkout_url Stripe
+  → Stripe checkout → pago exitoso → webhook POST /payments/webhook
+  → Backend: subscription_status=ACTIVE, is_licensed=True
+  → Frontend: setIsPaid(true)
+```
+
+#### Flujo 6 — PvP Arena
+```
+/arena → POST /duels/challenge {user_id}
+  → Emparejamiento ±200 Elo → DuelOut
+  → Editor Monaco → Enviar → POST /duels/{id}/submit
+  → Si ambos enviaron → winner = más rápido correcto → elo_delta en pantalla
+```
+
+#### Flujo 7 — Alpha Code (primeros usuarios)
+```
+/register → campo CÓDIGO VANG
+  → POST /alpha/redeem {code}
+  → SELECT FOR UPDATE → is_used=False?
+  → SET is_used=True, subscription_status=TRIAL, trial_end_date=+30 días
+```
+
+#### Flujo 8 — DAKI intervención proactiva
+```
+CodeWorkspace: 2 min sin escribir ni ejecutar
+  → useIdleDetection.onStuck()
+  → POST /daki/intervene {current_code, error_output, idle_minutes:2}
+  → Respuesta: daki_message inyectado en consola como "DAKI INTERRUPT"
+  → speakDaki(msg) + activateWaveform(msg)
+```
+
+---
+
+### RT-9 · STARTUP Y SEEDS (main.py)
+
+```
+Startup order:
+  1. Validar SECRET_KEY != "change-me-in-production" (fail-fast)
+  2. init_db() → CREATE TABLE IF NOT EXISTS + ALTER TABLE idempotentes
+  3. Si challenges vacía → seed_master.seed() + seed_tactical_keys.seed()
+  4. seed_incursions.seed() → UPSERT idempotente de 6 incursiones (siempre)
+  5. Si DEBUG=True → _ensure_dev_user() → admin@daki.dev / NEXO / DAKIadmin2025 (level 99, FOUNDER)
+```
+
+**Generación de alpha codes:**
+```bash
+python -m scripts.generate_alpha_codes --count 50 --prefix VANG
+# Formato: VANG-XXXX-XXXX (alphabet sin O/I/0/1)
+# Carga: SELECT FOR UPDATE en redención — anti-race-condition
+```
+
+**Incursiones seedeadas (estado actual):**
+| Slug | Título | Status | Orden |
+|------|--------|--------|-------|
+| python-core | Operación Vanguardia | ACTIVE | 1 |
+| tpm-mastery | Technical Project Manager | ACTIVE | 2 |
+| red-team | Ciberseguridad: Red Team | ENCRYPTED | 3 |
+| sales-mastery | Technical Sales Mastery | ACTIVE | 4 |
+| qa-senior-architect | QA Senior Architect | ACTIVE | 5 |
+| qa-automation-ops | QA Automation: Ops Especiales | ACTIVE | 6 |
+
+---
+
+### RT-10 · CONFIGURACIÓN (Variables de Entorno)
+
+#### Backend (Render)
+| Variable | Requerida | Notas |
+|----------|-----------|-------|
+| `DATABASE_URL` | ✅ | `postgresql+asyncpg://...neon...?ssl=require` |
+| `SECRET_KEY` | ✅ | `secrets.token_hex(32)` — fail-fast si valor default |
+| `ANTHROPIC_API_KEY` | ✅ | `sk-ant-...` |
+| `DEBUG` | ✅ | `False` en producción (oculta /docs, habilita seed devuser) |
+| `ALLOWED_ORIGINS` | ✅ | `["https://dakiedtech.com","https://daki-edtech.vercel.app"]` |
+| `FRONTEND_URL` | ✅ | URL de Vercel (inyectada en CORS dinámico) |
+| `STRIPE_SECRET_KEY` | Pagos | `sk_live_...` |
+| `STRIPE_WEBHOOK_SECRET` | Pagos | `whsec_...` |
+| `STRIPE_PRICE_ID` | Pagos | `price_...` ($25/mes) |
+| `ALERT_DISCORD_WEBHOOK` | Opcional | URL Discord para alertas de venta |
+
+#### Frontend (Vercel)
+| Variable | Requerida | Notas |
+|----------|-----------|-------|
+| `API_URL` | ✅ | Server-side, usado en `next.config.mjs` para el proxy rewrite |
+| `NEXT_PUBLIC_API_URL` | ✅ | Client-side fallback (`http://localhost:8000` en dev) |
+
+**Proxy Next.js:** `/api/v1/*` → backend (browser nunca ve la URL de Render).
+
+---
+
+### RT-11 · HOOKS Y UTILIDADES FRONTEND
+
+| Hook/Util | Firma | Uso |
+|-----------|-------|-----|
+| `useIdleDetection` | `({timeoutMs, onStuck, enabled}) → {resetTimer}` | CodeWorkspace: 2 min inactividad → DAKI interviene |
+| `useDakiVoice` | `(dakiLevel, {enabled}) → {speak, cancel, isSpeaking}` | Síntesis de voz Web Speech API para mensajes DAKI |
+| `useUserStore` | Zustand store | Global en toda la app |
+| `playSound(ref)` | `(HTMLAudioElement ref) → void` | IDE: victory/run/hint sounds (respeta `soundEnabled`) |
+| `applyVictoryDecoration()` | `() → void` | Flash verde en todas las líneas del editor (2.2s) |
+| `applyErrorDecoration(line)` | `(number) → void` | Resaltado rojo en línea con error (4s) |
+| `triggerShake(intensity)` | `('soft'|'hard') → void` | Framer Motion screen shake |
+
+---
+
+### RT-12 · SONIDOS Y ASSETS
+
+| Archivo | Uso | Volumen |
+|---------|-----|---------|
+| `/sounds/victory.mp3` | Victoria en misión | 100% |
+| `/sounds/data-stream.mp3` | Al ejecutar código | 40% |
+| `/sounds/daki_alert.mp3` | Al mostrar pista DAKI | 100% |
+| `/sounds/hub-ambient.mp3` | Música ambiente IDE (loop) | 12% |
+| `/assets/backgrounds/map1-5.png` | Fondos según `level_order` | — |
+
+---
+
 ## Arquitectura del Sistema — Mapa de Módulos
 
 ### Backend — Endpoints registrados (33 rutas)
@@ -213,6 +601,78 @@ gamification_events, badges, user_badges, payments
 ---
 
 ## Historial de Operaciones
+
+### 2026-04-02 — Directiva 031: Estructuración del Path QA Automation (10 Niveles Evaluables) ✅
+
+#### Problema resuelto:
+El seed de QA Automation existía con 50 niveles teóricos (`expected_output: "OK"`, no evaluables).
+D031 reemplaza eso con 10 niveles completamente evaluables auto-corregidos por el motor Piston.
+
+#### Cambios aplicados:
+
+**`temporal-master/app/services/execution_service.py`**
+- `_execute_via_piston()` ahora acepta `language: str = "python"` y `version: str = "3.10.0"` como parámetros
+- `execute_node_code()` puede llamar Piston con `language="typescript", version="5.0.4"` sin TypeError
+
+**`temporal-master/app/api/v1/endpoints/compiler.py`**
+- Import: agregado `execute_node_code` junto a `execute_python_code`
+- Routing por `challenge_type`:
+  ```python
+  challenge_type = getattr(challenge, "challenge_type", "python") or "python"
+  if challenge_type == "typescript":
+      exec_result = await execute_node_code(payload.source_code, payload.test_inputs)
+  else:
+      exec_result = await execute_python_code(payload.source_code, payload.test_inputs)
+  ```
+
+**`temporal-master/scripts/seed_qa_automation.py`** (reescrito completo)
+- 10 niveles reales evaluables (antes: 50 teóricos no evaluables)
+- 4 fases con boss fights marcados con `is_phase_boss=True`:
+
+| Level | Título                  | Tipo       | Boss | XP  |
+|-------|-------------------------|------------|------|-----|
+| L01   | Validador de Email      | python     | -    | 120 |
+| L02   | Motor de Assertions     | python     | -    | 140 |
+| L03   | Test Suite Class        | python     | ✅   | 200 |
+| L04   | Validador Respuesta API | typescript | -    | 160 |
+| L05   | Page Object Model       | typescript | ✅   | 220 |
+| L06   | Async Flow Simulator    | typescript | -    | 180 |
+| L07   | CSS Selector Builder    | typescript | -    | 190 |
+| L08   | Test Data Generator     | typescript | ✅   | 240 |
+| L09   | Validador Config CI     | typescript | -    | 260 |
+| L10   | Orquestador de Suite    | typescript | ✅   | 500 |
+
+- `codex_id = "qa_automation_ops"` en todos
+- `expected_output` real y determinístico por nivel
+- `initial_code` con TODOs claros (scaffolding evaluable)
+- `is_free=True` en L01-L03 (fase ALPHA); `is_free=False` en L04-L10
+
+#### Para activar:
+```bash
+python -m scripts.seed_qa_automation
+```
+
+---
+
+### 2026-04-02 — Directiva 030: Progresión entre Incursiones (Unlock Logic) ✅
+
+#### Cambios:
+- `temporal-master/app/models/incursion.py` — campos `prerequisite_incursion_slug`, `total_levels`
+- `temporal-master/app/core/database.py` — `ALTER TABLE IF NOT EXISTS` en `init_db()`
+- `temporal-master/scripts/seed_incursions.py` — qa-automation-ops: `prerequisite_incursion_slug="python-core"`, `status="ACTIVE"`
+- `temporal-master/app/api/v1/endpoints/incursions.py` — endpoint reescrito: `is_unlocked` computado por usuario; `SYSTEM_KILLER` badge desbloquea QA Automation; FOUNDER bypassa todo
+- `temporal-master/frontend/src/components/Hub/IncursionSelector.tsx` — `QAAutomationCard` renderizada cuando `slug === 'qa-automation-ops'`; card muestra estado bloqueado/desbloqueado
+
+---
+
+### 2026-04-02 — Directiva 029: Card QA Automation en Hub ✅
+
+#### Cambios:
+- `IncursionSelector.tsx`: nueva `QAAutomationCard` con diseño Cyan/Emerald, badges de stack (Python, TypeScript, Playwright, CI/CD), estado bloqueado (candado dorado) y desbloqueado (punto pulsante)
+- `hub/page.tsx`: pasa `userId` al `IncursionSelector`
+- Lucide icons: `ShieldCheck`, `Zap`, `Lock`, `Terminal`, `GitBranch`
+
+---
 
 ### 2026-03-30 — Directiva 014: Auditoría Pre-Lanzamiento y Alpha Gate Enforcement ✅
 
@@ -798,6 +1258,227 @@ python -m scripts.generate_alpha_codes --count 100 --prefix VANG
 - **Singleton exportado:** `llm_router_service` (listo para `Depends()` en FastAPI)
 - **Dependencias nuevas:** ninguna (usa `pydantic` ya presente en el stack)
 - **Estado:** mockeado · interfaz estable · listo para inyectar SDK calls
+
+### 2026-04-02 — Directiva 030: Progresión entre Incursiones — QA Automation Unlock ✅
+
+#### Objetivo
+Que el sistema reconozca QA Automation como siguiente paso al completar Python Core.
+La misión se desbloquea automáticamente cuando el Operador derrota al Boss ∞ LOOPER (medalla `SYSTEM_KILLER`).
+
+#### Cambios por capa
+
+**1. Modelo SQL (`app/models/incursion.py`)**
+- `prerequisite_incursion_slug: String(60), nullable` — slug de la Incursión prerequisito
+- `total_levels: Integer, nullable` — cantidad total de niveles en la Incursión
+- Import agregado: `Integer` de sqlalchemy
+
+**2. Migración idempotente (`app/core/database.py` → `init_db()`)**
+```sql
+ALTER TABLE incursions ADD COLUMN IF NOT EXISTS prerequisite_incursion_slug VARCHAR(60);
+ALTER TABLE incursions ADD COLUMN IF NOT EXISTS total_levels INTEGER;
+```
+Se ejecuta en cada startup — seguro en Neon producción y local.
+
+**3. Seed (`scripts/seed_incursions.py`)**
+- `qa-automation-ops` actualizado:
+  - `prerequisite_incursion_slug = "python-core"` 
+  - `total_levels = 10`
+  - `status = "ACTIVE"` (visible en el Hub)
+  - `color_acento = "#06B6D4"` (Cyan, coincide con la card D029)
+- Función `seed()` actualiza los nuevos campos en el UPSERT
+
+**4. Endpoint (`app/api/v1/endpoints/incursions.py`)**
+- Nueva query param: `user_id: Optional[UUID] = Query(None)`
+- `IncursionOut` schema extendido con `prerequisite_incursion_slug`, `total_levels`, `is_unlocked: bool`
+- Función `_compute_is_unlocked(incursion, user) → bool`:
+  - Sin prerequisito → `True`
+  - FOUNDER → `True` (bypassa todo)
+  - prerequisito `"python-core"` → verifica badge `SYSTEM_KILLER` en `user.badges_json`
+  - Sin user_id → `False` (bloqueada por defecto)
+- Función helper `_has_badge(user, badge) → bool` (safe parse de JSON)
+
+**Flujo de desbloqueo:**
+```
+/boss → POST /boss/execute → éxito → SYSTEM_KILLER badge en users.badges_json
+                                        ↓
+GET /incursions?user_id={id} → _compute_is_unlocked → is_unlocked=True para qa-automation-ops
+                                        ↓
+Frontend: QAAutomationCard.locked = False → botón "INGRESAR AL SECTOR" habilitado
+```
+
+**5. Frontend `IncursionSelector.tsx`**
+- Prop nuevo: `userId?: string`
+- Fetch: `/api/v1/incursions?user_id=${userId}` cuando userId disponible
+- `IncursionData` interface: agrega `prerequisite_incursion_slug`, `total_levels`, `is_unlocked`
+- `QAAutomationCard` props: `isFounder` → `isUnlocked` (más explícito)
+- Render: `isUnlocked={inc.is_unlocked || isFounder}` (FOUNDER siempre entra)
+
+**6. Hub (`frontend/src/app/hub/page.tsx`)**
+- `<IncursionSelector userId={userId ?? undefined} ...>`
+
+#### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `app/models/incursion.py` | + `prerequisite_incursion_slug`, `total_levels` |
+| `app/core/database.py` | + 2 ALTER TABLE en init_db() |
+| `scripts/seed_incursions.py` | qa-automation-ops: prerequisito + total_levels + UPSERT actualizado |
+| `app/api/v1/endpoints/incursions.py` | Reescrito con `user_id`, `is_unlocked`, helpers |
+| `frontend/src/components/Hub/IncursionSelector.tsx` | userId prop, fetch con query param, `isUnlocked` |
+| `frontend/src/app/hub/page.tsx` | Pasa `userId` a IncursionSelector |
+
+#### Estado: ✅ Operativo · Sin migraciones manuales (init_db idempotente)
+
+---
+
+### 2026-04-02 — Directiva 029: Card de Especialidad QA Automation ✅
+
+#### Objetivo
+Agregar tarjeta visual imponente para QA Automation (Playwright + TS) en el Hub, diferenciada del Core Python.
+
+#### Implementación
+- **Componente nuevo:** `QAAutomationCard` en `IncursionSelector.tsx`
+- **Lógica de intercepción:** cuando `slug === 'qa-automation-ops'` → renderiza la card especializada en lugar de la genérica
+- **Detección de lock:** `locked = !isFounder` (estado inicial bloqueado; FOUNDER puede entrar)
+
+#### Diseño visual
+| Elemento | Detalle |
+|----------|---------|
+| Gradiente fondo | `rgba(6,182,212,0.05)` → `rgba(16,185,129,0.03)` (Cyan → Emerald) |
+| Borde | `rgba(6,182,212,0.28)` → hover `rgba(6,182,212,0.70)` |
+| Línea pulso dual-color | Gradiente Cyan + Emerald, animado |
+| Hex grid background | `radial-gradient` puntitos Cyan, opacidad 4% |
+| Íconos Lucide | `ShieldCheck` (Cyan) + `Zap` (Emerald) con glow animado en hover |
+| Stack badges | Python, TypeScript, Playwright, CI/CD — color individual por tag |
+| Badge estado | Lock dorado (🔒 + `FFC700`) cuando bloqueado; punto pulsante Cyan cuando activo |
+| Descripción hover | "Domina el asedio de software moderno. De scripts locales a Pipelines de élite." |
+| CTA bloqueado | "REQUIERE: OPERACIÓN PYTHON FINALIZADA" → hover revela "🔒 COMPLETA EL CORE PYTHON PRIMERO" |
+| CTA desbloqueado | "INGRESAR AL SECTOR" con ícono `Terminal` |
+
+#### Dependencia nueva
+- `lucide-react@^1.7.0` — instalada en `package.json`
+
+#### Archivos modificados
+- `frontend/src/components/Hub/IncursionSelector.tsx`
+  - Import: `ShieldCheck, Zap, Lock, GitBranch, Terminal` de `lucide-react`
+  - Constantes: `QA_STACK_BADGES`, `BADGE_COLORS`
+  - Nuevo componente: `QAAutomationCard`
+  - Intercepción en el loop: `slug === 'qa-automation-ops'` → `<QAAutomationCard />`
+
+#### Próximo paso
+- Directiva 030: Lógica de desbloqueo real (nivel Python completado → `locked = false`)
+
+#### Estado: ✅ Operativo
+
+---
+
+### 2026-04-02 — Directiva 018: Gaming Experience Desktop — IDE Maximizado ✅
+
+#### Objetivo
+Maximizar la experiencia gaming en escritorio antes de adaptar a móvil.
+
+#### 8 mejoras implementadas en `CodeWorkspace.tsx` + `globals.css`:
+
+| # | Mejora | Implementación |
+|---|--------|----------------|
+| 1 | **Ctrl+Enter** ejecuta código | `editor.addCommand(monaco.KeyMod.CtrlCmd \| monaco.KeyCode.Enter, ...)` en `onMount` |
+| 2 | **Efectos de sonido** | `audioVictoryRef`, `audioRunRef`, `audioHintRef` + helper `playSound()` |
+| 3 | **Música ambiente** | `audioAmbientRef` loop a 12% volumen + botón ♪ en header |
+| 4 | **Session HUD** | Timer `⏱ MM:SS` en tiempo real + contador de intentos `N✕` |
+| 5 | **Focus Mode** | Botón ⊞ oculta el header; Escape lo restaura |
+| 6 | **Victory line flash** | `applyVictoryDecoration()` → decoraciones Monaco `.daki-victory-line` (2.2s) |
+| 7 | **Level-up dramático** | `NivelSubidoOverlay` full-screen: overlay oscuro + scan beam animado + anillos pulsantes |
+| 8 | **Cursor cyberpunk** | `.ide-view` CSS con SVG crosshair verde (#00FF41) data-URL |
+
+#### Archivos modificados:
+- `frontend/src/components/IDE/CodeWorkspace.tsx`
+  - Clase `ide-view` en contenedor principal (activa cursor cyberpunk)
+  - Botones en header derecho: ♪ ambient, SFX toggle, ⊞ focus mode
+  - Timer `formatTime(sessionSecs)` y contador `failStreak` visibles en HUD
+  - **Bugfix:** `useEffect` de `handleEjecutarRef` movido después de la declaración de `handleEjecutar` (error de TDZ — variable usada antes de ser asignada)
+- `frontend/src/app/globals.css`
+  - `.ide-view` + `.ide-view button/a/[role=button]` con cursor SVG crosshair
+  - `.daki-victory-line` — fondo verde semitransparente + borde izquierdo en Monaco
+  - `.level-up-scan-beam` + `@keyframes level-up-scan`
+
+#### Estado: ✅ Operativo
+
+---
+
+### 2026-04-02 — Directiva 017: Restauración Misiones, Boot Sequence y UX Hub ✅
+
+#### Restauración de selección en Misiones (`misiones/page.tsx`)
+- Parámetro URL `?selected=<UUID>`: al volver del IDE, la misión activa queda visible y seleccionada
+- `listRef` + `data-mission-id` en cada botón → `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+- "VOLVER A MISIONES" en CodeWorkspace navega a `/misiones?selected=${challengeId}`
+
+#### Persistencia de paso tutorial (`CodeWorkspace.tsx`)
+- `localStorage.setItem('daki_tutorial_step_<id>', step)` al cambiar de paso
+- Al recargar, restaura paso, progreso y código correspondiente
+- Al completar tutorial, limpia la clave
+
+#### Boot Sequence (`login/page.tsx`, `hub/page.tsx`)
+- Login: si `localStorage.getItem('boot_seen')` es null → redirige a `/boot-sequence` (nuevo usuario)
+- Hub: si `level > 1` → `localStorage.setItem('boot_seen', '1')` (retrocompatibilidad usuarios existentes)
+- Usuarios nuevos ven la cinemática de bienvenida; usuarios existentes entran directo al hub
+
+#### Hub — Restauración de Arena y Ligas (`hub/page.tsx`)
+- Botón **MODO ARENA** (rojo, ⚔, etiqueta PvP) entre CONTINUAR MISIÓN y Formaciones
+- Badge de **liga** en Rango Operacional: ◆ + nombre con color del tier, clickable a `/leaderboard`
+- Quick access **LEADERBOARD** renombrado a **LIGAS** con ícono ◆ dorado
+- `leagueTier` state extraído del campo `league_tier` en `/user/me`
+
+#### Archivos modificados:
+- `frontend/src/app/misiones/page.tsx` — `?selected` URL param + scroll automático
+- `frontend/src/components/IDE/CodeWorkspace.tsx` — tutorial step persistence, navegación con `?selected`
+- `frontend/src/app/login/page.tsx` — routing a `/boot-sequence` para nuevos usuarios
+- `frontend/src/app/hub/page.tsx` — Arena button, league badge, LIGAS, boot_seen guard
+- `frontend/src/app/users.py` (backend) — campo `league_tier: str = "Bronce"` en `UserOut`
+
+#### Estado: ✅ Operativo
+
+---
+
+### 2026-04-02 — Directiva 016: Auditoría de Seguridad — Vulnerabilidades Cerradas ✅
+
+#### Vulnerabilidades identificadas y cerradas:
+
+| # | Vulnerabilidad | Solución |
+|---|----------------|----------|
+| 1 | Token JWT en localStorage (XSS-vulnerable) | Cookie `daki_auth` HttpOnly; Secure en prod, SameSite=Lax en dev |
+| 2 | `user_id` spoofing en `/execute` y `/compiler` | JWT del operador autenticado debe coincidir con `body.user_id`; 403 si no coincide |
+| 3 | Sin rate limiting en admin y evaluate | `@limiter.limit("5/minute")` en admin login; `"20/minute"` en evaluate |
+| 4 | `SECRET_KEY` débil en arranque | `RuntimeError` en startup si valor por defecto |
+| 5 | `_ensure_dev_user()` en producción | Guarda `if settings.DEBUG:` |
+| 6 | Subprocess fallback sin control en prod | `if os.getenv("DEBUG") in ("1","true"):` else retorna error seguro |
+| 7 | Mensajes 409 distintos revelan si email o callsign existe | Unificados: `"Credenciales ya en uso. Verifica tu email o callsign."` |
+| 8 | Sin validación de tamaño de entrada en execute/compiler | `Field(max_length=20_000)`, `Field(ge=1, le=3)`, `Field(ge=0, le=100)` |
+| 9 | Sin logout que invalide cookie | `POST /auth/logout` con `response.delete_cookie("daki_auth")` |
+
+#### Migración de autenticación frontend (`credentials: 'include'`):
+- Todos los fetch a endpoints autenticados usan `credentials: 'include'` en lugar de `Authorization: Bearer ${token}`
+- `localStorage.getItem('daki_token')` eliminado de todos los componentes
+- Componentes migrados: `hub/page.tsx`, `AlphaAccessModal.tsx`, `IntelReportModal.tsx`, `DakiChatTerminal.tsx`
+
+#### Archivos modificados (backend):
+- `app/api/v1/endpoints/auth.py` — `_set_auth_cookie()`, cookie en login/register, `/auth/logout`, 409 unificado
+- `app/core/security.py` — `Cookie` import, fallback `daki_auth` cookie en `get_current_operator` y `_optional`
+- `app/api/v1/endpoints/compiler.py` — validación user_id vs JWT, Field bounds
+- `app/api/v1/endpoints/evaluate.py` — rate limit 20/min, Field bounds
+- `app/api/v1/endpoints/admin.py` — rate limit 5/min en admin login
+- `app/services/execution_service.py` — subprocess fallback guardado por DEBUG
+- `main.py` — SECRET_KEY check + `_ensure_dev_user()` guarded
+
+#### Archivos modificados (frontend):
+- `frontend/src/app/register/page.tsx` — sin `localStorage.setItem('daki_token', ...)`
+- `frontend/src/app/login/page.tsx` — sin `localStorage.setItem('daki_token', ...)`
+- `frontend/src/app/hub/page.tsx` — `credentials: 'include'`, logout llama `POST /auth/logout`
+- `frontend/src/components/UI/AlphaAccessModal.tsx` — `credentials: 'include'`
+- `frontend/src/components/Hub/IntelReportModal.tsx` — `credentials: 'include'`
+- `frontend/src/components/Hub/DakiChatTerminal.tsx` — `credentials: 'include'`
+
+#### Estado: ✅ Cerradas · Listo para producción
+
+---
 
 ### 2026-03-24 — Inicialización del Log
 

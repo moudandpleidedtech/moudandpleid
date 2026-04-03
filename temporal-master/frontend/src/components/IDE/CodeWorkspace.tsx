@@ -123,24 +123,110 @@ const KEYWORD_GLOW: Record<string, string> = {
 
 function NivelSubidoOverlay({ level }: { level: number }) {
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-center justify-center"
+    <motion.div
+      className="fixed inset-0 z-[9900] flex items-center justify-center overflow-hidden"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}>
-      <div className="absolute inset-0 bg-black/75" />
-      <motion.div className="relative z-10 text-center select-none"
-        initial={{ scale: 0.4, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 1.15, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 280, damping: 22 }}>
-        <div className="font-mono font-black tracking-[0.2em] text-7xl text-[#00FF41]"
-          style={{ textShadow: '0 0 20px #00FF41, 0 0 60px #00FF4180' }}>
-          RANGO ASCENDIDO
-        </div>
-        <motion.div className="mt-3 font-mono text-3xl text-[#00FF41]/80 tracking-widest"
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          RANGO {level}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Dramatic dark overlay with green radial glow */}
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(ellipse at center, rgba(0,25,10,0.97) 0%, rgba(0,0,0,0.99) 65%)',
+      }} />
+
+      {/* Animated scan beam */}
+      <div
+        className="absolute inset-x-0 h-0.5 pointer-events-none level-up-scan-beam"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #00FF41, rgba(0,255,65,0.6), #00FF41, transparent)',
+          boxShadow: '0 0 24px #00FF41, 0 0 48px #00FF4180',
+        }}
+      />
+
+      {/* Subtle grid */}
+      <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(0,255,65,0.8) 1px, transparent 1px), linear-gradient(90deg,rgba(0,255,65,0.8) 1px,transparent 1px)',
+        backgroundSize: '60px 60px',
+      }} />
+
+      {/* Content */}
+      <motion.div
+        className="relative z-10 text-center select-none px-10"
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 1.08, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+      >
+        {/* Outer pulsing ring */}
+        <motion.div
+          className="absolute inset-[-5rem] rounded-full border border-[#00FF41]/15 pointer-events-none"
+          animate={{ scale: [1, 1.07, 1], opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 1.8, repeat: Infinity }}
+        />
+        {/* Inner pulsing ring */}
+        <motion.div
+          className="absolute inset-[-2.5rem] rounded-full border border-[#00FF41]/30 pointer-events-none"
+          animate={{ scale: [1, 1.04, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.3, repeat: Infinity, delay: 0.2 }}
+        />
+
+        {/* Top label */}
+        <motion.div
+          className="text-[#00FF41]/50 text-[10px] tracking-[0.7em] uppercase mb-5"
+          initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          // NEXO — PROTOCOLO DE ASCENSO //
         </motion.div>
-        <motion.div className="absolute inset-[-2rem] border border-[#00FF41]/30"
-          animate={{ opacity: [0.3, 0.8, 0.3] }} transition={{ duration: 1, repeat: Infinity }} />
+
+        {/* Main title */}
+        <div
+          className="font-mono font-black leading-none"
+          style={{
+            fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
+            letterSpacing: '0.12em',
+            color: '#00FF41',
+            textShadow: '0 0 30px #00FF41, 0 0 70px #00FF4170, 0 0 120px #00FF4130',
+          }}
+        >
+          RANGO
+        </div>
+        <div
+          className="font-mono font-black leading-none"
+          style={{
+            fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
+            letterSpacing: '0.12em',
+            color: '#00FF41',
+            textShadow: '0 0 30px #00FF41, 0 0 70px #00FF4170, 0 0 120px #00FF4130',
+          }}
+        >
+          ASCENDIDO
+        </div>
+
+        {/* Level number — outline style */}
+        <motion.div
+          className="mt-5 font-mono font-black tracking-[0.35em]"
+          style={{
+            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+            color: 'transparent',
+            WebkitTextStroke: '2px #00FF41',
+            textShadow: '0 0 40px #00FF4190',
+          }}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.22, type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          [{level.toString().padStart(2, '0')}]
+        </motion.div>
+
+        {/* Separator */}
+        <motion.div
+          className="flex items-center gap-3 justify-center mt-5"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }}
+        >
+          <div className="h-px w-20" style={{ background: 'linear-gradient(90deg, transparent, #00FF41)' }} />
+          <span className="text-[#00FF41]/45 text-[9px] tracking-[0.55em]">ACCESO AMPLIADO</span>
+          <div className="h-px w-20" style={{ background: 'linear-gradient(90deg, #00FF41, transparent)' }} />
+        </motion.div>
       </motion.div>
     </motion.div>
   )
@@ -282,6 +368,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   // Waveform: true mientras DAKI "habla" (~duración estimada del mensaje)
   const [waveformActive, setWaveformActive] = useState(false)
+
+  // Gaming experience
+  const [ambientOn,    setAmbientOn]    = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [sessionSecs,  setSessionSecs]  = useState(0)
+  const [focusMode,    setFocusMode]    = useState(false)
   const waveformTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const activateWaveform = useCallback((msg: string) => {
@@ -322,6 +414,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const challengeStartMs = useRef<number>(Date.now())               // para telemetría time_spent
   const editorRef        = useRef<any>(null)                        // instancia Monaco editor
   const decorationsRef   = useRef<any>(null)                        // IEditorDecorationsCollection
+  const handleEjecutarRef = useRef<() => void>(() => {})            // stable ref for Ctrl+Enter
+  const audioVictoryRef  = useRef<HTMLAudioElement | null>(null)
+  const audioRunRef      = useRef<HTMLAudioElement | null>(null)
+  const audioHintRef     = useRef<HTMLAudioElement | null>(null)
+  const audioAmbientRef  = useRef<HTMLAudioElement | null>(null)
 
   const [failStreak, setFailStreak]       = useState(0)
   const [loadingHint, setLoadingHint]     = useState(false)
@@ -395,6 +492,40 @@ export default function CodeWorkspace({ challengeId }: Props) {
     onStuck: handleStuck,
     enabled: hydrated && !!userId && !!challengeId,
   })
+
+  // ── Initialize audio (client-only) ───────────────────────────────────────
+  useEffect(() => {
+    audioVictoryRef.current = new Audio('/sounds/victory.mp3')
+    audioRunRef.current     = new Audio('/sounds/data-stream.mp3')
+    audioRunRef.current.volume  = 0.4
+    audioHintRef.current    = new Audio('/sounds/daki_alert.mp3')
+    audioAmbientRef.current = new Audio('/sounds/hub-ambient.mp3')
+    audioAmbientRef.current.loop   = true
+    audioAmbientRef.current.volume = 0.12
+    return () => { audioAmbientRef.current?.pause() }
+  }, [])
+
+  // ── Ambient music toggle ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (ambientOn) { audioAmbientRef.current?.play().catch(() => {}) }
+    else           { audioAmbientRef.current?.pause() }
+  }, [ambientOn])
+
+  // ── Session HUD timer — resets on each new challenge ─────────────────────
+  useEffect(() => {
+    setSessionSecs(0)
+    const id = setInterval(() => {
+      setSessionSecs(Math.floor((Date.now() - challengeStartMs.current) / 1000))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [challengeId])
+
+  // ── Focus mode: Escape key exits ──────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setFocusMode(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // ── DAKI CLI: envía la pregunta del Operador y muestra respuesta en terminal ─
   const handleDakiAsk = useCallback(async () => {
@@ -470,6 +601,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
     }
   }, [code, challengeId])
 
+  // Persistir paso del tutorial en localStorage para sobrevivir recargas
+  useEffect(() => {
+    if (!challenge || challenge.challenge_type !== 'tutorial' || !challengeId) return
+    try { localStorage.setItem(`daki_tutorial_step_${challengeId}`, String(tutorialStep)) } catch { /* */ }
+  }, [tutorialStep, challengeId, challenge])
+
   // Carga el reto actual
   useEffect(() => {
     if (!hydrated || !userId) return
@@ -498,7 +635,20 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const draft = (() => {
           try { return localStorage.getItem(`code_draft_${data.id}`) } catch { return null }
         })()
-        setCode(draft ?? mergedData.initial_code ?? '')
+        // Restaurar paso del tutorial desde localStorage si existe
+        if (data.challenge_type === 'tutorial') {
+          const savedStep = (() => { try { return localStorage.getItem(`daki_tutorial_step_${data.id}`) } catch { return null } })()
+          const step = savedStep ? parseInt(savedStep, 10) : 1
+          if (step >= 2 && step <= 4) {
+            setTutorialStep(step)
+            setSyncProgress((step - 1) * 25)
+            setCode(TUTORIAL_STEP_CODES[step] ?? mergedData.initial_code ?? '')
+          } else {
+            setCode(draft ?? mergedData.initial_code ?? '')
+          }
+        } else {
+          setCode(draft ?? mergedData.initial_code ?? '')
+        }
         // Briefing teórico: solo para misiones normales no completadas
         if (mergedData.theory_content && !mergedData.completed && mergedData.challenge_type !== 'tutorial') {
           setViewMode('briefing')
@@ -570,6 +720,39 @@ export default function CodeWorkspace({ challengeId }: Props) {
     [shakeCtrl]
   )
 
+  // Sound helper
+  const playSound = useCallback((ref: React.MutableRefObject<HTMLAudioElement | null>) => {
+    if (!soundEnabled) return
+    try {
+      if (ref.current) { ref.current.currentTime = 0; ref.current.play().catch(() => {}) }
+    } catch { /* silent */ }
+  }, [soundEnabled])
+
+  // Victory line glow — whole-document Monaco decoration
+  const applyVictoryDecoration = useCallback(() => {
+    if (!editorRef.current) return
+    const model = editorRef.current.getModel()
+    if (!model) return
+    const lineCount = model.getLineCount()
+    const newDecs = Array.from({ length: lineCount }, (_, i) => ({
+      range: new (window as any).monaco.Range(i + 1, 1, i + 1, model.getLineMaxColumn(i + 1)),
+      options: { isWholeLine: true, className: 'daki-victory-line' },
+    }))
+    if (decorationsRef.current) {
+      decorationsRef.current.set(newDecs)
+    } else {
+      decorationsRef.current = editorRef.current.createDecorationsCollection(newDecs)
+    }
+    setTimeout(() => decorationsRef.current?.clear(), 2200)
+  }, [])
+
+  // Session timer formatter
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0')
+    const s = (secs % 60).toString().padStart(2, '0')
+    return `${m}:${s}`
+  }
+
   // Keyword glow
   const handleCodeChange = useCallback((val: string) => {
     setCode(val ?? '')
@@ -625,6 +808,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
       const data = await res.json()
       if (data.hint) {
+        playSound(audioHintRef)
         setOutput((prev) => {
           const next = [
             ...prev,
@@ -650,14 +834,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setOutput([{ text: '> Compilando...', kind: 'info' }])
     lastCodeRef.current = code
     resetIdleTimer()   // actividad semántica: el Operador ejecutó código
+    playSound(audioRunRef)
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 12_000)
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, test_inputs: challenge?.test_inputs ?? [],
@@ -728,6 +914,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
             })
             if (data.output_matched && !data.gamification.already_completed) {
               markChallengeCompleted(challengeId)
+              try { localStorage.removeItem(`daki_tutorial_step_${challengeId}`) } catch { /* */ }
               setSyncProgress(100)
               setTutorialFlash(true)
               triggerEditorAnim('anim-victory-glow', 1400)
@@ -859,6 +1046,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         triggerTerminalAnim('anim-victory-glow', 1400)
         setShowParticles(true)
         setTimeout(() => setShowParticles(false), 1400)
+        playSound(audioVictoryRef)
+        applyVictoryDecoration()
 
         // Combo de eficiencia
         const effectiveLines = countEffectiveLines(code)
@@ -919,6 +1108,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
   }, [code, isRunning, userId, challengeId, challenge, failStreak, parLines,
       tutorialStep, triggerShake, countEffectiveLines, findNextChallenge,
       applyGamificationResult, markChallengeCompleted, activateWaveform, resetIdleTimer])
+
+  // ── Keep handleEjecutarRef current so Ctrl+Enter never captures a stale closure ──
+  useEffect(() => { handleEjecutarRef.current = handleEjecutar }, [handleEjecutar])
 
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
@@ -1118,7 +1310,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       {/* Layout con screen shake */}
       <motion.div
         animate={shakeCtrl}
-        className="relative flex flex-col h-[calc(100vh-2rem)] bg-cover bg-center bg-no-repeat text-[#00FF41] font-mono overflow-hidden"
+        className="ide-view relative flex flex-col h-[calc(100vh-2rem)] bg-cover bg-center bg-no-repeat text-[#00FF41] font-mono overflow-hidden"
         style={{
           backgroundImage: `url('${getMissionBackground(challenge?.level_order)}'), radial-gradient(ellipse at center, #0a1a0a 0%, #000000 70%)`,
         }}
@@ -1167,14 +1359,14 @@ export default function CodeWorkspace({ challengeId }: Props) {
         </AnimatePresence>
 
         {/* HUD de navegación */}
-        <header className="grid grid-cols-3 items-center px-4 py-1.5 bg-[#0D0D0D] border-b border-[#00FF41]/20 text-xs shrink-0">
+        <header className={`grid grid-cols-3 items-center px-4 py-1.5 bg-[#0D0D0D] border-b border-[#00FF41]/20 text-xs shrink-0 transition-all duration-300 ${focusMode ? 'opacity-0 h-0 overflow-hidden py-0 border-0' : ''}`}>
 
           {/* Izquierda — botón abortar + archivo de misión */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setNetworkError(false)
-                router.push('/misiones')
+                router.push(`/misiones?selected=${challengeId}`)
               }}
               className="flex items-center gap-1.5 px-3 py-1 border border-orange-500/40 text-orange-400/80
                          tracking-widest hover:border-orange-400/80 hover:text-orange-300 hover:bg-orange-500/10
@@ -1213,13 +1405,17 @@ export default function CodeWorkspace({ challengeId }: Props) {
             )}
           </div>
 
-          {/* Derecha — stats del usuario */}
-          <div className="flex items-center justify-end gap-5 text-[#00FF41]/70">
+          {/* Derecha — stats + HUD controles */}
+          <div className="flex items-center justify-end gap-3 text-[#00FF41]/70">
+            <span className="text-[#00FF41]/40 tabular-nums">⏱ {formatTime(sessionSecs)}</span>
+            {failStreak > 0 && (
+              <span className="text-[#FFB800]/60 tabular-nums">{failStreak}✕</span>
+            )}
             <span className="text-[#00FF41]/40">{username}</span>
-            <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
+            <span>RNG <strong className="text-[#00FF41]">{level}</strong></span>
             <span id="xp-display">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
             {streakDays > 0 && (
-              <span>RACHA <strong className="text-[#00FF41]">{streakDays}d</strong></span>
+              <span>🔥<strong className="text-[#00FF41]">{streakDays}d</strong></span>
             )}
             {failStreak >= 2 && !loadingHint && (
               <motion.span
@@ -1232,6 +1428,38 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 ENIGMA?
               </motion.span>
             )}
+            {/* Ambient music toggle */}
+            <button
+              onClick={() => setAmbientOn((v) => !v)}
+              title={ambientOn ? 'Silenciar música' : 'Activar música ambiente'}
+              className="text-xs px-2 py-0.5 border transition-all duration-150 select-none"
+              style={{
+                borderColor: ambientOn ? 'rgba(0,255,65,0.6)' : 'rgba(0,255,65,0.2)',
+                color:       ambientOn ? 'rgba(0,255,65,0.9)' : 'rgba(0,255,65,0.35)',
+                background:  ambientOn ? 'rgba(0,255,65,0.08)' : 'transparent',
+              }}
+            >♪</button>
+            {/* Sound effects toggle */}
+            <button
+              onClick={() => setSoundEnabled((v) => !v)}
+              title={soundEnabled ? 'Silenciar efectos' : 'Activar efectos de sonido'}
+              className="text-xs px-2 py-0.5 border transition-all duration-150 select-none"
+              style={{
+                borderColor: soundEnabled ? 'rgba(0,255,65,0.6)' : 'rgba(0,255,65,0.2)',
+                color:       soundEnabled ? 'rgba(0,255,65,0.9)' : 'rgba(0,255,65,0.35)',
+                background:  soundEnabled ? 'rgba(0,255,65,0.08)' : 'transparent',
+              }}
+            >SFX</button>
+            {/* Focus mode toggle */}
+            <button
+              onClick={() => setFocusMode((v) => !v)}
+              title="Modo enfoque (Esc para salir)"
+              className="text-xs px-2 py-0.5 border transition-all duration-150 select-none"
+              style={{
+                borderColor: 'rgba(0,255,65,0.2)',
+                color:       'rgba(0,255,65,0.4)',
+              }}
+            >⊞</button>
           </div>
         </header>
 
@@ -1339,7 +1567,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 theme="vs-dark"
                 value={code}
                 onChange={(val) => handleCodeChange(val ?? '')}
-                onMount={(editor: any) => { editorRef.current = editor }}
+                onMount={(editor: any, monaco: any) => {
+                  editorRef.current = editor
+                  editor.addCommand(
+                    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                    () => handleEjecutarRef.current()
+                  )
+                }}
                 options={{
                   minimap: { enabled: false },
                   fontSize: 14,

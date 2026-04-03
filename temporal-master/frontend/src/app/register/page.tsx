@@ -155,8 +155,7 @@ export default function RegisterPage() {
         // ── Limpiar keys legacy antes de guardar las nuevas ────────────────
         LEGACY_KEYS.forEach(k => localStorage.removeItem(k))
 
-        // ── Guardar nuevo JWT y perfil ─────────────────────────────────────
-        localStorage.setItem('daki_token',    data.access_token)
+        // ── Guardar perfil (JWT viaja en cookie httpOnly — no se almacena en localStorage) ─
         localStorage.setItem('daki_user_id',  data.user_id)
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))

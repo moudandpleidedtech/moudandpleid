@@ -5,18 +5,20 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limit import limiter
+from app.core.security import get_current_operator_optional
 from app.models.challenge import Challenge
+from app.models.user import User
 from app.models.user_metrics import UserMetric
 from app.schemas.gamification import ChallengeAttemptResult
 from app.services.achievement_service import check_and_grant, get_insight_for_concepts
 from app.services.ai_mentor import get_execute_feedback
-from app.services.execution_service import execute_python_code
+from app.services.execution_service import execute_node_code, execute_python_code
 from app.services.gamification_service import gamification_engine
 
 router = APIRouter()
@@ -46,11 +48,11 @@ def _normalize_output(text: str) -> str:
 class CodeExecuteRequest(BaseModel):
     user_id: uuid.UUID
     challenge_id: uuid.UUID
-    source_code: str
+    source_code: str = Field(max_length=20_000)  # ~500 líneas — evita payloads abusivos
     test_inputs: list[str] = []
-    hints_used: int = 0       # pistas solicitadas a ENIGMA antes de este intento
-    time_spent_ms: int = 0    # tiempo en ms desde que el usuario abrió el reto (opcional)
-    daki_level: int = 1       # nivel evolutivo de DAKI (1 robótico, 2 amistoso, 3 compañero)
+    hints_used: int = Field(default=0, ge=0, le=100)
+    time_spent_ms: int = Field(default=0, ge=0)
+    daki_level: int = Field(default=1, ge=1, le=3)  # 1 robótico, 2 amistoso, 3 compañero
 
 
 class ErrorInfo(BaseModel):
@@ -160,7 +162,15 @@ async def execute_challenge_code(
     request: Request,
     payload: CodeExecuteRequest,
     db: AsyncSession = Depends(get_db),
+    operator: User | None = Depends(get_current_operator_optional),
 ) -> CodeExecuteResponse:
+    # Si el request viene autenticado, garantizar que user_id coincide con el JWT
+    if operator is not None and payload.user_id != operator.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="user_id no coincide con el operador autenticado.",
+        )
+
     challenge = await db.get(Challenge, payload.challenge_id)
     if challenge is None:
         raise HTTPException(
@@ -168,7 +178,11 @@ async def execute_challenge_code(
             detail=f"Challenge {payload.challenge_id} not found",
         )
 
-    exec_result = await execute_python_code(payload.source_code, payload.test_inputs)
+    challenge_type = getattr(challenge, "challenge_type", "python") or "python"
+    if challenge_type == "typescript":
+        exec_result = await execute_node_code(payload.source_code, payload.test_inputs)
+    else:
+        exec_result = await execute_python_code(payload.source_code, payload.test_inputs)
 
     # Cuenta errores de sintaxis detectados en stderr de este intento
     syntax_errors_count = exec_result["stderr"].count("SyntaxError")

@@ -65,15 +65,12 @@ export default function DakiChatTerminal({ userId, openingMessage }: Props) {
     setMessages(prev => [...prev, { from: 'operator', text, ts: Date.now() }])
     setLoading(true)
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
     try {
       const res = await fetch(`${API_BASE}/api/v1/chat`, {
-        method:  'POST',
-        headers,
-        body:    JSON.stringify({ message: text, user_id: userId }),
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ message: text, user_id: userId }),
       })
 
       const data = await res.json() as { reply?: string; detail?: string }

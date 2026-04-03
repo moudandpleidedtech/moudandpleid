@@ -9,12 +9,13 @@ con el mensaje narrativo de DAKI Intel.
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.access import check_freemium_access
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.challenge import Challenge
 from app.services.ai_mentor import get_execute_feedback
 from app.services.evaluation_service import EvaluacionResult, evaluar_incursion
@@ -27,8 +28,8 @@ router = APIRouter()
 
 class EvaluateRequest(BaseModel):
     challenge_id: uuid.UUID
-    code: str
-    daki_level: int = 1                     # nivel evolutivo de DAKI (1 robótico, 2 amistoso, 3 compañero)
+    code: str = Field(max_length=20_000)
+    daki_level: int = Field(default=1, ge=1, le=3)
     user_id: Optional[uuid.UUID] = None     # UUID del operador para verificar acceso
 
 
@@ -55,7 +56,9 @@ class EvaluateResponse(BaseModel):
     response_model=EvaluateResponse,
     summary="Evalúa el código del usuario contra el expected_output del nivel",
 )
+@limiter.limit("20/minute")
 async def evaluate_code(
+    request: Request,
     payload: EvaluateRequest,
     db: AsyncSession = Depends(get_db),
 ) -> EvaluateResponse:

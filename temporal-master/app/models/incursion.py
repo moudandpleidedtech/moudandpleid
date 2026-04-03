@@ -38,7 +38,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, SmallInteger, String, Text, func
+from sqlalchemy import DateTime, Integer, SmallInteger, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -115,6 +115,28 @@ class Incursion(Base):
     # Orden de visualización en el Hub (menor = más arriba / más prominente)
     orden: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, server_default="99"
+    )
+
+    # ── D030 — Progresión entre Incursiones ───────────────────────────────────
+    #
+    # prerequisite_incursion_slug:
+    #   Slug de la Incursión que el Operador debe completar antes de desbloquear
+    #   esta. NULL = sin requisito (accesible desde el inicio).
+    #   Ej: "python-core" → el Operador debe derrotar al Boss de Python Core
+    #       (medalla SYSTEM_KILLER) para desbloquear QA Automation.
+    #
+    # total_levels:
+    #   Cantidad total de misiones/niveles que contiene la Incursión.
+    #   Permite mostrar el progreso "X/N completadas" en el Hub sin
+    #   necesitar un COUNT(*) dinámico en cada request.
+    #   NULL = contenido aún no definido (ENCRYPTED sin fases especificadas).
+    #
+    # Migración: ADD COLUMN IF NOT EXISTS en database.py (init_db).
+    prerequisite_incursion_slug: Mapped[str | None] = mapped_column(
+        String(60), nullable=True, index=False
+    )
+    total_levels: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
     )
 
     # ── Auditoría ─────────────────────────────────────────────────────────────

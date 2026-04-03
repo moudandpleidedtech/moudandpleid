@@ -310,3 +310,13 @@ async def init_db() -> None:
             "UPDATE users SET email = REPLACE(email, '@quest.local', '') "
             "WHERE email LIKE '%@quest.local'"
         ))
+
+        # D030 — Progresión entre Incursiones
+        # prerequisite_incursion_slug: slug de la Incursión que el Operador debe
+        #   completar antes de poder acceder a esta (NULL = sin requisito).
+        # total_levels: cantidad de misiones/niveles que contiene la Incursión.
+        for stmt in [
+            "ALTER TABLE incursions ADD COLUMN IF NOT EXISTS prerequisite_incursion_slug VARCHAR(60)",
+            "ALTER TABLE incursions ADD COLUMN IF NOT EXISTS total_levels INTEGER",
+        ]:
+            await conn.execute(text(stmt))

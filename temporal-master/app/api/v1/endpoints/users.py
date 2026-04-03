@@ -29,6 +29,7 @@ class UserOut(BaseModel):
     subscription_status: str = "INACTIVE"
     trial_end_date: str | None = None
     role: str = "USER"
+    league_tier: str = "Bronce"
     model_config = ConfigDict(from_attributes=True)
 
 

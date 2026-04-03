@@ -22,11 +22,12 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
 from app.core.security import create_user_token, hash_password, verify_password
@@ -38,6 +39,21 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 _CALLSIGN_RE = re.compile(r"^[a-zA-Z0-9_\-]{3,20}$")
 
+# Duración de la cookie de sesión: 7 días
+_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+
+
+def _set_auth_cookie(response: Response, token: str) -> None:
+    """Establece el JWT en una cookie HttpOnly para protección contra XSS."""
+    response.set_cookie(
+        key="daki_auth",
+        value=token,
+        httponly=True,
+        secure=not settings.DEBUG,          # Secure solo en producción (HTTPS)
+        samesite="none" if not settings.DEBUG else "lax",  # cross-origin en prod
+        max_age=_COOKIE_MAX_AGE,
+        path="/",
+    )
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -149,24 +165,22 @@ async def _resolve_founder_code(
 @limiter.limit("10/minute")
 async def register(
     request: Request,
+    response: Response,
     payload: RegisterRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
-    # ── Unicidad de email ────────────────────────────────────────────────────
+    # ── Unicidad de email y callsign (mensaje unificado para evitar enumeración) ─
+    _conflict = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="Credenciales ya en uso. Verifica tu email o callsign.",
+    )
     result = await db.execute(select(User).where(User.email == payload.email))
     if result.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Este email ya está registrado.",
-        )
+        raise _conflict
 
-    # ── Unicidad de callsign ─────────────────────────────────────────────────
     result = await db.execute(select(User).where(User.callsign == payload.callsign))
     if result.scalar_one_or_none() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Este callsign ya está en uso. Elige otro identificador de Operador.",
-        )
+        raise _conflict
 
     # ── Resolver founder_code (antes de crear usuario para evitar flush parcial)
     founder_code_applied = False
@@ -205,6 +219,7 @@ async def register(
         is_licensed=user.is_licensed,
         role=user.role,
     )
+    _set_auth_cookie(response, token)
     return TokenResponse(
         access_token=token,
         user_id=str(user.id),
@@ -229,6 +244,7 @@ async def register(
 @limiter.limit("20/minute")
 async def login(
     request: Request,
+    response: Response,
     payload: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
@@ -275,6 +291,7 @@ async def login(
         is_licensed=user.is_licensed,
         role=user.role,
     )
+    _set_auth_cookie(response, token)
     return TokenResponse(
         access_token=token,
         user_id=str(user.id),
@@ -282,4 +299,13 @@ async def login(
         level=user.current_level,
         is_licensed=user.is_licensed,
         role=user.role,
+    )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Cerrar sesión")
+async def logout(response: Response) -> None:
+    """Elimina la cookie httpOnly de autenticación."""
+    response.delete_cookie(
+        key="daki_auth", path="/",
+        samesite="none" if not settings.DEBUG else "lax",
     )

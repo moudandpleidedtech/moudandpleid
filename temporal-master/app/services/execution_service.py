@@ -47,6 +47,35 @@ def _parse_python_error(stderr: str) -> dict | None:
     }
 
 
+async def execute_node_code(source_code: str, test_inputs: list[str]) -> dict:
+    """
+    Ejecuta TypeScript/Node.js via Piston API.
+
+    Usado para desafíos con challenge_type='typescript'.
+    Piston compila y ejecuta TypeScript con ts-node; el output de
+    console.log() se captura en stdout para comparar con expected_output.
+
+    Returns:
+        {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool,
+         'error_info': None}
+    """
+    stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
+    try:
+        result = await _execute_via_piston(
+            source_code, stdin, language="typescript", version="5.0.4"
+        )
+    except Exception:
+        result = {
+            "stdout": "",
+            "stderr": "TypeScript sandbox temporalmente no disponible. Intenta de nuevo.",
+            "execution_time_ms": 0.0,
+            "success": False,
+        }
+    # TypeScript error_info parsing omitido — stderr ya contiene el mensaje completo
+    result["error_info"] = None
+    return result
+
+
 async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     """
     Execute Python source code with test_inputs joined as stdin.
@@ -54,24 +83,35 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     Returns:
         {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool}
 
-    Tries Piston API (remote sandbox) first; falls back to local subprocess.
+    Uses Piston API (remote sandbox). The local subprocess fallback is disabled
+    in production to prevent arbitrary code execution on the server.
     """
+    import os
     # Unir inputs con newlines y añadir newline final para que el último input()
     # no quede esperando EOF en runtimes que requieren \n como terminador.
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
         result = await _execute_via_piston(source_code, stdin)
     except Exception:
-        result = await _execute_via_subprocess(source_code, stdin)
+        # Fallback local solo en modo DEBUG — en producción devuelve error seguro
+        if os.getenv("DEBUG", "false").lower() in ("1", "true"):
+            result = await _execute_via_subprocess(source_code, stdin)
+        else:
+            result = {
+                "stdout": "",
+                "stderr": "Sandbox de ejecución temporalmente no disponible. Intenta de nuevo.",
+                "execution_time_ms": 0.0,
+                "success": False,
+            }
 
     result["error_info"] = _parse_python_error(result.get("stderr", ""))
     return result
 
 
-async def _execute_via_piston(source_code: str, stdin: str) -> dict:
+async def _execute_via_piston(source_code: str, stdin: str, language: str = "python", version: str = "3.10.0") -> dict:
     payload = {
-        "language": "python",
-        "version": "3.10.0",
+        "language": language,
+        "version": version,
         "files": [{"content": source_code}],
         "stdin": stdin,
         "run_timeout": int(LOCAL_TIMEOUT_S * 1000),

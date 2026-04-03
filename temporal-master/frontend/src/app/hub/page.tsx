@@ -248,9 +248,12 @@ export default function HubPage() {
   } = useUserStore()
 
   const handleLogout = () => {
-    ;['daki_token', 'daki_user_id', 'daki_callsign', 'daki_level', 'daki_licensed'].forEach(k => localStorage.removeItem(k))
+    ;['daki_user_id', 'daki_callsign', 'daki_level', 'daki_licensed'].forEach(k => localStorage.removeItem(k))
     clearUser()
     document.cookie = 'enigma_user=; path=/; max-age=0; SameSite=Lax'
+    // Eliminar cookie httpOnly desde el servidor
+    const API_BASE_LOGOUT = process.env.NEXT_PUBLIC_API_URL ?? ''
+    fetch(`${API_BASE_LOGOUT}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
     router.replace('/login')
   }
   const [isBitacoraOpen,     setIsBitacoraOpen]     = useState(false)
@@ -295,15 +298,11 @@ export default function HubPage() {
   useEffect(() => {
     if (!userId || sessionOpenedRef.current) return
     sessionOpenedRef.current = true
-    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
-    if (!token) return
     const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
     fetch(`${API_BASE_LOCAL}/api/v1/session/open`, {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      method:      'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         operator_level: level,
         streak_days:    streakDays,
@@ -324,6 +323,8 @@ export default function HubPage() {
   useEffect(() => {
     if (!_hasHydrated) return
     if (!userId) { router.replace('/login'); return }
+    // Sellar boot_seen para usuarios con progreso previo (evita que vean la secuencia de arranque retroactivamente)
+    if (level > 1) { try { localStorage.setItem('boot_seen', '1') } catch { /* */ } }
     // Fetch completed missions to drive Bitácora unlock + ping
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
@@ -339,28 +340,25 @@ export default function HubPage() {
 
   const newArchiveCount = countNewArchives(completedOrders)
 
-  // ── Sincronizar subscription_status desde backend al montar ─────────────────
-  // Evita que Zustand muestre 'INACTIVE' cuando el usuario ya tiene TRIAL/ACTIVE.
+  const [leagueTier, setLeagueTier] = useState<string>('')
+
+  // ── Sincronizar subscription_status y liga desde backend al montar ───────────
   useEffect(() => {
     if (!userId) return
-    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
-    if (!token) return
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
-    fetch(`${API_BASE}/api/v1/user/me`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    })
+    fetch(`${API_BASE}/api/v1/user/me`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
-      .then((data: { subscription_status?: string; trial_end_date?: string | null; role?: string } | null) => {
+      .then((data: { subscription_status?: string; trial_end_date?: string | null; role?: string; league_tier?: string } | null) => {
         if (!data) return
         if (data.subscription_status && data.subscription_status !== 'INACTIVE') {
           setSubscription(data.subscription_status, data.trial_end_date ?? null)
           if (data.subscription_status === 'ACTIVE') setIsPaid(true)
         }
-        // Sync FOUNDER role so hasAccess check also covers role-based bypass
         if (data.role === 'FOUNDER') {
           setSubscription(data.subscription_status ?? 'ACTIVE', null)
           setIsPaid(true)
         }
+        if (data.league_tier) setLeagueTier(data.league_tier)
       })
       .catch(() => {})
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -382,13 +380,11 @@ export default function HubPage() {
   const handleStripeCheckout = async () => {
     if (checkoutLoading) return
     setCheckoutLoading(true)
-    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
-    if (!token) { setCheckoutLoading(false); return }
     const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
     try {
       const res = await fetch(`${API_BASE_LOCAL}/api/v1/payments/create-checkout-session`, {
-        method:  'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        method:      'POST',
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('checkout_failed')
       const data = await res.json() as { checkout_url: string }
@@ -462,6 +458,19 @@ export default function HubPage() {
             ⚑ INTEL
           </motion.button>
           
+          {role === 'FOUNDER' && (
+            <motion.button
+              onClick={() => navigateWithFade('/founder')}
+              className="border px-3 py-1 text-[9px] font-mono tracking-widest cursor-pointer transition-all duration-150 shrink-0"
+              style={{ borderColor: 'rgba(255,199,0,0.30)', color: 'rgba(255,199,0,0.55)' }}
+              whileHover={{ borderColor: 'rgba(255,199,0,0.75)', color: 'rgba(255,199,0,1)' }}
+              whileTap={{ scale: 0.96 }}
+              title="Panel de datos — progreso de usuarios"
+            >
+              ◈ DATOS
+            </motion.button>
+          )}
+
           <button
             onClick={handleLogout}
             className="text-red-500 hover:text-red-400 hover:bg-red-950/30 border border-red-800 px-3 py-1 text-xs font-mono tracking-widest cursor-pointer transition-all shrink-0"
@@ -665,6 +674,16 @@ export default function HubPage() {
                 {streakDays > 0 && (
                   <p className="text-[7px] text-[#FFB800]/60 tracking-widest mt-0.5">🔥 {streakDays}d</p>
                 )}
+                {leagueTier && (
+                  <p
+                    className="text-[7px] tracking-widest mt-0.5 font-black cursor-pointer"
+                    style={{ color: leagueTier === 'Arquitecto Supremo' ? '#FF6B9D' : leagueTier === 'Diamante' ? '#7DF9FF' : leagueTier === 'Oro' ? '#FFD700' : leagueTier === 'Plata' ? '#C0C0C0' : '#CD7F32' }}
+                    onClick={() => navigateWithFade('/leaderboard')}
+                    title="Ver clasificación"
+                  >
+                    ◆ {leagueTier.toUpperCase()}
+                  </p>
+                )}
               </div>
             </div>
             {/* XP bar */}
@@ -739,6 +758,33 @@ export default function HubPage() {
             </motion.button>
           </motion.div>
 
+          {/* ── ARENA — Modo PvP ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+          >
+            <motion.button
+              onClick={() => navigateWithFade('/arena')}
+              className="w-full py-3 font-black text-sm tracking-[0.25em] uppercase font-mono border-2 transition-all duration-200 cursor-pointer flex items-center justify-center gap-3"
+              style={{
+                borderColor: 'rgba(255,107,107,0.45)',
+                color:       'rgba(255,107,107,0.85)',
+                background:  'rgba(255,107,107,0.05)',
+                textShadow:  '0 0 8px rgba(255,107,107,0.5)',
+              }}
+              whileHover={{
+                background:  'rgba(255,107,107,0.12)',
+                boxShadow:   '0 0 24px rgba(255,107,107,0.2)',
+              }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span style={{ opacity: 0.6 }}>⚔</span>
+              <span>MODO ARENA</span>
+              <span className="text-[9px] font-normal tracking-widest" style={{ color: 'rgba(255,107,107,0.45)' }}>PvP</span>
+            </motion.button>
+          </motion.div>
+
           {/* ── Formaciones — Tabs + Grid ── */}
           <motion.div
             initial={{ opacity: 0, x: 16 }}
@@ -750,6 +796,7 @@ export default function HubPage() {
               isFounder={role === 'FOUNDER'}
               hasAccess={isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER'}
               onAccessDenied={() => setShowAlphaModal(true)}
+              userId={userId ?? undefined}
             />
           </motion.div>
 
@@ -776,7 +823,7 @@ export default function HubPage() {
                   ping: false,
                 },
                 {
-                  label: 'LEADERBOARD', icon: '▲', color: '#FF6B6B',
+                  label: 'LIGAS', icon: '◆', color: '#FFD700',
                   onClick: () => navigateWithFade('/leaderboard'),
                   ping: false,
                 },
