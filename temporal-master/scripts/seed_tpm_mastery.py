@@ -89,7 +89,11 @@ async def seed() -> None:
             boss_tag = " [BOSS]"    if data.get("is_phase_boss") else ""
             free_tag = " [FREE]"    if data.get("is_free")       else ""
             proj_tag = " [PROJECT]" if data.get("is_project")    else ""
-            session.add(Challenge(**data))
+            # Mapea 'hint' → 'syntax_hint' (campo real del modelo Challenge)
+            row = {k: v for k, v in data.items() if k != "hint"}
+            if data.get("hint"):
+                row["syntax_hint"] = data["hint"]
+            session.add(Challenge(**row))
             print(
                 f"    [{data['level_order']:03d}] {data['title']:<55} "
                 f"({data['difficulty'].upper()}{boss_tag}{free_tag}{proj_tag})"
