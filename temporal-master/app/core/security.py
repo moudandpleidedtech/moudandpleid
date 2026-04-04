@@ -184,6 +184,38 @@ async def get_current_operator_optional(
 require_user = get_current_operator
 
 
+# ─── Dependencia de Founder ───────────────────────────────────────────────────
+
+async def require_founder(
+    token: str | None = Depends(oauth2_scheme_optional),
+    daki_auth: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Dependencia que protege endpoints exclusivos del Founder.
+    Acepta cookie httpOnly (daki_auth) o Authorization header.
+    Verifica role == 'FOUNDER' en el token Y en la BD.
+    """
+    resolved = token or daki_auth
+    if not resolved:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sesión requerida.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user_id = _decode_user_token(resolved)  # valida firma y expiry
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if user is None or user.role != FOUNDER_ROLE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso exclusivo para el Founder.",
+        )
+    return user
+
+
 # ─── Dependencia de admin ─────────────────────────────────────────────────────
 
 async def require_admin(

@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import create_admin_token, require_admin
+from app.core.security import create_admin_token, require_admin, require_founder
 from app.models.challenge import Challenge
 from app.models.user import User
 from app.models.user_metrics import UserMetric
@@ -447,11 +447,10 @@ class UsersProgressResponse(BaseModel):
     "/users-progress",
     response_model=UsersProgressResponse,
     summary="Progreso de todos los usuarios — email, nivel, XP, completados",
-    dependencies=[Depends(require_admin)],
 )
 async def get_users_progress(
     db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_admin),
+    _founder: User = Depends(require_founder),
 ) -> UsersProgressResponse:
     from sqlalchemy import and_
 
