@@ -401,7 +401,7 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
       <div className="relative z-10 flex flex-col md:flex-row gap-6 lg:gap-10 p-5 sm:p-6 min-h-full">
 
         {/* ─── IZQUIERDA: Core Track ─── */}
-        <div className="md:w-[196px] shrink-0 flex flex-col items-center gap-5 py-2">
+        <div className="md:w-[210px] shrink-0 flex flex-col items-center gap-5 py-2">
 
           <motion.div className="text-center"
             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
@@ -451,20 +451,25 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                   <div
                     ref={el => { nodeCircleRefs.current[i] = el }}
                     className={[
-                      isActive ? 'w-[68px] h-[68px]' : 'w-[60px] h-[60px]',
+                      isActive ? 'w-[72px] h-[72px]' : 'w-[62px] h-[62px]',
                       'rounded-full border-2 flex flex-col items-center justify-center bg-nexo-bg',
                       'transition-transform duration-150 group-hover:scale-105',
-                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                                                   : '',
-                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse ring-2 ring-neon-emerald/20' : '',
-                      isLocked    ? 'border-neon-gold/55 text-gray-400    shadow-glow-gold'                         : '',
+                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                                                    : '',
+                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse ring-2 ring-neon-emerald/30' : '',
+                      isLocked    ? 'border-neon-gold/55 text-gray-400    shadow-glow-gold'                                                     : '',
                     ].filter(Boolean).join(' ')}
+                    style={
+                      isCompleted ? { boxShadow: '0 0 22px rgba(6,182,212,1), 0 0 50px rgba(6,182,212,0.45), inset 0 0 18px rgba(6,182,212,0.50)' } :
+                      isActive    ? { boxShadow: '0 0 28px rgba(16,185,129,1), 0 0 60px rgba(16,185,129,0.50), inset 0 0 22px rgba(16,185,129,0.55)' } :
+                      undefined
+                    }
                   >
-                    <CoreNodeIcon state={node.state} />
+                    <CoreNodeIcon state={node.state} size={isActive ? 22 : 20} />
                     <span className={[
                       'text-[6px] font-black font-mono tracking-widest mt-0.5',
-                      isCompleted ? 'text-neon-cyan/50'    : '',
-                      isActive    ? 'text-neon-emerald/55' : '',
-                      isLocked    ? 'text-gray-600'        : '',
+                      isCompleted ? 'text-neon-cyan'     : '',
+                      isActive    ? 'text-neon-emerald'  : '',
+                      isLocked    ? 'text-gray-600'      : '',
                     ].filter(Boolean).join(' ')}>
                       {String(node.id).padStart(2, '0')}
                     </span>
@@ -472,32 +477,40 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
                   {/* Etiqueta */}
                   <div className="text-center">
-                    <p className={[
-                      'text-[9px] font-black tracking-[0.28em] uppercase font-mono',
-                      isCompleted ? 'text-neon-cyan'    : '',
-                      isActive    ? 'text-neon-emerald'  : '',
-                      isLocked    ? 'text-neon-gold/70'  : '',
-                    ].filter(Boolean).join(' ')}>
+                    <p
+                      className={[
+                        'text-[10px] font-black tracking-[0.28em] uppercase font-mono',
+                        isCompleted ? 'text-neon-cyan'   : '',
+                        isActive    ? 'text-neon-emerald' : '',
+                        isLocked    ? 'text-neon-gold/70' : '',
+                      ].filter(Boolean).join(' ')}
+                      style={
+                        isCompleted ? { textShadow: '0 0 12px rgba(6,182,212,0.90)' } :
+                        isActive    ? { textShadow: '0 0 14px rgba(16,185,129,0.95)' } :
+                        undefined
+                      }
+                    >
                       {node.label}
                     </p>
                     <p className={[
                       'text-[7px] font-mono tracking-wider mt-0.5',
-                      isLocked ? 'text-gray-500' : 'text-gray-600',
+                      isLocked ? 'text-gray-500' : 'text-gray-500',
                     ].filter(Boolean).join(' ')}>{node.sublabel}</p>
                   </div>
 
                   {/* Badge estado */}
                   {isActive && (
                     <motion.span
-                      className="text-[5px] tracking-[0.45em] font-black font-mono px-2 py-0.5 border border-neon-emerald/45 text-neon-emerald"
-                      style={{ background: 'rgba(16,185,129,0.08)' }}
-                      animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.3, repeat: Infinity }}>
+                      className="text-[6px] tracking-[0.45em] font-black font-mono px-2.5 py-0.5 border text-neon-emerald"
+                      style={{ borderColor: 'rgba(16,185,129,0.70)', background: 'rgba(16,185,129,0.14)', boxShadow: '0 0 10px rgba(16,185,129,0.30)' }}
+                      animate={{ opacity: [0.65, 1, 0.65] }} transition={{ duration: 1.3, repeat: Infinity }}>
                       EN CURSO
                     </motion.span>
                   )}
                   {isCompleted && (
-                    <span className="text-[5px] tracking-[0.4em] font-black font-mono px-2 py-0.5 border border-neon-cyan/25 text-neon-cyan/45"
-                      style={{ background: 'rgba(6,182,212,0.05)' }}>
+                    <span
+                      className="text-[6px] tracking-[0.4em] font-black font-mono px-2.5 py-0.5 border text-neon-cyan"
+                      style={{ borderColor: 'rgba(6,182,212,0.60)', background: 'rgba(6,182,212,0.12)', boxShadow: '0 0 8px rgba(6,182,212,0.25)' }}>
                       COMPLETADO
                     </span>
                   )}
@@ -512,13 +525,13 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.60 }}>
             <div className="flex justify-between mb-1">
               <span className="text-[5px] tracking-[0.4em] text-gray-700 font-mono uppercase">Dominio</span>
-              <span className="text-[6px] font-black text-neon-cyan/45 font-mono">
+              <span className="text-[6px] font-black text-neon-cyan font-mono" style={{ textShadow: '0 0 8px rgba(6,182,212,0.80)' }}>
                 {Math.round((Math.min(completedCount, THRESHOLDS.AVANZADO_DONE) / THRESHOLDS.AVANZADO_DONE) * 100)}%
               </span>
             </div>
             <div className="w-full h-[2px] bg-white/5 overflow-hidden rounded-full">
               <motion.div className="h-full bg-neon-cyan rounded-full"
-                style={{ boxShadow: '0 0 6px rgba(6,182,212,0.55)' }}
+                style={{ boxShadow: '0 0 10px rgba(6,182,212,0.90), 0 0 20px rgba(6,182,212,0.40)' }}
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.round((Math.min(completedCount, THRESHOLDS.AVANZADO_DONE) / THRESHOLDS.AVANZADO_DONE) * 100)}%` }}
                 transition={{ delay: 0.80, duration: 0.9, ease: 'easeOut' }}
@@ -558,7 +571,7 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
           </motion.div>
 
           {/* Grid de tarjetas */}
-          <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
+          <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2">
             {SPEC_CARDS.map((card, i) => (
               <motion.div key={card.id}
                 ref={el => { cardRefs.current[i] = el }}
@@ -601,41 +614,41 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                   </motion.div>
                 </div>
 
-                <div className="px-3.5 py-3.5">
+                <div className="px-4 py-4">
                   {/* Ícono + título */}
-                  <div className="flex items-start gap-2.5 mb-2 pr-6">
+                  <div className="flex items-start gap-3 mb-2.5 pr-7">
                     <motion.span
-                      className="text-[20px] leading-none shrink-0 select-none"
-                      style={{ color: 'rgba(245,158,11,0.80)', textShadow: '0 0 14px rgba(245,158,11,0.50)' }}
+                      className="text-[26px] leading-none shrink-0 select-none"
+                      style={{ color: 'rgba(245,158,11,0.90)', textShadow: '0 0 18px rgba(245,158,11,0.65), 0 0 36px rgba(245,158,11,0.25)' }}
                       animate={{ opacity: [0.75, 1, 0.75] }}
                       transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}
                     >
                       {card.icon}
                     </motion.span>
-                    <p className="text-[9px] font-black tracking-[0.18em] uppercase font-mono leading-snug"
-                      style={{ color: 'rgba(245,158,11,0.92)', textShadow: '0 0 8px rgba(245,158,11,0.30)' }}>
+                    <p className="text-[11px] font-black tracking-[0.15em] uppercase font-mono leading-snug"
+                      style={{ color: 'rgba(245,158,11,0.97)', textShadow: '0 0 10px rgba(245,158,11,0.40)' }}>
                       {card.title}
                     </p>
                   </div>
 
-                  <p className="text-[7px] tracking-[0.18em] font-mono mb-3"
-                    style={{ color: 'rgba(245,158,11,0.55)' }}>
+                  <p className="text-[8px] tracking-[0.20em] font-mono mb-3.5"
+                    style={{ color: 'rgba(245,158,11,0.65)' }}>
                     {card.tag}
                   </p>
 
                   {/* Badge de countdown */}
-                  <div className="border px-2.5 py-1.5"
-                    style={{ borderColor: 'rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)' }}>
+                  <div className="border px-3 py-2"
+                    style={{ borderColor: 'rgba(245,158,11,0.30)', background: 'rgba(245,158,11,0.07)' }}>
                     {!branchesReady ? (
-                      <p className="text-[6px] tracking-[0.20em] font-mono leading-relaxed">
-                        <span className="font-black" style={{ color: 'rgba(245,158,11,0.85)' }}>
+                      <p className="text-[7px] tracking-[0.18em] font-mono leading-relaxed">
+                        <span className="font-black" style={{ color: 'rgba(245,158,11,0.95)' }}>
                           {missionsToUnlock} misión{missionsToUnlock !== 1 ? 'es' : ''} restantes
                         </span>
-                        <span style={{ color: 'rgba(245,158,11,0.50)' }}>{' · '}Python Core Avanzado</span>
+                        <span style={{ color: 'rgba(245,158,11,0.55)' }}>{' · '}Python Core Avanzado</span>
                       </p>
                     ) : (
-                      <p className="text-[6px] tracking-[0.20em] font-mono leading-relaxed font-black"
-                        style={{ color: 'rgba(245,158,11,0.85)' }}>
+                      <p className="text-[7px] tracking-[0.18em] font-mono leading-relaxed font-black"
+                        style={{ color: 'rgba(245,158,11,0.95)' }}>
                         ⚡ Completa Python Core (Avanzado) para activar
                       </p>
                     )}

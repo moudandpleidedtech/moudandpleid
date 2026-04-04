@@ -24,9 +24,9 @@ const config: Config = {
       },
       boxShadow: {
         // ── Resplandores neón — Skill Tree ───────────
-        'glow-cyan':    '0 0 15px rgba(6, 182, 212, 0.6), inset 0 0 10px rgba(6, 182, 212, 0.4)',
-        'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.8), inset 0 0 15px rgba(16, 185, 129, 0.5)',
-        'glow-gold':    '0 0 15px rgba(245, 158, 11, 0.4), inset 0 0 10px rgba(245, 158, 11, 0.2)',
+        'glow-cyan':    '0 0 18px rgba(6,182,212,1), 0 0 40px rgba(6,182,212,0.55), inset 0 0 18px rgba(6,182,212,0.55)',
+        'glow-emerald': '0 0 22px rgba(16,185,129,1), 0 0 50px rgba(16,185,129,0.60), inset 0 0 22px rgba(16,185,129,0.60)',
+        'glow-gold':    '0 0 18px rgba(245,158,11,0.70), 0 0 36px rgba(245,158,11,0.30), inset 0 0 14px rgba(245,158,11,0.30)',
       },
       animation: {
         'flicker':      'flicker 0.15s infinite',
