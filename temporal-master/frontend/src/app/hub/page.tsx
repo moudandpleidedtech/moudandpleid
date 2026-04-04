@@ -244,7 +244,7 @@ export default function HubPage() {
     _hasHydrated,
     userId, username, level, totalXp, streakDays, badges,
     subscriptionStatus, isPaid, role,
-    clearUser, setSubscription, setIsPaid,
+    clearUser, setSubscription, setIsPaid, setRole,
   } = useUserStore()
 
   const handleLogout = () => {
@@ -354,6 +354,7 @@ export default function HubPage() {
           setSubscription(data.subscription_status, data.trial_end_date ?? null)
           if (data.subscription_status === 'ACTIVE') setIsPaid(true)
         }
+        if (data.role) setRole(data.role)
         if (data.role === 'FOUNDER') {
           setSubscription(data.subscription_status ?? 'ACTIVE', null)
           setIsPaid(true)

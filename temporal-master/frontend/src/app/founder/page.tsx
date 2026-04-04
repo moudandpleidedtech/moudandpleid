@@ -55,7 +55,7 @@ function subBadge(status: string) {
 
 export default function FounderPage() {
   const router = useRouter()
-  const { _hasHydrated, userId, role } = useUserStore()
+  const { _hasHydrated, userId } = useUserStore()
 
   const [data,    setData]    = useState<UsersProgressResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,11 +64,11 @@ export default function FounderPage() {
   const [sortBy,  setSortBy]  = useState<'last_login' | 'current_level' | 'total_xp' | 'challenges_completed'>('last_login')
   const [sortAsc, setSortAsc] = useState(false)
 
-  // Guard: redirige si no está autenticado o no es FOUNDER
+  // Guard: redirige si no está autenticado (el API responde 403 si no es FOUNDER)
   useEffect(() => {
     if (!_hasHydrated) return
-    if (!userId || role !== 'FOUNDER') router.replace('/hub')
-  }, [_hasHydrated, userId, role, router])
+    if (!userId) router.replace('/hub')
+  }, [_hasHydrated, userId, router])
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError('')
@@ -89,8 +89,8 @@ export default function FounderPage() {
   }, [router])
 
   useEffect(() => {
-    if (_hasHydrated && userId && role === 'FOUNDER') fetchData()
-  }, [_hasHydrated, userId, role, fetchData])
+    if (_hasHydrated && userId) fetchData()
+  }, [_hasHydrated, userId, fetchData])
 
   const toggleSort = (col: typeof sortBy) => {
     if (sortBy === col) setSortAsc(v => !v)

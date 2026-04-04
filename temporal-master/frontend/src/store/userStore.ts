@@ -43,6 +43,7 @@ interface UserState {
   setDakiLevel: (_level: 1 | 2 | 3) => void
   setIsPaid: (_paid: boolean) => void
   setSubscription: (_status: string, _endDate: string | null) => void
+  setRole: (_role: string) => void
   clearUser: () => void
 }
 
@@ -109,6 +110,7 @@ export const useUserStore = create<UserState>()(
       setIsPaid: (paid: boolean) => set({ isPaid: paid }),
       setSubscription: (status: string, endDate: string | null) =>
         set({ subscriptionStatus: status, trialEndDate: endDate }),
+      setRole: (role: string) => set({ role }),
 
       clearUser: () =>
         set({
