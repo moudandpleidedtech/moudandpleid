@@ -12,7 +12,6 @@ import ArchivoFallasModal from '@/components/Hub/ArchivoFallasModal'
 import MobileGate from '@/components/UI/MobileGate'
 import AlphaAccessModal from '@/components/UI/AlphaAccessModal'
 import BossWarningBanner from '@/components/UI/BossWarningBanner'
-import IncursionSelector from '@/components/Hub/IncursionSelector'
 import IntelReportModal from '@/components/Hub/IntelReportModal'
 import DistincionesPanel from '@/components/Hub/DistincionesPanel'
 import SkillTreePanel from '@/components/Hub/SkillTreePanel'
@@ -234,6 +233,139 @@ function GlitchCTA({ onClick }: { onClick: () => void }) {
         transition={{ duration: 2.2, repeat: Infinity, delay: 0.6 }}
       />
     </motion.button>
+  )
+}
+
+// ─── Python Core Status ───────────────────────────────────────────────────────
+
+const CORE_THRESHOLDS = { BASICO: 5, MEDIO: 15, AVANZADO: 25 }
+const CORE_NODES = [
+  { label: 'BÁSICO',   sub: 'Fundamentos'           },
+  { label: 'MEDIO',    sub: 'Estructuras y Lógica'  },
+  { label: 'AVANZADO', sub: 'Algoritmos y OOP'      },
+  { label: 'EXPERT',   sub: 'Patrones y Producción' },
+]
+
+function PythonCoreStatus({ completedCount }: { completedCount: number }) {
+  // Determinar nodo activo y progreso hacia el siguiente umbral
+  let activeIdx   = 0
+  let rangeStart  = 0
+  let rangeEnd    = CORE_THRESHOLDS.BASICO
+
+  if (completedCount >= CORE_THRESHOLDS.AVANZADO) {
+    activeIdx  = 3; rangeStart = CORE_THRESHOLDS.AVANZADO; rangeEnd = CORE_THRESHOLDS.AVANZADO
+  } else if (completedCount >= CORE_THRESHOLDS.MEDIO) {
+    activeIdx  = 2; rangeStart = CORE_THRESHOLDS.MEDIO;    rangeEnd = CORE_THRESHOLDS.AVANZADO
+  } else if (completedCount >= CORE_THRESHOLDS.BASICO) {
+    activeIdx  = 1; rangeStart = CORE_THRESHOLDS.BASICO;   rangeEnd = CORE_THRESHOLDS.MEDIO
+  }
+
+  const pct          = rangeEnd > rangeStart
+    ? Math.round(((completedCount - rangeStart) / (rangeEnd - rangeStart)) * 100)
+    : 100
+  const missionsLeft = Math.max(0, rangeEnd - completedCount)
+  const nextLabel    = activeIdx < 3 ? CORE_NODES[activeIdx + 1].label : null
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/20 font-mono uppercase">
+          Operación Activa
+        </p>
+        <span className="text-[7px] tracking-[0.3em] text-[#00FF41]/15 font-mono">
+          {completedCount} MIS.
+        </span>
+      </div>
+
+      {/* Card del nodo activo */}
+      <div
+        className="relative overflow-hidden border px-4 py-3.5"
+        style={{ borderColor: 'rgba(0,255,65,0.15)', background: 'rgba(0,255,65,0.025)' }}
+      >
+        <motion.div
+          className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(0,255,65,0.45), transparent)' }}
+          animate={{ opacity: [0.2, 0.8, 0.2] }}
+          transition={{ duration: 2.2, repeat: Infinity }}
+        />
+
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <p className="text-[7px] tracking-[0.5em] text-[#00FF41]/30 font-mono mb-0.5">PYTHON CORE</p>
+            <p
+              className="text-base font-black tracking-[0.3em] font-mono leading-none"
+              style={{ color: '#00FF41', textShadow: '0 0 10px rgba(0,255,65,0.5)' }}
+            >
+              {CORE_NODES[activeIdx].label}
+            </p>
+            <p className="text-[8px] tracking-[0.2em] text-[#00FF41]/35 font-mono mt-0.5">
+              {CORE_NODES[activeIdx].sub}
+            </p>
+          </div>
+          <motion.span
+            className="text-[6px] tracking-[0.45em] font-black font-mono px-2 py-1 border border-[#00FF41]/25 text-[#00FF41]/55 bg-[#00FF41]/5 shrink-0"
+            animate={{ opacity: [0.45, 1, 0.45] }}
+            transition={{ duration: 1.4, repeat: Infinity }}
+          >
+            EN CURSO
+          </motion.span>
+        </div>
+
+        {/* Barra de progreso */}
+        <div className="h-[2px] w-full bg-white/5 overflow-hidden rounded-full mb-1.5">
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: '#00FF41', boxShadow: '0 0 6px rgba(0,255,65,0.6)' }}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(pct, 100)}%` }}
+            transition={{ delay: 0.8, duration: 0.9, ease: 'easeOut' }}
+          />
+        </div>
+        <div className="flex justify-between">
+          <span className="text-[6px] tracking-widest text-[#00FF41]/20 font-mono">
+            {completedCount}/{rangeEnd} COMPLETADAS
+          </span>
+          {missionsLeft > 0 && nextLabel && (
+            <span className="text-[6px] tracking-widest font-mono" style={{ color: 'rgba(245,158,11,0.45)' }}>
+              {missionsLeft} → {nextLabel}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Mini track — 4 nodos */}
+      <div className="flex items-center justify-between px-1">
+        {CORE_NODES.map((n, i) => {
+          const done   = i < activeIdx
+          const active = i === activeIdx
+          const dotColor = done ? '#06b6d4' : active ? '#10b981' : 'rgba(255,255,255,0.1)'
+          const lblColor = done ? 'rgba(6,182,212,0.55)' : active ? 'rgba(16,185,129,0.75)' : 'rgba(255,255,255,0.12)'
+          return (
+            <div key={n.label} className="flex items-center flex-1">
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: dotColor,
+                    boxShadow:  done ? '0 0 4px rgba(6,182,212,0.55)' : active ? '0 0 6px rgba(16,185,129,0.7)' : 'none',
+                  }}
+                />
+                <span className="text-[5px] tracking-widest font-black font-mono" style={{ color: lblColor }}>
+                  {n.label}
+                </span>
+              </div>
+              {i < CORE_NODES.length - 1 && (
+                <div
+                  className="h-px flex-1 mx-1 mb-3.5"
+                  style={{ background: i < activeIdx ? 'rgba(6,182,212,0.25)' : 'rgba(255,255,255,0.05)' }}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -802,19 +934,13 @@ export default function HubPage() {
             </motion.button>
           </motion.div>
 
-          {/* ── Formaciones Python — filtradas por identidad de marca ── */}
+          {/* ── Progreso Python Core ── */}
           <motion.div
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <IncursionSelector
-              onNavigate={navigateWithFade}
-              isFounder={role === 'FOUNDER'}
-              hasAccess={isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER'}
-              onAccessDenied={() => setShowAlphaModal(true)}
-              userId={userId ?? undefined}
-            />
+            <PythonCoreStatus completedCount={completedOrders.length} />
           </motion.div>
 
           {/* Separador */}
