@@ -12,6 +12,8 @@ _BASE = dict(
     sector_id       = 20,
     challenge_type  = "python",
     phase           = "perf_liderazgo",
+    difficulty_tier = 3,
+    base_xp_reward  = 300,
     is_free         = False,
     strict_match    = False,
     is_phase_boss   = False,
@@ -26,6 +28,7 @@ L81 = dict(
     level_order   = 81,
     title         = "Load Test Planner",
     difficulty    = "hard",
+    base_xp_reward = 310,
     description   = (
         "Implementa `plan_load_test(endpoints, users, ramp_seconds)` que, dado un "
         "listado de endpoints con sus pesos relativos, distribuye los usuarios virtuales "
@@ -36,7 +39,7 @@ L81 = dict(
         "El ramp_step = `ramp_seconds / users` (redondeado a 2 decimales).\n\n"
         "Imprime por endpoint: `path  users=N  ramp_step=Xs`."
     ),
-    hint          = "Usa floor division y asigna el sobrante al endpoint con mayor weight.",
+    syntax_hint   ="Usa floor division y asigna el sobrante al endpoint con mayor weight.",
     initial_code  = (
         "def plan_load_test(endpoints, users, ramp_seconds):\n"
         "    # distribuye usuarios y calcula ramp_step por endpoint\n"
@@ -63,6 +66,7 @@ L82 = dict(
     level_order   = 82,
     title         = "Response Time Percentiles",
     difficulty    = "hard",
+    base_xp_reward = 320,
     description   = (
         "Implementa `percentile_report(samples)` que calcula P50, P90, P95 y P99 "
         "de una lista de tiempos de respuesta (ms) y los imprime.\n\n"
@@ -71,7 +75,7 @@ L82 = dict(
         "Luego evalúa SLA: si P95 > 500ms imprime `SLA BREACH: P95` y si P99 > 1000ms "
         "imprime `SLA BREACH: P99`. Si no hay breach imprime `SLA OK`."
     ),
-    hint          = "Importa math.ceil. Ordena la lista antes de indexar.",
+    syntax_hint   ="Importa math.ceil. Ordena la lista antes de indexar.",
     initial_code  = (
         "import math\n\n"
         "def percentile_report(samples):\n"
@@ -95,6 +99,8 @@ L83 = dict(
     level_order   = 83,
     title         = "Throughput Calculator",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 250,
     description   = (
         "Implementa `throughput_report(windows)` donde `windows` es una lista de "
         "dicts `{'start': int, 'end': int, 'requests': int}` (tiempos en segundos).\n\n"
@@ -102,7 +108,7 @@ L83 = dict(
         "Imprime: `Window N: Xrps (X req / Xs)`.\n\n"
         "Al final imprime: `Peak: Xrps` y `Average: Xrps` (media de todos los rps, 2 dec)."
     ),
-    hint          = "Guarda todos los rps para calcular peak y average al final.",
+    syntax_hint   ="Guarda todos los rps para calcular peak y average al final.",
     initial_code  = (
         "def throughput_report(windows):\n"
         "    pass\n\n"
@@ -132,6 +138,8 @@ L84 = dict(
     level_order   = 84,
     title         = "Resource Monitor",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 260,
     description   = (
         "Implementa `monitor_resources(snapshots)` que analiza snapshots del sistema "
         "durante una prueba de carga.\n\n"
@@ -141,7 +149,7 @@ L84 = dict(
         "y el de mayor mem con prefijo `Peak MEM:`.\n"
         "Finalmente: `Total errors: N`."
     ),
-    hint          = "Usa max() con key= para encontrar los picos.",
+    syntax_hint   ="Usa max() con key= para encontrar los picos.",
     initial_code  = (
         "def monitor_resources(snapshots):\n"
         "    pass\n\n"
@@ -172,6 +180,7 @@ L85 = dict(
     level_order   = 85,
     title         = "Stress Test Escalator",
     difficulty    = "hard",
+    base_xp_reward = 340,
     description   = (
         "Implementa `stress_escalate(stages)` que simula un test de estrés escalonado.\n\n"
         "Cada stage: `{'users': int, 'error_rate': float, 'avg_ms': float}`.\n\n"
@@ -183,7 +192,7 @@ L85 = dict(
         "- `OK`       en otro caso\n\n"
         "Si un stage es BROKEN, imprime `System broke at stage N` y detén la escalada."
     ),
-    hint          = "Evalúa BROKEN antes que DEGRADED. Break al detectar BROKEN.",
+    syntax_hint   ="Evalúa BROKEN antes que DEGRADED. Break al detectar BROKEN.",
     initial_code  = (
         "def stress_escalate(stages):\n"
         "    pass\n\n"
@@ -213,6 +222,7 @@ L86 = dict(
     level_order   = 86,
     title         = "Spike Test Simulator",
     difficulty    = "hard",
+    base_xp_reward = 360,
     description   = (
         "Implementa `spike_test(baseline_rps, spike_rps, spike_duration, recovery_sla_s)` "
         "que simula un spike test en 4 fases:\n\n"
@@ -224,7 +234,7 @@ L86 = dict(
         "4. **Result**   — imprime `Spike ratio: Xx` (spike_rps/baseline_rps, 1 decimal)\n"
         "   Luego `Verdict: [RESILIENT|FRAGILE]`: RESILIENT si ratio < 5, FRAGILE si ratio >= 5"
     ),
-    hint          = "Calcula concurrent = spike_rps * 2. ratio = spike_rps / baseline_rps.",
+    syntax_hint   ="Calcula concurrent = spike_rps * 2. ratio = spike_rps / baseline_rps.",
     initial_code  = (
         "def spike_test(baseline_rps, spike_rps, spike_duration, recovery_sla_s):\n"
         "    pass\n\n"
@@ -248,6 +258,7 @@ L87 = dict(
     level_order   = 87,
     title         = "Endurance Test Monitor",
     difficulty    = "hard",
+    base_xp_reward = 370,
     description   = (
         "Implementa `endurance_monitor(hourly_stats)` que analiza un test de resistencia "
         "de varias horas.\n\n"
@@ -260,7 +271,7 @@ L87 = dict(
         "`WARNING: latency drift (+X%)`\n"
         "- Si no hay warnings → imprime `Endurance: STABLE`"
     ),
-    hint          = "Compara first vs last para detectar drift. El % es int((last/first - 1)*100).",
+    syntax_hint   ="Compara first vs last para detectar drift. El % es int((last/first - 1)*100).",
     initial_code  = (
         "def endurance_monitor(hourly_stats):\n"
         "    pass\n\n"
@@ -292,6 +303,8 @@ L88 = dict(
     level_order   = 88,
     title         = "SLA Compliance Checker",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 280,
     description   = (
         "Implementa `sla_report(services)` que verifica SLAs para múltiples servicios.\n\n"
         "Cada servicio: `{'name': str, 'uptime_pct': float, 'p95_ms': float, "
@@ -304,7 +317,7 @@ L88 = dict(
         "COMPLIANT solo si los 3 checks son OK.\n\n"
         "Al final: `Compliant: N/M services`."
     ),
-    hint          = "uptime breach si medido < sla.uptime. Los otros: medido > sla.",
+    syntax_hint   ="uptime breach si medido < sla.uptime. Los otros: medido > sla.",
     initial_code  = (
         "def sla_report(services):\n"
         "    pass\n\n"
@@ -334,6 +347,8 @@ L89 = dict(
     level_order   = 89,
     title         = "Security Header Scanner",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 290,
     description   = (
         "Implementa `scan_headers(responses)` que analiza las cabeceras de seguridad "
         "de varias respuestas HTTP simuladas.\n\n"
@@ -344,7 +359,7 @@ L89 = dict(
         "SECURE si score == 4. Luego lista los headers faltantes con `  MISSING: <header>`.\n\n"
         "Al final: `Overall: N/M endpoints secure`."
     ),
-    hint          = "Itera sobre la lista de headers requeridos y verifica su presencia en el dict.",
+    syntax_hint   ="Itera sobre la lista de headers requeridos y verifica su presencia en el dict.",
     initial_code  = (
         "def scan_headers(responses):\n"
         "    pass\n\n"
@@ -392,6 +407,7 @@ L90 = dict(
     level_order   = 90,
     title         = "SQL Injection Detector",
     difficulty    = "hard",
+    base_xp_reward = 400,
     description   = (
         "Implementa `detect_sqli(inputs)` que analiza strings de entrada para detectar "
         "patrones típicos de SQL injection.\n\n"
@@ -403,7 +419,7 @@ L90 = dict(
         "`  Patterns: pattern1, pattern2`\n\n"
         "Al final: `Flagged: N/M inputs`."
     ),
-    hint          = "Usa in con lower(). Un input puede tener múltiples patrones.",
+    syntax_hint   ="Usa in con lower(). Un input puede tener múltiples patrones.",
     initial_code  = (
         "def detect_sqli(inputs):\n"
         "    pass\n\n"
@@ -440,6 +456,7 @@ L91 = dict(
     level_order   = 91,
     title         = "XSS Vulnerability Scanner",
     difficulty    = "hard",
+    base_xp_reward = 420,
     description   = (
         "Implementa `scan_xss(payloads)` que detecta XSS payloads en inputs simulados.\n\n"
         "Patrones XSS (case-insensitive): `<script`, `javascript:`, `onerror=`, "
@@ -452,7 +469,7 @@ L91 = dict(
         "Imprime por cada XSS: `  Severity: HIGH|MEDIUM`\n\n"
         "Resumen final: `XSS found: N  High: N  Medium: N`."
     ),
-    hint          = "Evalúa severidad revisando si algún vector HIGH está en los patrones detectados.",
+    syntax_hint   ="Evalúa severidad revisando si algún vector HIGH está en los patrones detectados.",
     initial_code  = (
         "def scan_xss(payloads):\n"
         "    pass\n\n"
@@ -491,6 +508,7 @@ L92 = dict(
     level_order   = 92,
     title         = "OWASP Top 10 Checklist",
     difficulty    = "hard",
+    base_xp_reward = 440,
     description   = (
         "Implementa `owasp_audit(findings)` que evalúa un listado de hallazgos de seguridad "
         "contra el OWASP Top 10.\n\n"
@@ -504,7 +522,7 @@ L92 = dict(
         "Resumen: `Open: N  Closed: N  Critical open: N`\n"
         "Critical open = findings con severity='critical' y mitigated=False."
     ),
-    hint          = "Itera los findings, imprime estado y cuenta en una pasada.",
+    syntax_hint   ="Itera los findings, imprime estado y cuenta en una pasada.",
     initial_code  = (
         "def owasp_audit(findings):\n"
         "    pass\n\n"
@@ -535,6 +553,8 @@ L93 = dict(
     level_order   = 93,
     title         = "Test Team Capacity Planner",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 310,
     description   = (
         "Implementa `capacity_plan(engineers, sprints)` que distribuye el trabajo de QA "
         "entre ingenieros en múltiples sprints.\n\n"
@@ -547,7 +567,7 @@ L93 = dict(
         "Al final imprime la carga total por ingeniero: "
         "`Load: <name>=Xh`."
     ),
-    hint          = "Usa un índice circular (i % len(engineers)) para round-robin.",
+    syntax_hint   ="Usa un índice circular (i % len(engineers)) para round-robin.",
     initial_code  = (
         "def capacity_plan(engineers, sprints):\n"
         "    pass\n\n"
@@ -593,6 +613,7 @@ L94 = dict(
     level_order   = 94,
     title         = "Quality Dashboard Builder",
     difficulty    = "hard",
+    base_xp_reward = 450,
     description   = (
         "Implementa `build_dashboard(metrics)` que construye un dashboard de calidad "
         "en texto.\n\n"
@@ -618,7 +639,7 @@ L94 = dict(
         "Status: GREEN si coverage>=80 y open_bugs<=5 y failed_total==0; "
         "RED si coverage<60 o open_bugs>20 o failed_total>10; YELLOW en otro caso."
     ),
-    hint          = "Usa ljust/rjust para alinear columnas. Calcula failed_total sumando todos los suites.",
+    syntax_hint   ="Usa ljust/rjust para alinear columnas. Calcula failed_total sumando todos los suites.",
     initial_code  = (
         "def build_dashboard(metrics):\n"
         "    pass\n\n"
@@ -659,6 +680,8 @@ L95 = dict(
     level_order   = 95,
     title         = "Mentoring Session Planner",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 330,
     description   = (
         "Implementa `plan_mentoring(juniors)` que crea un plan de mentoring para un equipo.\n\n"
         "Cada junior: `{'name': str, 'level': int, 'weak_areas': list[str]}`.\n\n"
@@ -669,7 +692,7 @@ L95 = dict(
         "Al final imprime: `Sessions planned: N` (una por junior) y "
         "`Priority engineers: N`."
     ),
-    hint          = "Imprime [PRIORITY] solo si level <= 2. Cuenta prioridad al mismo tiempo.",
+    syntax_hint   ="Imprime [PRIORITY] solo si level <= 2. Cuenta prioridad al mismo tiempo.",
     initial_code  = (
         "def plan_mentoring(juniors):\n"
         "    pass\n\n"
@@ -706,6 +729,8 @@ L96 = dict(
     level_order   = 96,
     title         = "Incident Post-Mortem Template",
     difficulty    = "medium",
+    difficulty_tier = 2,
+    base_xp_reward = 340,
     description   = (
         "Implementa `generate_postmortem(incident)` que produce un post-mortem estructurado.\n\n"
         "incident: dict con: `id`, `title`, `severity`, `duration_min`, `impact`, "
@@ -726,7 +751,7 @@ L96 = dict(
         "  [<owner>] <task> (due: <due>)\n"
         "```"
     ),
-    hint          = "Itera timeline y action_items con el formato exacto.",
+    syntax_hint   ="Itera timeline y action_items con el formato exacto.",
     initial_code  = (
         "def generate_postmortem(incident):\n"
         "    pass\n\n"
@@ -779,6 +804,7 @@ L97 = dict(
     level_order   = 97,
     title         = "Test Maturity Assessment",
     difficulty    = "hard",
+    base_xp_reward = 480,
     description   = (
         "Implementa `maturity_assessment(org)` que evalúa la madurez de pruebas de una organización "
         "usando un modelo de 5 dimensiones, cada una con score 0-4.\n\n"
@@ -794,7 +820,7 @@ L97 = dict(
         "luego `Overall: <avg>/4 — <level>`.\n\n"
         "Si alguna dimensión tiene score 0: añade `  WARNING: <dimension> needs immediate attention`."
     ),
-    hint          = "Nivel: 0-1 → Initial, 2 → Managed, 3 → Defined, 4 → Optimized. Promedio con round(,2).",
+    syntax_hint   ="Nivel: 0-1 → Initial, 2 → Managed, 3 → Defined, 4 → Optimized. Promedio con round(,2).",
     initial_code  = (
         "def maturity_level(score):\n"
         "    if score <= 1: return 'Initial'\n"
@@ -835,6 +861,7 @@ L98 = dict(
     level_order   = 98,
     title         = "Risk Mitigation Strategist",
     difficulty    = "hard",
+    base_xp_reward = 500,
     description   = (
         "Implementa `risk_matrix(risks)` que construye una matriz de riesgos de QA.\n\n"
         "Cada riesgo: `{'id': str, 'description': str, 'probability': int, "
@@ -853,7 +880,7 @@ L98 = dict(
         "`  Mitigation: <mitigation>`\n\n"
         "Resumen: `Critical: N  High: N  Medium: N  Low: N`."
     ),
-    hint          = "Ordena con sorted(..., key=lambda r: r['probability']*r['impact'], reverse=True).",
+    syntax_hint   ="Ordena con sorted(..., key=lambda r: r['probability']*r['impact'], reverse=True).",
     initial_code  = (
         "def risk_matrix(risks):\n"
         "    pass\n\n"
@@ -895,6 +922,7 @@ L99 = dict(
     level_order   = 99,
     title         = "QA Transformation Roadmap",
     difficulty    = "hard",
+    base_xp_reward = 520,
     description   = (
         "Implementa `transformation_roadmap(current_state, target_state, quarters)` que "
         "genera un roadmap de transformación QA.\n\n"
@@ -909,7 +937,7 @@ L99 = dict(
         "Cada celda de quarter muestra el score acumulado al final de ese quarter.\n\n"
         "Al final: `Roadmap: <N> dimensions to improve over <M> quarters`."
     ),
-    hint          = (
+    syntax_hint   =(
         "Gap = target - current. Por quarter: floor(gap/M). Valor acumulado = current + step*(i+1), "
         "ajustado en último quarter a target."
     ),
@@ -941,6 +969,7 @@ L100 = dict(
     level_order   = 100,
     title         = "CONTRATO-QA-100: El Arquitecto Centinela",
     difficulty    = "legendary",
+    base_xp_reward = 800,
     is_phase_boss = True,
     is_project    = True,
     description   = (
@@ -962,7 +991,7 @@ L100 = dict(
         "tienen pass_rate >= 95; NO-GO en otro caso con lista de razones\n"
         "- Última línea: `DECISION: GO` o `DECISION: NO-GO`"
     ),
-    hint          = (
+    syntax_hint   =(
         "Guarda listas internas en __init__. go_live_decision() recorre cada lista y acumula "
         "razones para el NO-GO. Imprime secciones antes de calcular la decisión final."
     ),
