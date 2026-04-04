@@ -69,6 +69,37 @@ const MISSION_LORE: Record<number, { lore: string; requires: string; chapter: st
 const TIER_LABEL: Record<number, string> = { 1: 'INICIANTE', 2: 'INTERMEDIO', 3: 'AVANZADO' }
 const TIER_COLOR: Record<number, string> = { 1: '#00FF41', 2: '#FFD700', 3: '#FF4444' }
 
+// ─── S5: Filtro por rama de especialización ────────────────────────────────────
+
+const BRANCH_LABELS: Record<string, string> = {
+  auto: 'Automatización y Scripting',
+  qa:   'Testing y QA',
+  api:  'APIs y Backend',
+  data: 'Data Science y Análisis',
+  ai:   'Inteligencia Artificial Básica',
+}
+
+const BRANCH_KEYWORDS: Record<string, string[]> = {
+  auto: ['automatizacion', 'scripting', 'cli', 'automatización'],
+  qa:   ['testing', 'qa', 'pytest', 'test'],
+  api:  ['api', 'backend', 'fastapi', 'django', 'rest'],
+  data: ['data', 'analisis', 'pandas', 'numpy', 'análisis'],
+  ai:   ['ia', 'ai', 'machine_learning', 'ml', 'inteligencia'],
+}
+
+function sortByBranch(list: Mission[], branch: string | null): Mission[] {
+  if (!branch) return list
+  const kws = BRANCH_KEYWORDS[branch] ?? []
+  return [...list].sort((a, b) => {
+    const score = (m: Mission) =>
+      kws.some(k =>
+        m.phase?.toLowerCase().includes(k) ||
+        m.concepts_taught?.some(c => c.toLowerCase().includes(k))
+      ) ? 1 : 0
+    return score(b) - score(a)
+  })
+}
+
 // ─── Panel de Briefing (columna derecha) ───────────────────────────────────────
 
 function BriefingPanel({
@@ -278,9 +309,17 @@ export default function MisionesPage() {
   const [briefingMission, setBriefingMission] = useState<Mission | null>(null)
   const [isHacking, setIsHacking] = useState(false)
   const [hackingTitle, setHackingTitle] = useState('')
+  // S5 — Rama activa leída desde ?branch=<id>
+  const [activeBranch, setActiveBranch] = useState<string | null>(null)
+
   useEffect(() => {
     if (!_hasHydrated) return
     if (!userId) { router.replace('/login'); setLoading(false); return }
+    // Leer parámetros de URL antes de la carga
+    const params = new URLSearchParams(window.location.search)
+    const branchParam = params.get('branch')
+    if (branchParam && BRANCH_LABELS[branchParam]) setActiveBranch(branchParam)
+
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
       .then(r => r.json())
       .then((data: Mission[]) => {
@@ -290,7 +329,6 @@ export default function MisionesPage() {
         )
         setMissions(merged)
         // Restaurar selección desde URL param ?selected=<UUID>
-        const params = new URLSearchParams(window.location.search)
         const selectedParam = params.get('selected')
         const target = selectedParam ? merged.find(m => m.id === selectedParam && m.unlocked) : null
         const first = target ?? merged.find(m => m.unlocked && !m.completed) ?? merged[0]
@@ -309,9 +347,11 @@ export default function MisionesPage() {
       .finally(() => setLoading(false))
   }, [_hasHydrated, userId, router])
 
-  const completadas = missions.filter(m => m.completed).length
-  const tutorial = missions.find(m => m.challenge_type === 'tutorial')
-  const tutorialDone = tutorial?.completed ?? true
+  const completadas    = missions.filter(m => m.completed).length
+  const tutorial       = missions.find(m => m.challenge_type === 'tutorial')
+  const tutorialDone   = tutorial?.completed ?? true
+  // S5 — Lista ordenada por relevancia de rama (si hay filtro activo)
+  const displayedMissions = sortByBranch(missions, activeBranch)
 
   const handleDeploy = (mission: Mission) => {
     if (!mission.unlocked) return
@@ -433,6 +473,44 @@ export default function MisionesPage() {
               </p>
             ) : (
               <>
+                {/* ── S5: Banner de rama activa ── */}
+                {activeBranch && BRANCH_LABELS[activeBranch] && (
+                  <motion.div
+                    className="mx-3 mb-2 mt-1 border px-4 py-2.5 flex items-center justify-between gap-2"
+                    style={{
+                      borderColor: 'rgba(245,158,11,0.35)',
+                      background:  'rgba(245,158,11,0.06)',
+                      boxShadow:   '0 0 12px rgba(245,158,11,0.07)',
+                    }}
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div>
+                      <p className="text-[7px] tracking-[0.45em] font-black font-mono"
+                        style={{ color: 'rgba(245,158,11,0.75)' }}>
+                        ⚡ VISTA FILTRADA
+                      </p>
+                      <p className="text-[8px] tracking-wider font-mono mt-0.5"
+                        style={{ color: 'rgba(245,158,11,0.50)' }}>
+                        {BRANCH_LABELS[activeBranch]}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveBranch(null)
+                        window.history.replaceState({}, '', '/misiones')
+                      }}
+                      className="text-[7px] tracking-[0.3em] font-mono border px-2 py-1 transition-colors"
+                      style={{ color: 'rgba(245,158,11,0.45)', borderColor: 'rgba(245,158,11,0.22)' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'rgba(245,158,11,0.80)' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'rgba(245,158,11,0.45)' }}
+                    >
+                      ✕ LIMPIAR
+                    </button>
+                  </motion.div>
+                )}
+
                 {/* ── Banner: calibración requerida ── */}
                 {!tutorialDone && (
                   <motion.div
@@ -459,7 +537,7 @@ export default function MisionesPage() {
                   </motion.div>
                 )}
 
-                {missions.map((m, idx) => {
+                {displayedMissions.map((m, idx) => {
                   const isLocked = !m.unlocked
                   const isSelected = selected?.id === m.id
                   const tierColor = TIER_COLOR[m.difficulty_tier]

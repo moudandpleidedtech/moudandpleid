@@ -15,6 +15,7 @@ import BossWarningBanner from '@/components/UI/BossWarningBanner'
 import IncursionSelector from '@/components/Hub/IncursionSelector'
 import IntelReportModal from '@/components/Hub/IntelReportModal'
 import DistincionesPanel from '@/components/Hub/DistincionesPanel'
+import SkillTreePanel from '@/components/Hub/SkillTreePanel'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -606,10 +607,25 @@ export default function HubPage() {
         </div>
 
         {/* ══════════════════════════════════════════════
+            PANEL CENTRAL — Skill Tree Python Core
+        ══════════════════════════════════════════════ */}
+        <motion.div
+          className="flex-1 min-w-0 border-r border-[#00FF41]/8 overflow-hidden"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.45 }}
+        >
+          <SkillTreePanel
+            completedCount={completedOrders.length}
+            onNavigate={navigateWithFade}
+          />
+        </motion.div>
+
+        {/* ══════════════════════════════════════════════
             PANEL DERECHO — Navegación Táctica
         ══════════════════════════════════════════════ */}
         <motion.div
-          className="flex-1 flex flex-col justify-start gap-5 px-10 py-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="w-[320px] shrink-0 flex flex-col justify-start gap-5 px-8 py-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.45 }}
@@ -1122,6 +1138,7 @@ export default function HubPage() {
           </div>
 
         </motion.div>
+
       </main>
 
       {/* ── Modal de Alpha Access ────────────────────────────────────────────── */}
