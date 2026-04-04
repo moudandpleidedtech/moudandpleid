@@ -433,7 +433,7 @@ export default function HubPage() {
             NEXO CENTRAL
           </span>
           <span className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 hidden md:block">
-            {'// ECOSISTEMA DE FORMACIONES ACTIVO'}
+            {'// OPERADORES PYTHON · ECOSISTEMA ACTIVO'}
           </span>
         </div>
         
@@ -802,7 +802,7 @@ export default function HubPage() {
             </motion.button>
           </motion.div>
 
-          {/* ── Formaciones — Tabs + Grid ── */}
+          {/* ── Formaciones Python — filtradas por identidad de marca ── */}
           <motion.div
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}

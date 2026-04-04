@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShieldCheck, Zap, Lock, GitBranch, Terminal } from 'lucide-react'
+import { ShieldCheck, Zap, Lock, Terminal } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
     return (
       <div className="flex flex-col gap-2">
         <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/15 mb-1 font-mono">
-          MÓDULOS DE FORMACIÓN
+          FORMACIONES PYTHON
         </p>
         <div className="flex items-center justify-center py-10">
           <p className="text-[9px] tracking-[0.3em] font-mono" style={{ color: 'rgba(255,80,50,0.55)' }}>
@@ -111,10 +111,18 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
     )
   }
 
-  // ACTIVE primero (ordenadas por `orden`), luego ENCRYPTED — todas visibles
+  // Solo formaciones relacionadas con Python (filtro de identidad de marca)
+  const pythonIncursions = incursions.filter(i =>
+    i.slug.toLowerCase().includes('python') ||
+    (i.ruta?.toLowerCase().includes('python') ?? false) ||
+    i.titulo.toLowerCase().includes('python') ||
+    i.slug === 'qa-automation-ops'   // rama QA Python del Skill Tree
+  )
+
+  // ACTIVE primero (ordenadas por `orden`), luego ENCRYPTED — solo Python
   const visible = [
-    ...incursions.filter(i => i.status === 'ACTIVE'),
-    ...incursions.filter(i => i.status === 'ENCRYPTED'),
+    ...pythonIncursions.filter(i => i.status === 'ACTIVE'),
+    ...pythonIncursions.filter(i => i.status === 'ENCRYPTED'),
   ]
 
   return (
@@ -122,10 +130,10 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/20 font-mono uppercase">
-          Módulos de Formación
+          Formaciones Python
         </p>
         <span className="text-[7px] tracking-[0.3em] font-mono" style={{ color: 'rgba(0,255,65,0.18)' }}>
-          {incursions.filter(i => i.status === 'ACTIVE').length} ACTIVOS · {incursions.filter(i => i.status === 'ENCRYPTED').length} PRÓXIMOS
+          {pythonIncursions.filter(i => i.status === 'ACTIVE').length} ACTIVOS · {pythonIncursions.filter(i => i.status === 'ENCRYPTED').length} PRÓXIMOS
         </span>
       </div>
 
@@ -286,11 +294,11 @@ function ActiveCard({
 
 // ─── Tarjeta QA Automation (Especialidad) ─────────────────────────────────────
 
-const QA_STACK_BADGES = ['Python', 'TypeScript', 'Playwright', 'CI/CD']
+const QA_STACK_BADGES = ['Python', 'pytest', 'Playwright', 'CI/CD']
 
 const BADGE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   Python:     { bg: 'rgba(6,182,212,0.12)',  text: '#67E8F9', border: 'rgba(6,182,212,0.35)' },
-  TypeScript: { bg: 'rgba(16,185,129,0.12)', text: '#6EE7B7', border: 'rgba(16,185,129,0.35)' },
+  pytest:     { bg: 'rgba(16,185,129,0.12)', text: '#6EE7B7', border: 'rgba(16,185,129,0.35)' },
   Playwright: { bg: 'rgba(139,92,246,0.12)', text: '#C4B5FD', border: 'rgba(139,92,246,0.35)' },
   'CI/CD':    { bg: 'rgba(251,191,36,0.10)', text: '#FDE68A', border: 'rgba(251,191,36,0.30)' },
 }
@@ -419,7 +427,7 @@ function QAAutomationCard({
           className="text-[9px] tracking-[0.2em] font-mono mb-2 block"
           style={{ color: locked ? 'rgba(70,100,110,0.6)' : `${EMERALD}aa` }}
         >
-          STACK MODERNO · PLAYWRIGHT + TS
+          STACK PYTHON · PYTEST + PLAYWRIGHT
         </span>
 
         {/* ── Descripción (aparece en hover) ── */}
@@ -490,7 +498,7 @@ function QAAutomationCard({
                 style={{ color: 'rgba(255,199,0,0.55)' }}
               >
                 <Lock size={9} className="inline mr-1.5 mb-0.5" />
-                REQUIERE: OPERACIÓN PYTHON FINALIZADA
+                REQUIERE: PYTHON CORE AVANZADO
               </span>
               {/* Texto hover */}
               <span
