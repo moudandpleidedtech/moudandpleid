@@ -358,8 +358,8 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
           width={svgDims.w} height={svgDims.h}
           style={{ overflow: 'visible' }} aria-hidden="true">
           <defs>
-            <filter id="vein-glow" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+            <filter id="vein-glow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
@@ -369,18 +369,25 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
           {svgPaths.map((d, i) => (
             <g key={i}>
-              {/* Línea base */}
+              {/* Halo exterior difuso */}
+              <motion.path d={d} fill="none" stroke="#06b6d4" strokeWidth={6}
+                strokeLinecap="round" filter="url(#vein-glow)"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.18 }}
+                transition={{ delay: 0.72 + i * 0.13, duration: 0.85, ease: 'easeOut' }}
+              />
+              {/* Línea base principal */}
               <motion.path d={d} fill="none" stroke="#06b6d4" strokeWidth={2}
                 strokeLinecap="round" filter="url(#vein-glow)"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.45 }}
+                animate={{ pathLength: 1, opacity: 0.75 }}
                 transition={{ delay: 0.72 + i * 0.13, duration: 0.85, ease: 'easeOut' }}
               />
               {/* S4 — Pulso viajero */}
               <motion.path d={d} fill="none" stroke="#06b6d4" strokeWidth={5}
                 strokeLinecap="round" filter="url(#vein-glow)"
                 strokeDasharray="18 800"
-                animate={{ strokeDashoffset: [820, 0], opacity: [0, 0.80, 0.80, 0] }}
+                animate={{ strokeDashoffset: [820, 0], opacity: [0, 1, 1, 0] }}
                 transition={{
                   strokeDashoffset: { duration: 2.2, repeat: Infinity, ease: 'linear', delay: 1.4 + i * 0.25 },
                   opacity:          { duration: 2.2, repeat: Infinity, ease: 'linear', delay: 1.4 + i * 0.25, times: [0, 0.1, 0.9, 1] },
@@ -398,9 +405,10 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
           <motion.div className="text-center"
             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-            <p className="text-[6px] tracking-[0.65em] text-neon-cyan/28 font-mono uppercase mb-1">Eje Central</p>
+            <p className="text-[6px] tracking-[0.65em] font-mono uppercase mb-1"
+              style={{ color: 'rgba(6,182,212,0.55)' }}>Eje Central</p>
             <h3 className="text-[11px] font-black tracking-[0.45em] text-neon-cyan font-mono"
-              style={{ textShadow: '0 0 12px rgba(6,182,212,0.50)' }}>
+              style={{ textShadow: '0 0 18px rgba(6,182,212,0.70), 0 0 40px rgba(6,182,212,0.25)' }}>
               PYTHON CORE
             </h3>
           </motion.div>
@@ -410,7 +418,7 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
             {/* Línea vertical base */}
             <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] z-0"
-              style={{ background: 'linear-gradient(180deg, transparent 2%, rgba(6,182,212,0.18) 8%, rgba(6,182,212,0.18) 92%, transparent 98%)' }}
+              style={{ background: 'linear-gradient(180deg, transparent 2%, rgba(6,182,212,0.35) 8%, rgba(6,182,212,0.35) 92%, transparent 98%)', boxShadow: '0 0 8px rgba(6,182,212,0.20)' }}
             />
 
             {/* S4 — Pulso viajero sobre la línea vertical */}
@@ -446,9 +454,9 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                       isActive ? 'w-[68px] h-[68px]' : 'w-[60px] h-[60px]',
                       'rounded-full border-2 flex flex-col items-center justify-center bg-nexo-bg',
                       'transition-transform duration-150 group-hover:scale-105',
-                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                          : '',
-                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse'  : '',
-                      isLocked    ? 'border-neon-gold/40 text-gray-500    shadow-glow-gold    opacity-50'             : '',
+                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                                                   : '',
+                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse ring-2 ring-neon-emerald/20' : '',
+                      isLocked    ? 'border-neon-gold/55 text-gray-400    shadow-glow-gold'                         : '',
                     ].filter(Boolean).join(' ')}
                   >
                     <CoreNodeIcon state={node.state} />
@@ -468,11 +476,14 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                       'text-[9px] font-black tracking-[0.28em] uppercase font-mono',
                       isCompleted ? 'text-neon-cyan'    : '',
                       isActive    ? 'text-neon-emerald'  : '',
-                      isLocked    ? 'text-gray-500'      : '',
+                      isLocked    ? 'text-neon-gold/70'  : '',
                     ].filter(Boolean).join(' ')}>
                       {node.label}
                     </p>
-                    <p className="text-[7px] text-gray-600 font-mono tracking-wider mt-0.5">{node.sublabel}</p>
+                    <p className={[
+                      'text-[7px] font-mono tracking-wider mt-0.5',
+                      isLocked ? 'text-gray-500' : 'text-gray-600',
+                    ].filter(Boolean).join(' ')}>{node.sublabel}</p>
                   </div>
 
                   {/* Badge estado */}
@@ -520,25 +531,26 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
         <div className="flex-1 flex flex-col justify-center gap-4 min-w-0">
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
-            <p className="text-[6px] tracking-[0.65em] text-neon-gold/28 font-mono uppercase mb-1">
+            <p className="text-[6px] tracking-[0.65em] font-mono uppercase mb-1"
+              style={{ color: 'rgba(245,158,11,0.50)' }}>
               Arsenal de Especialización
             </p>
             <div className="flex items-end justify-between">
               <h3 className="text-[11px] font-black tracking-[0.35em] font-mono"
-                style={{ color: 'rgba(245,158,11,0.55)' }}>
+                style={{ color: 'rgba(245,158,11,0.90)', textShadow: '0 0 16px rgba(245,158,11,0.35)' }}>
                 RAMAS AVANZADAS
               </h3>
               {/* S3 — Contador global de desbloqueo */}
               {!branchesReady ? (
                 <motion.span
-                  className="text-[7px] font-black tracking-[0.3em] font-mono px-2 py-0.5 border"
-                  style={{ color: 'rgba(245,158,11,0.60)', borderColor: 'rgba(245,158,11,0.22)', background: 'rgba(245,158,11,0.04)' }}
-                  animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }}>
+                  className="text-[7px] font-black tracking-[0.3em] font-mono px-2.5 py-1 border"
+                  style={{ color: 'rgba(245,158,11,0.90)', borderColor: 'rgba(245,158,11,0.45)', background: 'rgba(245,158,11,0.10)', boxShadow: '0 0 10px rgba(245,158,11,0.12)' }}
+                  animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.8, repeat: Infinity }}>
                   🔒 {missionsToUnlock} misión{missionsToUnlock !== 1 ? 'es' : ''} para desbloquear
                 </motion.span>
               ) : (
-                <span className="text-[7px] font-black tracking-[0.3em] font-mono px-2 py-0.5 border"
-                  style={{ color: 'rgba(245,158,11,0.70)', borderColor: 'rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.06)' }}>
+                <span className="text-[7px] font-black tracking-[0.3em] font-mono px-2.5 py-1 border"
+                  style={{ color: 'rgba(245,158,11,0.95)', borderColor: 'rgba(245,158,11,0.55)', background: 'rgba(245,158,11,0.12)', boxShadow: '0 0 14px rgba(245,158,11,0.20)' }}>
                   ⚡ LISTAS PARA ACTIVAR
                 </span>
               )}
@@ -550,64 +562,80 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
             {SPEC_CARDS.map((card, i) => (
               <motion.div key={card.id}
                 ref={el => { cardRefs.current[i] = el }}
-                className="relative border overflow-hidden cursor-pointer"
+                className="relative border overflow-hidden cursor-pointer group"
                 style={{
-                  borderColor: 'rgba(245,158,11,0.18)',
-                  background:  'rgba(255,255,255,0.04)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
+                  borderColor: 'rgba(245,158,11,0.40)',
+                  background:  'linear-gradient(135deg, rgba(245,158,11,0.07) 0%, rgba(245,158,11,0.03) 100%)',
+                  boxShadow:   '0 0 20px rgba(245,158,11,0.06), inset 0 0 20px rgba(245,158,11,0.03)',
                 }}
                 initial={{ opacity: 0, x: 18 }}
-                animate={{ opacity: 0.65, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.22 + i * 0.07, duration: 0.40, ease: 'easeOut' }}
-                whileHover={{ opacity: 0.85, transition: { duration: 0.14 } }}
-                // S5 — navega a /misiones con filtro de rama
+                whileHover={{
+                  borderColor: 'rgba(245,158,11,0.75)',
+                  boxShadow:   '0 0 28px rgba(245,158,11,0.18), inset 0 0 20px rgba(245,158,11,0.06)',
+                  transition:  { duration: 0.15 },
+                }}
                 onClick={() => onNavigate(`/misiones?branch=${card.branchId}`)}
               >
+                {/* Línea de pulso superior */}
+                <motion.div
+                  className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.60), transparent)' }}
+                  animate={{ opacity: [0.3, 0.9, 0.3] }}
+                  transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.35 }}
+                />
+
                 {/* Esquinas */}
                 {['top-0 left-0 border-t border-l','top-0 right-0 border-t border-r','bottom-0 left-0 border-b border-l','bottom-0 right-0 border-b border-r'].map(cls => (
-                  <span key={cls} className={`absolute w-2 h-2 ${cls}`}
-                    style={{ borderColor: 'rgba(245,158,11,0.32)' }} />
+                  <span key={cls} className={`absolute w-2.5 h-2.5 ${cls}`}
+                    style={{ borderColor: 'rgba(245,158,11,0.55)' }} />
                 ))}
 
-                {/* Candado dorado pulsante */}
+                {/* Candado pulsante */}
                 <div className="absolute top-2.5 right-2.5">
                   <motion.div
-                    animate={{ opacity: [0.45, 0.85, 0.45] }}
-                    transition={{ duration: 2.6, repeat: Infinity, delay: i * 0.30 }}>
-                    <Lock size={14} style={{ color: 'rgba(245,158,11,0.70)', filter: 'drop-shadow(0 0 5px rgba(245,158,11,0.55))' }} />
+                    animate={{ opacity: [0.65, 1, 0.65], filter: ['drop-shadow(0 0 3px rgba(245,158,11,0.4))', 'drop-shadow(0 0 8px rgba(245,158,11,0.8))', 'drop-shadow(0 0 3px rgba(245,158,11,0.4))'] }}
+                    transition={{ duration: 2.2, repeat: Infinity, delay: i * 0.30 }}>
+                    <Lock size={13} style={{ color: 'rgba(245,158,11,0.85)' }} />
                   </motion.div>
                 </div>
 
-                <div className="px-3.5 py-3">
+                <div className="px-3.5 py-3.5">
                   {/* Ícono + título */}
                   <div className="flex items-start gap-2.5 mb-2 pr-6">
-                    <span className="text-[17px] leading-none shrink-0"
-                      style={{ color: 'rgba(245,158,11,0.38)', textShadow: '0 0 8px rgba(245,158,11,0.18)' }}>
+                    <motion.span
+                      className="text-[20px] leading-none shrink-0 select-none"
+                      style={{ color: 'rgba(245,158,11,0.80)', textShadow: '0 0 14px rgba(245,158,11,0.50)' }}
+                      animate={{ opacity: [0.75, 1, 0.75] }}
+                      transition={{ duration: 3, repeat: Infinity, delay: i * 0.4 }}
+                    >
                       {card.icon}
-                    </span>
+                    </motion.span>
                     <p className="text-[9px] font-black tracking-[0.18em] uppercase font-mono leading-snug"
-                      style={{ color: 'rgba(245,158,11,0.55)' }}>
+                      style={{ color: 'rgba(245,158,11,0.92)', textShadow: '0 0 8px rgba(245,158,11,0.30)' }}>
                       {card.title}
                     </p>
                   </div>
 
-                  <p className="text-[7px] tracking-[0.15em] text-gray-600 font-mono mb-2.5">{card.tag}</p>
+                  <p className="text-[7px] tracking-[0.18em] font-mono mb-3"
+                    style={{ color: 'rgba(245,158,11,0.55)' }}>
+                    {card.tag}
+                  </p>
 
-                  {/* S3 — Badge de countdown individual */}
-                  <div className="border px-2 py-1"
-                    style={{ borderColor: 'rgba(245,158,11,0.12)', background: 'rgba(245,158,11,0.03)' }}>
+                  {/* Badge de countdown */}
+                  <div className="border px-2.5 py-1.5"
+                    style={{ borderColor: 'rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)' }}>
                     {!branchesReady ? (
-                      <p className="text-[6px] tracking-[0.18em] font-mono leading-relaxed"
-                        style={{ color: 'rgba(245,158,11,0.42)' }}>
-                        <span className="font-black" style={{ color: 'rgba(245,158,11,0.60)' }}>
-                          Faltan {missionsToUnlock} misión{missionsToUnlock !== 1 ? 'es'  : ''}
+                      <p className="text-[6px] tracking-[0.20em] font-mono leading-relaxed">
+                        <span className="font-black" style={{ color: 'rgba(245,158,11,0.85)' }}>
+                          {missionsToUnlock} misión{missionsToUnlock !== 1 ? 'es' : ''} restantes
                         </span>
-                        {' · '}Python Core (Nivel Avanzado)
+                        <span style={{ color: 'rgba(245,158,11,0.50)' }}>{' · '}Python Core Avanzado</span>
                       </p>
                     ) : (
-                      <p className="text-[6px] tracking-[0.18em] font-mono leading-relaxed font-black"
-                        style={{ color: 'rgba(245,158,11,0.65)' }}>
+                      <p className="text-[6px] tracking-[0.20em] font-mono leading-relaxed font-black"
+                        style={{ color: 'rgba(245,158,11,0.85)' }}>
                         ⚡ Completa Python Core (Avanzado) para activar
                       </p>
                     )}
