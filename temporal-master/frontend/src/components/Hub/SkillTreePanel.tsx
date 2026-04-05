@@ -19,7 +19,7 @@ const THRESHOLDS = {
 type NodeState = 'completed' | 'active' | 'locked'
 
 interface CoreNode { id: number; label: string; sublabel: string; state: NodeState }
-interface SpecCard  { id: string; icon: string; title: string; tag: string; branchId: string }
+interface SpecCard  { id: string; icon: string; title: string; tag: string; branchId: string; jobs: string[]; unlockAt: number }
 interface NodeBrief { missions: number; xpRange: string; concepts: string[] }
 
 // ─── Datos estáticos ───────────────────────────────────────────────────────────
@@ -32,11 +32,11 @@ const BASE_NODES: Omit<CoreNode, 'state'>[] = [
 ]
 
 const SPEC_CARDS: SpecCard[] = [
-  { id: 'auto', icon: '⚙', branchId: 'auto', title: 'Automatización y Scripting',       tag: 'Scripts · CLI · Bots'           },
-  { id: 'qa',   icon: '⬡', branchId: 'qa',   title: 'Testing y QA',                     tag: 'Core Pytest / Playwright'       },
-  { id: 'api',  icon: '◈', branchId: 'api',  title: 'APIs y Backend',                   tag: 'FastAPI / Django'               },
-  { id: 'data', icon: '◉', branchId: 'data', title: 'Data Science y Análisis',          tag: 'Pandas · NumPy · Visualización' },
-  { id: 'ai',   icon: '◬', branchId: 'ai',   title: 'Inteligencia Artificial Básica',   tag: 'ML · Modelos base'              },
+  { id: 'auto', icon: '⚙', branchId: 'auto', title: 'Automatización y Scripting',  tag: 'Scripts · CLI · Bots',           jobs: ['DevOps Engineer', 'SRE', 'Backend Dev'],          unlockAt: 60 },
+  { id: 'qa',   icon: '⬡', branchId: 'qa',   title: 'Testing y QA',               tag: 'Pytest · Playwright · CI',        jobs: ['QA Engineer', 'SDET', 'Test Automation'],         unlockAt: 70 },
+  { id: 'api',  icon: '◈', branchId: 'api',  title: 'APIs y Backend',             tag: 'FastAPI · Django · REST',         jobs: ['Backend Developer', 'API Engineer', 'Full Stack'], unlockAt: 75 },
+  { id: 'data', icon: '◉', branchId: 'data', title: 'Data Science y Análisis',    tag: 'Pandas · NumPy · Visualización',  jobs: ['Data Analyst', 'Data Scientist', 'BI Developer'],  unlockAt: 80 },
+  { id: 'ai',   icon: '◬', branchId: 'ai',   title: 'Inteligencia Artificial',    tag: 'ML · Modelos base',               jobs: ['ML Engineer', 'AI Developer', 'Data Scientist'],   unlockAt: 90 },
 ]
 
 // S2 — Contenido del pre-brief por índice de nodo
@@ -162,19 +162,19 @@ function NodeBriefModal({
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-[7px] tracking-[0.55em] mb-1" style={{ color: accentColor.replace('1)', '0.40)') }}>
+              <p className="text-[11px] tracking-[0.45em] mb-1" style={{ color: accentColor.replace('1)', '0.65)') }}>
                 MÓDULO {String(nodeIdx + 1).padStart(2, '0')} // PYTHON CORE
               </p>
               <h3 className="text-lg font-black tracking-[0.25em] uppercase"
                 style={{ color: accentColor, textShadow: `0 0 12px ${accentColor.replace('1)', '0.40)')}` }}>
                 {node.label}
               </h3>
-              <p className="text-[9px] tracking-wider mt-0.5" style={{ color: accentColor.replace('1)', '0.50)') }}>
+              <p className="text-xs tracking-wider mt-0.5" style={{ color: accentColor.replace('1)', '0.70)') }}>
                 {node.sublabel}
               </p>
             </div>
             <button onClick={onClose}
-              className="text-gray-600 hover:text-gray-400 transition-colors mt-0.5">
+              className="text-gray-400 hover:text-gray-200 transition-colors mt-0.5">
               <X size={16} />
             </button>
           </div>
@@ -182,21 +182,21 @@ function NodeBriefModal({
           {/* Estado */}
           <div className="flex gap-2 mb-4">
             {isCompleted && (
-              <span className="text-[7px] tracking-[0.4em] font-black px-2 py-0.5 border"
-                style={{ color: 'rgba(6,182,212,0.8)', borderColor: 'rgba(6,182,212,0.30)', background: 'rgba(6,182,212,0.06)' }}>
+              <span className="text-[11px] tracking-[0.35em] font-black px-2 py-0.5 border"
+                style={{ color: 'rgba(6,182,212,0.90)', borderColor: 'rgba(6,182,212,0.35)', background: 'rgba(6,182,212,0.08)' }}>
                 ✓ COMPLETADO
               </span>
             )}
             {node.state === 'active' && (
-              <motion.span className="text-[7px] tracking-[0.4em] font-black px-2 py-0.5 border"
-                style={{ color: 'rgba(16,185,129,0.9)', borderColor: 'rgba(16,185,129,0.35)', background: 'rgba(16,185,129,0.07)' }}
-                animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.3, repeat: Infinity }}>
+              <motion.span className="text-[11px] tracking-[0.35em] font-black px-2 py-0.5 border"
+                style={{ color: 'rgba(16,185,129,1)', borderColor: 'rgba(16,185,129,0.45)', background: 'rgba(16,185,129,0.10)' }}
+                animate={{ opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.3, repeat: Infinity }}>
                 ▶ EN CURSO
               </motion.span>
             )}
             {isLocked && (
-              <span className="text-[7px] tracking-[0.4em] font-black px-2 py-0.5 border"
-                style={{ color: 'rgba(245,158,11,0.55)', borderColor: 'rgba(245,158,11,0.22)', background: 'rgba(245,158,11,0.04)' }}>
+              <span className="text-[11px] tracking-[0.35em] font-black px-2 py-0.5 border"
+                style={{ color: 'rgba(245,158,11,0.75)', borderColor: 'rgba(245,158,11,0.32)', background: 'rgba(245,158,11,0.06)' }}>
                 🔒 BLOQUEADO
               </span>
             )}
@@ -209,12 +209,12 @@ function NodeBriefModal({
               { icon: <Trophy   size={11} />, label: 'RECOMPENSA', value: brief.xpRange },
             ].map(({ icon, label, value }) => (
               <div key={label} className="border px-3 py-2"
-                style={{ borderColor: accentColor.replace('1)', '0.12)'), background: accentColor.replace('1)', '0.04)') }}>
-                <div className="flex items-center gap-1.5 mb-1" style={{ color: accentColor.replace('1)', '0.50)') }}>
+                style={{ borderColor: accentColor.replace('1)', '0.18)'), background: accentColor.replace('1)', '0.06)') }}>
+                <div className="flex items-center gap-1.5 mb-1" style={{ color: accentColor.replace('1)', '0.70)') }}>
                   {icon}
-                  <span className="text-[6px] tracking-[0.4em] font-black">{label}</span>
+                  <span className="text-[11px] tracking-[0.35em] font-black">{label}</span>
                 </div>
-                <p className="text-[8px] font-black" style={{ color: accentColor.replace('1)', '0.75)') }}>
+                <p className="text-xs font-black" style={{ color: accentColor.replace('1)', '0.90)') }}>
                   {value}
                 </p>
               </div>
@@ -223,14 +223,14 @@ function NodeBriefModal({
 
           {/* Conceptos */}
           <div className="mb-4">
-            <p className="text-[6px] tracking-[0.5em] mb-2" style={{ color: accentColor.replace('1)', '0.35)') }}>
+            <p className="text-[11px] tracking-[0.45em] mb-2" style={{ color: accentColor.replace('1)', '0.60)') }}>
               CONCEPTOS CUBIERTOS
             </p>
             <ul className="flex flex-col gap-1.5">
               {brief.concepts.map(c => (
                 <li key={c} className="flex items-center gap-2">
-                  <span style={{ color: accentColor.replace('1)', '0.50)'), fontSize: 8 }}>▸</span>
-                  <span className="text-[8px] tracking-wider text-gray-400">{c}</span>
+                  <span style={{ color: accentColor.replace('1)', '0.70)'), fontSize: 10 }}>▸</span>
+                  <span className="text-[11px] tracking-wider text-gray-300">{c}</span>
                 </li>
               ))}
             </ul>
@@ -239,24 +239,24 @@ function NodeBriefModal({
           {/* CTA */}
           {isLocked ? (
             <div className="border px-3 py-2.5 text-center"
-              style={{ borderColor: 'rgba(245,158,11,0.15)', background: 'rgba(245,158,11,0.03)' }}>
-              <p className="text-[7px] tracking-[0.3em] text-gray-600">
-                Completa <span style={{ color: 'rgba(245,158,11,0.65)' }}>
+              style={{ borderColor: 'rgba(245,158,11,0.22)', background: 'rgba(245,158,11,0.05)' }}>
+              <p className="text-xs tracking-[0.25em] text-gray-400">
+                Completa <span style={{ color: 'rgba(245,158,11,0.85)' }}>
                   {prevLabel ? `"${prevLabel}"` : 'el módulo anterior'}
                 </span> para desbloquear
               </p>
             </div>
           ) : isCompleted ? (
             <button onClick={onClose}
-              className="w-full py-2.5 text-[9px] font-black tracking-[0.4em] border transition-colors"
-              style={{ borderColor: 'rgba(6,182,212,0.30)', color: 'rgba(6,182,212,0.70)', background: 'rgba(6,182,212,0.05)' }}>
+              className="w-full py-2.5 text-[11px] font-black tracking-[0.4em] border transition-colors"
+              style={{ borderColor: 'rgba(6,182,212,0.40)', color: 'rgba(6,182,212,0.85)', background: 'rgba(6,182,212,0.07)' }}>
               ✓ MÓDULO COMPLETADO
             </button>
           ) : (
             <motion.button onClick={onGo}
-              className="w-full py-2.5 font-black tracking-[0.3em] text-[9px] flex items-center justify-center gap-2 border transition-all"
-              style={{ borderColor: 'rgba(16,185,129,0.50)', color: 'rgba(16,185,129,0.90)', background: 'rgba(16,185,129,0.08)' }}
-              whileHover={{ background: 'rgba(16,185,129,0.14)', boxShadow: '0 0 20px rgba(16,185,129,0.18)' }}
+              className="w-full py-2.5 font-black tracking-[0.3em] text-[11px] flex items-center justify-center gap-2 border transition-all"
+              style={{ borderColor: 'rgba(16,185,129,0.55)', color: 'rgba(16,185,129,1)', background: 'rgba(16,185,129,0.10)' }}
+              whileHover={{ background: 'rgba(16,185,129,0.18)', boxShadow: '0 0 20px rgba(16,185,129,0.22)' }}
               whileTap={{ scale: 0.98 }}>
               <span>IR A MISIONES</span>
               <ChevronRight size={12} />
@@ -588,10 +588,13 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
           {/* Grid de tarjetas */}
           <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2">
-            {SPEC_CARDS.map((card, i) => (
+            {SPEC_CARDS.map((card, i) => {
+              const cardPct = Math.min(100, Math.round((completedCount / card.unlockAt) * 100))
+              const cardRemaining = Math.max(0, card.unlockAt - completedCount)
+              return (
               <motion.div key={card.id}
                 ref={el => { cardRefs.current[i] = el }}
-                className="relative border overflow-hidden cursor-pointer group"
+                className="relative border overflow-hidden"
                 style={{
                   borderColor: 'rgba(245,158,11,0.40)',
                   background:  'linear-gradient(135deg, rgba(245,158,11,0.07) 0%, rgba(245,158,11,0.03) 100%)',
@@ -605,7 +608,6 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                   boxShadow:   '0 0 28px rgba(245,158,11,0.18), inset 0 0 20px rgba(245,158,11,0.06)',
                   transition:  { duration: 0.15 },
                 }}
-                onClick={() => onNavigate(`/misiones?branch=${card.branchId}`)}
               >
                 {/* Línea de pulso superior */}
                 <motion.div
@@ -652,26 +654,39 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                     {card.tag}
                   </p>
 
-                  {/* Badge de countdown */}
+                  {/* Roles + barra de desbloqueo individual */}
                   <div className="border px-3 py-2"
                     style={{ borderColor: 'rgba(245,158,11,0.30)', background: 'rgba(245,158,11,0.07)' }}>
-                    {!branchesReady ? (
-                      <p className="text-[7px] tracking-[0.18em] font-mono leading-relaxed">
-                        <span className="font-black" style={{ color: 'rgba(245,158,11,0.95)' }}>
-                          {missionsToUnlock} misión{missionsToUnlock !== 1 ? 'es' : ''} restantes
+                    <p className="text-[8px] tracking-[0.25em] font-mono mb-1.5"
+                      style={{ color: 'rgba(245,158,11,0.45)' }}>
+                      SALIDAS LABORALES
+                    </p>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {card.jobs.map(job => (
+                        <span key={job} className="text-[9px] font-mono px-1.5 py-0.5 border"
+                          style={{ color: 'rgba(245,158,11,0.75)', borderColor: 'rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)' }}>
+                          {job}
                         </span>
-                        <span style={{ color: 'rgba(245,158,11,0.55)' }}>{' · '}Python Core Avanzado</span>
-                      </p>
-                    ) : (
-                      <p className="text-[7px] tracking-[0.18em] font-mono leading-relaxed font-black"
-                        style={{ color: 'rgba(245,158,11,0.95)' }}>
-                        ⚡ Completa Python Core (Avanzado) para activar
-                      </p>
-                    )}
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(245,158,11,0.12)' }}>
+                        <motion.div className="h-full rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${cardPct}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 + i * 0.06 }}
+                          style={{ background: cardPct >= 100 ? 'rgba(245,158,11,0.95)' : 'rgba(245,158,11,0.50)' }}
+                        />
+                      </div>
+                      <span className="text-[8px] font-mono shrink-0" style={{ color: 'rgba(245,158,11,0.55)' }}>
+                        {cardRemaining > 0 ? `−${cardRemaining}` : '⚡'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

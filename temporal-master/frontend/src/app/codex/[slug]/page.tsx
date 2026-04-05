@@ -40,45 +40,17 @@ interface Level {
   test_inputs: string[]
 }
 
-// ─── Mapa de slug → codex_id ─────────────────────────────────────────────────
+// ─── Mapa de slug → codex_id (solo Python) ───────────────────────────────────
 
 const SLUG_TO_CODEX: Record<string, { codex_id: string; label: string; color: string }> = {
-  'qa-senior-architect': { codex_id: 'qa_senior_architect', label: 'QA SENIOR ARCHITECT', color: '#00D4FF' },
-  'tpm': { codex_id: 'tpm_mastery', label: 'TPM MASTERY', color: '#FF6B35' },
-  'red-team': { codex_id: 'cybersecurity', label: 'RED TEAM', color: '#FF2D78' },
-  'sales': { codex_id: 'sales_mastery_v1', label: 'SALES MASTERY', color: '#FFC700' },
-  'qa-automation-ops': { codex_id: 'qa_automation_ops', label: 'QA AUTOMATION OPS', color: '#06B6D4' },
+  'python-core': { codex_id: 'python_core', label: 'PYTHON CORE', color: '#00FF41' },
 }
 
 // ─── Constantes UI ─────────────────────────────────────────────────────────────
 
 const TIER_LABEL: Record<number, string> = { 1: 'INICIANTE', 2: 'INTERMEDIO', 3: 'AVANZADO' }
 const TIER_COLOR: Record<number, string> = { 1: '#00FF41', 2: '#FFD700', 3: '#FF4444' }
-const PHASE_LABELS: Record<string, string> = {
-  // QA Senior Architect
-  fundamentos:          'FUNDAMENTOS',
-  automatizacion_e2e:   'E2E AUTOMATION',
-  cicd_infra:           'CI/CD & INFRA',
-  api_contratos:        'API & CONTRATOS',
-  perf_liderazgo:       'PERFORMANCE & LIDERAZGO',
-  // QA Automation Ops
-  ALPHA:   'PYTEST ASSAULT',
-  BRAVO:   'TS OPERATIVE',
-  CHARLIE: 'PLAYWRIGHT SIEGE',
-  DELTA:   'API HUNTER',
-  ECHO:    'DEVOPS COMMANDER',
-  // TPM Mastery
-  programa_fundamentos:   'FUNDAMENTOS',
-  credibilidad_tecnica:   'CREDIBILIDAD TÉCNICA',
-  finanzas_negocio:       'FINANZAS & NEGOCIO',
-  comunicacion_ejecutiva: 'COMUNICACIÓN EJECUTIVA',
-  ejecucion_entrega:      'EJECUCIÓN & ENTREGA',
-  liderazgo_personas:     'LIDERAZGO & PERSONAS',
-  negociacion_influencia: 'NEGOCIACIÓN & INFLUENCIA',
-  gestion_cambio:         'GESTIÓN DEL CAMBIO',
-  decision_frameworks:    'FRAMEWORKS DE DECISIÓN',
-  tpm_ai_estrategia:      'TPM + IA & ESTRATEGIA',
-}
+const PHASE_LABELS: Record<string, string> = {}
 
 // ─── Panel de Briefing ─────────────────────────────────────────────────────────
 

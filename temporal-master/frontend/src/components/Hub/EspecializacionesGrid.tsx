@@ -6,58 +6,70 @@ import { motion } from 'framer-motion'
 
 const RAMAS = [
   {
-    id:    'automatizacion',
-    icon:  '⚙',
-    title: 'Automatización y Scripting',
-    hint:  'Scripts, tareas automáticas y CLI tools',
+    id:        'automatizacion',
+    icon:      '⚙',
+    title:     'Automatización y Scripting',
+    hint:      'Scripts, tareas automáticas y CLI tools',
+    jobs:      ['DevOps Engineer', 'SRE', 'Backend Dev'],
+    unlockAt:  60,
   },
   {
-    id:    'testing',
-    icon:  '⬡',
-    title: 'Testing y QA',
-    hint:  'Core Pytest / Playwright',
+    id:        'testing',
+    icon:      '⬡',
+    title:     'Testing y QA',
+    hint:      'Pytest · Playwright · CI pipelines',
+    jobs:      ['QA Engineer', 'SDET', 'Test Automation'],
+    unlockAt:  70,
   },
   {
-    id:    'apis',
-    icon:  '◈',
-    title: 'APIs y Backend',
-    hint:  'FastAPI / Django',
+    id:        'apis',
+    icon:      '◈',
+    title:     'APIs y Backend',
+    hint:      'FastAPI · Django · REST',
+    jobs:      ['Backend Developer', 'API Engineer', 'Full Stack'],
+    unlockAt:  75,
   },
   {
-    id:    'datascience',
-    icon:  '◉',
-    title: 'Data Science y Análisis',
-    hint:  'Pandas, NumPy y visualización',
+    id:        'datascience',
+    icon:      '◉',
+    title:     'Data Science y Análisis',
+    hint:      'Pandas · NumPy · visualización',
+    jobs:      ['Data Analyst', 'Data Scientist', 'BI Developer'],
+    unlockAt:  80,
   },
   {
-    id:    'ia',
-    icon:  '◬',
-    title: 'Inteligencia Artificial Básica',
-    hint:  'ML fundamentals y modelos base',
+    id:        'ia',
+    icon:      '◬',
+    title:     'Inteligencia Artificial',
+    hint:      'ML fundamentals · modelos base',
+    jobs:      ['ML Engineer', 'AI Developer', 'Data Scientist'],
+    unlockAt:  90,
   },
 ] as const
 
 // ─── Tarjeta individual bloqueada ─────────────────────────────────────────────
 
-function RamaCard({ rama, index }: { rama: typeof RAMAS[number]; index: number }) {
+function RamaCard({ rama, index, completedCount }: { rama: typeof RAMAS[number]; index: number; completedCount: number }) {
+  const pct = Math.min(100, Math.round((completedCount / rama.unlockAt) * 100))
+  const remaining = Math.max(0, rama.unlockAt - completedCount)
   return (
     <motion.div
       className="relative flex flex-col border overflow-hidden min-w-0"
       style={{
-        borderColor: 'rgba(255,184,0,0.18)',
+        borderColor: 'rgba(255,184,0,0.22)',
         background:  'rgba(0,0,0,0.50)',
-        opacity:     0.62,
+        opacity:     0.70,
       }}
       initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 0.62, y: 0 }}
+      animate={{ opacity: 0.70, y: 0 }}
       transition={{ delay: 0.08 + index * 0.06, duration: 0.38 }}
-      whileHover={{ opacity: 0.78, transition: { duration: 0.15 } }}
+      whileHover={{ opacity: 0.88, transition: { duration: 0.15 } }}
     >
       {/* Esquinas decorativas ámbar */}
-      <span className="absolute top-0 left-0  w-2 h-2 border-t border-l" style={{ borderColor: 'rgba(255,184,0,0.35)' }} />
-      <span className="absolute top-0 right-0 w-2 h-2 border-t border-r" style={{ borderColor: 'rgba(255,184,0,0.35)' }} />
-      <span className="absolute bottom-0 left-0  w-2 h-2 border-b border-l" style={{ borderColor: 'rgba(255,184,0,0.35)' }} />
-      <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r" style={{ borderColor: 'rgba(255,184,0,0.35)' }} />
+      <span className="absolute top-0 left-0  w-2 h-2 border-t border-l" style={{ borderColor: 'rgba(255,184,0,0.40)' }} />
+      <span className="absolute top-0 right-0 w-2 h-2 border-t border-r" style={{ borderColor: 'rgba(255,184,0,0.40)' }} />
+      <span className="absolute bottom-0 left-0  w-2 h-2 border-b border-l" style={{ borderColor: 'rgba(255,184,0,0.40)' }} />
+      <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r" style={{ borderColor: 'rgba(255,184,0,0.40)' }} />
 
       <div className="px-3.5 py-3 flex flex-col gap-2 h-full">
 
@@ -67,7 +79,7 @@ function RamaCard({ rama, index }: { rama: typeof RAMAS[number]; index: number }
           {/* Ícono de dominio */}
           <span
             className="text-xl leading-none select-none"
-            style={{ color: 'rgba(255,184,0,0.35)', textShadow: '0 0 8px rgba(255,184,0,0.20)' }}
+            style={{ color: 'rgba(255,184,0,0.50)', textShadow: '0 0 8px rgba(255,184,0,0.25)' }}
           >
             {rama.icon}
           </span>
@@ -76,16 +88,16 @@ function RamaCard({ rama, index }: { rama: typeof RAMAS[number]; index: number }
           <motion.div
             className="flex items-center gap-1 border px-1.5 py-0.5 shrink-0"
             style={{
-              borderColor: 'rgba(255,184,0,0.30)',
-              background:  'rgba(255,184,0,0.06)',
+              borderColor: 'rgba(255,184,0,0.35)',
+              background:  'rgba(255,184,0,0.08)',
             }}
-            animate={{ opacity: [0.55, 0.85, 0.55] }}
+            animate={{ opacity: [0.60, 0.90, 0.60] }}
             transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: index * 0.35 }}
           >
             <span style={{ fontSize: 9, lineHeight: 1 }}>🔒</span>
             <span
-              className="text-[6px] font-black tracking-[0.35em] font-mono"
-              style={{ color: 'rgba(255,184,0,0.65)', textShadow: '0 0 6px rgba(255,184,0,0.40)' }}
+              className="text-[10px] font-black tracking-[0.3em] font-mono"
+              style={{ color: 'rgba(255,184,0,0.80)', textShadow: '0 0 6px rgba(255,184,0,0.40)' }}
             >
               LOCKED
             </span>
@@ -95,35 +107,63 @@ function RamaCard({ rama, index }: { rama: typeof RAMAS[number]; index: number }
         {/* Título de la rama */}
         <div className="flex-1">
           <p
-            className="text-[10px] font-black tracking-[0.18em] uppercase font-mono leading-snug"
-            style={{ color: 'rgba(255,184,0,0.55)', textShadow: '0 0 8px rgba(255,184,0,0.18)' }}
+            className="text-xs font-black tracking-[0.15em] uppercase font-mono leading-snug"
+            style={{ color: 'rgba(255,184,0,0.75)', textShadow: '0 0 8px rgba(255,184,0,0.20)' }}
           >
             {rama.title}
           </p>
           <p
-            className="text-[7px] tracking-[0.15em] font-mono mt-1 leading-relaxed"
-            style={{ color: 'rgba(255,184,0,0.28)' }}
+            className="text-[10px] tracking-[0.10em] font-mono mt-1 leading-relaxed"
+            style={{ color: 'rgba(255,184,0,0.45)' }}
           >
             {rama.hint}
           </p>
         </div>
 
-        {/* Badge de requisito */}
+        {/* Roles de mercado */}
         <div
-          className="border px-2 py-1"
+          className="border px-2 py-1.5"
           style={{
-            borderColor: 'rgba(255,184,0,0.14)',
-            background:  'rgba(255,184,0,0.03)',
+            borderColor: 'rgba(255,184,0,0.18)',
+            background:  'rgba(255,184,0,0.04)',
           }}
         >
           <p
-            className="text-[6px] tracking-[0.2em] font-mono leading-relaxed"
-            style={{ color: 'rgba(255,184,0,0.40)' }}
+            className="text-[9px] tracking-[0.25em] font-mono mb-1"
+            style={{ color: 'rgba(255,184,0,0.45)' }}
           >
-            <span style={{ color: 'rgba(255,184,0,0.55)' }}>Requiere:</span>
-            {' '}Python Core{' '}
-            <span className="font-black">(Nivel Avanzado)</span>
+            SALIDAS LABORALES
           </p>
+          <div className="flex flex-wrap gap-1 mb-2">
+            {rama.jobs.map(job => (
+              <span
+                key={job}
+                className="text-[10px] font-mono px-1.5 py-0.5 border"
+                style={{
+                  color:       'rgba(255,184,0,0.70)',
+                  borderColor: 'rgba(255,184,0,0.22)',
+                  background:  'rgba(255,184,0,0.06)',
+                }}
+              >
+                {job}
+              </span>
+            ))}
+          </div>
+          {/* Barra de desbloqueo */}
+          <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,184,0,0.10)' }}>
+              <motion.div
+                className="h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 + index * 0.08 }}
+                style={{ background: pct >= 100 ? 'rgba(255,184,0,0.90)' : 'rgba(255,184,0,0.45)' }}
+              />
+            </div>
+            <span className="text-[9px] font-mono shrink-0" style={{ color: 'rgba(255,184,0,0.50)' }}>
+              {remaining > 0 ? `−${remaining} niveles` : 'LISTO'}
+            </span>
+          </div>
         </div>
 
       </div>
@@ -133,7 +173,7 @@ function RamaCard({ rama, index }: { rama: typeof RAMAS[number]; index: number }
 
 // ─── Componente principal ──────────────────────────────────────────────────────
 
-export default function EspecializacionesGrid() {
+export default function EspecializacionesGrid({ completedCount = 0 }: { completedCount?: number }) {
   return (
     <section
       className="shrink-0 border-t w-full"
@@ -158,21 +198,21 @@ export default function EspecializacionesGrid() {
         >
           <div className="flex items-center gap-3">
             <span
-              className="text-[8px] font-black tracking-[0.55em] uppercase font-mono"
-              style={{ color: 'rgba(255,184,0,0.50)', textShadow: '0 0 8px rgba(255,184,0,0.25)' }}
+              className="text-[11px] font-black tracking-[0.45em] uppercase font-mono"
+              style={{ color: 'rgba(255,184,0,0.70)', textShadow: '0 0 8px rgba(255,184,0,0.25)' }}
             >
               RAMAS DE ESPECIALIZACIÓN
             </span>
             <span
-              className="text-[7px] tracking-[0.3em] font-mono hidden sm:block"
-              style={{ color: 'rgba(255,184,0,0.22)' }}
+              className="text-[10px] tracking-[0.25em] font-mono hidden sm:block"
+              style={{ color: 'rgba(255,184,0,0.35)' }}
             >
               // Rutas avanzadas — desbloqueables
             </span>
           </div>
           <span
-            className="text-[6px] tracking-[0.4em] font-mono"
-            style={{ color: 'rgba(255,184,0,0.20)' }}
+            className="text-[10px] tracking-[0.35em] font-mono"
+            style={{ color: 'rgba(255,184,0,0.40)' }}
           >
             5 RAMAS · TODAS BLOQUEADAS
           </span>
@@ -181,7 +221,7 @@ export default function EspecializacionesGrid() {
         {/* Grid de tarjetas — Mobile-First */}
         <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {RAMAS.map((rama, i) => (
-            <RamaCard key={rama.id} rama={rama} index={i} />
+            <RamaCard key={rama.id} rama={rama} index={i} completedCount={completedCount} />
           ))}
         </div>
 

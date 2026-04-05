@@ -369,6 +369,159 @@ function PythonCoreStatus({ completedCount }: { completedCount: number }) {
   )
 }
 
+// ─── Barra de Progreso Global ─────────────────────────────────────────────────
+
+const MILESTONES = [
+  { at: 10,  label: 'Sector 00 completo' },
+  { at: 25,  label: 'Sector 01 completo' },
+  { at: 50,  label: 'Sector 02 completo' },
+  { at: 75,  label: 'Sector 03 completo' },
+  { at: 100, label: 'BOSS FINAL'          },
+]
+
+function GlobalProgressBar({ completedCount }: { completedCount: number }) {
+  const TOTAL = 100
+  const pct   = Math.min(100, Math.round((completedCount / TOTAL) * 100))
+  const next  = MILESTONES.find(m => m.at > completedCount)
+  const toNext = next ? next.at - completedCount : 0
+
+  return (
+    <div className="relative z-20 shrink-0 px-6 py-1.5 border-b border-[#06b6d4]/10 bg-black/30"
+      style={{ backdropFilter: 'blur(4px)' }}>
+      <div className="flex items-center gap-3">
+        <span className="text-[9px] font-mono tracking-[0.3em] shrink-0"
+          style={{ color: 'rgba(6,182,212,0.55)' }}>
+          PYTHON CORE
+        </span>
+        <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(6,182,212,0.08)' }}>
+          <motion.div
+            className="h-full rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 1.0, ease: 'easeOut', delay: 0.5 }}
+            style={{
+              background: pct >= 100
+                ? 'linear-gradient(90deg, rgba(6,182,212,0.9), rgba(16,185,129,0.9))'
+                : 'rgba(6,182,212,0.65)',
+              boxShadow: '0 0 8px rgba(6,182,212,0.50)',
+            }}
+          />
+        </div>
+        <span className="text-[9px] font-black font-mono shrink-0"
+          style={{ color: 'rgba(6,182,212,0.80)' }}>
+          {completedCount}/{TOTAL}
+        </span>
+        {next && (
+          <span className="text-[8px] font-mono shrink-0 hidden sm:block"
+            style={{ color: 'rgba(6,182,212,0.35)' }}>
+            · {next.label} en {toNext} misión{toNext !== 1 ? 'es' : ''}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Onboarding — modal de primera visita ─────────────────────────────────────
+
+function OnboardingModal({ onClose, onStart }: { onClose: () => void; onStart: () => void }) {
+  const [step, setStep] = useState(0)
+
+  const steps = [
+    {
+      icon:  '◈',
+      title: 'Bienvenido al Nexo',
+      body:  'El Nexo es la plataforma de entrenamiento operacional de DAKI EdTech. Aquí convertirás conocimiento en habilidades reales mediante misiones progresivas.',
+      cta:   'CONTINUAR',
+    },
+    {
+      icon:  '⬡',
+      title: 'Python Core — Tu primera formación',
+      body:  '100 misiones. 4 sectores de dificultad creciente. 1 Boss Final. Python Core es la base de todo lo que vendrá después en el Nexo.',
+      cta:   'CONTINUAR',
+    },
+    {
+      icon:  '▶',
+      title: 'Primera misión disponible',
+      body:  'Tu primer desafío ya está desbloqueado. Comienza por el Sector 00 — Calibración Sináptica. DAKI te guiará en cada paso.',
+      cta:   'INICIAR OPERACIÓN',
+    },
+  ]
+
+  const current = steps[step]
+  const isLast  = step === steps.length - 1
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[500] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="relative w-full max-w-sm border font-mono overflow-hidden"
+        style={{ background: '#020617', borderColor: 'rgba(6,182,212,0.40)', boxShadow: '0 0 60px rgba(6,182,212,0.15)' }}
+        initial={{ scale: 0.90, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.90, y: 20 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
+        {/* Línea pulso superior */}
+        <motion.div className="h-px w-full"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.70), transparent)' }}
+          animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.8, repeat: Infinity }} />
+
+        {/* Esquinas */}
+        {['top-0 left-0 border-t border-l', 'top-0 right-0 border-t border-r', 'bottom-0 left-0 border-b border-l', 'bottom-0 right-0 border-b border-r'].map(cls => (
+          <span key={cls} className={`absolute w-3 h-3 ${cls}`} style={{ borderColor: 'rgba(6,182,212,0.55)' }} />
+        ))}
+
+        <div className="px-8 py-8">
+          {/* Indicadores de paso */}
+          <div className="flex gap-1.5 mb-6">
+            {steps.map((_, i) => (
+              <div key={i} className="flex-1 h-[2px] rounded-full"
+                style={{ background: i <= step ? 'rgba(6,182,212,0.80)' : 'rgba(6,182,212,0.15)' }} />
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div key={step}
+              initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.20 }}>
+              <div className="text-4xl mb-4 text-center"
+                style={{ color: 'rgba(6,182,212,0.80)', textShadow: '0 0 20px rgba(6,182,212,0.50)' }}>
+                {current.icon}
+              </div>
+              <h2 className="text-base font-black tracking-[0.25em] uppercase mb-3 text-center"
+                style={{ color: 'rgba(6,182,212,0.95)' }}>
+                {current.title}
+              </h2>
+              <p className="text-xs leading-relaxed text-center mb-6"
+                style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {current.body}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+          <motion.button
+            onClick={() => isLast ? onStart() : setStep(s => s + 1)}
+            className="w-full py-2.5 font-black tracking-[0.35em] text-[11px] border mb-2"
+            style={{ borderColor: 'rgba(6,182,212,0.50)', color: 'rgba(6,182,212,1)', background: 'rgba(6,182,212,0.08)' }}
+            whileHover={{ background: 'rgba(6,182,212,0.16)', boxShadow: '0 0 20px rgba(6,182,212,0.20)' }}
+            whileTap={{ scale: 0.98 }}>
+            {current.cta}
+          </motion.button>
+          <button onClick={onClose}
+            className="w-full text-[9px] tracking-[0.3em] text-center py-1.5 transition-colors"
+            style={{ color: 'rgba(255,255,255,0.20)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.20)')}>
+            EXPLORAR PRIMERO
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ─── Página Hub ────────────────────────────────────────────────────────────────
 
 export default function HubPage() {
@@ -401,6 +554,7 @@ export default function HubPage() {
   const [showRadar,          setShowRadar]          = useState(false)
   const [showFallas,         setShowFallas]         = useState(false)
   const [showIntelReport,    setShowIntelReport]    = useState(false)
+  const [showOnboarding,     setShowOnboarding]     = useState(false)
 
   // ── XP progress hacia próximo nivel ────────────────────────────────────────
   // Fórmula: level = floor(0.1 * sqrt(XP)) + 1  →  XP en nivel N = ((N-1)*10)²
@@ -415,6 +569,14 @@ export default function HubPage() {
     setBgmFadeOut(true)
     setTimeout(() => router.push(path), 580)
   }
+
+  // ── Onboarding — primera visita ───────────────────────────────────────────
+  useEffect(() => {
+    if (!_hasHydrated || !userId) return
+    if (!localStorage.getItem('nexo_onboarded')) {
+      setTimeout(() => setShowOnboarding(true), 900)
+    }
+  }, [_hasHydrated, userId])
 
   // ── Reenganche — detecta inactividad > 24h ─────────────────────────────────
   useEffect(() => {
@@ -558,6 +720,20 @@ export default function HubPage() {
       {showFallas && <ArchivoFallasModal userId={userId ?? ''} onClose={() => setShowFallas(false)} />}
       <IntelReportModal isOpen={showIntelReport} onClose={() => setShowIntelReport(false)} userId={userId ?? ''} />
 
+      {/* ── Onboarding — primera visita ── */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingModal onClose={() => {
+            localStorage.setItem('nexo_onboarded', '1')
+            setShowOnboarding(false)
+          }} onStart={() => {
+            localStorage.setItem('nexo_onboarded', '1')
+            setShowOnboarding(false)
+            navigateWithFade('/misiones')
+          }} />
+        )}
+      </AnimatePresence>
+
       {/* ── Header ── */}
       <header className="relative z-20 shrink-0 flex flex-wrap items-center justify-between px-6 py-2.5 border-b border-[#00FF41]/12 bg-black/40 backdrop-blur-sm gap-4">
         <div className="flex items-center gap-4 shrink-0">
@@ -616,6 +792,9 @@ export default function HubPage() {
 
       {/* ── Boss Warning Banner ── */}
       <BossWarningBanner level={level} />
+
+      {/* ── Barra de progreso global ── */}
+      <GlobalProgressBar completedCount={completedOrders.length} />
 
       {/* ── Contenido principal ── */}
       <main className="relative z-20 flex-1 flex overflow-hidden">
