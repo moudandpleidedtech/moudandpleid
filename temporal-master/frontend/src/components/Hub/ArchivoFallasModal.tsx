@@ -110,8 +110,8 @@ export default function ArchivoFallasModal({ userId, onClose }: Props) {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative w-full max-w-md bg-[#060606] border border-[#FF4444]/20 font-mono overflow-hidden"
-            style={{ boxShadow: '0 0 60px rgba(255,68,68,0.08)' }}
+            className="relative w-full max-w-md border font-mono overflow-hidden"
+            style={{ background: '#020617', borderColor: 'rgba(255,68,68,0.38)', boxShadow: '0 0 0 1px rgba(255,68,68,0.18), 0 0 40px rgba(255,68,68,0.12)' }}
             initial={{ scale: 0.90, y: 20 }} animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}

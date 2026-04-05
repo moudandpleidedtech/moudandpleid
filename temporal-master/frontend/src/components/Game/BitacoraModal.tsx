@@ -154,16 +154,16 @@ export default function BitacoraModal({ isOpen, onClose, userId, completedOrders
 
           {/* Panel principal */}
           <motion.div
-            className="relative z-10 w-full max-w-4xl h-[82vh] flex border font-mono overflow-hidden"
-            style={{ borderColor: 'rgba(0,255,65,0.25)', background: 'linear-gradient(135deg,#030a05 0%,#020604 100%)' }}
+            className="relative z-10 w-full max-w-4xl h-[82vh] flex font-mono overflow-hidden"
+            style={{ background: '#020617', border: '1px solid rgba(6,182,212,0.40)', boxShadow: '0 0 0 1px rgba(6,182,212,0.18), 0 0 40px rgba(6,182,212,0.12)' }}
             initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, y: 24 }} transition={{ duration: 0.22, ease: [0.16,1,0.3,1] }}
           >
             {/* Esquinas */}
-            <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#00FF41]/60 z-10" />
-            <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-[#00FF41]/60 z-10" />
-            <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[#00FF41]/60 z-10" />
-            <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#00FF41]/60 z-10" />
+            <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 z-10" style={{ borderColor: 'rgba(6,182,212,0.60)' }} />
+            <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 z-10" style={{ borderColor: 'rgba(6,182,212,0.60)' }} />
+            <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 z-10" style={{ borderColor: 'rgba(6,182,212,0.60)' }} />
+            <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 z-10" style={{ borderColor: 'rgba(6,182,212,0.60)' }} />
 
             {/* ── Columna izquierda — Lista de archivos ── */}
             <div className="w-56 shrink-0 flex flex-col border-r border-[#00FF41]/12 overflow-hidden">

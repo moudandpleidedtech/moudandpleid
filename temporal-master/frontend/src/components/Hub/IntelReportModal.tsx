@@ -120,9 +120,9 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
             <motion.div
               className="relative w-full max-w-lg font-mono overflow-hidden"
               style={{
-                background: 'rgba(4,6,4,0.97)',
-                border:     `1px solid ${accentColor}30`,
-                boxShadow:  `0 0 40px ${accentColor}10, 0 0 80px rgba(0,0,0,0.8)`,
+                background: '#020617',
+                border:     `1px solid ${accentColor}45`,
+                boxShadow:  `0 0 0 1px ${accentColor}20, 0 0 40px ${accentColor}18, 0 0 80px rgba(0,0,0,0.9)`,
               }}
               initial={{ scale: 0.93, y: 16 }}
               animate={{ scale: 1,    y: 0  }}
@@ -172,7 +172,7 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
 
                 {/* Tipo de reporte */}
                 <div>
-                  <label className="text-[8px] tracking-[0.5em] text-[#00FF41]/30 uppercase block mb-2">
+                  <label className="text-[8px] tracking-[0.5em] uppercase block mb-2" style={{ color: 'rgba(74,222,128,0.50)' }}>
                     // CLASIFICACIÓN DEL INCIDENTE
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -207,7 +207,7 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
 
                 {/* Severidad */}
                 <div>
-                  <label className="text-[8px] tracking-[0.5em] text-[#00FF41]/30 uppercase block mb-2">
+                  <label className="text-[8px] tracking-[0.5em] uppercase block mb-2" style={{ color: 'rgba(74,222,128,0.50)' }}>
                     // NIVEL DE AMENAZA
                   </label>
                   <div className="flex gap-2">
@@ -233,7 +233,7 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
 
                 {/* Descripción */}
                 <div>
-                  <label className="text-[8px] tracking-[0.5em] text-[#00FF41]/30 uppercase block mb-2">
+                  <label className="text-[8px] tracking-[0.5em] uppercase block mb-2" style={{ color: 'rgba(74,222,128,0.50)' }}>
                     // DESCRIPCIÓN DEL INCIDENTE
                     <span className="ml-2 text-[#00FF41]/20 normal-case tracking-normal">
                       ({charCount}/2000)
@@ -370,9 +370,9 @@ export default function IntelReportModal({ isOpen, onClose, userId }: Props) {
                           background:  accentColor + '08',
                         }}
                         whileHover={description.trim().length >= 10 ? {
-                          background:  accentColor + '18',
-                          borderColor: accentColor + '99',
-                          boxShadow:   `0 0 16px ${accentColor}20`,
+                          background:  accentColor + '20',
+                          borderColor: accentColor + 'cc',
+                          boxShadow:   `0 0 0 1px ${accentColor}50, 0 0 22px ${accentColor}35`,
                         } : {}}
                         whileTap={description.trim().length >= 10 ? { scale: 0.97 } : {}}
                       >

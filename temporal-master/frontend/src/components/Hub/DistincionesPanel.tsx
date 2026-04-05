@@ -71,19 +71,18 @@ export default function DistincionesPanel({ userId }: Props) {
       {/* ── Cabecera ── */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between px-3 py-2 border border-[#00FF41]/15
-                   hover:border-[#00FF41]/30 hover:bg-[#00FF41]/03 transition-all duration-200"
+        className="w-full flex items-center justify-between px-3 py-2 border transition-all duration-200 border-neon"
       >
         <div className="flex items-center gap-2">
-          <span className="text-[9px] tracking-[0.4em] text-[#00FF41]/50 uppercase font-bold">
+          <span className="text-[9px] tracking-[0.4em] uppercase font-bold" style={{ color: 'rgba(74,222,128,0.65)' }}>
             Distinciones
           </span>
           {!loading && (
             <span
               className="text-[8px] px-1.5 py-0.5 border tracking-wider"
               style={{
-                borderColor: hasAny ? 'rgba(0,255,65,0.35)' : 'rgba(0,255,65,0.12)',
-                color:       hasAny ? 'rgba(0,255,65,0.7)'  : 'rgba(0,255,65,0.25)',
+                borderColor: hasAny ? 'rgba(74,222,128,0.40)' : 'rgba(74,222,128,0.15)',
+                color:       hasAny ? 'rgba(74,222,128,0.80)' : 'rgba(74,222,128,0.30)',
               }}
             >
               {unlocked.length}/{total}

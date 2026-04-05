@@ -177,8 +177,8 @@ export default function RadarMaestriaModal({ userId, onClose }: Props) {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative w-full max-w-lg bg-[#060D06] border border-[#00FF41]/25 font-mono overflow-hidden"
-            style={{ boxShadow: '0 0 60px rgba(0,255,65,0.10)' }}
+            className="relative w-full max-w-lg font-mono overflow-hidden"
+            style={{ background: '#020617', border: '1px solid rgba(6,182,212,0.40)', boxShadow: '0 0 0 1px rgba(6,182,212,0.18), 0 0 40px rgba(6,182,212,0.12)' }}
             initial={{ scale: 0.90, y: 20 }} animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
@@ -189,19 +189,21 @@ export default function RadarMaestriaModal({ userId, onClose }: Props) {
             />
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#00FF41]/12">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(6,182,212,0.12)]">
               <div>
-                <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/35 uppercase mb-0.5">
+                <p className="text-[9px] tracking-[0.5em] uppercase mb-0.5" style={{ color: 'rgba(74,222,128,0.50)' }}>
                   {'// INTEL OPERACIONAL'}
                 </p>
-                <h2 className="text-sm font-black tracking-[0.2em] text-[#00FF41]"
-                  style={{ textShadow: '0 0 10px rgba(0,255,65,0.4)' }}>
+                <h2 className="text-sm font-black tracking-[0.2em]" style={{ color: 'rgba(6,182,212,0.90)', textShadow: '0 0 10px rgba(6,182,212,0.40)' }}>
                   RADAR DE MAESTRÍA
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="text-[#00FF41]/25 hover:text-[#00FF41]/60 text-xs tracking-widest transition-colors"
+                className="text-xs tracking-widest transition-colors"
+                style={{ color: 'rgba(6,182,212,0.30)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(6,182,212,0.70)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(6,182,212,0.30)')}
               >
                 [ ESC ]
               </button>

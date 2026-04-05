@@ -129,10 +129,10 @@ export default function FounderPage() {
   if (!_hasHydrated) return null
 
   return (
-    <div className="min-h-screen font-mono" style={{ background: '#050508', color: '#e5e7eb' }}>
+    <div className="min-h-screen font-mono" style={{ background: '#020617', color: '#e5e7eb' }}>
 
       {/* ── Header ── */}
-      <header className="flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: '#0f0f1a' }}>
+      <header className="flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'rgba(6,182,212,0.20)' }}>
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/hub')}
@@ -171,7 +171,7 @@ export default function FounderPage() {
             { label: 'En trial',          value: trialCount,          color: '#FFC700' },
             { label: 'Activos (24h)',      value: activeLast24h,       color: '#60a5fa' },
           ].map(k => (
-            <div key={k.label} className="rounded border p-4 space-y-1" style={{ background: '#0d0d1a', borderColor: '#1a1a2e' }}>
+            <div key={k.label} className="rounded border p-4 space-y-1" style={{ background: '#030b18', borderColor: 'rgba(6,182,212,0.18)' }}>
               <p className="text-[9px] tracking-widest uppercase" style={{ color: '#4b5563' }}>{k.label}</p>
               <p className="text-2xl font-black" style={{ color: k.color }}>{k.value}</p>
             </div>
@@ -185,7 +185,7 @@ export default function FounderPage() {
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por email o callsign..."
             className="flex-1 min-w-[220px] px-3 py-2 rounded text-sm font-mono outline-none"
-            style={{ background: '#0d0d1a', border: '1px solid #1a1a2e', color: '#e5e7eb', caretColor: '#FFC700' }}
+            style={{ background: '#030b18', border: '1px solid rgba(6,182,212,0.20)', color: '#e5e7eb', caretColor: '#FFC700' }}
           />
           <span className="text-[9px] tracking-widest uppercase" style={{ color: '#374151' }}>
             {filtered.length} / {data?.total ?? '—'} usuarios
@@ -205,10 +205,10 @@ export default function FounderPage() {
             </button>
           </div>
         ) : (
-          <div className="rounded border overflow-x-auto" style={{ borderColor: '#1a1a2e' }}>
+          <div className="rounded border overflow-x-auto" style={{ borderColor: 'rgba(6,182,212,0.18)' }}>
             <table className="w-full text-xs font-mono">
               <thead>
-                <tr style={{ background: '#0d0d1a', borderBottom: '1px solid #1a1a2e' }}>
+                <tr style={{ background: '#030b18', borderBottom: '1px solid rgba(6,182,212,0.12)' }}>
                   <th className="text-left px-4 py-3 text-[9px] tracking-widest uppercase" style={{ color: '#4b5563' }}>Callsign</th>
                   <th className="text-left px-4 py-3 text-[9px] tracking-widest uppercase" style={{ color: '#4b5563' }}>Email</th>
                   <th className="px-4 py-3 text-center"><SortBtn col="current_level"        label="Nivel" /></th>
@@ -231,7 +231,7 @@ export default function FounderPage() {
                   return (
                     <tr
                       key={u.id}
-                      style={{ background: i % 2 === 0 ? '#050508' : '#080810', borderBottom: '1px solid #0f0f1a' }}
+                      style={{ background: i % 2 === 0 ? '#020617' : '#030c1a', borderBottom: '1px solid rgba(6,182,212,0.06)' }}
                     >
                       <td className="px-4 py-2.5 font-black" style={{ color: '#e5e7eb' }}>
                         {u.callsign}
@@ -260,7 +260,7 @@ export default function FounderPage() {
                 })}
               </tbody>
             </table>
-            <div className="px-4 py-2 border-t flex items-center gap-6" style={{ borderColor: '#0f0f1a', background: '#0d0d1a' }}>
+            <div className="px-4 py-2 border-t flex items-center gap-6" style={{ borderColor: 'rgba(6,182,212,0.10)', background: '#030b18' }}>
               <span className="text-[9px] tracking-widest uppercase" style={{ color: '#374151' }}>
                 NIV. PROMEDIO: <strong style={{ color: '#e5e7eb' }}>{avgLevel}</strong>
               </span>
