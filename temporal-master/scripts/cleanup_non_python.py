@@ -21,38 +21,37 @@ import argparse
 import asyncio
 import sys
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import text
 
 # Asegura que el import funcione desde la raíz del proyecto
 sys.path.insert(0, ".")
 
 from app.core.database import AsyncSessionLocal
-from app.models.challenge import Challenge
-from app.models.user_progress import UserProgress
 
-NON_PYTHON_CODEX = [
+# Todos los codex_id no-Python conocidos (incluyendo variantes sin sufijo _v1)
+NON_PYTHON_CODEX = (
     "tpm_mastery_v1",
+    "tpm_mastery",
     "sales_mastery_v1",
     "qa_senior_architect",
     "qa_automation_ops",
-]
+)
 
 
 async def run(dry_run: bool) -> None:
     async with AsyncSessionLocal() as db:
-        # ── Contar desafíos a eliminar ────────────────────────────────────────
-        count_result = await db.execute(
-            select(func.count()).select_from(Challenge)
-            .where(Challenge.codex_id.in_(NON_PYTHON_CODEX))
-        )
-        to_delete = count_result.scalar_one()
+        placeholders = ", ".join(f"'{c}'" for c in NON_PYTHON_CODEX)
 
-        # ── Contar desafíos Python que se conservan ───────────────────────────
-        python_only = or_(Challenge.codex_id.is_(None), Challenge.codex_id == "python_core")
-        keep_result = await db.execute(
-            select(func.count()).select_from(Challenge).where(python_only)
+        # ── Contar desafíos a eliminar ────────────────────────────────────────
+        count_del = await db.execute(
+            text(f"SELECT COUNT(*) FROM challenges WHERE codex_id IN ({placeholders})")
         )
-        to_keep = keep_result.scalar_one()
+        to_delete = count_del.scalar_one()
+
+        count_keep = await db.execute(
+            text("SELECT COUNT(*) FROM challenges WHERE codex_id IS NULL OR codex_id = 'python_core'")
+        )
+        to_keep = count_keep.scalar_one()
 
         print(f"\n{'='*50}")
         print(f"  Challenges a ELIMINAR : {to_delete}")
@@ -67,23 +66,20 @@ async def run(dry_run: bool) -> None:
             print("\n[OK] Nada que eliminar. La BD ya está limpia.\n")
             return
 
-        # ── Obtener IDs de challenges no-Python ───────────────────────────────
-        ids_result = await db.execute(
-            select(Challenge.id).where(Challenge.codex_id.in_(NON_PYTHON_CODEX))
-        )
-        ids_to_delete = [row[0] for row in ids_result.all()]
+        # ── 1. Eliminar UserProgress de challenges no-Python ──────────────────
+        del_prog = await db.execute(text(f"""
+            DELETE FROM user_progress
+            WHERE challenge_id IN (
+                SELECT id FROM challenges WHERE codex_id IN ({placeholders})
+            )
+        """))
+        print(f"\n  UserProgress eliminados : {del_prog.rowcount}")
 
-        # ── 1. Eliminar UserProgress asociados ────────────────────────────────
-        del_progress = await db.execute(
-            delete(UserProgress).where(UserProgress.challenge_id.in_(ids_to_delete))
-        )
-        print(f"\n  UserProgress eliminados : {del_progress.rowcount}")
-
-        # ── 2. Eliminar las challenges ─────────────────────────────────────────
-        del_challenges = await db.execute(
-            delete(Challenge).where(Challenge.id.in_(ids_to_delete))
-        )
-        print(f"  Challenges eliminados  : {del_challenges.rowcount}")
+        # ── 2. Eliminar challenges no-Python ──────────────────────────────────
+        del_ch = await db.execute(text(f"""
+            DELETE FROM challenges WHERE codex_id IN ({placeholders})
+        """))
+        print(f"  Challenges eliminados  : {del_ch.rowcount}")
 
         await db.commit()
         print("\n[DONE] Limpieza completada. Solo queda Python Core.\n")
