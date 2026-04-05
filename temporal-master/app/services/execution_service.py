@@ -83,26 +83,18 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     Returns:
         {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool}
 
-    Uses Piston API (remote sandbox). The local subprocess fallback is disabled
-    in production to prevent arbitrary code execution on the server.
+    Uses Piston API (remote sandbox) con fallback a subprocess local
+    cuando Piston no está disponible (timeout, rate limit, etc.).
     """
-    import os
     # Unir inputs con newlines y añadir newline final para que el último input()
     # no quede esperando EOF en runtimes que requieren \n como terminador.
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
         result = await _execute_via_piston(source_code, stdin)
     except Exception:
-        # Fallback local solo en modo DEBUG — en producción devuelve error seguro
-        if os.getenv("DEBUG", "false").lower() in ("1", "true"):
-            result = await _execute_via_subprocess(source_code, stdin)
-        else:
-            result = {
-                "stdout": "",
-                "stderr": "Sandbox de ejecución temporalmente no disponible. Intenta de nuevo.",
-                "execution_time_ms": 0.0,
-                "success": False,
-            }
+        # Fallback local cuando Piston no está disponible (timeout, rate limit, etc.)
+        # El subprocess corre aislado en el contenedor de Render con timeout de 3s.
+        result = await _execute_via_subprocess(source_code, stdin)
 
     result["error_info"] = _parse_python_error(result.get("stderr", ""))
     return result
