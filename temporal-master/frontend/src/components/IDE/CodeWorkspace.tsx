@@ -532,7 +532,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
     audioAmbientRef.current = new Audio('/sounds/hub-ambient.mp3')
     audioAmbientRef.current.loop   = true
     audioAmbientRef.current.volume = 0.12
-    return () => { audioAmbientRef.current?.pause() }
+    return () => {
+      audioAmbientRef.current?.pause()
+      audioVictoryRef.current?.pause()
+      audioRunRef.current?.pause()
+    }
   }, [])
 
   // ── Ambient music toggle ──────────────────────────────────────────────────
@@ -543,7 +547,17 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   // ── Session HUD timer — resets on each new challenge ─────────────────────
   useEffect(() => {
+    // Detener sonidos del reto anterior al cambiar de misión
+    if (audioVictoryRef.current) {
+      audioVictoryRef.current.pause()
+      audioVictoryRef.current.currentTime = 0
+    }
+    if (audioRunRef.current) {
+      audioRunRef.current.pause()
+      audioRunRef.current.currentTime = 0
+    }
     setSessionSecs(0)
+    challengeStartMs.current = Date.now()
     const id = setInterval(() => {
       setSessionSecs(Math.floor((Date.now() - challengeStartMs.current) / 1000))
     }, 1000)
