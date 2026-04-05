@@ -119,10 +119,10 @@ function BriefingPanel({
         >
           <span className="text-[#00FF41]/30 text-2xl">◈</span>
         </motion.div>
-        <p className="text-[10px] tracking-[0.5em] text-[#00FF41]/20">
+        <p className="text-[13px] tracking-[0.35em] text-[#00FF41]/35">
           SELECCIONA UNA INCURSIÓN
         </p>
-        <p className="text-[9px] tracking-widest text-[#00FF41]/12 mt-2">
+        <p className="text-xs tracking-wider text-[#00FF41]/20 mt-2">
           PARA VER EL BRIEFING TÁCTICO
         </p>
       </div>
@@ -146,7 +146,7 @@ function BriefingPanel({
       >
         {/* Tag de clasificación */}
         <div className="flex items-center gap-3 mb-5">
-          <span className={`text-[8px] tracking-[0.6em] ${mission.challenge_type === 'tutorial' ? 'text-cyan-400/40' : 'text-[#00FF41]/25'}`}>
+          <span className={`text-[11px] tracking-[0.35em] ${mission.challenge_type === 'tutorial' ? 'text-cyan-400/60' : 'text-[#00FF41]/45'}`}>
             {mission.challenge_type === 'tutorial'
               ? 'PROTOCOLO 00 // CALIBRACIÓN OBLIGATORIA'
               : `INCURSIÓN #${String(order).padStart(2, '0')} // EL NEXO`}
@@ -174,7 +174,7 @@ function BriefingPanel({
 
         {/* Dificultad + XP */}
         <div className="flex items-center gap-4 mb-6">
-          <span className="text-[10px] tracking-widest font-bold" style={{ color: `${tierColor}90` }}>
+          <span className="text-[13px] tracking-widest font-bold" style={{ color: `${tierColor}90` }}>
             {TIER_LABEL[mission.difficulty_tier]}
           </span>
           <span className="text-[#00FF41]/20">·</span>
@@ -199,12 +199,12 @@ function BriefingPanel({
 
         {/* Lore / Objetivo táctico */}
         <div className="mb-5">
-          <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/30 mb-3">◆ OBJETIVO TÁCTICO</p>
+          <p className="text-[11px] tracking-[0.35em] text-[#00FF41]/50 mb-3">◆ OBJETIVO TÁCTICO</p>
           <div
             className="border-l-2 border-[#00FF41]/30 pl-4 bg-black/40 backdrop-blur-sm py-3 pr-3"
             style={{ boxShadow: 'inset 0 0 20px rgba(0,255,65,0.03)' }}
           >
-            <p className="text-[12px] text-green-200/70 leading-relaxed">
+            <p className="text-sm text-green-200/75 leading-relaxed">
               {lore?.lore ?? mission.description}
             </p>
           </div>
@@ -216,13 +216,13 @@ function BriefingPanel({
             className="border border-[#00E5FF]/20 bg-black/40 backdrop-blur-sm px-4 py-3 mb-6"
             style={{ boxShadow: '0 4px 20px rgba(0,229,255,0.06)' }}
           >
-            <p className="text-[8px] tracking-[0.5em] text-[#00E5FF]/35 mb-2">CONOCIMIENTO REQUERIDO</p>
+            <p className="text-[11px] tracking-[0.35em] text-[#00E5FF]/55 mb-2">CONOCIMIENTO REQUERIDO</p>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] text-[#00E5FF]/70 font-bold tracking-wider">
+              <span className="text-[13px] text-[#00E5FF]/80 font-bold tracking-wider">
                 {lore.requires}
               </span>
-              <span className="text-[#00E5FF]/20">·</span>
-              <span className="text-[9px] tracking-widest text-[#00E5FF]/35 border border-[#00E5FF]/15 px-2 py-0.5">
+              <span className="text-[#00E5FF]/30">·</span>
+              <span className="text-xs tracking-widest text-[#00E5FF]/50 border border-[#00E5FF]/20 px-2 py-0.5">
                 {lore.chapter}
               </span>
             </div>
@@ -232,8 +232,8 @@ function BriefingPanel({
         {/* Lore briefing si existe */}
         {mission.lore_briefing && (
           <div className="mb-6">
-            <p className="text-[9px] tracking-[0.5em] text-[#00FF41]/25 mb-2">TRANSMISIÓN DE DAKI</p>
-            <p className="text-[11px] text-[#00FF41]/40 leading-relaxed italic">
+            <p className="text-[11px] tracking-[0.35em] text-[#00FF41]/45 mb-2">TRANSMISIÓN DE DAKI</p>
+            <p className="text-[13px] text-[#00FF41]/55 leading-relaxed italic">
               &ldquo;{mission.lore_briefing}&rdquo;
             </p>
           </div>
@@ -245,10 +245,10 @@ function BriefingPanel({
         {/* Botón de despliegue */}
         {isLocked ? (
           <div className="border border-[#00FF41]/10 bg-black/40 backdrop-blur-sm px-5 py-4 text-center">
-            <p className="text-[10px] tracking-[0.5em] text-[#00FF41]/25">
+            <p className="text-xs tracking-[0.35em] text-[#00FF41]/40">
               🔒 INCURSIÓN BLOQUEADA
             </p>
-            <p className="text-[9px] text-[#00FF41]/12 mt-1 tracking-widest">
+            <p className="text-[11px] text-[#00FF41]/25 mt-1 tracking-wider">
               COMPLETA EL PROTOCOLO 00 PARA DESBLOQUEAR
             </p>
           </div>
@@ -441,12 +441,12 @@ export default function MisionesPage() {
 
           {/* Cabecera columna */}
           <div className="shrink-0 px-5 py-4 border-b border-green-500/15 bg-black/30 backdrop-blur-sm">
-            <h2 className="text-xs font-black tracking-[0.4em] text-[#00FF41]/70 mb-1 drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]">
+            <h2 className="text-sm font-black tracking-[0.3em] text-[#00FF41]/80 mb-1 drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]">
               SELECTOR DE INCURSIONES
             </h2>
             {/* Barra de progreso */}
             <div className="flex items-center gap-3 mt-2">
-              <div className="flex-1 h-px bg-[#00FF41]/10 relative overflow-hidden">
+              <div className="flex-1 h-0.5 bg-[#00FF41]/10 relative overflow-hidden">
                 <motion.div
                   className="absolute left-0 top-0 h-full bg-[#00FF41]"
                   initial={{ width: 0 }}
@@ -455,7 +455,7 @@ export default function MisionesPage() {
                   style={{ boxShadow: '0 0 6px #00FF41' }}
                 />
               </div>
-              <span className="text-[9px] tracking-widest text-[#00FF41]/30 shrink-0">
+              <span className="text-xs tracking-wider text-[#00FF41]/50 shrink-0 font-bold">
                 {completadas}/{missions.length}
               </span>
             </div>
@@ -487,12 +487,12 @@ export default function MisionesPage() {
                     transition={{ duration: 0.3 }}
                   >
                     <div>
-                      <p className="text-[7px] tracking-[0.45em] font-black font-mono"
-                        style={{ color: 'rgba(245,158,11,0.75)' }}>
+                      <p className="text-[11px] tracking-[0.3em] font-black font-mono"
+                        style={{ color: 'rgba(245,158,11,0.85)' }}>
                         ⚡ VISTA FILTRADA
                       </p>
-                      <p className="text-[8px] tracking-wider font-mono mt-0.5"
-                        style={{ color: 'rgba(245,158,11,0.50)' }}>
+                      <p className="text-[11px] tracking-wider font-mono mt-0.5"
+                        style={{ color: 'rgba(245,158,11,0.60)' }}>
                         {BRANCH_LABELS[activeBranch]}
                       </p>
                     </div>
@@ -501,7 +501,7 @@ export default function MisionesPage() {
                         setActiveBranch(null)
                         window.history.replaceState({}, '', '/misiones')
                       }}
-                      className="text-[7px] tracking-[0.3em] font-mono border px-2 py-1 transition-colors"
+                      className="text-[11px] tracking-[0.2em] font-mono border px-2 py-1 transition-colors"
                       style={{ color: 'rgba(245,158,11,0.45)', borderColor: 'rgba(245,158,11,0.22)' }}
                       onMouseEnter={e => { e.currentTarget.style.color = 'rgba(245,158,11,0.80)' }}
                       onMouseLeave={e => { e.currentTarget.style.color = 'rgba(245,158,11,0.45)' }}
@@ -527,11 +527,11 @@ export default function MisionesPage() {
                         transition={{ duration: 1.2, repeat: Infinity }}
                         style={{ boxShadow: '0 0 5px rgba(0,229,255,0.8)' }}
                       />
-                      <span className="text-[9px] tracking-[0.45em] text-cyan-400/80 font-bold uppercase">
+                      <span className="text-[12px] tracking-[0.3em] text-cyan-400/90 font-bold uppercase">
                         Calibración Sináptica Requerida
                       </span>
                     </div>
-                    <p className="text-[10px] text-cyan-200/50 leading-relaxed">
+                    <p className="text-[12px] text-cyan-200/60 leading-relaxed">
                       Completa el Protocolo 00 para desbloquear las incursiones del Nexo.
                     </p>
                   </motion.div>
@@ -602,11 +602,11 @@ export default function MisionesPage() {
                       {isTutorial && (
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <motion.span
-                            className="w-1 h-1 rounded-full bg-cyan-400 shrink-0"
+                            className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0"
                             animate={{ opacity: [0.4, 1, 0.4] }}
                             transition={{ duration: 1.4, repeat: Infinity }}
                           />
-                          <span className="text-[8px] tracking-[0.4em] text-cyan-400/70 font-bold uppercase">
+                          <span className="text-[11px] tracking-[0.25em] text-cyan-400/80 font-bold uppercase">
                             Protocolo 00 · Obligatorio
                           </span>
                         </div>
@@ -614,12 +614,12 @@ export default function MisionesPage() {
 
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className={`text-[10px] w-4 shrink-0 tabular-nums ${isTutorial ? 'text-cyan-400/40' : 'text-[#00FF41]/25'}`}>
+                          <span className={`text-xs w-5 shrink-0 tabular-nums font-bold ${isTutorial ? 'text-cyan-400/50' : 'text-[#00FF41]/40'}`}>
                             {String(m.level_order ?? idx + 1).padStart(2, '0')}
                           </span>
                           <span
                             className={[
-                              'text-[11px] font-bold tracking-wide truncate',
+                              'text-[13px] font-bold tracking-wide truncate',
                               isLocked
                                 ? 'text-[#00FF41]/25'
                                 : isSelected
@@ -634,7 +634,7 @@ export default function MisionesPage() {
                             {m.title}
                           </span>
                         </div>
-                        <div className="shrink-0 text-[9px] flex items-center gap-1.5">
+                        <div className="shrink-0 text-xs flex items-center gap-1.5">
                           {isLocked ? (
                             <span className="text-[#00FF41]/20">🔒</span>
                           ) : m.completed ? (
@@ -656,15 +656,15 @@ export default function MisionesPage() {
                       </div>
 
                       {/* Fila inferior: dificultad + intentos */}
-                      <div className="pl-7 mt-0.5 flex items-center gap-2">
+                      <div className="pl-8 mt-0.5 flex items-center gap-2">
                         <span
-                          className="text-[8px] tracking-widest"
-                          style={{ color: isTutorial ? 'rgba(0,229,255,0.35)' : `${tierColor}40` }}
+                          className="text-[11px] tracking-wider"
+                          style={{ color: isTutorial ? 'rgba(0,229,255,0.50)' : `${tierColor}55` }}
                         >
                           {isTutorial ? 'CALIBRACIÓN' : TIER_LABEL[m.difficulty_tier]}
                         </span>
                         {m.attempts > 0 && !m.completed && (
-                          <span className="text-[8px] text-green-200/30">
+                          <span className="text-[11px] text-green-200/40">
                             · {m.attempts} intento{m.attempts !== 1 ? 's' : ''}
                           </span>
                         )}
@@ -680,7 +680,7 @@ export default function MisionesPage() {
                     <div className="px-5 pt-5 pb-1">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="h-px flex-1 bg-red-500/20" />
-                        <span className="text-[8px] tracking-[0.4em] text-red-500/50">JEFE FINAL</span>
+                        <span className="text-[11px] tracking-[0.3em] text-red-500/60">JEFE FINAL</span>
                         <div className="h-px flex-1 bg-red-500/20" />
                       </div>
                     </div>
@@ -708,11 +708,11 @@ export default function MisionesPage() {
                           >
                             ∞
                           </motion.span>
-                          <span className="text-[11px] font-bold tracking-wide text-red-400 drop-shadow-[0_0_8px_rgba(255,0,0,0.6)]">
+                          <span className="text-[13px] font-bold tracking-wide text-red-400 drop-shadow-[0_0_8px_rgba(255,0,0,0.6)]">
                             THE INFINITE LOOPER
                           </span>
                         </div>
-                        <span className="text-[8px] tracking-widest text-red-400/50 border border-red-500/30 px-1.5 py-0.5">
+                        <span className="text-[11px] tracking-widest text-red-400/60 border border-red-500/30 px-1.5 py-0.5">
                           BOSS
                         </span>
                       </div>

@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import nulls_last, select
+from sqlalchemy import nulls_last, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -94,8 +94,12 @@ async def list_challenges(
     user_id: Optional[uuid.UUID] = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> list[ChallengeOut]:
+    # Solo Python Core: codex_id IS NULL (legacy Python) o 'python_core' explícito
+    python_only = or_(Challenge.codex_id.is_(None), Challenge.codex_id == "python_core")
+
     result = await db.execute(
-        select(Challenge).order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
+        select(Challenge).where(python_only)
+        .order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
     )
     challenges = result.scalars().all()
 
@@ -130,9 +134,11 @@ async def get_challenge(
     user_id: Optional[uuid.UUID] = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> ChallengeOut:
-    # Carga la lista ordenada para calcular el estado de desbloqueo correctamente
+    # Carga solo Python Core para calcular desbloqueo correctamente
+    python_only = or_(Challenge.codex_id.is_(None), Challenge.codex_id == "python_core")
     all_result = await db.execute(
-        select(Challenge).order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
+        select(Challenge).where(python_only)
+        .order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
     )
     all_challenges = all_result.scalars().all()
 
