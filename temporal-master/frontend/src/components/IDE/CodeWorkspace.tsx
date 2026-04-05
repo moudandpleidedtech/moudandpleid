@@ -651,8 +651,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => router.replace('/misiones'), 2200)
           return
         }
-        // Misión de pago + usuario freemium → Alpha modal (nunca activado) o Paywall (expirado)
-        if (data.is_free === false && !isPaid) {
+        // Misión de pago + usuario freemium → Alpha modal o Paywall
+        // Guardia: las primeras 10 misiones (level_order 0-9) son siempre libres
+        const isFreeLevel = data.is_free === true
+          || data.challenge_type === 'tutorial'
+          || (typeof data.level_order === 'number' && data.level_order <= 9)
+        if (!isFreeLevel && !isPaid) {
           if (subscriptionStatus === 'INACTIVE') {
             setShowAlphaModal(true)
           } else {

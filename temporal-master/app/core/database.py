@@ -218,15 +218,13 @@ async def init_db() -> None:
             "WHERE code_string != UPPER(code_string)"
         ))
 
-        # Freemium gate — solo sector 00 (L0-L9) gratuito; L10+ requiere Alpha Code
+        # Freemium gate — primeros 10 niveles gratuitos (level_order 0-9)
+        # También libres: sector_id=0 (legacy) y challenge_type='tutorial'
         await conn.execute(text(
             "UPDATE challenges SET is_free = TRUE "
-            "WHERE sector_id = 0 AND is_free = FALSE"
-        ))
-        # Asegurarse de que sector 1+ NO sean gratuitos (por si venían de una migration anterior)
-        await conn.execute(text(
-            "UPDATE challenges SET is_free = FALSE "
-            "WHERE sector_id >= 1 AND is_free = TRUE"
+            "WHERE (level_order IS NOT NULL AND level_order <= 9) "
+            "   OR sector_id = 0 "
+            "   OR challenge_type = 'tutorial'"
         ))
 
         # Operación Vanguardia — Suscripción Alpha (Directiva 005M)
