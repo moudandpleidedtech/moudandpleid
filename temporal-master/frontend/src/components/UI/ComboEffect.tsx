@@ -15,10 +15,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface Props {
   visible: boolean
   xpEarned: number
+  multiplier?: number  // F5: multiplicador por racha sin pistas (cosmético)
   onDone?: () => void
 }
 
-export default function ComboEffect({ visible, xpEarned, onDone }: Props) {
+export default function ComboEffect({ visible, xpEarned, multiplier = 2, onDone }: Props) {
   useEffect(() => {
     if (!visible) return
     const t = setTimeout(() => onDone?.(), 2600)
@@ -79,7 +80,7 @@ export default function ComboEffect({ visible, xpEarned, onDone }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.18, type: 'spring', stiffness: 400 }}
             >
-              x2 XP
+              x{multiplier % 1 === 0 ? multiplier : multiplier.toFixed(1)} XP
             </motion.div>
 
             {/* XP ganado */}

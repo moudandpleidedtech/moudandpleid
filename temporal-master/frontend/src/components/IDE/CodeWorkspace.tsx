@@ -18,10 +18,17 @@ import DakiWaveform from '@/components/UI/DakiWaveform'
 import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
 import PaywallModal from '@/components/UI/PaywallModal'
 import AlphaCodeModal from '@/components/UI/AlphaCodeModal'
+import MisionDebriefModal from '@/components/Game/MisionDebriefModal'
+import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
+import FlashRecallModal from '@/components/Game/FlashRecallModal'
 import AchievementToast, { type Achievement } from '@/components/UI/AchievementToast'
 import InsightFlash from '@/components/UI/InsightFlash'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
 import { useIdleDetection } from '@/hooks/useIdleDetection'
+import { TIER_LABEL, TIER_COLOR } from '@/lib/tierLabels'
+import MicroBroadcast from '@/components/UI/MicroBroadcast'
+import { useMicroBroadcast } from '@/hooks/useMicroBroadcast'
+import { useSecretMissions } from '@/hooks/useSecretMissions'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -86,11 +93,6 @@ function getMissionBackground(levelOrder: number | null | undefined): string {
   return LEVEL_BACKGROUNDS[1]
 }
 
-const TIER_LABEL: Record<number, string> = {
-  1: 'INICIANTE',
-  2: 'INTERMEDIO',
-  3: 'AVANZADO',
-}
 
 const TIER_PAR_LINES: Record<number, number> = {
   1: 8,
@@ -349,6 +351,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [showVictory, setShowVictory]     = useState(false)
   const [victoryNext, setVictoryNext]     = useState<VictoryNext | null>(null)
   const [victoryXp, setVictoryXp]         = useState(0)
+  const [showDebrief, setShowDebrief]     = useState(false)  // F4: debrief post-éxito
+  const debriefAttempts                   = useRef(0)
+  const [showRadar, setShowRadar]         = useState(false)  // F2: Mapa de Sinapsis
+  const [showFlashRecall, setShowFlashRecall] = useState(false)  // F1: Flash Recall
 
   // Network error fallback
   const [networkError, setNetworkError]   = useState(false)
@@ -406,7 +412,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [cliLoading, setCliLoading] = useState(false)
 
   // Intervención proactiva — último error para contexto (Prompt 57)
-  const lastErrorRef = useRef('')
+  const lastErrorRef     = useRef('')
+  const errorHistoryRef  = useRef<string[]>([]) // F7: historial de tipos de error por sesión
 
   // Toast para nivel bloqueado
   const [toastMsg, setToastMsg]           = useState('')
@@ -432,6 +439,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const audioAmbientRef  = useRef<HTMLAudioElement | null>(null)
 
   const [failStreak, setFailStreak]       = useState(0)
+  const [hintFreeStreak, setHintFreeStreak] = useState(0)  // F5: misiones seguidas sin pistas
   const [loadingHint, setLoadingHint]     = useState(false)
   const [hintIndex, setHintIndex]         = useState(-1)   // -1 = oculto, 0/1/2 = pista visible
   const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
@@ -440,6 +448,23 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
   const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
+
+  // F6: Micro-transmisiones
+  const { message: microMsg, dismiss: dismissMicro, fire: fireMicro } = useMicroBroadcast(failStreak)
+
+  // F8: Misiones Secretas
+  const { checkBehavior: checkSecretMissions } = useSecretMissions((unlock) => {
+    const secretAchievement: Achievement = {
+      id: `secret-${unlock.missionName}-${Date.now()}`,
+      name: unlock.missionName,
+      description: unlock.description,
+      icon: '★',
+      xp_bonus: 0,
+      rarity: 'legendary',
+      unlocked_at: new Date().toISOString(),
+    }
+    setActiveAchievements((prev) => [...prev, secretAchievement])
+  })
 
   // Tutorial multi-step
   const [tutorialStep, setTutorialStep]   = useState(1)
@@ -626,8 +651,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setFailStreak(0)
     setHintIndex(-1)
     challengeStartMs.current = Date.now()
+    errorHistoryRef.current = []  // F7: reset historial de errores al cambiar de misión
     // Limpiar debounce pendiente del reto anterior
     if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
+    // F6: micro-transmisión a los 30s de actividad en un nuevo challenge
+    const microTimer = setTimeout(() => fireMicro(), 30_000)
+    return () => clearTimeout(microTimer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeId])
 
   // Guardar borrador del código en localStorage (debounce 800ms)
@@ -843,10 +873,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const requestHint = async (currentOutput: ConsoleLine[]) => {
     if (loadingHint || !challenge) return
     setLoadingHint(true)
+    setHintFreeStreak(0)  // F5: usar pista rompe la racha sin pistas
     const errorText = currentOutput
       .filter((l) => l.kind === 'stderr' || l.kind === 'info')
       .map((l) => l.text)
       .join('\n')
+    const errorTypeMatch = errorText.match(/\b(NameError|TypeError|SyntaxError|ValueError|IndexError|KeyError|AttributeError|ZeroDivisionError|IndentationError|RecursionError|StopIteration|output_mismatch)\b/)
+    const errorType = errorTypeMatch ? errorTypeMatch[1] : (errorText ? 'output_mismatch' : '')
     try {
       const res = await fetch(`${API_BASE}/api/v1/hint`, {
         method: 'POST',
@@ -854,6 +887,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, error_output: errorText,
+          error_type: errorType,
           fail_count: Math.max(1, failStreak),
           operator_level: level ?? 1,
         }),
@@ -1050,6 +1084,22 @@ export default function CodeWorkspace({ challengeId }: Props) {
         setDakiState('error')
         setDakiErrorLine(ei.line ?? null)
         setTimeout(() => { setDakiState('idle'); setDakiErrorLine(null) }, 3500)
+
+        // F7: Patrón Registrado — detectar error repetido 3 veces
+        errorHistoryRef.current.push(ei.error_type)
+        const sameCount = errorHistoryRef.current.filter((t) => t === ei.error_type).length
+        if (sameCount === 3) {
+          const warningAchievement: Achievement = {
+            id: `pattern-${ei.error_type}-${Date.now()}`,
+            name: 'PATRÓN REGISTRADO',
+            description: `${ei.error_type} detectado 3 veces. DAKI ha catalogado tu punto débil.`,
+            icon: '⚠',
+            xp_bonus: 0,
+            rarity: 'epic',
+            unlocked_at: new Date().toISOString(),
+          }
+          setActiveAchievements((prev) => [...prev, warningAchievement])
+        }
       }
 
       // ── DAKI: reacción contextual del LLM → DakiHint + voz + waveform ────────
@@ -1110,6 +1160,15 @@ export default function CodeWorkspace({ challengeId }: Props) {
         playSound(audioVictoryRef)
         applyVictoryDecoration()
 
+        // F5: racha sin pistas — incrementar si no se usó ENIGMA en esta misión
+        const usedHintThisMission = hintIndex >= 0
+        const nextHintFreeStreak = usedHintThisMission ? 0 : hintFreeStreak + 1
+        setHintFreeStreak(nextHintFreeStreak)
+
+        // F8: Misiones Secretas — chequear comportamientos de élite
+        const timeSpent = Date.now() - challengeStartMs.current
+        checkSecretMissions(usedHintThisMission, timeSpent, failStreak === 0)
+
         // Combo de eficiencia
         const effectiveLines = countEffectiveLines(code)
         if (effectiveLines <= parLines && data.gamification.xp_earned > 0) {
@@ -1131,7 +1190,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const next = findNextChallenge(challengeId, true)
         setVictoryNext(next)
         setVictoryXp(data.gamification.xp_earned)
-        setTimeout(() => setShowVictory(true), 700)
+        // F6: micro-transmisión al completar misión (refuerzo variable)
+        setTimeout(() => fireMicro(), 1200)
+
+        // F4: Debrief post-éxito — aparece antes del modal de victoria
+        debriefAttempts.current = failStreak + 1
+        setTimeout(() => setShowDebrief(true), 700)
       } else if (!data.output_matched) {
         triggerShake('soft')
         triggerEditorAnim('anim-error-flash', 500)
@@ -1173,9 +1237,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // ── Keep handleEjecutarRef current so Ctrl+Enter never captures a stale closure ──
   useEffect(() => { handleEjecutarRef.current = handleEjecutar }, [handleEjecutar])
 
+  // F1: Flash Recall — navegar después del recall quiz
+  const handleFlashRecallClose = useCallback(() => {
+    setShowFlashRecall(false)
+    if (!victoryNext || victoryNext.isLocked) {
+      router.push('/misiones')
+      return
+    }
+    if (victoryNext.isDrone) {
+      router.push('/enigma')
+    } else {
+      router.push(`/challenge/${victoryNext.id}`)
+    }
+  }, [victoryNext, router])
+
   // Navegar al siguiente nodo desde el modal de victoria
   const handleNextChallenge = useCallback(() => {
     setShowVictory(false)
+    // F1: show flash recall on every 3rd mission completion
+    try {
+      const count = parseInt(localStorage.getItem('pq-missions-completed') ?? '0', 10) + 1
+      localStorage.setItem('pq-missions-completed', String(count))
+      if (count % 3 === 0) { setShowFlashRecall(true); return }
+    } catch { /* storage blocked */ }
     if (!victoryNext || victoryNext.isLocked) {
       router.push('/misiones')
       return
@@ -1197,7 +1281,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
     <>
       <QuestTour />
       <ParticleBurst visible={showParticles} />
-      <ComboEffect visible={showCombo} xpEarned={comboXp} onDone={() => setShowCombo(false)} />
+      <ComboEffect
+        visible={showCombo}
+        xpEarned={comboXp}
+        multiplier={Math.min(1 + hintFreeStreak * 0.5, 3)}
+        onDone={() => setShowCombo(false)}
+      />
       <Toast
         message={toastMsg}
         visible={showToast}
@@ -1208,6 +1297,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
       <AnimatePresence>
         {showNivelSubido && <NivelSubidoOverlay level={level} />}
       </AnimatePresence>
+
+      {/* F1: Flash Recall */}
+      <FlashRecallModal
+        visible={showFlashRecall}
+        onClose={handleFlashRecallClose}
+      />
+
+      {/* F2: Mapa de Sinapsis */}
+      {showRadar && (
+        <RadarMaestriaModal
+          userId={userId ?? ''}
+          onClose={() => setShowRadar(false)}
+        />
+      )}
+
+      {/* F4: Debrief post-éxito */}
+      <MisionDebriefModal
+        visible={showDebrief}
+        userId={userId ?? ''}
+        challengeId={challengeId ?? ''}
+        attemptCount={debriefAttempts.current}
+        onClose={() => { setShowDebrief(false); setShowVictory(true) }}
+      />
 
       <VictoryModal
         visible={showVictory}
@@ -1243,6 +1355,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
         achievements={activeAchievements}
         onDismiss={(id) => setActiveAchievements((prev) => prev.filter((a) => a.id !== id))}
       />
+
+      {/* F6: Micro-transmisiones DAKI */}
+      <MicroBroadcast message={microMsg} onDismiss={dismissMicro} />
 
       {/* ── Insight flash post-nivel ─────────────────────────────────────────── */}
       <AnimatePresence>
@@ -1479,6 +1594,15 @@ export default function CodeWorkspace({ challengeId }: Props) {
           {/* Derecha — stats + HUD controles */}
           <div className="flex items-center justify-end gap-3 text-[#00FF41]/70">
             <span className="text-[#00FF41]/40 tabular-nums">⏱ {formatTime(sessionSecs)}</span>
+            {hintFreeStreak >= 2 && (
+              <span
+                className="text-[10px] font-black tracking-widest px-1.5 py-0.5 border"
+                style={{ color: '#FFD700', borderColor: '#FFD70040', textShadow: '0 0 8px #FFD70080', background: '#FFD70008' }}
+                title={`Racha sin pistas: ${hintFreeStreak} misiones`}
+              >
+                x{Math.min(1 + hintFreeStreak * 0.5, 3) % 1 === 0 ? Math.min(1 + hintFreeStreak * 0.5, 3) : Math.min(1 + hintFreeStreak * 0.5, 3).toFixed(1)}⚡
+              </span>
+            )}
             {failStreak > 0 && (
               <span className="text-[#FFB800]/60 tabular-nums">{failStreak}✕</span>
             )}
@@ -1499,6 +1623,15 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 ENIGMA?
               </motion.span>
             )}
+            {/* F2: Mapa de Sinapsis */}
+            <button
+              onClick={() => setShowRadar(true)}
+              className="text-[9px] tracking-[0.3em] px-1.5 py-0.5 border transition-colors"
+              style={{ color: '#00B4D8', borderColor: '#00B4D820', background: '#00B4D808' }}
+              title="Mapa de Sinapsis — radar de maestría conceptual"
+            >
+              ◉ SINAPSIS
+            </button>
             {/* Ambient music toggle */}
             <button
               onClick={() => setAmbientOn((v) => !v)}

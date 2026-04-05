@@ -7,6 +7,7 @@ import { useUserStore } from '@/store/userStore'
 import MissionBriefingModal from '@/components/Game/MissionBriefingModal'
 import HackingTransition from '@/components/Game/HackingTransition'
 import MobileGate from '@/components/UI/MobileGate'
+import { TIER_LABEL, TIER_COLOR } from '@/lib/tierLabels'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -48,8 +49,6 @@ const SLUG_TO_CODEX: Record<string, { codex_id: string; label: string; color: st
 
 // ─── Constantes UI ─────────────────────────────────────────────────────────────
 
-const TIER_LABEL: Record<number, string> = { 1: 'INICIANTE', 2: 'INTERMEDIO', 3: 'AVANZADO' }
-const TIER_COLOR: Record<number, string> = { 1: '#00FF41', 2: '#FFD700', 3: '#FF4444' }
 const PHASE_LABELS: Record<string, string> = {}
 
 // ─── Panel de Briefing ─────────────────────────────────────────────────────────

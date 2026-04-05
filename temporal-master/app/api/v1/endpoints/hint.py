@@ -26,6 +26,7 @@ class HintRequest(BaseModel):
     challenge_id: uuid.UUID
     source_code: str
     error_output: str = ""
+    error_type: str = ""       # tipo limpio extraído en el frontend (e.g. "NameError")
     fail_count: int = 1        # número de intentos fallidos → calibra el nivel de pista DAKI
     operator_level: int = 1    # nivel actual del Operador → calibra etapa DAKI
 
@@ -75,6 +76,7 @@ async def request_hint(
     progress.hints_used = (progress.hints_used or 0) + 1
 
     # ── Memoria Evolutiva: registrar error_frecuente y recuperar historial ─────
+    resolved_error_type = payload.error_type or (payload.error_output[:120] if payload.error_output else "")
     if payload.fail_count >= 2:
         await record_event(
             db=db,
@@ -83,7 +85,7 @@ async def request_hint(
             context_data={
                 "challenge_title": challenge.title,
                 "fail_count": payload.fail_count,
-                "error_type": payload.error_output[:120] if payload.error_output else "",
+                "error_type": resolved_error_type,
             },
             challenge_id=payload.challenge_id,
         )
@@ -120,6 +122,7 @@ async def request_hint(
         challenge_description=challenge.description,
         source_code=payload.source_code,
         error_output=payload.error_output,
+        error_type=resolved_error_type,
         fail_count=max(1, payload.fail_count),
         operator_history=operator_history,
         concepts_taught=concepts_taught,

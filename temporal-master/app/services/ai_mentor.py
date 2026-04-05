@@ -188,6 +188,7 @@ def _build_user_message(
     stage_addendum: str = "",
     concept_intel: str = "",
     weak_concepts: list[str] | None = None,
+    error_type: str = "",
 ) -> str:
     """
     Construye el mensaje del usuario que recibe el modelo.
@@ -208,6 +209,8 @@ def _build_user_message(
 
     # ── Intel de la misión: conceptos, objetivo, scaffold, pistas DB ─────────
     mission_intel_parts: list[str] = []
+    if error_type:
+        mission_intel_parts.append(f"Tipo de error (DAKI Memory): {error_type}")
     if concepts_taught:
         mission_intel_parts.append(f"Conceptos evaluados: {', '.join(concepts_taught)}")
     if pedagogical_objective:
@@ -407,6 +410,7 @@ async def get_hint(
     db_hints: list[str] | None = None,
     operator_level: int = 1,
     weak_concepts: list[str] | None = None,
+    error_type: str = "",
 ) -> str:
     """
     Genera una pista táctica calibrada al nivel de falla y al nivel del Operador.
@@ -453,6 +457,7 @@ async def get_hint(
         stage_addendum=stage_addendum,
         concept_intel=concept_intel,
         weak_concepts=weak_concepts,
+        error_type=error_type,
     )
 
     try:

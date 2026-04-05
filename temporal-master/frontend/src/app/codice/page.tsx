@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { TIER_LABEL, TIER_COLOR } from '@/lib/tierLabels'
 import { useUserStore } from '@/store/userStore'
 import MissionBriefing from '@/components/Game/MissionBriefing'
 import MobileGate from '@/components/UI/MobileGate'
@@ -19,17 +20,6 @@ interface KnowledgeEntry {
   completed: boolean
 }
 
-const TIER_LABEL: Record<number, string> = {
-  1: 'INICIANTE',
-  2: 'INTERMEDIO',
-  3: 'AVANZADO',
-}
-
-const TIER_COLOR: Record<number, string> = {
-  1: '#00FF41',
-  2: '#FFD700',
-  3: '#FF4444',
-}
 
 export default function CodicePage() {
   const router = useRouter()

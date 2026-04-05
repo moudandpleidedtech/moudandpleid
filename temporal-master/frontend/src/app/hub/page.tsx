@@ -15,6 +15,7 @@ import BossWarningBanner from '@/components/UI/BossWarningBanner'
 import IntelReportModal from '@/components/Hub/IntelReportModal'
 import DistincionesPanel from '@/components/Hub/DistincionesPanel'
 import SkillTreePanel from '@/components/Hub/SkillTreePanel'
+import DailyAnomalyCard from '@/components/Hub/DailyAnomalyCard'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -1141,6 +1142,9 @@ export default function HubPage() {
           >
             <PythonCoreStatus completedCount={completedOrders.length} />
           </motion.div>
+
+          {/* F3: Anomalía Diaria */}
+          <DailyAnomalyCard />
 
           {/* Separador */}
           <div className="h-px bg-[#00FF41]/8 w-full" />

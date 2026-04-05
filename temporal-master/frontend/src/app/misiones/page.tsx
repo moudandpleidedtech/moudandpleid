@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useUserStore } from '@/store/userStore'
 import MissionBriefingModal from '@/components/Game/MissionBriefingModal'
 import HackingTransition from '@/components/Game/HackingTransition'
+import { TIER_LABEL, TIER_COLOR } from '@/lib/tierLabels'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -66,8 +67,6 @@ const MISSION_LORE: Record<number, { lore: string; requires: string; chapter: st
 
 // ─── Constantes UI ─────────────────────────────────────────────────────────────
 
-const TIER_LABEL: Record<number, string> = { 1: 'INICIANTE', 2: 'INTERMEDIO', 3: 'AVANZADO' }
-const TIER_COLOR: Record<number, string> = { 1: '#00FF41', 2: '#FFD700', 3: '#FF4444' }
 
 // ─── S5: Filtro por rama de especialización ────────────────────────────────────
 
