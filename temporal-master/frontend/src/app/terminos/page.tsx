@@ -84,7 +84,8 @@ function LegalDoc() {
         <ul className="space-y-1 text-[#00FF41]/60">
           <li><span className="text-[#00FF41]/80">Nombre:</span> Adrian Eduardo Ardiles Peralta</li>
           <li><span className="text-[#00FF41]/80">Marca comercial:</span> DAKI EdTech</li>
-          <li><span className="text-[#00FF41]/80">Contacto:</span> legal@dakiedtech.com</li>
+          <li><span className="text-[#00FF41]/80">Soporte técnico:</span> systemsupport@dakiedtech.com</li>
+          <li><span className="text-[#00FF41]/80">Legal / reembolsos:</span> legal@dakiedtech.com</li>
           <li><span className="text-[#00FF41]/80">País de constitución:</span> Argentina</li>
         </ul>
       </Section>
@@ -337,11 +338,20 @@ function LegalDoc() {
       </Section>
 
       <Section title="13. Contacto">
-        <p className="text-[#00FF41]/50">
-          Para cualquier consulta legal, solicitud de reembolso o ejercicio de derechos
-          sobre tus datos, escríbenos a:{' '}
-          <span className="text-[#00FF41]/80">legal@dakiedtech.com</span>
-        </p>
+        <ul className="space-y-2 text-[#00FF41]/50">
+          <Li>
+            <span className="text-[#00FF41]/80">Soporte técnico y consultas generales:</span>{' '}
+            <a href="mailto:systemsupport@dakiedtech.com" className="text-[#00FF41]/80 hover:text-[#00FF41] underline transition-colors">
+              systemsupport@dakiedtech.com
+            </a>
+          </Li>
+          <Li>
+            <span className="text-[#00FF41]/80">Consultas legales, reembolsos y propiedad intelectual:</span>{' '}
+            <a href="mailto:legal@dakiedtech.com" className="text-[#00FF41]/70 hover:text-[#00FF41] underline transition-colors">
+              legal@dakiedtech.com
+            </a>
+          </Li>
+        </ul>
       </Section>
 
     </div>

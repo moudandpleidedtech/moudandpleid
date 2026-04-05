@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - Rutas privadas sin cookie → redirige a /login
  */
 
-const PRIVATE_ROUTES = ['/hub', '/misiones', '/challenge', '/enigma', '/boss', '/leaderboard', '/arena', '/codice']
+const PRIVATE_ROUTES = ['/hub', '/misiones', '/challenge', '/enigma', '/boss', '/leaderboard', '/arena', '/codice', '/admin']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -41,5 +41,6 @@ export const config = {
     '/leaderboard',
     '/arena',
     '/codice',
+    '/admin/:path*',
   ],
 }

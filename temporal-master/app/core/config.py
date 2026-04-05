@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     # Precio de la Licencia de Operador en USD (para proyección de ingresos)
     LICENSE_PRICE_USD: float = 49.0
 
+    # ── Google OAuth ──────────────────────────────────────────────────────────
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+
     # TTL del JWT de admin en minutos (8 horas por defecto)
     ADMIN_TOKEN_EXPIRE_MINUTES: int = 480
 

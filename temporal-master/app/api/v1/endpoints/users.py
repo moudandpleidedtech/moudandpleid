@@ -1,19 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.core.security import require_user
 from app.models.user import User
 
 router = APIRouter()
-
-
-class LoginRequest(BaseModel):
-    callsign: str
 
 
 class UserOut(BaseModel):
@@ -35,27 +28,19 @@ class UserOut(BaseModel):
 
 @router.post(
     "/users/login",
-    response_model=UserOut,
-    status_code=status.HTTP_200_OK,
-    summary="Crear o recuperar usuario por nombre",
+    status_code=status.HTTP_410_GONE,
+    summary="[DEPRECATED] Endpoint legacy deshabilitado",
+    include_in_schema=False,   # oculto del OpenAPI/Swagger
 )
-async def login_or_create(
-    payload: LoginRequest,
-    db: AsyncSession = Depends(get_db),
-) -> UserOut:
-    result = await db.execute(select(User).where(User.callsign == payload.callsign))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        user = User(
-            callsign=payload.callsign,
-            email=f"{payload.callsign.lower()}@quest.local",
-            password_hash=str(uuid.uuid4()),
-        )
-        db.add(user)
-        await db.flush()
-
-    return user
+async def login_or_create_deprecated() -> None:
+    """
+    Endpoint legacy eliminado por razones de seguridad.
+    Permite crear cuentas sin contraseña — reemplazado por POST /api/v1/auth/register.
+    """
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Endpoint deshabilitado. Usa POST /api/v1/auth/register.",
+    )
 
 
 @router.get(

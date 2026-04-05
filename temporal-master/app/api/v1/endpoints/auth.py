@@ -49,8 +49,8 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         key="daki_auth",
         value=token,
         httponly=True,
-        secure=not settings.DEBUG,          # Secure solo en producción (HTTPS)
-        samesite="none" if not settings.DEBUG else "lax",  # cross-origin en prod
+        secure=not settings.DEBUG,   # Secure en producción (HTTPS)
+        samesite="lax",              # lax: permite navegación normal, bloquea CSRF cross-site
         max_age=_COOKIE_MAX_AGE,
         path="/",
     )

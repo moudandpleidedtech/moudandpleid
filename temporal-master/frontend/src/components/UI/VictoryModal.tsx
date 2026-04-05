@@ -1,7 +1,45 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+
+// ─── Partículas internas del modal ────────────────────────────────────────────
+
+function ModalParticles() {
+  const particles = useMemo(() => {
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: ((i * 13 + 7) % 90) + 5,  // 5–95% horizontal
+      delay: (i % 6) * 0.06,
+      dur: 0.55 + (i % 4) * 0.07,
+      size: 2 + (i % 3),
+      color: i % 4 === 0 ? '#FFD700' : '#00FF41',
+    }))
+  }, [])
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            width: p.size,
+            height: p.size,
+            left: `${p.x}%`,
+            top: '50%',
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+          }}
+          initial={{ opacity: 1, y: 0, scale: 1 }}
+          animate={{ opacity: [1, 0.8, 0], y: -80 - (p.id % 40), scale: [1, 1.3, 0.4] }}
+          transition={{ duration: p.dur, delay: p.delay, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -56,6 +94,9 @@ export default function VictoryModal({ visible, xpEarned, next, onNext, onReview
             <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00FF41]/60" />
             <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#00FF41]/60" />
             <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#00FF41]/60" />
+
+            {/* Partículas de celebración — explotan al aparecer el modal */}
+            <ModalParticles />
 
             {/* Línea de barrido */}
             <motion.div

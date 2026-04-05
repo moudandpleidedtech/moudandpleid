@@ -63,6 +63,9 @@ class User(Base):
     # Stripe Customer ID — persiste entre sesiones de checkout para evitar crear clientes duplicados
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
 
+    # Google OAuth — ID único de la cuenta de Google del operador (sub claim)
+    google_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None, index=True)
+
     # ── Sistema de Rangos ─────────────────────────────────────────────────────
     points: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
     current_rank: Mapped[str] = mapped_column(

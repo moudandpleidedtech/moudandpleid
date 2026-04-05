@@ -67,7 +67,8 @@ function PrivacyDoc() {
         <Table rows={[
           ['Responsable', 'Adrian Eduardo Ardiles Peralta'],
           ['Marca comercial', 'DAKI EdTech'],
-          ['Email de contacto', 'legal@dakiedtech.com'],
+          ['Soporte técnico', 'systemsupport@dakiedtech.com'],
+          ['Legal / privacidad', 'legal@dakiedtech.com'],
           ['País', 'Argentina'],
         ]} />
       </Section>
@@ -187,9 +188,13 @@ function PrivacyDoc() {
         </ul>
         <p className="mt-4 text-[#00FF41]/50">
           Para ejercer cualquiera de estos derechos, escríbenos a{' '}
-          <span className="text-[#00FF41]/70">legal@dakiedtech.com</span> con el
-          asunto «DERECHOS ARCO» e indicando tu email de cuenta. Atendemos en un plazo
-          máximo de 30 días.
+          <a href="mailto:legal@dakiedtech.com" className="text-[#00FF41]/70 hover:text-[#00FF41] underline transition-colors">
+            legal@dakiedtech.com
+          </a>{' '}con el asunto «DERECHOS ARCO» e indicando tu email de cuenta.
+          Para consultas técnicas de cuenta, escríbenos a{' '}
+          <a href="mailto:systemsupport@dakiedtech.com" className="text-[#00FF41]/80 hover:text-[#00FF41] underline transition-colors">
+            systemsupport@dakiedtech.com
+          </a>. Atendemos en un plazo máximo de 30 días.
         </p>
       </Section>
 
@@ -222,11 +227,21 @@ function PrivacyDoc() {
       </Section>
 
       <Section title="12. Contacto y Reclamaciones">
-        <p className="text-[#00FF41]/60">
-          Para cualquier consulta sobre privacidad:{' '}
-          <span className="text-[#00FF41]/80">legal@dakiedtech.com</span>
-        </p>
-        <p className="mt-3 text-[#00FF41]/40">
+        <ul className="space-y-2 text-[#00FF41]/60">
+          <Li>
+            <span className="text-[#00FF41]/80">Soporte técnico y consultas generales:</span>{' '}
+            <a href="mailto:systemsupport@dakiedtech.com" className="text-[#00FF41]/80 hover:text-[#00FF41] underline transition-colors">
+              systemsupport@dakiedtech.com
+            </a>
+          </Li>
+          <Li>
+            <span className="text-[#00FF41]/80">Consultas sobre privacidad y ejercicio de derechos ARCO:</span>{' '}
+            <a href="mailto:legal@dakiedtech.com" className="text-[#00FF41]/70 hover:text-[#00FF41] underline transition-colors">
+              legal@dakiedtech.com
+            </a>
+          </Li>
+        </ul>
+        <p className="mt-4 text-[#00FF41]/40">
           Si consideras que el tratamiento de tus datos no se ajusta a la normativa,
           tienes derecho a presentar una reclamación ante la autoridad de control de
           protección de datos de tu país.

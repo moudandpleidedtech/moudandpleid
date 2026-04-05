@@ -56,12 +56,13 @@ class GamificationEngine:
         if challenge is None:
             raise ValueError(f"Challenge {challenge_id} not found")
 
-        # Fetch or create UserProgress
+        # Fetch or create UserProgress — with_for_update() previene race condition
+        # de doble-submit que otorgaría XP dos veces en submits simultáneos.
         result = await db.execute(
             select(UserProgress).where(
                 UserProgress.user_id == user_id,
                 UserProgress.challenge_id == challenge_id,
-            )
+            ).with_for_update()
         )
         progress = result.scalar_one_or_none()
 

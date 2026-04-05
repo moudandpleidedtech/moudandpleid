@@ -49,9 +49,12 @@ export default function Footer() {
           <p className="text-[#00FF41]/15 text-[10px] tracking-[0.3em]">
             © 2026 DAKIedtech · Todos los sistemas operativos.
           </p>
-          <p className="text-white/8 text-[10px] tracking-[0.25em] transition-colors duration-300 hover:text-[#00FF41]/25">
-            Diseñado por consultores expertos.
-          </p>
+          <a
+            href="mailto:systemsupport@dakiedtech.com"
+            className="text-[#00FF41]/20 text-[10px] tracking-[0.25em] hover:text-[#00FF41]/50 transition-colors duration-200"
+          >
+            systemsupport@dakiedtech.com
+          </a>
         </div>
 
       </div>

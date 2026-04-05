@@ -12,6 +12,7 @@ Endpoints:
   GET  /api/v1/admin/dashboard      — Telemetría completa por nivel (legacy, mantenida)
 """
 
+import asyncio
 import json
 import uuid
 from collections import defaultdict
@@ -25,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import create_admin_token, require_admin, require_founder
+from app.core.security import create_admin_token, require_admin, require_founder, verify_password
 from app.models.challenge import Challenge
 from app.models.user import User
 from app.models.user_metrics import UserMetric
@@ -66,14 +67,24 @@ async def admin_login(
     payload: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
+    _invalid = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Credenciales inválidas.",          # mensaje genérico — sin info de enumeración
+    )
+
     result = await db.execute(select(User).where(User.callsign == payload.callsign))
     user = result.scalar_one_or_none()
 
-    if user is None or not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas o usuario sin permisos de administrador.",
-        )
+    # Verificación en tiempo constante: siempre se evalúa el hash,
+    # aunque el usuario no exista, para prevenir timing attacks.
+    _DUMMY_HASH = "$2b$12$dummyhashfordummychecktimingattack00000000000000000000"
+    stored_hash = user.password_hash if (user and user.is_admin) else _DUMMY_HASH
+    password_ok = verify_password(payload.password, stored_hash)
+
+    if not password_ok or user is None or not user.is_admin:
+        # Pequeño jitter adicional para dificultar medición de latencia de red
+        await asyncio.sleep(0.1)
+        raise _invalid
 
     token = create_admin_token(str(user.id), user.callsign)
     return TokenResponse(

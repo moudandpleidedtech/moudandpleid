@@ -10,12 +10,13 @@ Flujo:
   4. Incrementa current_uses y retorna token de acceso.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.models.beta_code import BetaCode
 
 router = APIRouter(prefix="/auth", tags=["beta"])
@@ -45,7 +46,9 @@ class BetaCodeResponse(BaseModel):
     response_model=BetaCodeResponse,
     summary="Valida un código de acceso Beta",
 )
+@limiter.limit("5/minute")
 async def verify_beta_code(
+    request: Request,
     payload: BetaCodeRequest,
     db: AsyncSession = Depends(get_db),
 ) -> BetaCodeResponse:

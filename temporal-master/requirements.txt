@@ -35,5 +35,8 @@ anthropic>=0.50.0
 # Stripe — pasarela de pagos global
 stripe>=8.0.0
 
+# Google OAuth 2.0
+authlib>=1.3.0
+
 # Error tracking (opcional — activar con SENTRY_DSN en env vars)
 sentry-sdk[fastapi]>=2.0.0

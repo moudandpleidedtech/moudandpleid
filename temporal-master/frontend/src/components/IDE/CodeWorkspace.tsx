@@ -16,6 +16,7 @@ import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
 import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
 import PaywallModal from '@/components/UI/PaywallModal'
+import AlphaCodeModal from '@/components/UI/AlphaCodeModal'
 import AchievementToast, { type Achievement } from '@/components/UI/AchievementToast'
 import InsightFlash from '@/components/UI/InsightFlash'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
@@ -329,7 +330,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const {
     userId, username, level, previousLevel, totalXp, streakDays,
     completedChallengeIds, applyGamificationResult, markChallengeCompleted,
-    dakiLevel, isPaid, setIsPaid,
+    dakiLevel, isPaid, setIsPaid, setSubscription, subscriptionStatus,
   } = useUserStore()
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
@@ -384,8 +385,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
     waveformTimerRef.current = setTimeout(() => setWaveformActive(false), duration)
   }, [])
 
-  // Paywall modal: se muestra si el backend devuelve 402
-  const [showPaywall, setShowPaywall] = useState(false)
+  // Paywall modal: se muestra si el backend devuelve 402 (usuarios con trial/licensed vencido)
+  const [showPaywall,    setShowPaywall]    = useState(false)
+  // Alpha Code modal: se muestra si el backend devuelve 402 y el usuario no tiene ningún acceso
+  const [showAlphaModal, setShowAlphaModal] = useState(false)
 
   // ── Intel Drawer (Fase 1) ─────────────────────────────────────────────────
   const [showIntelDrawer, setShowIntelDrawer] = useState(false)
@@ -621,9 +624,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => router.replace('/misiones'), 2200)
           return
         }
-        // Misión de pago + usuario freemium → mostrar paywall inmediatamente
+        // Misión de pago + usuario freemium → Alpha modal (nunca activado) o Paywall (expirado)
         if (data.is_free === false && !isPaid) {
-          setShowPaywall(true)
+          if (subscriptionStatus === 'INACTIVE') {
+            setShowAlphaModal(true)
+          } else {
+            setShowPaywall(true)
+          }
         }
         // Merge local cache: si ya se completó en esta sesión, reflejarlo sin esperar a la API
         const mergedData = completedChallengeIds.includes(data.id)
@@ -854,9 +861,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
 
       if (!res.ok) {
-        // ── 402: paywall — el usuario llegó al límite freemium ────────────────
+        // ── 402: sin acceso — Alpha modal (INACTIVE) o Paywall (trial expirado) ─
         if (res.status === 402) {
-          setShowPaywall(true)
+          if (subscriptionStatus === 'INACTIVE') {
+            setShowAlphaModal(true)
+          } else {
+            setShowPaywall(true)
+          }
           return
         }
         const err = await res.json()
@@ -1158,6 +1169,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
           ? '[ CALIBRACIÓN COMPLETADA. RIESGO CEREBRAL AL 0%. ACCESO AL NEXO CONCEDIDO ]'
           : undefined
         }
+      />
+
+      <AlphaCodeModal
+        visible={showAlphaModal}
+        onClose={() => setShowAlphaModal(false)}
+        onGranted={(trialEndDate) => {
+          setSubscription('TRIAL', trialEndDate)
+          setIsPaid(true)
+          setShowAlphaModal(false)
+        }}
       />
 
       <PaywallModal
@@ -1699,12 +1720,42 @@ export default function CodeWorkspace({ challengeId }: Props) {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#00FF41]/10 shrink-0">
                 <span className="text-[#00FF41]/40 text-xs tracking-widest uppercase">consola</span>
-                {loadingHint && (
+                {isRunning && (
+                  <motion.span
+                    className="text-[#00FF41]/60 text-[9px] tracking-[0.4em]"
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 0.9, repeat: Infinity }}
+                  >
+                    SANDBOX ACTIVO
+                  </motion.span>
+                )}
+                {loadingHint && !isRunning && (
                   <span className="text-[#FFB800]/60 text-xs animate-pulse tracking-widest">
                     ENIGMA...
                   </span>
                 )}
               </div>
+              {/* Barra de progreso del sandbox — visible durante ejecución */}
+              <AnimatePresence>
+                {isRunning && (
+                  <motion.div
+                    className="h-px shrink-0 relative overflow-hidden"
+                    style={{ background: 'rgba(0,255,65,0.08)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <motion.div
+                      className="absolute inset-y-0 left-0"
+                      style={{ background: 'linear-gradient(90deg,rgba(0,255,65,0.6),rgba(0,255,65,0.9),rgba(0,255,65,0.6))' }}
+                      initial={{ width: '0%' }}
+                      animate={{ width: '88%' }}
+                      transition={{ duration: 2.6, ease: 'easeOut' }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div ref={consoleRef} className="flex-1 overflow-y-auto p-3 space-y-0.5">
                 {output.map((line, i) => (
                   <div key={i}

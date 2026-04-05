@@ -13,8 +13,8 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
+    pool_size=20,
+    max_overflow=30,
     connect_args=_connect_args,
 )
 
@@ -218,10 +218,15 @@ async def init_db() -> None:
             "WHERE code_string != UPPER(code_string)"
         ))
 
-        # Freemium gate — sectores 00 y 01 siempre gratuitos (idempotente)
+        # Freemium gate — solo sector 00 (L0-L9) gratuito; L10+ requiere Alpha Code
         await conn.execute(text(
             "UPDATE challenges SET is_free = TRUE "
-            "WHERE sector_id IN (0, 1) AND is_free = FALSE"
+            "WHERE sector_id = 0 AND is_free = FALSE"
+        ))
+        # Asegurarse de que sector 1+ NO sean gratuitos (por si venían de una migration anterior)
+        await conn.execute(text(
+            "UPDATE challenges SET is_free = FALSE "
+            "WHERE sector_id >= 1 AND is_free = TRUE"
         ))
 
         # Operación Vanguardia — Suscripción Alpha (Directiva 005M)
@@ -320,3 +325,12 @@ async def init_db() -> None:
             "ALTER TABLE incursions ADD COLUMN IF NOT EXISTS total_levels INTEGER",
         ]:
             await conn.execute(text(stmt))
+
+        # Google OAuth — vincula la cuenta de Google del Operador (sub claim)
+        await conn.execute(text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)"
+        ))
+        await conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_users_google_id ON users (google_id) "
+            "WHERE google_id IS NOT NULL"
+        ))

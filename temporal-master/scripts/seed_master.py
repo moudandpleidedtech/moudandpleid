@@ -75,6 +75,7 @@ def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
         ("scripts.seed_sector_08", "SECTOR_08"),
         ("scripts.seed_sector_09", "SECTOR_09"),
         ("scripts.seed_sector_10", "SECTOR_10"),
+        ("scripts.seed_contratos", "CONTRATOS"),
     ]
 
     for module, attr in sources:
