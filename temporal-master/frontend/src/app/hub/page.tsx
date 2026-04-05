@@ -532,7 +532,7 @@ export default function HubPage() {
     <MobileGate>
     <div
       className="h-screen flex flex-col font-mono text-[#00FF41] overflow-hidden relative"
-      style={{ background: 'radial-gradient(circle at 50% 45%, #001a0d 0%, #000000 65%)' }}
+      style={{ background: 'radial-gradient(circle at 50% 30%, #030d1f 0%, #020617 55%, #010410 100%)' }}
     >
       {/* ── Scanlines CSS ── */}
       <div
@@ -638,8 +638,8 @@ export default function HubPage() {
             <h2
               className="text-3xl font-black tracking-[0.15em] mb-3 font-mono"
               style={{
-                color:      '#00FF41',
-                textShadow: '0 0 20px rgba(0,255,65,0.55), 0 0 50px rgba(0,255,65,0.18)',
+                color:      '#4ade80',
+                textShadow: '0 0 20px rgba(74,222,128,0.65), 0 0 50px rgba(74,222,128,0.25)',
               }}
             >
               {username?.toUpperCase() ?? '—'}
@@ -679,15 +679,16 @@ export default function HubPage() {
             ) : (
               <motion.div
                 className="inline-flex items-center gap-2 px-4 py-1.5 border mb-5 mx-auto"
-                style={{ borderColor: 'rgba(0,255,65,0.22)', background: 'rgba(0,255,65,0.04)' }}
+                style={{ borderColor: 'rgba(74,222,128,0.30)', background: 'rgba(74,222,128,0.05)' }}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.35 }}
               >
-                <span className="text-[10px] font-black tracking-[0.5em] text-[#00FF41]/70 font-mono">
+                <span className="text-[10px] font-black tracking-[0.5em] font-mono"
+                  style={{ color: '#4ade80', textShadow: '0 0 8px rgba(74,222,128,0.50)' }}>
                   OPERADOR
                 </span>
-                <span className="text-[8px] text-[#00FF41]/35 font-mono">// NIV. {level}</span>
+                <span className="text-[8px] font-mono" style={{ color: 'rgba(74,222,128,0.45)' }}>// NIV. {level}</span>
               </motion.div>
             )}
             {/* Espacio base — sin CTA aquí */}
@@ -700,18 +701,21 @@ export default function HubPage() {
 
           {/* ── DAKI — compacto ── */}
           <motion.div
-            className="text-[7px] tracking-[0.6em] text-[#00FF41]/18 mb-4 text-center font-mono"
+            className="text-[7px] tracking-[0.6em] mb-4 text-center font-mono"
+            style={{ color: 'rgba(74,222,128,0.35)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           >
             SIMBIONTE // UNIDAD DAKI // CONEXIÓN ACTIVA
           </motion.div>
 
+          {/* Envoltorio DAKI con aura verde pulsante */}
           <motion.div
-            className="transform scale-75 origin-center mb-1"
+            className="relative transform scale-75 origin-center mb-1"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 0.75 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
           >
+            <div className="neon-pulse--emerald rounded-full absolute inset-0 -m-4 pointer-events-none" />
             <AdriCore />
           </motion.div>
 
@@ -860,6 +864,7 @@ export default function HubPage() {
 
           {/* ── CTA Primario único ── */}
           <motion.div
+            className="neon-pulse rounded-sm"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}

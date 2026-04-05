@@ -336,8 +336,14 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
   return (
     <div ref={containerRef}
-      className="relative w-full h-full bg-nexo-bg overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      className="relative w-full h-full bg-nexo-deep-bg overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
     >
+      {/* ── Cuadrícula táctica — patrón casi invisible ── */}
+      <div className="absolute inset-0 pointer-events-none z-0" style={{
+        backgroundImage: `linear-gradient(rgba(6,182,212,0.035) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(6,182,212,0.035) 1px, transparent 1px)`,
+        backgroundSize: '32px 32px',
+      }} />
 
       {/* ── S2: Modal de pre-brief ── */}
       <AnimatePresence>
@@ -377,10 +383,10 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
                 transition={{ delay: 0.72 + i * 0.13, duration: 0.85, ease: 'easeOut' }}
               />
               {/* Línea base principal */}
-              <motion.path d={d} fill="none" stroke="#06b6d4" strokeWidth={2}
+              <motion.path d={d} fill="none" stroke="#06b6d4" strokeWidth={3}
                 strokeLinecap="round" filter="url(#vein-glow)"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.75 }}
+                animate={{ pathLength: 1, opacity: 0.85 }}
                 transition={{ delay: 0.72 + i * 0.13, duration: 0.85, ease: 'easeOut' }}
               />
               {/* S4 — Pulso viajero */}
@@ -440,23 +446,33 @@ export default function SkillTreePanel({ completedCount, onNavigate }: Props) {
 
               return (
                 <motion.div key={node.id}
-                  className="relative z-10 flex flex-col items-center gap-2 cursor-pointer group"
+                  className={[
+                    'relative z-10 flex flex-col items-center gap-2 cursor-pointer group',
+                    isLocked ? 'opacity-40' : '',
+                  ].filter(Boolean).join(' ')}
                   initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1,  y: 0  }}
+                  animate={{ opacity: isLocked ? 0.40 : 1, y: 0 }}
                   transition={{ delay: 0.10 + i * 0.09, duration: 0.38, ease: 'easeOut' }}
                   onClick={() => setBriefNodeIdx(i)}
                   title="Ver detalles del módulo"
                 >
+                  {/* Aura pulsante — solo nodo activo */}
+                  {isActive && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="neon-pulse--emerald rounded-full" style={{ width: 88, height: 88, position: 'absolute' }} />
+                    </div>
+                  )}
+
                   {/* Círculo */}
                   <div
                     ref={el => { nodeCircleRefs.current[i] = el }}
                     className={[
                       isActive ? 'w-[72px] h-[72px]' : 'w-[62px] h-[62px]',
-                      'rounded-full border-2 flex flex-col items-center justify-center bg-nexo-bg',
-                      'transition-transform duration-150 group-hover:scale-105',
-                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                                                    : '',
-                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse ring-2 ring-neon-emerald/30' : '',
-                      isLocked    ? 'border-neon-gold/55 text-gray-400    shadow-glow-gold'                                                     : '',
+                      'rounded-full border-2 flex flex-col items-center justify-center bg-nexo-deep-bg',
+                      'transition-transform duration-150 group-hover:scale-105 relative z-10',
+                      isCompleted ? 'border-neon-cyan    text-neon-cyan    shadow-glow-cyan'                          : '',
+                      isActive    ? 'border-neon-emerald text-neon-emerald shadow-glow-emerald animate-energy-pulse'  : '',
+                      isLocked    ? 'border-neon-gold/55 text-gray-400    shadow-glow-gold'                           : '',
                     ].filter(Boolean).join(' ')}
                     style={
                       isCompleted ? { boxShadow: '0 0 22px rgba(6,182,212,1), 0 0 50px rgba(6,182,212,0.45), inset 0 0 18px rgba(6,182,212,0.50)' } :
