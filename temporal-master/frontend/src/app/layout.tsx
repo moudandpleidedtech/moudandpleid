@@ -19,6 +19,11 @@ export const metadata: Metadata = {
     locale: 'es_AR',
     type: 'website',
   },
+  // Google Search Console domain verification
+  // Reemplazar el valor con el código real desde: Search Console → Add property → HTML tag
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION ?? '',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -5,6 +5,7 @@ import ActivacionSection  from '@/components/Landing/ActivacionSection'
 import CircuitBoard       from '@/components/UI/CircuitBoard'
 import LandingSlider      from '@/components/Landing/LandingSlider'
 import HubAudio           from '@/components/UI/HubAudio'
+import Footer             from '@/components/Landing/Footer'
 import type { Slide }     from '@/components/Landing/LandingSlider'
 
 const SLIDES: Slide[] = [
@@ -32,6 +33,7 @@ export default function LandingPage() {
       <HubAudio buttonClass="fixed top-3 right-4" />
       <CircuitBoard />
       <LandingSlider slides={SLIDES} />
+      <Footer />
     </main>
   )
 }
