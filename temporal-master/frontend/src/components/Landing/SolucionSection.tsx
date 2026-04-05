@@ -3,9 +3,8 @@
 /**
  * SolucionSection — Slide 3 del Landing
  *
- * Rediseño D025: de tabs fragmentados a flujo continuo.
- * Objetivo: generar deseo por el ecosistema antes de pedir el registro.
- * Una sola sección scrollable — sin fricción de clicks.
+ * Propuesta: Un lenguaje. Dominado de verdad.
+ * Diferenciadores: Python-only + gamificación + experiencia verificable.
  */
 
 import { motion } from 'framer-motion'
@@ -13,41 +12,45 @@ import Link from 'next/link'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const FORMATIONS = [
-  {
-    code: '01', name: 'OPERACIÓN VANGUARDIA', sub: 'Python Core · Fundamentos de Élite',
-    color: '#00FF41', icon: '⬡', status: 'ACTIVA', locked: false,
-    desc: 'De print("hola") a sistemas que corren en producción. 100 niveles. 4 sectores. 1 Boss Final.',
-  },
-  {
-    code: '02', name: 'PROTOCOLO TPM', sub: 'Technical Project Manager',
-    color: '#FF6B35', icon: '◎', status: 'ENCRIPTADO', locked: true,
-    desc: 'Gestión de equipos de ingeniería bajo presión real. Stakeholders imposibles. Decisiones críticas.',
-  },
-  {
-    code: '03', name: 'PROTOCOLO ARES', sub: 'Ciberseguridad · Red Team',
-    color: '#FF2D78', icon: '⬟', status: 'CLASIFICADO', locked: true,
-    desc: 'Piensa como atacante, construye como defensor. CTF, CVE, kill-chain ofensivo.',
-  },
-  {
-    code: '04', name: 'TECHNICAL SALES', sub: 'Del código a la mesa de negocios',
-    color: '#FFC700', icon: '◈', status: 'CLASIFICADO', locked: true,
-    desc: 'Tu expertise técnico como ventaja comercial. Para el dev que quiere cruzar al otro lado.',
-  },
+const CORE_STATS = [
+  { value: '100', label: 'Misiones reales',              icon: '⬡', color: '#00FF41' },
+  { value: '4',   label: 'Sectores de dificultad',       icon: '◎', color: '#06b6d4' },
+  { value: '1',   label: 'Boss Final de integración',    icon: '◆', color: '#f59e0b' },
+  { value: 'DDA', label: 'Dificultad que se adapta',     icon: '◈', color: '#a78bfa' },
 ]
 
-const DAKI_PROTOCOL = [
-  { letter: 'D', word: 'DIAGNÓSTICO',  desc: 'Cada interacción escanea tu lógica. No qué sabés — cómo pensás.', color: '#00FF41' },
-  { letter: 'A', word: 'ADAPTACIÓN',   desc: 'El sistema ajusta la dificultad en tiempo real a tu historial de errores.', color: '#00B4D8' },
-  { letter: 'K', word: 'CONOCIMIENTO', desc: 'Nada es teoría sin aplicación. Cada concepto es una misión con consecuencias.', color: '#7B2FBE' },
-  { letter: 'I', word: 'INTELIGENCIA', desc: 'La IA no te da la respuesta. Te interroga hasta que la construís solo.', color: '#FFB800' },
+const BRANCHES = [
+  { icon: '⚙', title: 'Automatización',  jobs: 'DevOps · SRE · Scripting',       unlockAt: 60 },
+  { icon: '⬡', title: 'Testing y QA',    jobs: 'QA Engineer · SDET',              unlockAt: 70 },
+  { icon: '◈', title: 'APIs y Backend',  jobs: 'Backend Dev · API Engineer',      unlockAt: 75 },
+  { icon: '◉', title: 'Data Science',    jobs: 'Data Analyst · BI Developer',     unlockAt: 80 },
+  { icon: '◬', title: 'IA Aplicada',     jobs: 'ML Engineer · AI Developer',      unlockAt: 90 },
 ]
 
 const PROBLEMS = [
-  { icon: '⬚', label: 'CURSOS ONLINE',       verdict: 'Certificado sin arquitectura',  color: '#FF6B6B' },
-  { icon: '◫', label: 'BOOTCAMPS',            verdict: 'Alcanza para entrar, no para crecer', color: '#FFB800' },
-  { icon: '◪', label: 'YOUTUBE + TUTORIALES', verdict: 'Conocimiento fragmentado',      color: '#00B4D8' },
-  { icon: '◆', label: 'DAKI',                 verdict: 'Sistema que piensa con vos',    color: '#00FF41' },
+  { icon: '⬚', label: 'YOUTUBE / TUTORIALES', verdict: 'Sintaxis sin criterio de arquitectura',           color: '#FF6B6B' },
+  { icon: '◫', label: 'BOOTCAMPS',            verdict: 'Te da el primer empleo, no los siguientes',        color: '#FFB800' },
+  { icon: '◪', label: 'CERTIFICADOS ONLINE',  verdict: 'Acredita que cursaste, no que podés construir',    color: '#00B4D8' },
+  { icon: '◆', label: 'NEXO — DAKI',          verdict: 'Código que corre. Errores documentados. Rango real.', color: '#00FF41' },
+]
+
+const DAKI_PROTOCOL = [
+  {
+    letter: 'D', word: 'DIAGNÓSTICO', color: '#00FF41',
+    desc: 'Cada misión escanea tu lógica en tiempo real. No qué sabés — cómo pensás bajo presión.',
+  },
+  {
+    letter: 'A', word: 'ADAPTACIÓN', color: '#00B4D8',
+    desc: 'DDA ajusta la dificultad a tu historial de errores. Nunca demasiado fácil. Nunca injusto.',
+  },
+  {
+    letter: 'K', word: 'CONOCIMIENTO', color: '#7B2FBE',
+    desc: 'Cada concepto es una misión con consecuencias reales. La teoría sin aplicación no existe aquí.',
+  },
+  {
+    letter: 'I', word: 'INTELIGENCIA', color: '#FFB800',
+    desc: 'La IA no te da la respuesta. Te interroga hasta que la construís solo — y la recordás.',
+  },
 ]
 
 // ─── Componente ────────────────────────────────────────────────────────────────
@@ -72,97 +75,114 @@ export default function SolucionSection() {
           className="mb-7"
         >
           <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/20 mb-2">
-            {'// EL NEXO — ECOSISTEMA DE FORMACIONES'}
+            {'// EL NEXO — FORMACIÓN PYTHON INTENSIVA'}
           </p>
-          <h2 className="text-lg sm:text-xl font-black tracking-[0.08em] text-white/85 uppercase leading-tight mb-1">
-            Cuatro formaciones.{' '}
+          <h2 className="text-lg sm:text-xl font-black tracking-[0.06em] text-white/85 uppercase leading-tight mb-1">
+            Un lenguaje.{' '}
             <span className="text-[#00FF41]" style={{ textShadow: '0 0 20px rgba(0,255,65,0.5)' }}>
-              Una sola plataforma.
+              Dominado de verdad.
             </span>
           </h2>
           <p className="text-[10px] text-[#00FF41]/35 tracking-[0.3em] uppercase">
-            El camino al top 1% — por disciplina, no por azar.
+            No diez lenguajes a medias. Python al nivel que el mercado exige.
           </p>
         </motion.div>
 
-        {/* ── Mapa del Ecosistema ──────────────────────────────────────────────── */}
+        {/* ── Python Core — showcase ─────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8"
+          className="relative mb-5 p-5 overflow-hidden"
+          style={{ border: '1px solid rgba(0,255,65,0.30)', background: 'rgba(0,255,65,0.03)' }}
         >
-          {FORMATIONS.map((f, i) => (
-            <motion.div
-              key={f.code}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08 + i * 0.06, duration: 0.25 }}
-              className="relative overflow-hidden p-4"
-              style={{
-                border:     `1px solid ${f.color}${f.locked ? '18' : '35'}`,
-                background: `${f.color}${f.locked ? '03' : '05'}`,
-                opacity:    f.locked ? 0.72 : 1,
-              }}
-            >
-              {/* Pulso superior */}
-              {!f.locked && (
-                <motion.div
-                  className="absolute top-0 left-0 right-0 h-px"
-                  style={{ background: `linear-gradient(90deg,transparent,${f.color}55,transparent)` }}
-                  animate={{ opacity: [0.3, 0.9, 0.3] }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
+          {/* Pulso superior activo */}
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-px"
+            style={{ background: 'linear-gradient(90deg,transparent,rgba(0,255,65,0.60),transparent)' }}
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          />
+
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <motion.span
+                  className="w-2 h-2 rounded-full bg-[#00FF41]"
+                  animate={{ opacity: [1, 0.3, 1], scale: [1, 1.4, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                 />
-              )}
-
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs shrink-0" style={{ color: f.color }}>{f.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-[9px] font-black tracking-[0.3em] uppercase truncate" style={{ color: f.color }}>
-                      {f.name}
-                    </p>
-                    <p className="text-[8px] tracking-wide" style={{ color: `${f.color}55` }}>{f.sub}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {!f.locked ? (
-                    <>
-                      <motion.span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: f.color }}
-                        animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
-                        transition={{ duration: 1.6, repeat: Infinity }}
-                      />
-                      <span className="text-[7px] tracking-widest" style={{ color: `${f.color}77` }}>ACTIVA</span>
-                    </>
-                  ) : (
-                    <span className="text-[8px]" style={{ filter: `drop-shadow(0 0 3px ${f.color}55)` }}>🔒</span>
-                  )}
-                </div>
+                <span className="text-[7px] tracking-[0.5em] text-[#00FF41]/60">FORMACIÓN ACTIVA</span>
               </div>
+              <h3 className="text-sm font-black tracking-[0.20em] text-[#00FF41] uppercase"
+                style={{ textShadow: '0 0 12px rgba(0,255,65,0.40)' }}>
+                OPERACIÓN VANGUARDIA
+              </h3>
+              <p className="text-[9px] text-[#00FF41]/45 tracking-wider">Python Core · Fundamentos de Élite</p>
+            </div>
+            <span className="text-2xl" style={{ color: 'rgba(0,255,65,0.50)' }}>⬡</span>
+          </div>
 
-              <p className="text-[9px] leading-relaxed" style={{ color: `${f.color}${f.locked ? '40' : '55'}` }}>
-                {f.desc}
-              </p>
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+            {CORE_STATS.map(({ value, label, icon, color }) => (
+              <div key={label} className="border px-3 py-2.5 text-center"
+                style={{ borderColor: `${color}18`, background: `${color}04` }}>
+                <p className="text-lg font-black font-mono mb-0.5" style={{ color, textShadow: `0 0 10px ${color}55` }}>
+                  {value}
+                </p>
+                <p className="text-[7px] tracking-wider leading-tight" style={{ color: `${color}55` }}>
+                  {icon} {label}
+                </p>
+              </div>
+            ))}
+          </div>
 
-              {!f.locked && (
-                <div
-                  className="inline-flex items-center gap-1 px-2 py-0.5 mt-2"
-                  style={{ border: `1px solid ${f.color}30`, background: `${f.color}08` }}
-                >
-                  <span className="text-[7px] tracking-[0.35em] font-bold" style={{ color: `${f.color}80` }}>
-                    DISPONIBLE AHORA
-                  </span>
-                </div>
-              )}
-            </motion.div>
-          ))}
+          <p className="text-[9px] leading-relaxed text-[#00FF41]/50">
+            De{' '}
+            <span className="text-[#00FF41]/80 font-mono">print(&quot;hola&quot;)</span>
+            {' '}a sistemas que corren en producción. Cada sector escala la complejidad.
+            El Boss Final valida que podés integrar todo lo aprendido bajo presión.
+          </p>
+        </motion.div>
+
+        {/* ── Ramas de especialización — post Python Core ──────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.10 }}
+          className="mb-8"
+        >
+          <p className="text-[8px] tracking-[0.5em] text-[#f59e0b]/30 uppercase mb-3">
+            {'// TRAS COMPLETAR PYTHON CORE — RAMAS DE ESPECIALIZACIÓN'}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {BRANCHES.map(({ icon, title, jobs, unlockAt }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 0.65, y: 0 }}
+                transition={{ delay: 0.12 + i * 0.04, duration: 0.22 }}
+                className="border px-3 py-3 relative overflow-hidden"
+                style={{ borderColor: 'rgba(245,158,11,0.18)', background: 'rgba(245,158,11,0.03)' }}
+              >
+                <span className="absolute top-1.5 right-1.5 text-[8px]">🔒</span>
+                <p className="text-base mb-1" style={{ color: 'rgba(245,158,11,0.40)' }}>{icon}</p>
+                <p className="text-[8px] font-black tracking-[0.15em] uppercase leading-snug mb-1"
+                  style={{ color: 'rgba(245,158,11,0.55)' }}>
+                  {title}
+                </p>
+                <p className="text-[7px] leading-relaxed" style={{ color: 'rgba(245,158,11,0.30)' }}>{jobs}</p>
+                <p className="text-[6px] tracking-[0.3em] mt-1.5" style={{ color: 'rgba(245,158,11,0.25)' }}>
+                  desde nivel {unlockAt}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
 
         {/* ── Por qué fallan los demás ─────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
+          transition={{ duration: 0.3, delay: 0.18 }}
           className="mb-8"
         >
           <p className="text-[8px] tracking-[0.5em] text-[#FF0033]/35 uppercase mb-4">
@@ -172,17 +192,21 @@ export default function SolucionSection() {
             {PROBLEMS.map(({ icon, label, verdict, color }, i) => (
               <div
                 key={label}
-                className="p-3 text-center border"
+                className="p-3 text-center border transition-all duration-200"
                 style={{
                   borderColor: `${color}${i === 3 ? '40' : '12'}`,
                   background:  `${color}${i === 3 ? '06' : '02'}`,
                 }}
               >
-                <span className="text-xl block mb-1.5" style={{ color: `${color}${i === 3 ? 'cc' : '25'}` }}>{icon}</span>
-                <p className="text-[8px] font-black tracking-[0.25em] uppercase mb-1" style={{ color: `${color}${i === 3 ? '90' : '40'}` }}>
+                <span className="text-xl block mb-1.5" style={{ color: `${color}${i === 3 ? 'cc' : '25'}` }}>
+                  {icon}
+                </span>
+                <p className="text-[8px] font-black tracking-[0.2em] uppercase mb-1"
+                  style={{ color: `${color}${i === 3 ? '90' : '40'}` }}>
                   {label}
                 </p>
-                <p className="text-[7px] tracking-wide leading-4" style={{ color: `${color}${i === 3 ? '60' : '30'}` }}>
+                <p className="text-[7px] tracking-wide leading-4"
+                  style={{ color: `${color}${i === 3 ? '65' : '30'}` }}>
                   {verdict}
                 </p>
               </div>
@@ -193,17 +217,17 @@ export default function SolucionSection() {
         {/* ── Protocolo D·A·K·I ────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.25 }}
+          transition={{ duration: 0.3, delay: 0.24 }}
           className="mb-8"
         >
           <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/20 uppercase mb-4">
-            {'// PROTOCOLO D·A·K·I — CÓMO FUNCIONA EL SISTEMA'}
+            {'// PROTOCOLO D·A·K·I — POR QUÉ FUNCIONA LA GAMIFICACIÓN'}
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {DAKI_PROTOCOL.map(({ letter, word, desc, color }) => (
               <div
                 key={letter}
-                className="border p-4 transition-all duration-200 group"
+                className="border p-4 transition-all duration-200"
                 style={{ borderColor: `${color}15`, background: `${color}03` }}
                 onMouseEnter={e => {
                   ;(e.currentTarget as HTMLDivElement).style.borderColor = `${color}40`
@@ -214,10 +238,8 @@ export default function SolucionSection() {
                   ;(e.currentTarget as HTMLDivElement).style.background  = `${color}03`
                 }}
               >
-                <span
-                  className="text-4xl font-black leading-none block mb-2"
-                  style={{ color, textShadow: `0 0 20px ${color}40` }}
-                >
+                <span className="text-4xl font-black leading-none block mb-2"
+                  style={{ color, textShadow: `0 0 20px ${color}40` }}>
                   {letter}
                 </span>
                 <p className="text-[8px] font-black tracking-[0.35em] mb-1.5 uppercase" style={{ color }}>
@@ -231,15 +253,15 @@ export default function SolucionSection() {
           </div>
         </motion.div>
 
-        {/* ── CTA final de sección ─────────────────────────────────────────────── */}
+        {/* ── CTA final ────────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.30 }}
           className="text-center py-6 border border-[#00FF41]/10"
           style={{ background: 'rgba(0,255,65,0.02)' }}
         >
           <p className="text-[9px] tracking-[0.4em] text-[#00FF41]/35 uppercase mb-3">
-            Todo esto está esperándote. Sin tarjeta de crédito.
+            Sin tarjeta de crédito. Sin excusas.
           </p>
           <Link
             href="/register"

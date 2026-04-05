@@ -3,26 +3,48 @@
 /**
  * ActivacionSection — Slide 4 del Landing · Cierre de conversión
  *
- * Rediseño D025: de pricing page a máquina de registro.
- * Sin precios. Sin pricing cards. Un solo objetivo: crear cuenta.
- * El upsell a membresía sucede desde adentro del Hub — no aquí.
+ * Propuesta: El mercado no contrata certificados. Contrata operadores.
+ * Diferenciador: experiencia Python real + verificable + gamificada.
  */
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
 const FREE_ACCESS = [
-  { icon: '⬡', label: 'Operación Vanguardia',      detail: 'Python Core completo — los 100 niveles' },
-  { icon: '◈', label: 'IA Simbionte DAKI',           detail: 'Tu instructor que nunca duerme ni te da respuestas gratis' },
-  { icon: '◎', label: 'Mapa de Incursiones',         detail: 'Ves el ecosistema completo desde el primer login' },
-  { icon: '⬟', label: 'Leaderboard de Operadores',   detail: 'Tu rango real vs el resto del Nexo' },
-  { icon: '◆', label: 'Bitácora táctica',            detail: 'Tu historial de errores convertido en inteligencia' },
+  {
+    icon: '⬡',
+    label: 'Python Core — 100 misiones',
+    detail: 'De variables a sistemas en producción. Sin atajos. Sin relleno.',
+  },
+  {
+    icon: '◈',
+    label: 'IA adaptativa DAKI',
+    detail: 'Ajusta la dificultad a tus errores — no al promedio del grupo.',
+  },
+  {
+    icon: '◎',
+    label: 'Boss Fights de integración',
+    detail: 'Al final de cada sector: pruebas reales que obligan a integrar todo lo aprendido.',
+  },
+  {
+    icon: '⬟',
+    label: 'Leaderboard de Operadores',
+    detail: 'Tu rango verificable frente al resto del Nexo en tiempo real.',
+  },
+  {
+    icon: '◆',
+    label: 'Bitácora táctica',
+    detail: 'Tu historial de errores y cómo los resolviste — evidencia técnica real.',
+  },
 ]
 
-const WHAT_AWAITS = [
-  { label: 'PROTOCOLO TPM',          color: '#FF6B35', status: 'Encriptado' },
-  { label: 'PROTOCOLO ARES',         color: '#FF2D78', status: 'Clasificado' },
-  { label: 'TECHNICAL SALES MASTERY', color: '#FFC700', status: 'Clasificado' },
+const VERIFIABLE = [
+  { label: 'XP por área demostrable',                          detail: '(OOP, Algoritmos, APIs, Estructuras de Datos)' },
+  { label: 'Rango en el leaderboard nacional',                  detail: 'Posición actualizada en tiempo real' },
+  { label: 'Sectores completados con código que funciona',       detail: 'No presentaciones — misiones con output real' },
+  { label: 'Bitácora pública de errores → soluciones',          detail: 'La diferencia entre alguien que aprendió y alguien que lo dice' },
 ]
 
 const FOOTER_LINKS = [
@@ -31,6 +53,8 @@ const FOOTER_LINKS = [
   { label: 'Privacidad', href: '/privacidad' },
   { label: 'Términos',   href: '/terminos'   },
 ]
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function ActivacionSection() {
   return (
@@ -59,20 +83,20 @@ export default function ActivacionSection() {
             className="relative p-6 border-l-2 mb-4"
             style={{ borderColor: '#FF0033', background: 'rgba(255,0,51,0.025)' }}
           >
-            <p className="text-base sm:text-lg font-black tracking-[0.05em] text-white/80 uppercase leading-snug mb-2">
-              La mayoría termina el curso.
+            <p className="text-base sm:text-lg font-black tracking-[0.04em] text-white/80 uppercase leading-snug mb-2">
+              El mercado no contrata certificados.
             </p>
-            <p className="text-base sm:text-lg font-black tracking-[0.05em] uppercase leading-snug">
-              <span className="text-[#FF0033]">Muy pocos</span>{' '}
-              <span className="text-white/80">aprenden a construir sistemas.</span>
+            <p className="text-base sm:text-lg font-black tracking-[0.04em] uppercase leading-snug">
+              <span className="text-[#FF0033]">Contrata</span>{' '}
+              <span className="text-white/80">operadores que construyen.</span>
             </p>
             <p className="text-[10px] text-[#00FF41]/40 tracking-[0.25em] mt-3 uppercase">
-              DAKI no te enseña a completar ejercicios. Te forja hasta que no los necesitás.
+              DAKI no te enseña a completar ejercicios. Te forja hasta que construís sin red de contención.
             </p>
           </div>
         </motion.div>
 
-        {/* ── Lo que obtenés gratis ────────────────────────────────────────────── */}
+        {/* ── Acceso inmediato ─────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.06 }}
@@ -88,7 +112,7 @@ export default function ActivacionSection() {
                 key={label}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + i * 0.05, duration: 0.2 }}
+                transition={{ delay: 0.10 + i * 0.05, duration: 0.20 }}
                 className="flex items-start gap-3 px-4 py-3 border border-[#00FF41]/10 bg-[#00FF41]/[0.025] transition-all duration-150"
                 onMouseEnter={e => {
                   ;(e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,65,0.25)'
@@ -104,46 +128,48 @@ export default function ActivacionSection() {
                   ✓
                 </span>
                 <div className="min-w-0">
-                  <span className="text-[10px] font-black tracking-[0.2em] text-[#00FF41]/80 uppercase">{icon} {label}</span>
+                  <span className="text-[10px] font-black tracking-[0.2em] text-[#00FF41]/80 uppercase">
+                    {icon} {label}
+                  </span>
                   <p className="text-[9px] text-[#00FF41]/40 tracking-wide mt-0.5">{detail}</p>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Lo que te espera adentro (tease de membresía — sin precio) */}
+          {/* Tu progreso es verificable */}
           <div
-            className="relative px-4 py-4 border border-dashed overflow-hidden"
-            style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(0,0,0,0.4)' }}
+            className="relative px-4 py-4 border overflow-hidden"
+            style={{ borderColor: 'rgba(6,182,212,0.20)', background: 'rgba(6,182,212,0.03)' }}
           >
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.005) 8px, rgba(255,255,255,0.005) 9px)' }}
+            <motion.div
+              className="absolute top-0 left-0 right-0 h-px"
+              style={{ background: 'linear-gradient(90deg,transparent,rgba(6,182,212,0.50),transparent)' }}
+              animate={{ opacity: [0.2, 0.8, 0.2] }}
+              transition={{ duration: 2.8, repeat: Infinity }}
             />
-            <p className="text-[8px] tracking-[0.5em] text-white/20 uppercase mb-3">
-              {'// UNA VEZ DENTRO — PRÓXIMAS FORMACIONES'}
+            <p className="text-[8px] tracking-[0.5em] mb-3"
+              style={{ color: 'rgba(6,182,212,0.45)' }}>
+              {'// TU PROGRESO ES VERIFICABLE — NO SOLO UN NÚMERO'}
             </p>
             <div className="flex flex-col gap-2">
-              {WHAT_AWAITS.map(({ label, color, status }) => (
-                <div key={label} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px]">🔒</span>
-                    <span className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: `${color}55` }}>
+              {VERIFIABLE.map(({ label, detail }) => (
+                <div key={label} className="flex items-start gap-2">
+                  <span className="text-[10px] shrink-0 mt-0.5"
+                    style={{ color: 'rgba(6,182,212,0.70)' }}>▸</span>
+                  <div>
+                    <p className="text-[9px] font-black tracking-[0.15em]"
+                      style={{ color: 'rgba(6,182,212,0.75)' }}>
                       {label}
-                    </span>
+                    </p>
+                    <p className="text-[8px] tracking-wide"
+                      style={{ color: 'rgba(6,182,212,0.35)' }}>
+                      {detail}
+                    </p>
                   </div>
-                  <span
-                    className="text-[7px] tracking-[0.3em] px-2 py-0.5 border"
-                    style={{ color: `${color}55`, borderColor: `${color}20`, background: `${color}05` }}
-                  >
-                    {status}
-                  </span>
                 </div>
               ))}
             </div>
-            <p className="text-[8px] text-white/15 tracking-[0.25em] mt-3 italic">
-              Los verás en el Hub. Cuando quieras acceder, sabés dónde encontrarnos.
-            </p>
           </div>
         </motion.div>
 
@@ -233,7 +259,7 @@ export default function ActivacionSection() {
                 DAKIedtech
               </p>
               <p className="text-[#00FF41]/15 text-[9px] tracking-[0.25em] hidden sm:block">
-                Entrena. Despliega. Domina el ecosistema.
+                Python. Gamificado. Verificable.
               </p>
             </div>
             <div className="flex items-center gap-5">
