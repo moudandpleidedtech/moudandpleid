@@ -178,7 +178,8 @@ export default function RegisterPage() {
           : `OPERADOR ${data.callsign} REGISTRADO. ABRIENDO EL NEXO...`
 
         setConsole({ text: msg, state: 'success' })
-        setTimeout(() => router.push('/hub'), 1400)
+        // Nuevos operadores → onboarding antes del hub
+        setTimeout(() => router.push('/onboarding'), 1400)
         return
       }
 
