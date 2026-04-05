@@ -376,9 +376,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [dakiErrorLine, setDakiErrorLine] = useState<number | null>(null)
   const [surgeActive,   setSurgeActive]   = useState(false)
 
-  // Gaming experience
+  // Gaming experience — sonido persiste en localStorage
   const [ambientOn,    setAmbientOn]    = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try { return localStorage.getItem('daki_sound_enabled') !== 'false' } catch { return true }
+  })
   const [sessionSecs,  setSessionSecs]  = useState(0)
   const [focusMode,    setFocusMode]    = useState(false)
   const waveformTimerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -493,7 +495,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (!res.ok) return
       const data = await res.json()
       const msg: string = data.daki_message ?? ''
-      if (!msg) return
+      // Filtrar mensajes de error interno — no mostrar fallos técnicos al usuario
+      if (!msg || msg.startsWith('[DAKI_SYS]')) return
 
       // Forzar vista de editor para que el terminal sea visible
       setViewMode('editor')
@@ -1473,7 +1476,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 transition={{ duration: 1.2, repeat: Infinity }}
                 className="text-[#FFB800] text-xs tracking-widest cursor-pointer"
                 onClick={() => requestHint(output)}
-                title="Solicitar pista de DAKI"
+                title="ENIGMA — Pista de DAKI (se activa tras 2 fallos consecutivos)"
               >
                 ENIGMA?
               </motion.span>
@@ -1491,8 +1494,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
             >♪</button>
             {/* Sound effects toggle */}
             <button
-              onClick={() => setSoundEnabled((v) => !v)}
-              title={soundEnabled ? 'Silenciar efectos' : 'Activar efectos de sonido'}
+              onClick={() => setSoundEnabled((v) => {
+                const next = !v
+                try { localStorage.setItem('daki_sound_enabled', String(next)) } catch { /* */ }
+                return next
+              })}
+              title={soundEnabled ? 'Silenciar efectos de sonido' : 'Activar efectos de sonido'}
               className="text-xs px-2 py-0.5 border transition-all duration-150 select-none"
               style={{
                 borderColor: soundEnabled ? 'rgba(0,255,65,0.6)' : 'rgba(0,255,65,0.2)',
