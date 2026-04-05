@@ -391,24 +391,6 @@ export default function CodeWorkspace({ challengeId }: Props) {
     waveformTimerRef.current = setTimeout(() => setWaveformActive(false), duration)
   }, [])
 
-  // ── DAKI Presence transitions ─────────────────────────────────────────────
-  useEffect(() => {
-    if (isRunning) setDakiState('scanning')
-    else if (!waveformActive) setDakiState('idle')
-  }, [isRunning, waveformActive])
-
-  useEffect(() => {
-    if (waveformActive) setDakiState('speaking')
-    else if (!isRunning) setDakiState('idle')
-  }, [waveformActive, isRunning])
-
-  useEffect(() => {
-    if (!dakiMessage) return
-    setSurgeActive(true)
-    const t = setTimeout(() => setSurgeActive(false), 700)
-    return () => clearTimeout(t)
-  }, [dakiMessage])
-
   // Paywall modal: se muestra si el backend devuelve 402 (usuarios con trial/licensed vencido)
   const [showPaywall,    setShowPaywall]    = useState(false)
   // Alpha Code modal: se muestra si el backend devuelve 402 y el usuario no tiene ningún acceso
@@ -465,6 +447,24 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Guardia de hidratación: esperar a que Zustand lea localStorage antes de evaluar userId
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => { setHydrated(true) }, [])
+
+  // ── DAKI Presence transitions ─────────────────────────────────────────────
+  useEffect(() => {
+    if (isRunning) setDakiState('scanning')
+    else if (!waveformActive) setDakiState('idle')
+  }, [isRunning, waveformActive])
+
+  useEffect(() => {
+    if (waveformActive) setDakiState('speaking')
+    else if (!isRunning) setDakiState('idle')
+  }, [waveformActive, isRunning])
+
+  useEffect(() => {
+    if (!dakiMessage) return
+    setSurgeActive(true)
+    const t = setTimeout(() => setSurgeActive(false), 700)
+    return () => clearTimeout(t)
+  }, [dakiMessage])
 
   useEffect(() => {
     if (!hydrated) return
