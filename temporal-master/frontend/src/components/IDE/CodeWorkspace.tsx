@@ -12,6 +12,7 @@ import Toast from '@/components/UI/Toast'
 import MissionBriefing from '@/components/Game/MissionBriefing'
 import VictoryModal, { type VictoryNext } from '@/components/UI/VictoryModal'
 import DakiHint from '@/components/IDE/DakiHint'
+import DakiPresence, { type DakiState } from '@/components/IDE/DakiPresence'
 import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
 import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
@@ -370,6 +371,11 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Waveform: true mientras DAKI "habla" (~duración estimada del mensaje)
   const [waveformActive, setWaveformActive] = useState(false)
 
+  // DAKI Presence state
+  const [dakiState,     setDakiState]     = useState<DakiState>('idle')
+  const [dakiErrorLine, setDakiErrorLine] = useState<number | null>(null)
+  const [surgeActive,   setSurgeActive]   = useState(false)
+
   // Gaming experience
   const [ambientOn,    setAmbientOn]    = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -384,6 +390,24 @@ export default function CodeWorkspace({ challengeId }: Props) {
     const duration = Math.min(Math.max(msg.length * 40, 2000), 8000)
     waveformTimerRef.current = setTimeout(() => setWaveformActive(false), duration)
   }, [])
+
+  // ── DAKI Presence transitions ─────────────────────────────────────────────
+  useEffect(() => {
+    if (isRunning) setDakiState('scanning')
+    else if (!waveformActive) setDakiState('idle')
+  }, [isRunning, waveformActive])
+
+  useEffect(() => {
+    if (waveformActive) setDakiState('speaking')
+    else if (!isRunning) setDakiState('idle')
+  }, [waveformActive, isRunning])
+
+  useEffect(() => {
+    if (!dakiMessage) return
+    setSurgeActive(true)
+    const t = setTimeout(() => setSurgeActive(false), 700)
+    return () => clearTimeout(t)
+  }, [dakiMessage])
 
   // Paywall modal: se muestra si el backend devuelve 402 (usuarios con trial/licensed vencido)
   const [showPaywall,    setShowPaywall]    = useState(false)
@@ -1002,6 +1026,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const lineLabel = ei.line ? `${ei.line}` : '?'
         lines.push({ text: `[${ei.error_type}] Línea ${lineLabel}: ${ei.detail}`, kind: 'stderr' })
         applyErrorDecoration(ei.line)
+        setDakiState('error')
+        setDakiErrorLine(ei.line ?? null)
+        setTimeout(() => { setDakiState('idle'); setDakiErrorLine(null) }, 3500)
       }
 
       // ── DAKI: reacción contextual del LLM → DakiHint + voz + waveform ────────
@@ -1055,6 +1082,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         triggerShake('soft')
         triggerEditorAnim('anim-victory-glow', 1400)
         triggerTerminalAnim('anim-victory-glow', 1400)
+        setDakiState('success')
+        setTimeout(() => setDakiState('idle'), 2500)
         setShowParticles(true)
         setTimeout(() => setShowParticles(false), 1400)
         playSound(audioVictoryRef)
@@ -1541,7 +1570,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         <div className={`flex flex-1 overflow-hidden transition-all ${viewMode === 'briefing' ? 'hidden' : ''}`}>
 
           {/* Editor */}
-          <div id="code-editor-panel" className={`flex-1 flex flex-col min-w-0 border border-transparent ${editorAnim}`}>
+          <div id="code-editor-panel" className={`relative flex-1 flex flex-col min-w-0 border border-transparent ${editorAnim} ${surgeActive ? 'daki-surge-active' : ''}`}>
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#00FF41]/10 bg-[#0D0D0D] shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-[#00FF41]/40 text-xs tracking-widest">editor · python</span>
@@ -1608,6 +1637,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 }}
               />
             </div>
+
+            {/* DAKI Presence — avatar vivo flotante */}
+            <DakiPresence state={dakiState} errorLine={dakiErrorLine} />
           </div>
 
           {/* Panel derecho — flash verde/rojo en éxito/error */}
