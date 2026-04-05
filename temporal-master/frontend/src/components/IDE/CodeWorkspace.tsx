@@ -551,6 +551,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // ── Initialize audio (client-only) ───────────────────────────────────────
   useEffect(() => {
     audioVictoryRef.current = new Audio('/sounds/victory.mp3')
+    audioVictoryRef.current.volume = 0.3   // mitad del máximo — festivo pero no agresivo
     audioRunRef.current     = new Audio('/sounds/data-stream.mp3')
     audioRunRef.current.volume  = 0.4
     audioHintRef.current    = new Audio('/sounds/daki_alert.mp3')
@@ -1318,6 +1319,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         userId={userId ?? ''}
         challengeId={challengeId ?? ''}
         attemptCount={debriefAttempts.current}
+        operatorLevel={level ?? 1}
+        difficultyTier={challenge?.difficulty_tier ?? 1}
         onClose={() => { setShowDebrief(false); setShowVictory(true) }}
       />
 

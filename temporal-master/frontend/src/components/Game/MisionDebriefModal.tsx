@@ -18,6 +18,8 @@ interface Props {
   userId: string
   challengeId: string
   attemptCount: number
+  operatorLevel?: number    // nivel del operador — calibra dificultad de la pregunta
+  difficultyTier?: number   // tier del challenge — 1=básico, 2=intermedio, 3=avanzado
   onClose: () => void
 }
 
@@ -26,6 +28,8 @@ export default function MisionDebriefModal({
   userId,
   challengeId,
   attemptCount,
+  operatorLevel = 1,
+  difficultyTier = 1,
   onClose,
 }: Props) {
   const [question, setQuestion] = useState('')
@@ -43,17 +47,26 @@ export default function MisionDebriefModal({
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_id:       userId,
-        challenge_id:  challengeId,
-        attempt_count: attemptCount,
+        user_id:        userId,
+        challenge_id:   challengeId,
+        attempt_count:  attemptCount,
+        operator_level: operatorLevel,
+        difficulty_tier: difficultyTier,
       }),
     })
       .then(r => r.ok ? r.json() : null)
       .then((d: { question: string } | null) => {
-        setQuestion(d?.question ?? '¿Qué patrón usarías si el input de esta misión cambiara de tipo?')
+        const fallback = operatorLevel <= 5 || difficultyTier <= 1
+          ? '¿Con tus palabras, qué hizo el código que escribiste?'
+          : operatorLevel <= 15 || difficultyTier <= 2
+          ? '¿Qué cambiarías si el valor de entrada fuera diferente?'
+          : '¿Cómo aplicarías este patrón si los datos de entrada cambiaran de tipo?'
+        setQuestion(d?.question ?? fallback)
       })
       .catch(() => {
-        setQuestion('¿Cómo aplicarías este mismo patrón en un sistema con múltiples módulos?')
+        setQuestion(operatorLevel <= 5 || difficultyTier <= 1
+          ? '¿Con tus palabras, qué hizo el código que escribiste?'
+          : '¿Qué modificarías en tu solución si el tipo de dato cambiara?')
       })
       .finally(() => setLoading(false))
   }, [visible, challengeId]) // eslint-disable-line react-hooks/exhaustive-deps

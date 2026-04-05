@@ -358,22 +358,68 @@ async def ask_daki(
 
 # ─── POST /api/v1/daki/debrief — Bucle metacognitivo post-misión ─────────────
 
-_DEBRIEF_DIRECTIVE = """\
-[DIRECTIVA: DEBRIEF POST-MISIÓN — BUCLE METACOGNITIVO]
-El Operador acaba de completar una misión exitosamente. Formula UNA pregunta de reflexión táctica.
-Objetivo: activar el bucle metacognitivo para consolidar el aprendizaje.
+_DEBRIEF_DIRECTIVES: dict[str, str] = {
+    "beginner": """\
+[DIRECTIVA: DEBRIEF POST-MISIÓN — NIVEL PRINCIPIANTE]
+El Operador acaba de completar su primera misión o una misión de nivel básico.
+Formula UNA pregunta muy simple y concreta sobre lo que acaba de hacer.
 La pregunta debe:
-  1. Referir directamente al concepto o patrón usado en la misión.
+  1. Referirse solo a lo que vio en esta misión — sin conceptos externos.
+  2. Ser respondible con una o dos oraciones simples. No tiene que razonar en abstracto.
+  3. Usar lenguaje cotidiano, sin jerga técnica.
+  4. Máximo 1 línea. Solo la pregunta.
+Ejemplos de tono correcto: "¿Para qué sirvió print() en lo que escribiste?",
+  "Con tus palabras, ¿qué hizo la variable que usaste?",
+  "¿Qué cambiaría si escribieras un número diferente en tu código?"
+NO preguntes sobre sistemas, módulos, arquitecturas ni casos abstractos.\
+""",
+    "intermediate": """\
+[DIRECTIVA: DEBRIEF POST-MISIÓN — NIVEL INTERMEDIO]
+El Operador acaba de completar una misión de dificultad intermedia.
+Formula UNA pregunta de reflexión que lo haga pensar en el patrón que usó.
+La pregunta debe:
+  1. Referir directamente al concepto o patrón de la misión.
+  2. Invitar a pensar en qué pasaría si cambiara un elemento del problema.
+  3. Máximo 2 líneas. Sin preámbulo. Solo la pregunta.
+Tono: evaluador directo. No felicites. Solo el interrogatorio.\
+""",
+    "advanced": """\
+[DIRECTIVA: DEBRIEF POST-MISIÓN — NIVEL AVANZADO]
+El Operador acaba de completar una misión compleja.
+Formula UNA pregunta de reflexión táctica que lo obligue a razonar más allá de la misión.
+La pregunta debe:
+  1. Referir al concepto central y exigir transferencia a otro contexto.
   2. No tener respuesta obvia — que obligue a razonar, no a confirmar.
   3. Máximo 2 líneas. Sin preámbulo. Solo la pregunta.
-Tono: evaluador directo. No felicites. No elogies. Solo el interrogatorio.\
-"""
+Tono: evaluador exigente. No felicites. Solo el interrogatorio.\
+""",
+}
+
+_DEBRIEF_FALLBACKS: dict[str, str] = {
+    "beginner":     "¿Con tus palabras, qué hace el código que escribiste en esta misión?",
+    "intermediate": "¿Qué cambiarías en tu solución si el tipo de datos de entrada fuera diferente?",
+    "advanced":     "¿Cómo aplicarías este patrón en un contexto con múltiples módulos?",
+}
+
+
+def _get_debrief_tier(operator_level: int, difficulty_tier: int) -> str:
+    """
+    Determina el nivel de dificultad del debrief según el nivel del operador
+    y el tier de dificultad del challenge.
+    """
+    if operator_level <= 5 or difficulty_tier <= 1:
+        return "beginner"
+    if operator_level <= 15 or difficulty_tier <= 2:
+        return "intermediate"
+    return "advanced"
 
 
 class DebriefRequest(BaseModel):
     user_id: uuid.UUID
     challenge_id: uuid.UUID
     attempt_count: int = 1
+    operator_level: int = 1    # nivel actual del Operador en la plataforma
+    difficulty_tier: int = 1   # tier de dificultad del challenge (1=básico, 2=intermedio, 3=avanzado)
 
 
 class DebriefResponse(BaseModel):
@@ -395,28 +441,39 @@ async def mission_debrief(
     una misión. Activa el bucle metacognitivo: el Operador debe articular
     qué aprendió y qué haría diferente — duplicando la retención a largo plazo.
     """
+    tier = _get_debrief_tier(payload.operator_level, payload.difficulty_tier)
+    directive = _DEBRIEF_DIRECTIVES[tier]
+    fallback  = _DEBRIEF_FALLBACKS[tier]
+
     challenge = await db.get(Challenge, payload.challenge_id)
     if challenge is None:
-        return DebriefResponse(
-            question="Misión completada. ¿Qué patrón usarías si el tipo de entrada cambiara?"
-        )
+        return DebriefResponse(question=fallback)
 
     concepts = _extract_concepts(challenge)
     concept_str = ", ".join(concepts[:3]) if concepts else "código Python"
 
+    # Usar el difficulty_tier real del challenge si está disponible
+    effective_tier = _get_debrief_tier(
+        payload.operator_level,
+        getattr(challenge, "difficulty_tier", payload.difficulty_tier) or payload.difficulty_tier,
+    )
+    directive = _DEBRIEF_DIRECTIVES[effective_tier]
+    fallback  = _DEBRIEF_FALLBACKS[effective_tier]
+
     user_msg = (
-        f"{_DEBRIEF_DIRECTIVE}\n\n"
+        f"{directive}\n\n"
         f"--- MISIÓN COMPLETADA ---\n"
         f"Nombre: {challenge.title}\n"
         f"Descripción: {challenge.description}\n"
         f"Conceptos evaluados: {concept_str}\n"
+        f"Nivel del Operador: {payload.operator_level}\n"
         f"Intentos del Operador: {payload.attempt_count}\n\n"
         "Formula la pregunta de debrief. Solo la pregunta, nada más."
     )
 
-    question = await _call_haiku(user_msg, max_tokens=120)
+    question = await _call_haiku(user_msg, max_tokens=100)
     if not question or question.startswith("[DAKI_SYS]"):
-        question = f"¿Cómo aplicarías {concepts[0] if concepts else 'este patrón'} en un sistema con múltiples módulos?"
+        question = fallback
 
     return DebriefResponse(question=question)
 
