@@ -555,6 +555,21 @@ export default function HubPage() {
   const [showFallas,         setShowFallas]         = useState(false)
   const [showIntelReport,    setShowIntelReport]    = useState(false)
   const [showOnboarding,     setShowOnboarding]     = useState(false)
+  const [showDakiGreeting,   setShowDakiGreeting]   = useState(false)
+
+  // ── Saludo de DAKI — una vez por sesión de navegador ──────────────────────
+  useEffect(() => {
+    if (!username) return
+    try {
+      if (sessionStorage.getItem('daki_greeted')) return
+      sessionStorage.setItem('daki_greeted', '1')
+    } catch { /* */ }
+    const t = setTimeout(() => {
+      setShowDakiGreeting(true)
+      setTimeout(() => setShowDakiGreeting(false), 5000)
+    }, 900)
+    return () => clearTimeout(t)
+  }, [username])
 
   // ── XP progress hacia próximo nivel ────────────────────────────────────────
   // Fórmula: level = floor(0.1 * sqrt(XP)) + 1  →  XP en nivel N = ((N-1)*10)²
@@ -1497,6 +1512,69 @@ export default function HubPage() {
           </motion.div>
         </div>
       )}
+
+      {/* ── Saludo de DAKI ───────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDakiGreeting && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0,   scale: 1 }}
+            exit={{    opacity: 0, y: -10,  scale: 0.97 }}
+            transition={{ duration: 0.28, ease: 'easeOut' }}
+            className="fixed top-14 left-1/2 z-[90] -translate-x-1/2 pointer-events-none"
+          >
+            <div
+              className="flex items-center gap-3 px-5 py-3 font-mono backdrop-blur-sm"
+              style={{
+                border:     '1px solid rgba(0,207,255,0.35)',
+                background: 'rgba(0,0,0,0.88)',
+                boxShadow:  '0 0 28px rgba(0,207,255,0.15), 0 4px 24px rgba(0,0,0,0.6)',
+              }}
+            >
+              {/* Ojo de DAKI */}
+              <motion.span
+                className="text-xl leading-none shrink-0"
+                style={{ color: '#00CFFF', textShadow: '0 0 12px rgba(0,207,255,0.8)' }}
+                animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.12, 1] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+              >◈</motion.span>
+
+              {/* Texto */}
+              <div>
+                <span className="text-[8px] tracking-[0.45em] block mb-0.5"
+                  style={{ color: 'rgba(0,207,255,0.45)' }}>
+                  DAKI · TRANSMISIÓN
+                </span>
+                <span className="text-[12px] font-bold tracking-[0.1em]"
+                  style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  {(() => {
+                    const h = new Date().getHours()
+                    const saludo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+                    return `${saludo}, `
+                  })()}
+                  <span style={{ color: '#00CFFF', textShadow: '0 0 8px rgba(0,207,255,0.6)' }}>
+                    {username?.toUpperCase()}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>.</span>
+                </span>
+              </div>
+
+              {/* Waveform decorativa */}
+              <div className="flex items-end gap-0.5 h-4 shrink-0">
+                {[5,9,14,8,12,6,10,7,13,5].map((h, i) => (
+                  <motion.span key={i}
+                    className="block w-0.5 rounded-full"
+                    style={{ background: '#00CFFF', opacity: 0.5 }}
+                    animate={{ height: [h * 0.5, h, h * 0.3, h * 0.8, h * 0.5] }}
+                    transition={{ duration: 0.6 + i * 0.04, repeat: Infinity, ease: 'easeInOut', delay: i * 0.05 }}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
     </MobileGate>
   )
