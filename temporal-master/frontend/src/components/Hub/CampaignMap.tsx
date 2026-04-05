@@ -91,24 +91,6 @@ const ZONES: CampaignZone[] = [
       },
     ],
   },
-  {
-    codex_id: 'cybersecurity',
-    title: 'CIBERSEGURIDAD',
-    subtitle: 'Protocolo Clasificado',
-    color: '#FF2D78',
-    icon: '⬟',
-    status: 'coming_soon',
-    nodes: [],
-  },
-  {
-    codex_id: 'engineering',
-    title: 'INGENIERÍA',
-    subtitle: 'Arquitectura del Sistema',
-    color: '#8B5CF6',
-    icon: '⬠',
-    status: 'coming_soon',
-    nodes: [],
-  },
 ]
 
 // ─── Fallback de progreso — solo el primer sector desbloqueado ────────────────
