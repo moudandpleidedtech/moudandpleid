@@ -22,6 +22,10 @@ import MisionDebriefModal from '@/components/Game/MisionDebriefModal'
 import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
 import FlashRecallModal from '@/components/Game/FlashRecallModal'
 import SecretMissionRevealModal from '@/components/Game/SecretMissionRevealModal'
+import MilestoneModal from '@/components/Game/MilestoneModal'
+import DakiIntelCard from '@/components/IDE/DakiIntelCard'
+import { useMilestones, type MilestoneUnlock } from '@/hooks/useMilestones'
+import { pushMission } from '@/hooks/useSessionLog'
 import AchievementToast, { type Achievement } from '@/components/UI/AchievementToast'
 import InsightFlash from '@/components/UI/InsightFlash'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
@@ -52,6 +56,8 @@ interface Challenge {
   challenge_type?: string
   hints?: string[]
   is_free?: boolean
+  slug?: string | null
+  concepts_taught_json?: string[] | null
 }
 
 interface ChallengeListItem {
@@ -339,8 +345,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
   const [allChallenges, setAllChallenges] = useState<ChallengeListItem[]>([])
-  // 'briefing' → muestra teoría antes del editor; 'editor' → modo normal
-  const [viewMode, setViewMode]           = useState<'briefing' | 'editor'>('editor')
+  // 'briefing' → teoría completa | 'intel' → glossary fallback | 'editor' → modo normal
+  const [viewMode, setViewMode]           = useState<'briefing' | 'intel' | 'editor'>('editor')
   const [code, setCode]                   = useState('')
   const [output, setOutput]               = useState<ConsoleLine[]>([
     { text: '> Terminal lista.', kind: 'info' },
@@ -446,13 +452,20 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
   const [activeAchievements, setActiveAchievements] = useState<Achievement[]>([])
   const [activeInsight, setActiveInsight] = useState<string | null>(null)
-  const [secretReveal, setSecretReveal] = useState<{ missionName: string; description: string } | null>(null)
+  const [secretReveal,    setSecretReveal]    = useState<{ missionName: string; description: string } | null>(null)
+  const [activeMilestone, setActiveMilestone] = useState<MilestoneUnlock | null>(null)
+  const [sessionAttempts, setSessionAttempts] = useState(0)  // intentos en misión actual
 
   // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
   const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
 
   // F6: Micro-transmisiones
   const { message: microMsg, dismiss: dismissMicro, fire: fireMicro } = useMicroBroadcast(failStreak)
+
+  // Milestones narrativos del journey
+  const { checkMilestones } = useMilestones((milestone) => {
+    setActiveMilestone(milestone)
+  })
 
   // F8: Misiones Secretas
   const { checkBehavior: checkSecretMissions } = useSecretMissions((unlock) => {
@@ -737,9 +750,21 @@ export default function CodeWorkspace({ challengeId }: Props) {
         } else {
           setCode(draft ?? mergedData.initial_code ?? '')
         }
-        // Briefing teórico: solo para misiones normales no completadas
-        if (mergedData.theory_content && !mergedData.completed && mergedData.challenge_type !== 'tutorial') {
-          setViewMode('briefing')
+        // Briefing teórico: DB → 'briefing'; glossary fallback → 'intel'; ya completada → 'editor'
+        if (!mergedData.completed && mergedData.challenge_type !== 'tutorial') {
+          if (mergedData.theory_content) {
+            setViewMode('briefing')
+          } else {
+            const concepts: string[] = (() => {
+              const raw = mergedData.concepts_taught_json
+              if (!raw) return []
+              if (Array.isArray(raw)) return raw
+              try { return JSON.parse(raw as unknown as string) } catch { return [] }
+            })()
+            if (concepts.length > 0) setViewMode('intel')
+          }
+        } else {
+          setViewMode('editor')
         }
       })
       .catch((err) => { if (err?.name !== 'AbortError') {} })
@@ -902,16 +927,24 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (data.hint) {
         playSound(audioHintRef)
         setOutput((prev) => {
-          const next = [
-            ...prev,
+          const lines: ConsoleLine[] = [
             { text: '', kind: 'enigma' as const },
-            { text: '[DAKI] Transmisión entrante...', kind: 'enigma' as const },
-            ...data.hint.split('\n').map((line: string) => ({
-              text: `[DAKI] ${line}`, kind: 'enigma' as const,
-            })),
           ]
+          // Modo Socrático: preguntas guía antes de la pista directa
+          if (data.questions && data.questions.length > 0) {
+            lines.push({ text: '[DAKI] // MODO SOCRÁTICO — razona antes de leer la pista:', kind: 'enigma' as const })
+            data.questions.forEach((q: string) => {
+              lines.push({ text: `[DAKI] ▸ ${q}`, kind: 'enigma' as const })
+            })
+            lines.push({ text: '[DAKI] ─────────────────────────────────', kind: 'enigma' as const })
+          } else {
+            lines.push({ text: '[DAKI] Transmisión entrante...', kind: 'enigma' as const })
+          }
+          data.hint.split('\n').forEach((line: string) => {
+            lines.push({ text: `[DAKI] ${line}`, kind: 'enigma' as const })
+          })
           scrollConsole()
-          return next
+          return [...prev, ...lines]
         })
       }
     } catch { /* fallo silencioso */ }
@@ -1175,6 +1208,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const timeSpent = Date.now() - challengeStartMs.current
         checkSecretMissions(usedHintThisMission, timeSpent, failStreak === 0)
 
+        // Session log — registrar misión completada para Fin de Turno e Hub memoria
+        const totalCompleted = parseInt(localStorage.getItem('pq-missions-completed') || '0', 10) + 1
+        pushMission({
+          title:      challenge?.title ?? 'Misión',
+          tier:       challenge?.difficulty_tier ?? 1,
+          time_ms:    timeSpent,
+          hints_used: usedHintThisMission,
+          attempts:   sessionAttempts + 1,
+        })
+        setSessionAttempts(0)
+
+        // Milestones narrativos del journey
+        const consecutiveLog = JSON.parse(localStorage.getItem('pq-behavior-log') || '{}')
+        checkMilestones({
+          totalMissions:     totalCompleted,
+          hintsUsed:         usedHintThisMission,
+          timeMs:            timeSpent,
+          attempts:          failStreak + 1,
+          tier:              challenge?.difficulty_tier ?? 1,
+          consecutiveNoHint: consecutiveLog.consecutive_no_hint ?? 0,
+          streakDays:        0,
+        })
+
         // F3: Marcar anomalía del día como completada si coincide con este challenge
         try {
           const anomalyRaw = localStorage.getItem('daki-anomaly-today')
@@ -1381,6 +1437,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
         missionName={secretReveal?.missionName ?? ''}
         description={secretReveal?.description ?? ''}
         onClose={() => setSecretReveal(null)}
+      />
+
+      {/* Milestone — hito del journey */}
+      <MilestoneModal
+        milestone={activeMilestone}
+        onClose={() => setActiveMilestone(null)}
       />
 
       {/* F6: Micro-transmisiones DAKI */}
@@ -1730,7 +1792,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           </div>
         )}
 
-        {/* Briefing — se muestra antes del editor si hay theory_content */}
+        {/* Briefing — DB theory_content */}
         <AnimatePresence mode="wait">
           {viewMode === 'briefing' && challenge?.theory_content && (
             <motion.div
@@ -1751,8 +1813,30 @@ export default function CodeWorkspace({ challengeId }: Props) {
           )}
         </AnimatePresence>
 
+        {/* Intel Card — glossary fallback cuando no hay theory_content */}
+        <AnimatePresence mode="wait">
+          {viewMode === 'intel' && challenge && (
+            <motion.div
+              key="intel-wrapper"
+              className="flex-1 overflow-hidden flex"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <DakiIntelCard
+                concepts={(() => {
+                  try { return JSON.parse((challenge as any).concepts_taught_json || '[]') } catch { return [] }
+                })()}
+                challengeTitle={challenge.title}
+                onStart={() => setViewMode('editor')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Layout principal — editor + consola */}
-        <div className={`flex flex-1 overflow-hidden transition-all ${viewMode === 'briefing' ? 'hidden' : ''}`}>
+        <div className={`flex flex-1 overflow-hidden transition-all ${viewMode !== 'editor' ? 'hidden' : ''}`}>
 
           {/* Editor */}
           <div id="code-editor-panel" className={`relative flex-1 flex flex-col min-w-0 border border-transparent ${editorAnim} ${surgeActive ? 'daki-surge-active' : ''}`}>

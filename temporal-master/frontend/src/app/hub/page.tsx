@@ -16,6 +16,10 @@ import IntelReportModal from '@/components/Hub/IntelReportModal'
 import DistincionesPanel from '@/components/Hub/DistincionesPanel'
 import SkillTreePanel from '@/components/Hub/SkillTreePanel'
 import DailyAnomalyCard from '@/components/Hub/DailyAnomalyCard'
+import DakiMemoriaCard from '@/components/Hub/DakiMemoriaCard'
+import FinDeTurnoModal from '@/components/Game/FinDeTurnoModal'
+import { getSessionLog, clearSessionLog } from '@/hooks/useSessionLog'
+import type { SessionMission } from '@/hooks/useSessionLog'
 
 // ─── Frases de DAKI ───────────────────────────────────────────────────────────
 
@@ -557,6 +561,8 @@ export default function HubPage() {
   const [showIntelReport,    setShowIntelReport]    = useState(false)
   const [showOnboarding,     setShowOnboarding]     = useState(false)
   const [showDakiGreeting,   setShowDakiGreeting]   = useState(false)
+  const [sessionLog,         setSessionLog]         = useState<SessionMission[]>([])
+  const [showFinDeTurno,     setShowFinDeTurno]     = useState(false)
 
   // ── Saludo de DAKI — una vez por sesión de navegador ──────────────────────
   useEffect(() => {
@@ -593,6 +599,11 @@ export default function HubPage() {
       setTimeout(() => setShowOnboarding(true), 900)
     }
   }, [_hasHydrated, userId])
+
+  // ── Cargar log de sesión al montar ────────────────────────────────────────
+  useEffect(() => {
+    setSessionLog(getSessionLog())
+  }, [])
 
   // ── Reenganche — detecta inactividad > 24h ─────────────────────────────────
   useEffect(() => {
@@ -1146,6 +1157,20 @@ export default function HubPage() {
           {/* F3: Anomalía Diaria */}
           <DailyAnomalyCard />
 
+          {/* F4: DAKI Memoria — resumen de sesión activa */}
+          <DakiMemoriaCard />
+
+          {/* F4: Fin de Turno — aparece con 2+ misiones completadas */}
+          {sessionLog.length >= 2 && (
+            <TacticButton
+              onClick={() => setShowFinDeTurno(true)}
+              label="VER INFORME DE TURNO"
+              sublabel={`${sessionLog.length} misiones ejecutadas esta sesión`}
+              icon="◎"
+              primary
+            />
+          )}
+
           {/* Separador */}
           <div className="h-px bg-[#00FF41]/8 w-full" />
 
@@ -1516,6 +1541,19 @@ export default function HubPage() {
           </motion.div>
         </div>
       )}
+
+      {/* ── Fin de Turno — resumen de sesión con DAKI ───────────────────────── */}
+      <FinDeTurnoModal
+        visible={showFinDeTurno}
+        userId={userId ?? ''}
+        operatorLevel={level}
+        missions={sessionLog}
+        onClose={() => {
+          setShowFinDeTurno(false)
+          clearSessionLog()
+          setSessionLog([])
+        }}
+      />
 
       {/* ── Saludo de DAKI ───────────────────────────────────────────────────── */}
       <AnimatePresence>

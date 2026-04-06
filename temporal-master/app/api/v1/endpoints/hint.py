@@ -33,6 +33,7 @@ class HintRequest(BaseModel):
 
 class HintResponse(BaseModel):
     hint: str
+    questions: list[str] = []   # Modo Socrático: preguntas guía para fail_count == 1
 
 
 @router.post(
@@ -133,4 +134,37 @@ async def request_hint(
         weak_concepts=weak_concepts or None,
     )
 
-    return HintResponse(hint=hint)
+    # ── Modo Socrático: solo en el primer intento (fail_count == 1) ───────────
+    # Genera 2 preguntas guía para que el Operador razone antes de ver la pista.
+    questions: list[str] = []
+    if payload.fail_count <= 1:
+        import anthropic as _anthropic
+        from app.core.config import settings as _settings
+        from app.services.daki_persona import DAKI_SYSTEM_PROMPT as _SYS
+        _socratic_directive = (
+            "[DIRECTIVA: MODO SOCRÁTICO]\n"
+            "Genera EXACTAMENTE 2 preguntas breves (una por línea) que guíen al Operador "
+            "a descubrir el error por sí mismo, sin revelar la solución. "
+            "Las preguntas deben referirse al código y al error específico. "
+            "Solo las preguntas, sin numeración, sin preámbulo.\n\n"
+            f"Misión: {challenge.title}\n"
+            f"Error del Operador: {resolved_error_type or 'sin error de tipo'}\n"
+            f"Código:\n```python\n{payload.source_code[:600]}\n```"
+        )
+        try:
+            _client = _anthropic.AsyncAnthropic(api_key=_settings.ANTHROPIC_API_KEY)
+            _resp = await _client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=100,
+                system=_SYS,
+                messages=[{"role": "user", "content": _socratic_directive}],
+            )
+            _text = next(
+                (b.text.strip() for b in _resp.content if getattr(b, "type", None) == "text"), ""
+            )
+            questions = [q.strip() for q in _text.splitlines() if q.strip()][:2]
+        except Exception:
+            pass  # Socrático no es crítico — fallback a pista directa
+
+    await db.commit()
+    return HintResponse(hint=hint, questions=questions)

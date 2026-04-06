@@ -72,6 +72,36 @@ No hagas preguntas. No menciones el tiempo. Tono: mentor de combate — directo,
 
 # ─── Schemas ─────────────────────────────────────────────────────────────────
 
+# ── Fin de Turno ──────────────────────────────────────────────────────────────
+
+class SessionMission(BaseModel):
+    title: str
+    tier: int = 1
+    time_ms: int = 0
+    hints_used: bool = False
+    attempts: int = 1
+
+class SessionSummaryRequest(BaseModel):
+    user_id: uuid.UUID
+    missions: list[SessionMission]
+    operator_level: int = 1
+
+class SessionSummaryResponse(BaseModel):
+    summary: str
+    next_directive: str = ""
+
+_SESSION_SUMMARY_DIRECTIVE = """\
+[DIRECTIVA: INFORME DE FIN DE TURNO]
+El Operador acaba de cerrar su turno de entrenamiento en el Nexo.
+Genera un informe breve de EXACTAMENTE 3 secciones (sin encabezados, sin bullets):
+  Línea 1: Reconoce lo completado con frialdad táctica — sin elogios vacíos, con datos.
+  Línea 2: Identifica el patrón más débil detectado en la sesión (mayor número de intentos o pistas usadas).
+  Línea 3: Da UNA directiva concreta y ejecutable para el próximo turno.
+Tono: comandante de operaciones — seco, preciso, con peso. Sin "excelente", "muy bien", "increíble".
+Máximo 4 líneas totales. Solo el informe, nada más.\
+"""
+
+
 class StagnationRequest(BaseModel):
     user_id: uuid.UUID
     challenge_id: uuid.UUID
@@ -476,6 +506,54 @@ async def mission_debrief(
         question = fallback
 
     return DebriefResponse(question=question)
+
+
+# ─── POST /api/v1/daki/session-summary — Informe de Fin de Turno ─────────────
+
+@router.post(
+    "/daki/session-summary",
+    response_model=SessionSummaryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Informe de Fin de Turno — DAKI resume la sesión del Operador",
+)
+@limiter.limit("10/minute")
+async def session_summary(
+    request: Request,
+    payload: SessionSummaryRequest,
+) -> SessionSummaryResponse:
+    """
+    Recibe las misiones completadas en la sesión y genera un informe
+    personalizado de DAKI con análisis de rendimiento y directiva para el
+    próximo turno. No requiere DB — opera solo con los datos enviados.
+    """
+    if not payload.missions:
+        return SessionSummaryResponse(summary="Sin datos de sesión registrados.", next_directive="")
+
+    mission_lines = []
+    for m in payload.missions:
+        hints_str = "ENIGMA usada" if m.hints_used else "sin ENIGMA"
+        time_str = f"{m.time_ms // 1000}s" if m.time_ms else "tiempo N/D"
+        mission_lines.append(
+            f"  • {m.title} | Tier {m.tier} | {m.attempts} intento(s) | {time_str} | {hints_str}"
+        )
+    missions_block = "\n".join(mission_lines)
+
+    user_msg = (
+        f"{_SESSION_SUMMARY_DIRECTIVE}\n\n"
+        f"--- DATOS DEL TURNO ---\n"
+        f"Misiones completadas: {len(payload.missions)}\n"
+        f"Nivel del Operador: {payload.operator_level}\n"
+        f"Detalle:\n{missions_block}\n\n"
+        "Genera el informe de fin de turno. Solo el texto, sin encabezados ni etiquetas."
+    )
+
+    summary = await _call_haiku(user_msg, max_tokens=220)
+    if not summary or summary.startswith("[DAKI_SYS]"):
+        summary = (
+            f"Turno cerrado. {len(payload.missions)} incursión(es) procesada(s). "
+            "Analiza tus intentos y prepara la siguiente ofensiva."
+        )
+    return SessionSummaryResponse(summary=summary)
 
 
 # ─── POST /api/v1/chat — Chat general con memoria de identidad ───────────────
