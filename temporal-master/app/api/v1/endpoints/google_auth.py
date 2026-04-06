@@ -264,26 +264,10 @@ async def google_callback(
     )
 
     # ── 9. Redirigir al frontend ──────────────────────────────────────────────
-    # Usuario nuevo → boot-sequence (onboarding)
-    # Usuario existente → hub directo
-    try:
-        boot_skip = not is_new_user
-    except Exception:
-        boot_skip = True
-
-    destination = f"{frontend_base}/hub" if boot_skip else f"{frontend_base}/boot-sequence"
-    response = RedirectResponse(url=destination, status_code=302)
-    _set_auth_cookie(response, token)
-
-    # enigma_user cookie (leída por el middleware de Next.js para proteger rutas)
-    response.set_cookie(
-        key="enigma_user",
-        value="1",
-        httponly=False,          # legible por JS (el middleware de Next.js la lee)
-        secure=not settings.DEBUG,
-        samesite="lax",
-        max_age=_COOKIE_MAX_AGE,
-        path="/",
-    )
-
-    return response
+    # El token viaja como query param porque backend (daki-api.onrender.com) y
+    # frontend (dakiedtech.com) son dominios distintos — las cookies no cruzan.
+    # La página /auth/google del frontend lee el token, lo persiste en
+    # localStorage + Zustand, setea enigma_user y navega al hub.
+    new_param = "1" if is_new_user else "0"
+    destination = f"{frontend_base}/auth/google?token={token}&new={new_param}"
+    return RedirectResponse(url=destination, status_code=302)
