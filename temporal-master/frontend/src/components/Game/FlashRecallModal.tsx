@@ -128,15 +128,55 @@ const QUESTION_BANK: Question[] = [
   },
 ]
 
-const TIME_LIMIT = 15  // segundos
+const TIME_LIMIT   = 15   // segundos
+const HISTORY_KEY  = 'daki-flash-history'  // Record<questionId, {correct: number, wrong: number}>
+
+type QuestionHistory = Record<string, { correct: number; wrong: number }>
+
+function loadHistory(): QuestionHistory {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function saveResult(questionId: string, wasCorrect: boolean): void {
+  try {
+    const h = loadHistory()
+    if (!h[questionId]) h[questionId] = { correct: 0, wrong: 0 }
+    if (wasCorrect) h[questionId].correct += 1
+    else            h[questionId].wrong   += 1
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(h))
+  } catch {}
+}
 
 function pickQuestion(concepts: string[], lastId: string | null): Question {
-  // Priorizar preguntas relacionadas a conceptos vistos
-  const relevant = concepts.length
-    ? QUESTION_BANK.filter((q) => concepts.includes(q.concept) && q.id !== lastId)
-    : []
-  const pool = relevant.length ? relevant : QUESTION_BANK.filter((q) => q.id !== lastId)
-  return pool[Math.floor(Math.random() * pool.length)]
+  const history = loadHistory()
+
+  // Peso de cada pregunta: preguntas con más errores tienen mayor probabilidad
+  // Nunca vistas → peso base 2. Incorrectas anteriores → peso proporcional.
+  const scored = QUESTION_BANK
+    .filter((q) => q.id !== lastId)
+    .map((q) => {
+      const h = history[q.id]
+      const wrong   = h?.wrong   ?? 0
+      const correct = h?.correct ?? 0
+      // Prioridad 1: conceptos del challenge actual + errores previos
+      const conceptMatch = concepts.includes(q.concept) ? 3 : 1
+      const errorBonus   = wrong > 0 ? wrong * 2 : 0
+      const masteryPenalty = correct >= 3 ? -1 : 0  // deprioritizar preguntas ya dominadas
+      const weight = Math.max(1, conceptMatch + errorBonus + masteryPenalty)
+      return { q, weight }
+    })
+
+  // Selección ponderada
+  const totalWeight = scored.reduce((sum, s) => sum + s.weight, 0)
+  let rand = Math.random() * totalWeight
+  for (const { q, weight } of scored) {
+    rand -= weight
+    if (rand <= 0) return q
+  }
+  return scored[scored.length - 1].q
 }
 
 interface Props {
@@ -165,7 +205,13 @@ export default function FlashRecallModal({ visible, conceptsTaught = [], onClose
 
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) { clearInterval(timerRef.current); setRevealed(true); return 0 }
+        if (t <= 1) {
+          clearInterval(timerRef.current)
+          setRevealed(true)
+          // Timeout cuenta como respuesta incorrecta para el historial
+          setQuestion((q) => { if (q) saveResult(q.id, false); return q })
+          return 0
+        }
         return t - 1
       })
     }, 1000)
@@ -175,10 +221,11 @@ export default function FlashRecallModal({ visible, conceptsTaught = [], onClose
   }, [visible])
 
   const handleSelect = (idx: number) => {
-    if (revealed) return
+    if (revealed || !question) return
     clearInterval(timerRef.current)
     setSelected(idx)
     setRevealed(true)
+    saveResult(question.id, idx === question.correct)
   }
 
   if (!question) return null

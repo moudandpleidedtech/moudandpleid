@@ -21,6 +21,7 @@ import AlphaCodeModal from '@/components/UI/AlphaCodeModal'
 import MisionDebriefModal from '@/components/Game/MisionDebriefModal'
 import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
 import FlashRecallModal from '@/components/Game/FlashRecallModal'
+import SecretMissionRevealModal from '@/components/Game/SecretMissionRevealModal'
 import AchievementToast, { type Achievement } from '@/components/UI/AchievementToast'
 import InsightFlash from '@/components/UI/InsightFlash'
 import { useDakiVoice } from '@/hooks/useDakiVoice'
@@ -445,6 +446,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
   const [activeAchievements, setActiveAchievements] = useState<Achievement[]>([])
   const [activeInsight, setActiveInsight] = useState<string | null>(null)
+  const [secretReveal, setSecretReveal] = useState<{ missionName: string; description: string } | null>(null)
 
   // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
   const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
@@ -454,6 +456,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
   // F8: Misiones Secretas
   const { checkBehavior: checkSecretMissions } = useSecretMissions((unlock) => {
+    // Modal dramático de revelación
+    setSecretReveal({ missionName: unlock.missionName, description: unlock.description })
+    // Toast secundario para el log de logros
     const secretAchievement: Achievement = {
       id: `secret-${unlock.missionName}-${Date.now()}`,
       name: unlock.missionName,
@@ -1170,6 +1175,17 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const timeSpent = Date.now() - challengeStartMs.current
         checkSecretMissions(usedHintThisMission, timeSpent, failStreak === 0)
 
+        // F3: Marcar anomalía del día como completada si coincide con este challenge
+        try {
+          const anomalyRaw = localStorage.getItem('daki-anomaly-today')
+          if (anomalyRaw) {
+            const { id: anomalyId, date: anomalyDate } = JSON.parse(anomalyRaw)
+            if (challenge?.id === anomalyId || challenge?.slug === anomalyId) {
+              localStorage.setItem('daki-anomaly-done', anomalyDate)
+            }
+          }
+        } catch {}
+
         // Combo de eficiencia
         const effectiveLines = countEffectiveLines(code)
         if (effectiveLines <= parLines && data.gamification.xp_earned > 0) {
@@ -1357,6 +1373,14 @@ export default function CodeWorkspace({ challengeId }: Props) {
       <AchievementToast
         achievements={activeAchievements}
         onDismiss={(id) => setActiveAchievements((prev) => prev.filter((a) => a.id !== id))}
+      />
+
+      {/* F8: Revelación de Misión Secreta */}
+      <SecretMissionRevealModal
+        visible={!!secretReveal}
+        missionName={secretReveal?.missionName ?? ''}
+        description={secretReveal?.description ?? ''}
+        onClose={() => setSecretReveal(null)}
       />
 
       {/* F6: Micro-transmisiones DAKI */}

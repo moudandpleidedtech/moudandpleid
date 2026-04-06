@@ -8,8 +8,8 @@ import time
 import httpx
 
 PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
-PISTON_TIMEOUT_S = 10.0
-LOCAL_TIMEOUT_S = 3.0
+PISTON_TIMEOUT_S = 6.0   # reducido de 10s — activa fallback más rápido
+LOCAL_TIMEOUT_S  = 4.0   # subido de 3s — más margen para código legítimo
 
 # Error types DAKI knows how to identify
 _KNOWN_ERRORS = (
@@ -64,7 +64,10 @@ async def execute_node_code(source_code: str, test_inputs: list[str]) -> dict:
         result = await _execute_via_piston(
             source_code, stdin, language="typescript", version="5.0.4"
         )
-    except Exception:
+    except Exception as exc:
+        # Fallback explícito: Piston no disponible o respuesta inválida
+        import logging
+        logging.getLogger(__name__).warning("Piston TypeScript unavailable: %s", exc)
         result = {
             "stdout": "",
             "stderr": "TypeScript sandbox temporalmente no disponible. Intenta de nuevo.",
@@ -91,9 +94,10 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
         result = await _execute_via_piston(source_code, stdin)
-    except Exception:
-        # Fallback local cuando Piston no está disponible (timeout, rate limit, etc.)
-        # El subprocess corre aislado en el contenedor de Render con timeout de 3s.
+    except Exception as exc:
+        # Fallback local: Piston timeout, rate limit, respuesta inválida, etc.
+        import logging
+        logging.getLogger(__name__).warning("Piston unavailable (%s), using subprocess fallback", type(exc).__name__)
         result = await _execute_via_subprocess(source_code, stdin)
 
     result["error_info"] = _parse_python_error(result.get("stderr", ""))
@@ -115,7 +119,12 @@ async def _execute_via_piston(source_code: str, stdin: str, language: str = "pyt
         response.raise_for_status()
     elapsed_ms = (time.perf_counter() - start) * 1000
 
-    run = response.json()["run"]
+    # Respuesta inesperada de Piston → tratar como fallo para activar el fallback
+    body = response.json()
+    if "run" not in body:
+        raise ValueError(f"Piston response missing 'run' key: {list(body.keys())}")
+
+    run = body["run"]
     return {
         "stdout": run.get("stdout", ""),
         "stderr": run.get("stderr", ""),
