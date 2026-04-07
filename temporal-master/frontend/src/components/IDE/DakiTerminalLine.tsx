@@ -169,7 +169,7 @@ function ConceptTooltip({ pos, onClose }: { pos: TooltipPos; onClose: () => void
 interface DakiTerminalLineProps {
   text: string
   /** Only 'enigma', 'intervention', and 'daki-cli' lines get the keyword parser */
-  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention' | 'daki-cli'
+  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention' | 'daki-cli' | 'daki-explain'
 }
 
 const PARSEABLE_KINDS: Set<string> = new Set(['enigma', 'intervention', 'daki-cli'])

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -104,6 +105,46 @@ async def mastery_radar(
         "total_concepts": len(records),
         "total_mastered": total_mastered,
         "total_reinforcement_needed": sum(1 for r in records if r.needs_reinforcement),
+    }
+
+
+@router.get("/weekly-review")
+async def weekly_review(
+    user_id: uuid.UUID = Query(..., description="UUID del Operador"),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Retorna conceptos que necesitan refuerzo semanal:
+    - updated_at < 7 días atrás (no practicado recientemente)
+    - mastery_score < 70 (maestría incompleta)
+    Máximo 8 conceptos, ordenados por score ascendente (más débil primero).
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+
+    result = await db.execute(
+        select(ConceptMastery).where(
+            ConceptMastery.user_id == user_id,
+            ConceptMastery.mastery_score < 70,
+            ConceptMastery.updated_at < cutoff,
+        )
+    )
+    records = result.scalars().all()
+    records_sorted = sorted(records, key=lambda r: r.mastery_score)[:8]
+
+    concepts = [
+        {
+            "concept": r.concept_name,
+            "score": round(r.mastery_score, 1),
+            "last_seen": r.updated_at.isoformat() if r.updated_at else None,
+            "needs_reinforcement": r.needs_reinforcement,
+        }
+        for r in records_sorted
+    ]
+
+    return {
+        "concepts": concepts,
+        "total": len(concepts),
+        "cutoff_days": 7,
     }
 
 

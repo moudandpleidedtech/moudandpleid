@@ -17,6 +17,7 @@ import DistincionesPanel from '@/components/Hub/DistincionesPanel'
 import SkillTreePanel from '@/components/Hub/SkillTreePanel'
 import DailyAnomalyCard from '@/components/Hub/DailyAnomalyCard'
 import DakiMemoriaCard from '@/components/Hub/DakiMemoriaCard'
+import RevisionSemanalCard from '@/components/Hub/RevisionSemanalCard'
 import FinDeTurnoModal from '@/components/Game/FinDeTurnoModal'
 import { getSessionLog, clearSessionLog } from '@/hooks/useSessionLog'
 import type { SessionMission } from '@/hooks/useSessionLog'
@@ -1159,6 +1160,9 @@ export default function HubPage() {
 
           {/* F4: DAKI Memoria — resumen de sesión activa */}
           <DakiMemoriaCard />
+
+          {/* Block 4: Revisión Semanal — conceptos con maestría incompleta sin practicar */}
+          {userId && <RevisionSemanalCard userId={userId} />}
 
           {/* F4: Fin de Turno — aparece con 2+ misiones completadas */}
           {sessionLog.length >= 2 && (

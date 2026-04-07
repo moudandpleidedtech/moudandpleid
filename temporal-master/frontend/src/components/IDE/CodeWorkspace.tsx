@@ -58,6 +58,8 @@ interface Challenge {
   is_free?: boolean
   slug?: string | null
   concepts_taught_json?: string[] | null
+  pedagogical_objective?: string | null
+  syntax_hint?: string | null
 }
 
 interface ChallengeListItem {
@@ -70,7 +72,22 @@ interface ChallengeListItem {
 
 interface ConsoleLine {
   text: string
-  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention' | 'daki-cli'
+  kind: 'stdout' | 'stderr' | 'info' | 'success' | 'enigma' | 'intervention' | 'daki-cli' | 'daki-explain'
+}
+
+// ─── DAKI Error Explainer — mapa estático error_type → explicación en español ──
+const DAKI_ERROR_EXPLANATIONS: Record<string, string> = {
+  SyntaxError:      '▸ SyntaxError: Python no puede leer tu código. Revisá paréntesis sin cerrar, dos puntos faltantes al final de if/for/def, o indentación mezclada.',
+  IndentationError: '▸ IndentationError: El espaciado no es consistente. Usá 4 espacios por nivel y no mezcles espacios con tabs.',
+  NameError:        '▸ NameError: Usaste un nombre que Python no conoce. Verificá ortografía, que la variable esté definida antes de usarla, y que no esté en otro scope.',
+  TypeError:        '▸ TypeError: Operación inválida entre tipos. No podés sumar un str con un int directamente — usá int(), str() o f-strings para convertir.',
+  ValueError:       '▸ ValueError: El valor tiene el tipo correcto pero no tiene sentido (ej: int("hola")). Validá la entrada antes de convertir.',
+  AttributeError:   '▸ AttributeError: Ese objeto no tiene ese método o propiedad. Revisá el tipo del objeto (type(x)) y consultá su documentación.',
+  IndexError:       '▸ IndexError: Índice fuera de rango. Las listas en Python empiezan en 0. Si tu lista tiene 3 elementos, el último índice es [2].',
+  KeyError:         '▸ KeyError: La clave no existe en el diccionario. Usá .get(clave) para evitar el error, o verificá antes con "clave in dict".',
+  ZeroDivisionError:'▸ ZeroDivisionError: División por cero. Verificá que el denominador no sea 0 antes de dividir.',
+  RecursionError:   '▸ RecursionError: La función se llamó a sí misma demasiadas veces. Asegurate de que tu función recursiva tenga un caso base que detenga la recursión.',
+  RuntimeError:     '▸ RuntimeError: Error en tiempo de ejecución. Revisá la lógica del programa y el mensaje de error para más contexto.',
 }
 
 interface ErrorInfo {
@@ -425,6 +442,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Toast para nivel bloqueado
   const [toastMsg, setToastMsg]           = useState('')
   const [showToast, setShowToast]         = useState(false)
+  // Toast para conceptos nuevos desbloqueados
+  const [conceptsToast, setConceptsToast] = useState('')
+  const [showConceptsToast, setShowConceptsToast] = useState(false)
 
   // Juice states
   const [keywordFlash, setKeywordFlash]   = useState<string | null>(null)
@@ -449,6 +469,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [hintFreeStreak, setHintFreeStreak] = useState(0)  // F5: misiones seguidas sin pistas
   const [loadingHint, setLoadingHint]     = useState(false)
   const [hintIndex, setHintIndex]         = useState(-1)   // -1 = oculto, 0/1/2 = pista visible
+  const [guidedHintStep, setGuidedHintStep] = useState(-1) // Block 5: paso de guía 0/1/2 (-1=no iniciado)
   const [dakiMessage, setDakiMessage]     = useState('')   // frase narrativa de DAKI Intel
   const [activeAchievements, setActiveAchievements] = useState<Achievement[]>([])
   const [activeInsight, setActiveInsight] = useState<string | null>(null)
@@ -669,6 +690,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setOutput([{ text: '> Terminal lista.', kind: 'info' }])
     setFailStreak(0)
     setHintIndex(-1)
+    setGuidedHintStep(-1)
     challengeStartMs.current = Date.now()
     errorHistoryRef.current = []  // F7: reset historial de errores al cambiar de misión
     // Limpiar debounce pendiente del reto anterior
@@ -1124,6 +1146,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
         setDakiErrorLine(ei.line ?? null)
         setTimeout(() => { setDakiState('idle'); setDakiErrorLine(null) }, 3500)
 
+        // DAKI Error Explainer — explicación estática en español
+        const explanation = DAKI_ERROR_EXPLANATIONS[ei.error_type]
+        if (explanation) {
+          lines.push({ text: explanation, kind: 'daki-explain' })
+        }
+
         // F7: Patrón Registrado — detectar error repetido 3 veces
         errorHistoryRef.current.push(ei.error_type)
         const sameCount = errorHistoryRef.current.filter((t) => t === ei.error_type).length
@@ -1161,6 +1189,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
         kind: data.output_matched ? 'success' : 'info',
       })
 
+      // Failed case — mismatch de salida sin excepción Python
+      if (data.failed_case) {
+        lines.push({ text: `── Salida obtenida: ${data.failed_case.got || '(vacía)'}`, kind: 'info' })
+        lines.push({ text: `── Salida esperada: ${data.failed_case.expected || '(vacía)'}`, kind: 'info' })
+      }
+
       if (data.gamification.xp_earned > 0) {
         lines.push({
           text: `+${data.gamification.xp_earned} XP${
@@ -1172,6 +1206,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
       if (data.gamification.already_completed) {
         lines.push({ text: '(Mision ya completada — sin XP adicional)', kind: 'info' })
+      }
+
+      // Block 3: ¿Por qué funciona? — objetivo pedagógico post-victoria
+      if (data.output_matched && !data.gamification.already_completed) {
+        const objective = challenge?.pedagogical_objective ?? challenge?.syntax_hint
+        if (objective) {
+          lines.push({ text: '', kind: 'info' })
+          lines.push({ text: '▸ ¿POR QUÉ FUNCIONA?', kind: 'daki-explain' })
+          lines.push({ text: objective, kind: 'daki-explain' })
+        }
       }
 
       setOutput(lines)
@@ -1252,6 +1296,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
         // Logros desbloqueados
         if (data.achievements_unlocked?.length) {
           setTimeout(() => setActiveAchievements(data.achievements_unlocked), 400)
+        }
+
+        // Conceptos nuevos desbloqueados
+        if (data.new_concepts?.length) {
+          const conceptList = data.new_concepts.slice(0, 4).join(' · ').toUpperCase().replace(/_/g, ' ')
+          setConceptsToast(`NODOS DESBLOQUEADOS: ${conceptList}`)
+          setShowConceptsToast(true)
         }
 
         // Insight flash (conexión mundo real)
@@ -1365,6 +1416,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
         visible={showToast}
         onClose={() => setShowToast(false)}
         variant="warning"
+      />
+      <Toast
+        message={conceptsToast}
+        visible={showConceptsToast}
+        onClose={() => setShowConceptsToast(false)}
+        variant="success"
+        duration={5000}
       />
 
       <AnimatePresence>
@@ -1666,8 +1724,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
             )}
           </div>
 
-          {/* Centro — nombre de la misión */}
-          <div className="flex justify-center">
+          {/* Centro — nombre de la misión + conceptos */}
+          <div className="flex flex-col items-center gap-1">
             {challenge ? (
               <span
                 className="font-black tracking-[0.15em] text-[#00FF41] truncate max-w-xs text-center"
@@ -1678,11 +1736,35 @@ export default function CodeWorkspace({ challengeId }: Props) {
             ) : (
               <span className="text-[#00FF41]/25 tracking-widest animate-pulse">CARGANDO...</span>
             )}
+            {challenge?.concepts_taught_json && challenge.concepts_taught_json.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1 max-w-sm">
+                {challenge.concepts_taught_json.slice(0, 4).map((concept) => (
+                  <span
+                    key={concept}
+                    className="text-[9px] tracking-widest px-1.5 py-0.5 border font-mono"
+                    style={{ color: '#00B4D8', borderColor: '#00B4D820', background: '#00B4D808' }}
+                    title={`Concepto: ${concept}`}
+                  >
+                    {concept.toUpperCase().replace(/_/g, ' ')}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Derecha — stats + HUD controles */}
           <div className="flex items-center justify-end gap-3 text-[#00FF41]/70">
-            <span className="text-[#00FF41]/40 tabular-nums">⏱ {formatTime(sessionSecs)}</span>
+            <span
+              className="tabular-nums transition-colors duration-500"
+              style={{
+                color: sessionSecs < 60
+                  ? 'rgba(0,255,65,0.4)'
+                  : sessionSecs < 120
+                  ? 'rgba(255,184,0,0.7)'
+                  : 'rgba(255,80,80,0.8)',
+                textShadow: sessionSecs >= 120 ? '0 0 8px rgba(255,80,80,0.4)' : undefined,
+              }}
+            >⏱ {formatTime(sessionSecs)}</span>
             {hintFreeStreak >= 2 && (
               <span
                 className="text-[10px] font-black tracking-widest px-1.5 py-0.5 border"
@@ -1711,6 +1793,32 @@ export default function CodeWorkspace({ challengeId }: Props) {
               >
                 ENIGMA?
               </motion.span>
+            )}
+            {/* Block 5: DAKI guía paso a paso — tras 8+ fallos */}
+            {failStreak >= 8 && challenge?.hints && challenge.hints.length > 0 && guidedHintStep < challenge.hints.length - 1 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-[9px] tracking-widest px-1.5 py-0.5 border"
+                style={{ color: '#BD00FF', borderColor: '#BD00FF30', background: '#BD00FF08' }}
+                title="DAKI te guía paso a paso — revelación progresiva"
+                onClick={() => {
+                  const nextStep = guidedHintStep + 1
+                  const hint = challenge.hints![nextStep]
+                  if (!hint) return
+                  const stepLabel = nextStep === 0 ? 'PISTA 1/3' : nextStep === 1 ? 'PISTA 2/3' : 'PISTA FINAL'
+                  setOutput((prev) => [
+                    ...prev,
+                    { text: '', kind: 'info' as const },
+                    { text: `▸ [DAKI GUIADO — ${stepLabel}]`, kind: 'intervention' as const },
+                    ...hint.split('\n').map((l) => ({ text: `  ${l}`, kind: 'enigma' as const })),
+                  ])
+                  setGuidedHintStep(nextStep)
+                  scrollConsole()
+                }}
+              >
+                {guidedHintStep === -1 ? '▸ GUÍA PASO A PASO' : `▸ PISTA ${guidedHintStep + 2}/${challenge.hints.length}`}
+              </motion.button>
             )}
             {/* F2: Mapa de Sinapsis */}
             <button
@@ -1879,7 +1987,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-hidden" style={editorStyle}>
+            <div
+              className="flex-1 overflow-hidden transition-all duration-700"
+              style={{
+                ...editorStyle,
+                boxShadow: hintFreeStreak >= 3 ? '0 0 24px rgba(255,215,0,0.15), inset 0 0 16px rgba(255,215,0,0.05)' : undefined,
+              }}
+            >
               <MonacoEditor
                 height="100%"
                 language="python"
@@ -2062,7 +2176,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
                   <div key={i}
                     className={`text-xs leading-5 whitespace-pre-wrap break-all ${
                       line.kind === 'stderr'       ? 'text-red-400'
-                      : line.kind === 'success'   ? 'text-[#00FF41]'
+                      : line.kind === 'daki-explain' ? 'text-orange-300/90'
+                      : line.kind === 'success'   ? 'text-[#00FF41] font-semibold'
                       : line.kind === 'enigma'    ? 'enigma-line'
                       : line.kind === 'info'      ? 'text-[#00FF41]/45'
                       : line.kind === 'intervention'
@@ -2072,7 +2187,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
                       : 'text-[#00FF41]/85'
                     }`}
                     style={
-                      line.kind === 'intervention' ? {
+                      line.kind === 'stderr' ? {
+                        borderLeft: '2px solid rgba(248,113,113,0.5)',
+                        paddingLeft: '6px',
+                      }
+                      : line.kind === 'daki-explain' ? {
+                        borderLeft: '2px solid rgba(251,146,60,0.5)',
+                        paddingLeft: '6px',
+                        textShadow: '0 0 6px rgba(251,146,60,0.2)',
+                      }
+                      : line.kind === 'intervention' ? {
                         textShadow: '0 0 8px #BD00FF60',
                         borderLeft: '2px solid #BD00FF80',
                         paddingLeft: '6px',

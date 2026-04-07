@@ -78,6 +78,11 @@ class AchievementUnlocked(BaseModel):
     unlocked_at: str
 
 
+class FailedCase(BaseModel):
+    got: str      # salida real del operador
+    expected: str # salida esperada del challenge
+
+
 class CodeExecuteResponse(BaseModel):
     stdout: str
     stderr: str
@@ -89,6 +94,8 @@ class CodeExecuteResponse(BaseModel):
     daki_message: str = ""                                  # frase narrativa de DAKI Intel
     achievements_unlocked: list[AchievementUnlocked] = []  # logros recién desbloqueados
     insight: Optional[str] = None                          # conexión mundo real post-nivel
+    failed_case: Optional[FailedCase] = None               # mismatch de salida (sin error de ejecución)
+    new_concepts: list[str] = []                           # conceptos desbloqueados en primera compleción
 
 
 async def _upsert_metric(
@@ -250,6 +257,7 @@ async def execute_challenge_code(
     # ── Logros + Insight (solo en primera compleción exitosa) ─────────────────
     achievements_unlocked: list[dict] = []
     insight: Optional[str] = None
+    new_concepts: list[str] = []
 
     if is_success:
         try:
@@ -258,6 +266,10 @@ async def execute_challenge_code(
 
             # Insight de mundo real
             insight = get_insight_for_concepts(concepts)
+
+            # Conceptos desbloqueados — solo en primera compleción
+            if not gamification_result.already_completed:
+                new_concepts = concepts
 
             # Logros
             achievements_unlocked = await check_and_grant(
@@ -279,6 +291,14 @@ async def execute_challenge_code(
         except Exception:
             pass  # Logros no son críticos — nunca bloquean la respuesta
 
+    # ── Failed case — solo cuando hay mismatch de salida (sin error de ejecución) ──
+    failed_case: Optional[FailedCase] = None
+    if not output_matched and not error_info and exec_result["success"]:
+        failed_case = FailedCase(
+            got=exec_result["stdout"].strip(),
+            expected=challenge.expected_output.strip() if challenge.expected_output else "",
+        )
+
     return CodeExecuteResponse(
         stdout=exec_result["stdout"],
         stderr=exec_result["stderr"],
@@ -290,4 +310,6 @@ async def execute_challenge_code(
         daki_message=daki_message,
         achievements_unlocked=[AchievementUnlocked(**a) for a in achievements_unlocked],
         insight=insight if (is_success and not gamification_result.already_completed) else None,
+        failed_case=failed_case,
+        new_concepts=new_concepts,
     )
