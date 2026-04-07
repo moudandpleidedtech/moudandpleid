@@ -1,7 +1,7 @@
 # DAKI_LOG — Contexto Completo del Proyecto Nexo EdTech
 
 > Archivo de contexto para sesiones futuras.
-> Ultima actualizacion: 2026-04-07 (sesion 3 — expansion curricular completa)
+> Ultima actualizacion: 2026-04-07 (sesion 5 — Protocolo Guerrero: 11 features pedagogicas)
 
 ---
 
@@ -604,7 +604,108 @@ Backend (.env):
 
 ---
 
-## 21. Checklist para Retomar Trabajo
+## 22. 4 Mejoras de Experiencia Profesional (2026-04-07 — Sesion 4)
+
+### Feature 1 — DAKI Code Review post-victoria
+- `POST /api/v1/daki/code-review`: envia codigo real del operador a Claude Haiku 4.5
+- Haiku actua como senior Python engineer: Pythonicidad, PEP 8, patrones idiomatic
+- Respuesta <= 3 lineas de feedback concreto
+- `MisionDebriefModal`: muestra code review en seccion ambar antes de la pregunta metacognitiva
+- `CodeWorkspace`: captura codigo ganador en `lastWinCodeRef`
+
+### Feature 2 — Modo Debug (Sector 19, L162-169)
+- `challenge_type = 'debug'`: misiones donde el codigo tiene bugs intencionales
+- Banner rojo en HUD: `▸ MODO DEBUG — Encontra y corrige el bug`
+- 8 challenges: NameError, TypeError, off-by-one, return faltante, KeyError, acumulador roto, condicion invertida, IndexError
+
+### Feature 3 — Perfil Publico del Operador
+- `GET /api/v1/users/profile/{callsign}`: sin auth, retorna nivel, XP, misiones, racha, liga, rango, badges
+- Pagina `/p/[callsign]`: XP bar animada, grid de stats 3 columnas, badges, boton share, CTA registro
+
+### Feature 4 — Protocolo de Entrevista (Sector 20, L170-179)
+- 10 challenges con patrones clasicos de screening tecnico Python:
+  two sum, palindromo, anagramas, fibonacci iterativo, elemento mas frecuente,
+  invertir palabras, eliminar duplicados con orden, parentesis validos,
+  maxima ganancia (greedy), boss de agrupamiento + filtering
+
+---
+
+## 23. Protocolo Guerrero — 7 Features Pedagogicas (2026-04-07 — Sesion 5)
+
+### Filosofia
+El operador debe **sufrir, pensar y superar** — no solo teclear. Cada feature esta guardada
+para que los niveles iniciales (L0-L30) sigan siendo accesibles y el operador avance.
+
+### F1 — Prediccion de Output (L30+)
+- Widget sobre el boton RUN: input de prediccion antes de ejecutar
+- Post-ejecucion: feedback verde (acertaste) o rojo (fallaste) + muestra el output real
+- Solo activo en challenges `level_order >= 30`, tipo != 'predict', !ironman, !retrieval
+
+### F2 — Predict Challenges (Sector 21, L180-L189)
+- `challenge_type = 'predict'`: el operador lee codigo y escribe el output exacto SIN ejecutar
+- 10 challenges sembrados via `_seed_predict_challenges()` en startup con uuid5 (idempotente)
+- Correcta prediccion → llama `/execute` con `initial_code` para registrar XP
+- Boss L189: map + filter + lambda con prediccion de 3 lineas exactas
+
+| Level | Titulo | Concepto Principal | XP |
+|-------|--------|-------------------|----|
+| 180 | PREDICCION 01: Precedencia de Operadores | operator_precedence | 120 |
+| 181 | PREDICCION 02: Indexing de Strings | string_indexing | 120 |
+| 182 | PREDICCION 03: Booleanos como Enteros | boolean arithmetic | 130 |
+| 183 | PREDICCION 04: Slicing de Listas | slice, negative_index | 130 |
+| 184 | PREDICCION 05: Cadena de Metodos | method_chaining | 140 |
+| 185 | PREDICCION 06: List Comprehension con Filtro | comprehension, filter | 160 |
+| 186 | PREDICCION 07: Mutacion de Diccionario | dict, mutation | 160 |
+| 187 | PREDICCION 08: Scope de Variables | scope, local vs global | 170 |
+| 188 | PREDICCION 09: El Argumento Mutable (Gotcha) | mutable_default | 200 |
+| 189 | PREDICCION 10 — BOSS: Map, Filter y Lambda | map, filter, lambda | 350 |
+
+### F3 — Rubber Duck Gate (L30+, failStreak >= 3)
+- Antes de pedir ENIGMA: modal azul/cyan requiere articular el razonamiento (min 15 chars)
+- "¿Por que crees que falla? Describilo en al menos una oraicion." 
+- Boton `ACTIVAR ENIGMA` post-explicacion redirige al flujo normal de hints
+- Implementado via `pendingHintRef.current` flag para evitar doble trigger
+
+### F4 — Modo Ironman (is_ironman=TRUE)
+- Sin pistas (ENIGMA deshabilitado), sin error explainer, sin DAKI proactivo
+- Banner dorado/ambar en HUD con texto `MODO IRONMAN — SIN ASISTENCIA`
+- 1 challenge por sector marcado automaticamente en `init_db()` via CTE:
+  - Sectores 8-20: el 2° challenge no-boss no-project por level_order
+  - Idempotente: siempre marca el mismo challenge
+
+### F5 — Pattern Callout (L20+)
+- 1.5s tras cargar el challenge: fetch `GET /intel/pattern-callout?user_id=X&challenge_id=Y`
+- Si hay overlap de conceptos con un challenge completado anterior → linea en consola:
+  `[DAKI] Ya trabajaste '{concepto}' en '{titulo prev}' (L{N})`
+- Kind: `pattern` (tono info, text blanco 40%)
+- Solo activo en `level_order >= 20`
+
+### F6 — Edge Case Gauntlet (post-victoria)
+- Tras primera victoria: si el challenge tiene `edge_cases[]`, se revelan en consola
+- Formato: `▸ CASO EXTREMO: {description}` — 3 casos por boss challenge
+- Kind: `edge-case` (color ambar oscuro)
+- Edge cases sembrados en boss challenges L136, L142, L150, L155, L161, L169, L179
+
+### F7 — Retrieval Mode (?mode=retrieval)
+- `RevisionSemanalCard`: boton `↺ PRACTICAR` por concepto debil
+- `GET /intel/retrieval-challenge?user_id=X&concept=Y`: retorna challenge completado random (top 5)
+- Navega a `/challenge/{id}?mode=retrieval`
+- En modo retrieval: sin pistas, sin error explainer, banner morado `PROTOCOLO DE RECUPERACION`
+
+### Archivos modificados (sesion 5)
+| Archivo | Cambios |
+|---------|---------|
+| `app/models/challenge.py` | +2 campos: `is_ironman`, `edge_cases_json` |
+| `app/api/v1/endpoints/challenges.py` | +`is_ironman`, `edge_cases`, `expected_output` en ChallengeOut |
+| `app/api/v1/endpoints/intel.py` | +`GET /intel/pattern-callout`, +`GET /intel/retrieval-challenge` |
+| `app/core/database.py` | +ALTER TABLE `is_ironman`/`edge_cases_json`, +ironman CTE UPDATE, +boss edge cases |
+| `main.py` | +`_seed_predict_challenges()` (10 challenges uuid5 idempotentes) |
+| `CodeWorkspace.tsx` | +380 lineas: todos los banners, modales, efectos y logica pedagogica |
+| `RevisionSemanalCard.tsx` | Reescrito con boton PRACTICAR por concepto |
+
+---
+
+## 24. Checklist para Retomar Trabajo
 
 - [ ] Verificar DakiIntelCard en challenge sin theory_content (probar en produccion)
 - [ ] Verificar Fin de Turno: completar 2+ misiones -> volver al Hub -> boton aparece
@@ -613,6 +714,38 @@ Backend (.env):
 - [ ] Verificar Block 1-5 en produccion (deploy Vercel + Render)
 - [ ] Verificar RevisionSemanalCard en Hub con datos reales (requiere 7+ dias de uso)
 - [ ] Verificar DAKI Error Explainer en produccion con cada tipo de error
+- [ ] Verificar Predict Challenges L180-L189 sembrados correctamente en startup
+- [ ] Verificar ironman marking en init_db() (1 challenge por sector 8-20)
+- [ ] Verificar Rubber Duck Gate dispara correctamente con failStreak >= 3 en L30+
+- [ ] Verificar Edge Cases visibles en consola post-victoria de boss challenges
+- [ ] Verificar Pattern Callout en L20+ con overlap de conceptos
+- [ ] Verificar Retrieval Mode desde RevisionSemanalCard
+
+---
+
+## 25. Estado del Curriculo — Post Sesion 5
+
+| Sector | Fase | Niveles | Challenges | Ironman |
+|--------|------|---------|-----------|---------|
+| 0 | tutorial | 0 | 1 | — |
+| 1 | fundamentos | 1-10 | 10 | — |
+| 2 | flujo | 11-20 | 10 | — |
+| 3 | ciclos | 21-30 | 10 | — |
+| 4 | while | 31-37 | 7 | — |
+| 5 | estructuras | 38-47 | 10 | — |
+| 6 | funciones | 48-58 | 11 | — |
+| 7 | comprensiones | 59-66 | 8 | — |
+| 8-13 | practica | 67-126 | 60 | 1/sector |
+| 14 | modulos | 127-136 | 10 | 1 |
+| 15 | archivos | 137-142 | 6 | 1 |
+| 16 | oop | 143-150 | 8 | 1 |
+| 17 | errores | 151-155 | 5 | 1 |
+| 18 | proyecto | 156-161 | 6 | 1 |
+| 19 | debug | 162-169 | 8 | 1 |
+| 20 | interview | 170-179 | 10 | 1 |
+| **21** | **predict** | **180-189** | **10** | — |
+
+**Total: 190 challenges. 13 con Modo Ironman. 7 con Edge Case Gauntlet.**
 
 ---
 
