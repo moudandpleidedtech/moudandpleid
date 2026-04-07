@@ -5,10 +5,12 @@
  *
  * Llama a GET /intel/weekly-review y muestra hasta 8 conceptos con
  * mastery_score < 70 que no se han practicado en los últimos 7 días.
- * Solo aparece si hay conceptos pendientes.
+ * Cada concepto tiene botón de retrieval: navega a un challenge completado
+ * en modo ?mode=retrieval (sin pistas, con banner de recuperación).
  */
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -28,8 +30,10 @@ function daysAgo(iso: string | null): string {
 }
 
 export default function RevisionSemanalCard({ userId }: { userId: string }) {
-  const [concepts, setConcepts] = useState<WeakConcept[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const router = useRouter()
+  const [concepts, setConcepts]     = useState<WeakConcept[]>([])
+  const [loaded, setLoaded]         = useState(false)
+  const [loading, setLoading]       = useState<string | null>(null)  // concept cargando
 
   useEffect(() => {
     if (!userId) return
@@ -41,6 +45,24 @@ export default function RevisionSemanalCard({ userId }: { userId: string }) {
       })
       .catch(() => setLoaded(true))
   }, [userId])
+
+  // F7: navegar a un challenge de recuperación para el concepto dado
+  const handleRetrieval = async (concept: string) => {
+    if (loading) return
+    setLoading(concept)
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/v1/intel/retrieval-challenge?user_id=${userId}&concept=${encodeURIComponent(concept)}`
+      )
+      if (!res.ok) return
+      const d = await res.json()
+      if (d?.challenge_id) {
+        router.push(`/challenge/${d.challenge_id}?mode=retrieval`)
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
 
   if (!loaded || concepts.length === 0) return null
 
@@ -75,25 +97,36 @@ export default function RevisionSemanalCard({ userId }: { userId: string }) {
         </div>
 
         <p className="text-[9px] mb-3" style={{ color: 'rgba(255,184,0,0.4)' }}>
-          Estos conceptos no se han reforzado en 7+ días y tienen maestría incompleta.
+          Conceptos sin refuerzo en 7+ días. Activá el Protocolo de Recuperación en cada uno.
         </p>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-col gap-1.5">
           {concepts.map((c) => (
             <div
               key={c.concept}
-              className="flex items-center gap-1.5 px-2 py-1 border text-[9px]"
+              className="flex items-center justify-between px-2 py-1.5 border text-[9px]"
               style={{
                 borderColor: c.needs_reinforcement ? 'rgba(255,80,80,0.3)' : 'rgba(255,184,0,0.2)',
                 background:  c.needs_reinforcement ? 'rgba(255,80,80,0.04)' : 'rgba(255,184,0,0.04)',
-                color:       c.needs_reinforcement ? 'rgba(255,80,80,0.7)' : 'rgba(255,184,0,0.6)',
               }}
-              title={`Maestría: ${c.score}% | Última vez: ${daysAgo(c.last_seen)} atrás`}
             >
-              <span className="font-mono tracking-wide">
-                {c.concept.toUpperCase().replace(/_/g, ' ')}
-              </span>
-              <span style={{ opacity: 0.5 }}>{c.score}%</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono tracking-wide"
+                  style={{ color: c.needs_reinforcement ? 'rgba(255,80,80,0.7)' : 'rgba(255,184,0,0.6)' }}>
+                  {c.concept.toUpperCase().replace(/_/g, ' ')}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>{c.score}%</span>
+                <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>{daysAgo(c.last_seen)} atrás</span>
+              </div>
+              <button
+                onClick={() => handleRetrieval(c.concept)}
+                disabled={loading === c.concept}
+                className="text-[7px] tracking-[0.35em] uppercase px-2 py-0.5 border transition-all disabled:opacity-40"
+                style={{ borderColor: 'rgba(189,0,255,0.3)', color: 'rgba(189,0,255,0.6)', background: 'rgba(189,0,255,0.04)' }}
+              >
+                {loading === c.concept ? '...' : '↺ PRACTICAR'}
+              </button>
             </div>
           ))}
         </div>

@@ -60,6 +60,10 @@ interface Challenge {
   concepts_taught_json?: string[] | null
   pedagogical_objective?: string | null
   syntax_hint?: string | null
+  // Pedagogía avanzada
+  is_ironman?: boolean
+  edge_cases?: { description: string }[]
+  expected_output?: string   // usado en challenges tipo 'predict'
 }
 
 interface ChallengeListItem {
@@ -465,6 +469,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const audioHintRef     = useRef<HTMLAudioElement | null>(null)
   const audioAmbientRef  = useRef<HTMLAudioElement | null>(null)
   const lastWinCodeRef   = useRef<string>('')   // Feature 1: code review — código al momento de la victoria
+  const pendingHintRef   = useRef(false)         // Feature 3: Rubber Duck — evita doble-trigger
 
   const [failStreak, setFailStreak]       = useState(0)
   const [hintFreeStreak, setHintFreeStreak] = useState(0)  // F5: misiones seguidas sin pistas
@@ -477,6 +482,19 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [secretReveal,    setSecretReveal]    = useState<{ missionName: string; description: string } | null>(null)
   const [activeMilestone, setActiveMilestone] = useState<MilestoneUnlock | null>(null)
   const [sessionAttempts, setSessionAttempts] = useState(0)  // intentos en misión actual
+
+  // ── Pedagogía avanzada ────────────────────────────────────────────────────────
+  // F1-pred: Predicción antes de ejecutar (L30+)
+  const [prediction, setPrediction]           = useState('')
+  const [predictionResult, setPredictionResult] = useState<'correct' | 'wrong' | null>(null)
+  // F3-duck: Rubber Duck Gate
+  const [showRubberDuck, setShowRubberDuck]   = useState(false)
+  const [rubberDuckText, setRubberDuckText]   = useState('')
+  // F7-ret: Retrieval mode (activado por ?mode=retrieval en URL)
+  const [isRetrievalMode, setIsRetrievalMode] = useState(false)
+  // F2-pred: predict challenge — respuesta del operador
+  const [predictAnswer, setPredictAnswer]     = useState('')
+  const [predictFeedback, setPredictFeedback] = useState<'correct' | 'wrong' | null>(null)
 
   // Voz de DAKI Intel — habla automáticamente cuando dakiMessage cambia
   const { speak: speakDaki } = useDakiVoice(dakiLevel, { enabled: true })
@@ -802,6 +820,44 @@ export default function CodeWorkspace({ challengeId }: Props) {
     }
   }, [level, previousLevel])
 
+  // F7-ret: detectar modo retrieval por query param
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('mode') === 'retrieval') setIsRetrievalMode(true)
+    } catch { /* */ }
+  }, [])
+
+  // F5-pattern: callout de patrón entre challenges (L20+, 1.5s después de cargar)
+  useEffect(() => {
+    if (!challenge || !userId || (challenge.level_order ?? 0) < 20) return
+    const t = setTimeout(() => {
+      fetch(`${API_BASE}/api/v1/intel/pattern-callout?user_id=${userId}&challenge_id=${challenge.id}`)
+        .then(r => r.ok ? r.json() : null)
+        .then((d: { previous_title?: string; previous_level?: number; concept?: string } | null) => {
+          if (d?.previous_title && d.concept) {
+            setOutput(prev => [
+              ...prev,
+              { text: `[DAKI] Patrón reconocido: '${d.concept.replace(/_/g, ' ')}' — lo trabajaste en L${d.previous_level} (${d.previous_title}). Buscá la conexión.`, kind: 'daki-explain' as const },
+            ])
+          }
+        })
+        .catch(() => {})
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [challenge?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Resetear estados pedagógicos al cambiar de challenge
+  useEffect(() => {
+    setPrediction('')
+    setPredictionResult(null)
+    setPredictAnswer('')
+    setPredictFeedback(null)
+    setShowRubberDuck(false)
+    setRubberDuckText('')
+    pendingHintRef.current = false
+  }, [challengeId])
+
   // Par de líneas del reto actual
   const parLines = useMemo(() => {
     if (!challenge) return 15
@@ -926,6 +982,21 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Pista DAKI
   const requestHint = async (currentOutput: ConsoleLine[]) => {
     if (loadingHint || !challenge) return
+
+    // F4-ironman: sin asistencia en modo ironman
+    if (challenge.is_ironman) return
+
+    // F7-ret: sin pistas en modo retrieval
+    if (isRetrievalMode) return
+
+    // F3-duck: Rubber Duck Gate — L30+ y failStreak >= 3 → articular antes de recibir ayuda
+    const isEarlyLevel = (challenge.level_order ?? 0) < 30
+    if (!isEarlyLevel && failStreak >= 3 && !pendingHintRef.current) {
+      setShowRubberDuck(true)
+      return
+    }
+    pendingHintRef.current = false
+
     setLoadingHint(true)
     setHintFreeStreak(0)  // F5: usar pista rompe la racha sin pistas
     const errorText = currentOutput
@@ -1147,10 +1218,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
         setDakiErrorLine(ei.line ?? null)
         setTimeout(() => { setDakiState('idle'); setDakiErrorLine(null) }, 3500)
 
-        // DAKI Error Explainer — explicación estática en español
-        const explanation = DAKI_ERROR_EXPLANATIONS[ei.error_type]
-        if (explanation) {
-          lines.push({ text: explanation, kind: 'daki-explain' })
+        // DAKI Error Explainer — suprimido en Modo Ironman (F4) y Retrieval (F7)
+        if (!challenge?.is_ironman && !isRetrievalMode) {
+          const explanation = DAKI_ERROR_EXPLANATIONS[ei.error_type]
+          if (explanation) {
+            lines.push({ text: explanation, kind: 'daki-explain' })
+          }
         }
 
         // F7: Patrón Registrado — detectar error repetido 3 veces
@@ -1217,6 +1290,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
           lines.push({ text: '▸ ¿POR QUÉ FUNCIONA?', kind: 'daki-explain' })
           lines.push({ text: objective, kind: 'daki-explain' })
         }
+
+        // F6-edge: Gauntlet de casos extremos — solo primera compleción, solo si existen
+        const edgeCases = challenge?.edge_cases
+        if (edgeCases && edgeCases.length > 0) {
+          lines.push({ text: '', kind: 'info' })
+          lines.push({ text: '[DAKI] ◆ PROTOCOLO DE ESTRÉS — tu solución pasa el caso principal.', kind: 'daki-explain' })
+          lines.push({ text: '[DAKI] ¿Aguanta bajo presión? Casos extremos a considerar:', kind: 'daki-explain' })
+          edgeCases.forEach(ec => lines.push({ text: `  ▸ ${ec.description}`, kind: 'daki-explain' }))
+          lines.push({ text: '[DAKI] Probálos en el editor — el código de producción los maneja todos.', kind: 'daki-explain' })
+        }
+      }
+
+      // F1-pred: comparación predicción vs output real (L30+)
+      if (prediction.trim() && (challenge?.level_order ?? 0) >= 30) {
+        const normalize = (s: string) => s.replace(/\r\n/g, '\n').trim()
+        const actualOut = normalize(data.stdout || '')
+        const userPred  = normalize(prediction)
+        const hit = actualOut === userPred
+        setPredictionResult(hit ? 'correct' : 'wrong')
+        lines.unshift(hit
+          ? { text: '◆ PREDICCIÓN CORRECTA — Modelo mental activo', kind: 'success' as const }
+          : { text: `△ Predijiste: "${userPred}" — Output real: "${actualOut}" | Analizá la brecha.`, kind: 'daki-explain' as const }
+        )
       }
 
       setOutput(lines)
@@ -1336,7 +1432,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         // Niveles INTERMEDIATE/ADVANCED: pistas en el 2do, 4to y 6to fallo
         const isEasy = (challenge?.difficulty_tier ?? 2) === 1
         const hintTriggers = isEasy ? [1, 3, 5] : [2, 4, 6]
-        if (hintTriggers.includes(newStreak)) {
+        // F4-ironman + F7-ret: sin pistas automáticas en modo sin asistencia
+        if (!challenge?.is_ironman && !isRetrievalMode && hintTriggers.includes(newStreak)) {
           setHintIndex((prev: number) => {
             const maxIdx = (challenge?.hints?.length ?? 1) - 1
             return Math.min(prev + 1, maxIdx)
@@ -1788,15 +1885,23 @@ export default function CodeWorkspace({ challengeId }: Props) {
               <span>🔥<strong className="text-[#00FF41]">{streakDays}d</strong></span>
             )}
             {failStreak >= 2 && !loadingHint && (
-              <motion.span
-                initial={{ opacity: 0 }} animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-                className="text-[#FFB800] text-xs tracking-widest cursor-pointer"
-                onClick={() => requestHint(output)}
-                title="ENIGMA — Pista de DAKI (se activa tras 2 fallos consecutivos)"
-              >
-                ENIGMA?
-              </motion.span>
+              {!challenge?.is_ironman && !isRetrievalMode ? (
+                <motion.span
+                  initial={{ opacity: 0 }} animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.2, repeat: Infinity }}
+                  className="text-[#FFB800] text-xs tracking-widest cursor-pointer"
+                  onClick={() => requestHint(output)}
+                  title="ENIGMA — Pista de DAKI (se activa tras 2 fallos consecutivos)"
+                >
+                  ENIGMA?
+                </motion.span>
+              ) : (
+                <span className="text-[9px] tracking-widest opacity-30 line-through"
+                  style={{ color: challenge?.is_ironman ? 'rgba(255,184,0,0.4)' : 'rgba(189,0,255,0.4)' }}
+                  title={challenge?.is_ironman ? 'Modo Ironman — sin asistencia' : 'Modo Recuperación — sin pistas'}>
+                  ENIGMA
+                </span>
+              )}
             )}
             {/* Block 5: DAKI guía paso a paso — tras 8+ fallos */}
             {failStreak >= 8 && challenge?.hints && challenge.hints.length > 0 && guidedHintStep < challenge.hints.length - 1 && (
@@ -1904,20 +2009,45 @@ export default function CodeWorkspace({ challengeId }: Props) {
           </div>
         )}
 
-        {/* ── Banner DEBUG MODE — Feature 2 ── */}
+        {/* ── Banner DEBUG MODE ── */}
         {challenge?.challenge_type === 'debug' && (
           <div className="shrink-0 px-4 py-2 border-b backdrop-blur-sm"
             style={{ background: 'rgba(255,40,40,0.04)', borderColor: 'rgba(255,80,80,0.18)' }}>
             <div className="flex items-center gap-2">
-              <motion.span
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.4, repeat: Infinity }}
-                style={{ color: 'rgba(255,80,80,0.85)' }}
-                className="text-[10px]"
-              >⚠</motion.span>
-              <span className="text-[8px] tracking-[0.45em] font-bold"
-                style={{ color: 'rgba(255,80,80,0.65)' }}>
+              <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.4, repeat: Infinity }}
+                style={{ color: 'rgba(255,80,80,0.85)' }} className="text-[10px]">⚠</motion.span>
+              <span className="text-[8px] tracking-[0.45em] font-bold" style={{ color: 'rgba(255,80,80,0.65)' }}>
                 MODO DEBUG — Encontrá y corregí el bug en el código inicial
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ── F4: Banner IRONMAN — sin asistencia ── */}
+        {challenge?.is_ironman && (
+          <div className="shrink-0 px-4 py-2 border-b backdrop-blur-sm"
+            style={{ background: 'rgba(255,184,0,0.04)', borderColor: 'rgba(255,184,0,0.25)' }}>
+            <div className="flex items-center gap-2">
+              <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.8, repeat: Infinity }}
+                style={{ color: 'rgba(255,184,0,0.9)' }} className="text-[11px]">◈</motion.span>
+              <span className="text-[8px] tracking-[0.45em] font-bold" style={{ color: 'rgba(255,184,0,0.7)' }}>
+                MODO IRONMAN — Sin pistas. Sin asistencia. Solo vos y el código.
+              </span>
+              <span className="ml-auto text-[7px] tracking-widest px-1.5 py-0.5 border"
+                style={{ color: 'rgba(255,184,0,0.4)', borderColor: 'rgba(255,184,0,0.2)' }}>CICATRIZ DISPONIBLE</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── F7: Banner RETRIEVAL MODE ── */}
+        {isRetrievalMode && (
+          <div className="shrink-0 px-4 py-2 border-b backdrop-blur-sm"
+            style={{ background: 'rgba(189,0,255,0.04)', borderColor: 'rgba(189,0,255,0.2)' }}>
+            <div className="flex items-center gap-2">
+              <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}
+                style={{ color: 'rgba(189,0,255,0.85)' }} className="text-[10px]">↺</motion.span>
+              <span className="text-[8px] tracking-[0.45em] font-bold" style={{ color: 'rgba(189,0,255,0.6)' }}>
+                PROTOCOLO DE RECUPERACIÓN — Completá sin pistas. La memoria se forja en la trinchera.
               </span>
             </div>
           </div>
@@ -1994,6 +2124,28 @@ export default function CodeWorkspace({ challengeId }: Props) {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* F1-pred: Widget de predicción — L30+, no-predict, no-ironman */}
+              {(challenge?.level_order ?? 0) >= 30 && challenge?.challenge_type !== 'predict' && !challenge?.is_ironman && !isRetrievalMode && (
+                <div className="flex items-center gap-1.5 mr-2">
+                  <input
+                    value={prediction}
+                    onChange={e => { setPrediction(e.target.value); setPredictionResult(null) }}
+                    placeholder="¿Cuál será el output?"
+                    className="text-[9px] tracking-wide bg-transparent border px-2 py-1 outline-none w-36 font-mono"
+                    style={{
+                      borderColor: predictionResult === 'correct' ? 'rgba(0,255,65,0.5)' : predictionResult === 'wrong' ? 'rgba(255,80,80,0.4)' : 'rgba(0,255,65,0.15)',
+                      color: predictionResult === 'correct' ? 'rgba(0,255,65,0.9)' : 'rgba(0,255,65,0.5)',
+                    }}
+                    title="Escribí tu predicción del output antes de ejecutar"
+                  />
+                  {predictionResult && (
+                    <span className="text-[9px]" style={{ color: predictionResult === 'correct' ? '#00FF41' : 'rgba(255,80,80,0.7)' }}>
+                      {predictionResult === 'correct' ? '◆' : '△'}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Botón ejecutar — deshabilitado y con texto animado durante compilación */}
               <button
@@ -2267,6 +2419,190 @@ export default function CodeWorkspace({ challengeId }: Props) {
         </div>
         </div> {/* end z-10 content wrapper */}
       </motion.div>
+
+      {/* ── F3: Rubber Duck Gate ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showRubberDuck && (
+          <>
+            <motion.div key="rd-bd" className="fixed inset-0 z-[200] bg-black/80"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+            <motion.div key="rd-modal" className="fixed inset-0 z-[201] flex items-center justify-center p-6"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div
+                className="w-full max-w-sm font-mono border bg-[#060D06] overflow-hidden"
+                style={{ borderColor: 'rgba(0,180,255,0.3)', boxShadow: '0 0 60px rgba(0,180,255,0.1)' }}
+                initial={{ scale: 0.9, y: 16 }} animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+              >
+                <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,180,255,0.6), transparent)' }} />
+                <div className="px-6 pt-5 pb-4 border-b" style={{ borderColor: 'rgba(0,180,255,0.12)' }}>
+                  <p className="text-[8px] tracking-[0.45em] mb-1" style={{ color: 'rgba(0,180,255,0.45)' }}>PROTOCOLO RUBBER DUCK</p>
+                  <h3 className="text-[12px] font-black tracking-[0.15em]" style={{ color: 'rgba(0,180,255,0.85)' }}>
+                    ARTICULÁ ANTES DE RECIBIR AYUDA
+                  </h3>
+                </div>
+                <div className="px-6 py-4">
+                  <p className="text-[10px] leading-5 mb-4" style={{ color: 'rgba(0,180,255,0.55)' }}>
+                    Describí en una oración exactamente qué es lo que no entendés de este desafío.
+                    Muchos operadores resuelven el problema solo al intentar articularlo.
+                  </p>
+                  <textarea
+                    value={rubberDuckText}
+                    onChange={e => setRubberDuckText(e.target.value)}
+                    rows={3}
+                    placeholder="¿Qué es exactamente lo que no entendés?"
+                    className="w-full bg-transparent border text-xs leading-5 p-3 outline-none resize-none placeholder:opacity-20 transition-colors"
+                    style={{
+                      borderColor: rubberDuckText.length >= 15 ? 'rgba(0,180,255,0.4)' : 'rgba(0,180,255,0.15)',
+                      color: 'rgba(0,180,255,0.8)',
+                      fontFamily: 'monospace',
+                    }}
+                    autoFocus
+                  />
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[8px] tracking-widest" style={{ color: rubberDuckText.length >= 15 ? 'rgba(0,255,65,0.4)' : 'rgba(255,255,255,0.15)' }}>
+                      {rubberDuckText.length}/15 mín
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowRubberDuck(false)}
+                        className="text-[9px] tracking-[0.3em] opacity-25 hover:opacity-50 transition-opacity uppercase"
+                      >[ Cancelar ]</button>
+                      <motion.button
+                        onClick={() => {
+                          if (rubberDuckText.trim().length < 15) return
+                          setShowRubberDuck(false)
+                          pendingHintRef.current = true
+                          requestHint(output)
+                        }}
+                        disabled={rubberDuckText.trim().length < 15}
+                        className="text-[9px] tracking-[0.35em] uppercase px-4 py-2 border transition-all disabled:opacity-25"
+                        style={{ borderColor: 'rgba(0,180,255,0.35)', color: 'rgba(0,180,255,0.8)', background: 'rgba(0,180,255,0.06)' }}
+                        whileTap={{ scale: 0.97 }}
+                      >ACTIVAR ENIGMA</motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── F2: Predict Challenge UI ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {challenge?.challenge_type === 'predict' && viewMode === 'editor' && (
+          <motion.div
+            key="predict-overlay"
+            className="fixed inset-0 z-[50] flex flex-col font-mono"
+            style={{ background: '#04090A' }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          >
+            {/* header */}
+            <div className="shrink-0 px-6 py-3 border-b flex items-center gap-3"
+              style={{ borderColor: 'rgba(0,180,255,0.15)', background: '#060E10' }}>
+              <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}
+                style={{ color: 'rgba(0,180,255,0.7)' }} className="text-[10px]">◉</motion.span>
+              <span className="text-[8px] tracking-[0.5em] font-bold" style={{ color: 'rgba(0,180,255,0.55)' }}>
+                DESAFÍO DE PREDICCIÓN — Sin ejecutar, ¿qué produce este código?
+              </span>
+              <span className="ml-auto text-[8px] tracking-widest" style={{ color: 'rgba(0,180,255,0.3)' }}>
+                {challenge.title.toUpperCase()}
+              </span>
+            </div>
+
+            <div className="flex flex-1 overflow-hidden">
+              {/* Código a predecir */}
+              <div className="flex-1 overflow-auto p-6 border-r" style={{ borderColor: 'rgba(0,180,255,0.1)' }}>
+                <p className="text-[7px] tracking-[0.5em] mb-3" style={{ color: 'rgba(0,180,255,0.3)' }}>CÓDIGO A ANALIZAR</p>
+                <pre className="text-[11px] leading-6 font-mono whitespace-pre-wrap" style={{ color: 'rgba(0,255,65,0.8)' }}>
+                  {challenge.initial_code}
+                </pre>
+              </div>
+
+              {/* Panel de predicción */}
+              <div className="w-80 shrink-0 flex flex-col p-6 gap-4">
+                <div>
+                  <p className="text-[7px] tracking-[0.5em] mb-2" style={{ color: 'rgba(0,180,255,0.4)' }}>TU PREDICCIÓN</p>
+                  <p className="text-[9px] leading-5 mb-3" style={{ color: 'rgba(0,180,255,0.45)' }}>
+                    {challenge.description}
+                  </p>
+                  <textarea
+                    value={predictAnswer}
+                    onChange={e => { setPredictAnswer(e.target.value); setPredictFeedback(null) }}
+                    rows={4}
+                    placeholder="Escribí el output exacto que esperás..."
+                    className="w-full bg-transparent border text-xs p-3 outline-none resize-none placeholder:opacity-20 leading-5 font-mono transition-colors"
+                    style={{
+                      borderColor: predictFeedback === 'correct' ? 'rgba(0,255,65,0.5)' : predictFeedback === 'wrong' ? 'rgba(255,80,80,0.4)' : 'rgba(0,180,255,0.2)',
+                      color: 'rgba(0,180,255,0.8)',
+                    }}
+                  />
+                </div>
+
+                <motion.button
+                  onClick={async () => {
+                    if (!predictAnswer.trim() || !challenge) return
+                    const normalize = (s: string) => s.replace(/\r\n/g, '\n').trim()
+                    const expected = normalize(challenge.expected_output || '')
+                    const answer   = normalize(predictAnswer)
+                    if (answer === expected) {
+                      setPredictFeedback('correct')
+                      const res = await fetch(`${API_BASE}/api/v1/execute`, {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          user_id: userId, challenge_id: challengeId,
+                          source_code: challenge.initial_code,
+                          test_inputs: challenge.test_inputs ?? [],
+                          time_spent_ms: Date.now() - challengeStartMs.current,
+                          daki_level: dakiLevel,
+                        }),
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        applyGamificationResult({ new_level: data.gamification.new_level, new_total_xp: data.gamification.new_total_xp })
+                        markChallengeCompleted(challengeId)
+                        lastWinCodeRef.current = challenge.initial_code
+                        debriefAttempts.current = 1
+                        setTimeout(() => setShowDebrief(true), 800)
+                      }
+                    } else {
+                      setPredictFeedback('wrong')
+                      setFailStreak(prev => prev + 1)
+                    }
+                  }}
+                  disabled={!predictAnswer.trim()}
+                  className="w-full py-3 border text-[10px] font-black tracking-[0.35em] uppercase disabled:opacity-25 transition-all"
+                  style={{ borderColor: 'rgba(0,180,255,0.4)', color: 'rgba(0,180,255,0.9)', background: 'rgba(0,180,255,0.06)' }}
+                  whileTap={{ scale: 0.97 }}
+                >VERIFICAR PREDICCIÓN</motion.button>
+
+                <AnimatePresence>
+                  {predictFeedback === 'correct' && (
+                    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+                      <p className="text-[10px] font-black tracking-widest" style={{ color: '#00FF41' }}>◆ CORRECTO</p>
+                      <p className="text-[9px] mt-1" style={{ color: 'rgba(0,255,65,0.5)' }}>Modelo mental verificado. Ejecutando el protocolo de victoria...</p>
+                    </motion.div>
+                  )}
+                  {predictFeedback === 'wrong' && (
+                    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+                      <p className="text-[10px] font-black tracking-widest mb-1" style={{ color: 'rgba(255,80,80,0.7)' }}>△ INCORRECTO</p>
+                      <p className="text-[8px] mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Output real:</p>
+                      <pre className="text-[10px] font-mono p-2 border" style={{ color: 'rgba(255,184,0,0.75)', borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
+                        {challenge.expected_output}
+                      </pre>
+                      <p className="text-[8px] mt-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                        Analizá la diferencia con tu predicción e intentá de nuevo.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

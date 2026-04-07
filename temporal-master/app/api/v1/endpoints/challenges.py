@@ -46,6 +46,10 @@ class ChallengeOut(BaseModel):
     strict_match: bool
     # Freemium
     is_free: bool
+    # Pedagogía avanzada
+    is_ironman: bool
+    edge_cases: list[dict]
+    expected_output: str   # expuesto para challenges tipo 'predict'
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -82,6 +86,9 @@ def _build_out(
         telemetry_goal_time=challenge.telemetry_goal_time,
         strict_match=challenge.strict_match,
         is_free=challenge.is_free,
+        is_ironman=challenge.is_ironman if challenge.is_ironman is not None else False,
+        edge_cases=json.loads(challenge.edge_cases_json) if challenge.edge_cases_json else [],
+        expected_output=challenge.expected_output,
     )
 
 

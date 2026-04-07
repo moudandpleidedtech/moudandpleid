@@ -328,7 +328,50 @@ async def init_db() -> None:
         await conn.execute(text(
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)"
         ))
+
+        # Pedagogía avanzada — Ironman + Edge Cases
+        for stmt in [
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS is_ironman BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE challenges ADD COLUMN IF NOT EXISTS edge_cases_json TEXT",
+        ]:
+            await conn.execute(text(stmt))
         await conn.execute(text(
             "CREATE INDEX IF NOT EXISTS ix_users_google_id ON users (google_id) "
             "WHERE google_id IS NOT NULL"
         ))
+
+        # ── Ironman Protocol — 1 challenge por sector (sectores 8-20) ─────────────
+        # Elige el 2° challenge no-boss no-project por sector (por level_order).
+        # Idempotente: siempre marca exactamente el mismo challenge por sector.
+        await conn.execute(text("""
+            WITH picks AS (
+                SELECT id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY sector_id ORDER BY level_order
+                       ) AS rn
+                FROM challenges
+                WHERE sector_id BETWEEN 8 AND 20
+                  AND is_phase_boss = FALSE
+                  AND is_project    = FALSE
+                  AND challenge_type IN ('python', 'debug')
+            )
+            UPDATE challenges SET is_ironman = TRUE
+            WHERE id IN (SELECT id FROM picks WHERE rn = 2)
+        """))
+
+        # ── Edge Cases — Boss Battles L136, L142, L150, L155, L161, L169, L179 ──
+        # Se agregan post-victoria en la consola para entrenamiento de producción.
+        boss_edge_cases: list[tuple[int, str]] = [
+            (136, '[{"description": "¿Qué pasa si la lista de entrada está vacía? ¿Tu solución retorna [] o lanza un error?"}, {"description": "¿Funciona tu solución con valores negativos o cero? Probá el caso extremo."}, {"description": "¿Cuánta memoria usa tu solución con 1 millón de elementos? Considerá un generador."}]'),
+            (142, '[{"description": "¿Tu función maneja el caso donde no se pasan argumentos opcionales?"}, {"description": "¿Qué pasa si se pasa None como entrada? ¿Lanza un error o lo maneja silenciosamente?"}, {"description": "¿Podés reescribir esto en una línea con comprensión de lista o expresión generadora?"}]'),
+            (150, '[{"description": "¿Qué pasa si intentás instanciar la clase sin pasar argumentos al __init__?"}, {"description": "¿Tus métodos modifican el estado del objeto (mutables) o retornan nuevos valores (inmutables)?"}, {"description": "¿Cómo se vería este diseño si necesitás una subclase que hereda el comportamiento?"}]'),
+            (155, '[{"description": "¿Tu solución maneja inputs de tipo incorrecto (string donde se espera int)?"}, {"description": "¿Qué pasa con una lista de 1 elemento? ¿Y con una lista ya ordenada?"}, {"description": "¿Cuál es la complejidad temporal de tu solución? O(n), O(n log n) o O(n²)?"}]'),
+            (161, '[{"description": "¿Tu solución es Pythónica? ¿Hay algún built-in (map, filter, zip, enumerate) que simplifique el código?"}, {"description": "¿Qué pasa si el input tiene duplicados? ¿Tu solución los maneja correctamente?"}, {"description": "¿Cómo se comporta tu código con 10,000 elementos? ¿Hay un bottleneck?"}]'),
+            (169, '[{"description": "¿Encontraste todos los bugs? Los bugs silenciosos (sin error pero con resultado incorrecto) son los más peligrosos."}, {"description": "¿Qué herramienta usarías en producción para detectar este bug automáticamente? (pytest, type hints, assertions)"}, {"description": "¿Cómo escribirías un test unitario que hubiera detectado este bug antes de llegar a producción?"}]'),
+            (179, '[{"description": "¿Cuál es la complejidad temporal y espacial de tu solución? ¿El entrevistador te preguntaría si podés hacerlo mejor?"}, {"description": "¿Tu solución funciona con inputs vacíos, None, o con un solo elemento? Los entrevistadores siempre prueban edge cases."}, {"description": "¿Podés explicar tu solución en voz alta en 30 segundos? Si no podés explicarla, no la entendés lo suficientemente bien."}]'),
+        ]
+        for level_order, edge_json in boss_edge_cases:
+            await conn.execute(text(
+                "UPDATE challenges SET edge_cases_json = :ej "
+                "WHERE level_order = :lo AND edge_cases_json IS NULL"
+            ), {"ej": edge_json, "lo": level_order})

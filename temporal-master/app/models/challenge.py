@@ -64,6 +64,23 @@ class Challenge(Base):
     # is_free=False → requiere is_paid=True en el usuario (default para todos)
     is_free: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
+    # ── Pedagogía avanzada ────────────────────────────────────────────────────────
+    #
+    # is_ironman:
+    #   True en challenges sin asistencia (1 por sector a partir del sector 8).
+    #   Cuando True: ENIGMA deshabilitado, error explainer suprimido,
+    #   DAKI proactivo silenciado. Completarlo otorga badge "Cicatriz de Ironman".
+    #
+    # edge_cases_json:
+    #   Array JSON de {description: str} — casos extremos que se revelan
+    #   en consola post-victoria para entrenar código de producción.
+    #   Ej: [{"description": "lista vacía → ¿qué retorna?"}]
+
+    is_ironman: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )
+    edge_cases_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     # ── Árbol de Habilidades — Correlatividades (D018) ─────────────────────────
     #
     # codex_id:

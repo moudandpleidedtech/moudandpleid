@@ -16,9 +16,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import random
+
 from app.core.database import get_db
+from app.models.challenge import Challenge
 from app.models.concept_mastery import ConceptMastery
 from app.models.user_metrics import UserMetric
+from app.models.user_progress import UserProgress
 
 router = APIRouter(prefix="/intel", tags=["intel"])
 
@@ -191,4 +195,90 @@ async def error_vault(
         "total_hints": total_hints,
         "missions_with_data": len(metrics),
         "missions_failed": missions_failed,
+    }
+
+
+@router.get("/pattern-callout")
+async def pattern_callout(
+    user_id: uuid.UUID = Query(...),
+    challenge_id: uuid.UUID = Query(...),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Busca si el operador ya trabajó algún concepto del challenge actual
+    en challenges previos completados. Devuelve el primer match para que
+    DAKI muestre el callout de patrón en la consola.
+    """
+    # Obtener conceptos del challenge actual
+    current = await db.get(Challenge, challenge_id)
+    if not current or not current.concepts_taught_json:
+        return {}
+    try:
+        current_concepts = set(json.loads(current.concepts_taught_json))
+    except Exception:
+        return {}
+    if not current_concepts:
+        return {}
+
+    # Challenges completados por el operador (excluyendo el actual)
+    result = await db.execute(
+        select(UserProgress, Challenge)
+        .join(Challenge, Challenge.id == UserProgress.challenge_id)
+        .where(
+            UserProgress.user_id == user_id,
+            UserProgress.completed.is_(True),
+            UserProgress.challenge_id != challenge_id,
+            Challenge.level_order.isnot(None),
+        )
+        .order_by(Challenge.level_order)
+    )
+    rows = result.all()
+
+    for progress, ch in rows:
+        try:
+            ch_concepts = set(json.loads(ch.concepts_taught_json or "[]"))
+        except Exception:
+            continue
+        overlap = current_concepts & ch_concepts
+        if overlap:
+            concept = next(iter(overlap))
+            return {
+                "previous_title": ch.title,
+                "previous_level": ch.level_order,
+                "concept": concept,
+            }
+    return {}
+
+
+@router.get("/retrieval-challenge")
+async def retrieval_challenge(
+    user_id: uuid.UUID = Query(...),
+    concept: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Devuelve un challenge completado por el operador que trabaje el concepto dado.
+    Usado por la Revisión Semanal para activar el protocolo de recuperación.
+    """
+    result = await db.execute(
+        select(UserProgress, Challenge)
+        .join(Challenge, Challenge.id == UserProgress.challenge_id)
+        .where(
+            UserProgress.user_id == user_id,
+            UserProgress.completed.is_(True),
+            Challenge.concepts_taught_json.contains(concept),
+            Challenge.challenge_type == "python",
+        )
+        .order_by(Challenge.level_order)
+    )
+    rows = result.all()
+    if not rows:
+        return {}
+    # Elegir uno al azar entre los primeros 5 para variar
+    progress, ch = random.choice(rows[:5])
+    return {
+        "challenge_id": str(ch.id),
+        "title": ch.title,
+        "level_order": ch.level_order,
+        "slug": getattr(ch, "slug", None) or str(ch.id),
     }
