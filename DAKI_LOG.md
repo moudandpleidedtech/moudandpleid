@@ -1,7 +1,7 @@
 # DAKI_LOG — Contexto Completo del Proyecto Nexo EdTech
 
 > Archivo de contexto para sesiones futuras.
-> Ultima actualizacion: 2026-04-06
+> Ultima actualizacion: 2026-04-07 (sesion 3 — expansion curricular completa)
 
 ---
 
@@ -443,6 +443,164 @@ Backend (.env):
 - Revela hints de `challenge.hints[]` en secuencia: PISTA 1/3 -> PISTA 2/3 -> PISTA FINAL
 - Kind: `intervention` (purpura) para el header, `enigma` para el contenido
 - Estado `guidedHintStep` se resetea al cambiar de challenge
+
+---
+
+## 22. Expansion del Ecosistema Python — Plan 7 Partes (2026-04-06)
+
+### Estado del curriculo (actualizado con Part 1 + 2 + 3)
+- Total: **127 challenges** (102 originales + 11 funciones + 8 comprensiones + 7 while)
+
+### Mapa completo de sectores POST Part 3
+| s | Fase | Niveles | N |
+|---|------|---------|---|
+| 0 | tutorial | 0 | 1 |
+| 1 | fundamentos | 1-10 | 10 |
+| 2 | flujo | 11-20 | 10 |
+| 3 | ciclos (for) | 21-30 | 10 |
+| **4** | **while (NUEVO)** | **31-37** | **7** |
+| 5 | estructuras | 38-47 | 10 |
+| **6** | **funciones (NUEVO)** | **48-58** | **11** |
+| **7** | **comprensiones (NUEVO)** | **59-66** | **8** |
+| 8 | cadenas | 67-76 | 10 |
+| 9 | boveda | 77-86 | 10 |
+| 10 | contrato | 87-96 | 10 |
+| 11-13 | practica | 97-126 | 30 |
+
+### Sector 4: While Avanzado (L31-37) — NUEVO
+| L | Titulo | Concepto | XP |
+|---|--------|----------|----|
+| 31 | Escalada de Potencia | while + contador + *= | 175 |
+| 32 | Dos Guardianes | while + AND | 200 |
+| 33 | Cuenta de Digitos | while + // | 225 |
+| 34 | Suma Hasta Superar | while + acumulador umbral | 225 |
+| 35 | Clave de Acceso | while + flag booleano + input | 250 |
+| 36 | Patron de Estrellas | while anidado | 275 |
+| 37 | El Maximo Comun Divisor | while + Euclides | 350 |
+- Sectores: 0-11 (anteriormente 0-10)
+- Niveles: 0-111 (anteriormente 0-100)
+- Eliminado: "La Cosita del Viernes" (boss_battle vacio, sector None)
+
+### Mapa de Sectores — Estado Final (162 challenges, sesion 3)
+| Sector | Fase | Niveles | Challenges |
+|--------|------|---------|-----------|
+| 0 | tutorial | 0 | 1 |
+| 1 | fundamentos | 1-10 | 10 |
+| 2 | flujo | 11-20 | 10 |
+| 3 | ciclos | 21-30 | 10 |
+| 4 | while | 31-37 | 7 |
+| 5 | estructuras | 38-47 | 10 |
+| 6 | funciones | 48-58 | 11 |
+| 7 | comprensiones | 59-66 | 8 |
+| 8 | cadenas | 67-76 | 10 |
+| 9 | boveda | 77-86 | 10 |
+| 10 | contrato | 87-96 | 10 |
+| 11 | practica | 97-106 | 10 |
+| 12 | practica | 107-116 | 10 |
+| 13 | practica | 117-126 | 10 |
+| **14** | **modulos** | **127-136** | **10** |
+| **15** | **archivos** | **137-142** | **6** |
+| **16** | **oop** | **143-150** | **8** |
+| **17** | **errores** | **151-155** | **5** |
+| **18** | **proyecto** | **156-161** | **6** |
+
+### Sector 6: Comprensiones (L52-59) — NUEVO
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 52 | La Lista Comprimida | list comprehension basica | 225 |
+| 53 | El Filtro Integrado | comprehension con if | 250 |
+| 54 | Transforma y Filtra | expresion + filtro combinados | 275 |
+| 55 | El Mapa de Datos | dict comprehension basica | 300 |
+| 56 | Inventario Activo | dict comprehension con filtro | 325 |
+| 57 | El Bucle Comprimido | comprension vs bucle for | 300 |
+| 58 | La Matriz Plana | comprension anidada | 375 |
+| 59 | NEXUS-06: El Analizador | boss — integracion completa | 750 |
+
+### Sector 5: Funciones Avanzadas (L41-51)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 41 | El Saludo Configurable | parametros default | 200 |
+| 42 | Estadisticas del Escaner | retorno multiple | 225 |
+| 43 | Cuenta Regresiva | recursion intro + caso base | 250 |
+| 44 | El Factorial del Sistema | recursion clasica | 275 |
+| 45 | Funciones en una Linea | lambda basica | 300 |
+| 46 | Ordenamiento Inteligente | sorted() con key=lambda | 325 |
+| 47 | Funciones que Reciben Funciones | orden superior | 350 |
+| 48 | Transformacion en Masa | map() | 375 |
+| 49 | Filtro de Frecuencias | filter() | 400 |
+| 50 | Fabricas de Funciones | closures | 425 |
+| 51 | NEXUS-05: Pipeline Funcional | integracion filter+map | 750 |
+
+### Estado Final del Plan de Expansion (sesion 3 — 2026-04-07) — TODO COMPLETADO
+
+| # | Descripcion | Challenges | Sector | Niveles | Estado |
+|---|-------------|-----------|--------|---------|--------|
+| 1 | Funciones avanzadas (default, recursion, lambda, HOF, closures) | 11 | 6 | 48-58 | COMPLETADO |
+| 2 | Comprensiones (list, dict, nested, boss) | 8 | 7 | 59-66 | COMPLETADO |
+| 3 | While profundo (retry, menu, multiple exit, boss) | 7 | 4 | 31-37 | COMPLETADO |
+| 4 | Modulos stdlib (math, random, datetime, collections, string, os.path) | 10 | 14 | 127-136 | COMPLETADO |
+| 5 | File I/O (open w/r/a, readlines, CSV) | 6 | 15 | 137-142 | COMPLETADO |
+| 6 | OOP (class, __init__, metodos, __str__, classmethod, herencia, super) | 8 | 16 | 143-150 | COMPLETADO |
+| 7 | Error handling (try/except, finally, raise, custom Exception) | 5 | 17 | 151-155 | COMPLETADO |
+| 8 | Proyecto integrador (__main__, JSON, sys.argv, modulo propio, boss final) | 6 | 18 | 156-161 | COMPLETADO |
+| 9 | Quality repairs (test_inputs_json para L23, L28, L29) | — | — | — | COMPLETADO |
+
+**Total sesion 3: 35 challenges nuevos insertados. Curriculo: 127 → 162 challenges.**
+
+### Sector 14: Modulos Stdlib (L127-136)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 127 | El Modulo math | sqrt, ceil, floor, pi | 250 |
+| 128 | Geometria con math | hipotenusa + area circulo | 275 |
+| 129 | random: Propiedades Garantizadas | seed, randint, choice | 275 |
+| 130 | random: Muestras y Mezclas | sample, shuffle | 300 |
+| 131 | datetime: Fechas y Diferencias | date(), timedelta | 300 |
+| 132 | datetime: Formato de Fechas | strftime | 300 |
+| 133 | collections.Counter | Counter, most_common | 325 |
+| 134 | string: Caracteres y Validacion | ascii_lowercase, digits, any() | 325 |
+| 135 | os.path: Rutas Portables | join, basename, dirname, splitext | 350 |
+| 136 | MODULO-01: El Inspector de Datos | Counter + sum/len integration boss | 700 |
+
+### Sector 15: File I/O (L137-142)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 137 | Escribir y Leer un Archivo | open w/r, with, f.read() | 300 |
+| 138 | Leer Linea por Linea | writelines, for line in f, strip | 300 |
+| 139 | Modo Append | open 'a', acumulacion de logs | 325 |
+| 140 | readlines() y Comprensiones | readlines + list comprehension | 350 |
+| 141 | CSV: Leer y Escribir | csv.writer, csv.reader, writerows | 400 |
+| 142 | ARCHIVO-01: Procesador CSV | csv.DictReader + Counter boss | 750 |
+
+### Sector 16: OOP (L143-150)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 143 | Tu Primera Clase | class, atributo de clase, isinstance | 300 |
+| 144 | __init__ y Atributos de Instancia | __init__, self, instancia | 325 |
+| 145 | Metodos de Instancia | metodos, mutacion via self | 350 |
+| 146 | __str__: Representacion Legible | __str__, dunder methods | 350 |
+| 147 | Atributos de Clase y @classmethod | @classmethod, cls | 375 |
+| 148 | Herencia: Polimorfismo | herencia, override, polimorfismo | 400 |
+| 149 | super() y Herencia Avanzada | super(), isinstance avanzado | 425 |
+| 150 | OOP-01: La Red de Nodos | OOP + comprehensions boss | 800 |
+
+### Sector 17: Error Handling (L151-155)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 151 | try/except: El Escudo del Error | try/except, ZeroDivisionError | 325 |
+| 152 | Multiples Excepciones | nested try/except, ValueError | 350 |
+| 153 | except as e: Inspeccionar el Error | except as e, IndexError | 350 |
+| 154 | finally: Siempre se Ejecuta | finally, cleanup garantizado | 375 |
+| 155 | raise: Lanzar Excepciones Custom | raise, clase Exception custom | 500 |
+
+### Sector 18: Proyecto Integrador (L156-161)
+| Level | Titulo | Concepto | XP |
+|-------|--------|----------|----|
+| 156 | El Guardian del Main | if __name__ == '__main__' | 375 |
+| 157 | JSON: El Lenguaje de los Datos | json.dumps, json.loads | 375 |
+| 158 | Verificador de Modulos | __import__, ImportError | 375 |
+| 159 | Argumentos de Linea de Comandos | sys.argv pattern | 400 |
+| 160 | El Modulo Propio | estructura de modulo, constantes | 425 |
+| 161 | NEXUS-FINAL: El Proyecto Integrador | OOP+comprehensions+json+datetime boss | 1000 |
 
 ---
 
