@@ -1,7 +1,7 @@
 # DAKI_LOG — Contexto Completo del Proyecto Nexo EdTech
 
 > Archivo de contexto para sesiones futuras.
-> Ultima actualizacion: 2026-04-05
+> Ultima actualizacion: 2026-04-06
 
 ---
 
@@ -407,20 +407,54 @@ Backend (.env):
 ## 19. Bugs Conocidos / Tech Debt
 
 - Monaco no funciona en mobile (no es prioridad — plataforma desktop)
-- RadarMaestriaModal puede mostrar datos hardcoded (necesita conectar progreso real)
-- conceptGlossary.ts tiene 14 conceptos — expandir con mas conceptos Python avanzados
+- ~~RadarMaestriaModal puede mostrar datos hardcoded~~ RESUELTO: conectado a GET /intel/mastery-radar
+- ~~conceptGlossary.ts tiene 14 conceptos~~ RESUELTO: expandido a 50+ en sesion 2026-04-05
 - SecretMissionRevealModal: UI de revelacion existe, pero no hay pantalla de historial
 
 ---
 
-## 20. Checklist para Retomar Trabajo
+## 20. 5 Bloques de Inversion — Inmersion y Aprendizaje (2026-04-06)
+
+### Block 1 — Pure frontend (CodeWorkspace.tsx + DakiTerminalLine.tsx)
+- **Timer color**: verde <60s, amarillo 60-120s, rojo >120s con glow pulsante
+- **Concept badges HUD**: `challenge.concepts_taught_json` muestra hasta 4 badges cyan bajo el titulo
+- **Editor glow dorado**: cuando `hintFreeStreak >= 3` (indicador de autonomia tactca)
+- **stderr border**: borde izquierdo rojo + nuevo kind `daki-explain` (naranja) para explicaciones
+- **DAKI Error Explainer**: mapa estatico de 11 error_type -> explicacion en espanol, inyectada en consola tras cada error
+
+### Block 2 — Backend + frontend
+- **failed_case** en CodeExecuteResponse: `{ got: str, expected: str }` cuando hay mismatch sin excepcion
+- **new_concepts** en CodeExecuteResponse: lista de conceptos de la mision, solo en primera complecion
+- **Toast "NODOS DESBLOQUEADOS"** (success, 5s) post-victoria con conceptos desbloqueados
+- Consola muestra `── Salida obtenida / Salida esperada` cuando hay mismatch
+
+### Block 3 — Pedagogical objective post-victoria
+- Tras primera victoria: seccion `▸ ¿POR QUE FUNCIONA?` en consola
+- Usa `challenge.pedagogical_objective` si existe, fallback a `challenge.syntax_hint`
+- kind: `daki-explain` (naranja, border izquierdo)
+
+### Block 4 — Revision Semanal
+- **GET /intel/weekly-review**: conceptos con `mastery_score < 70` y `updated_at < 7 dias`
+- **RevisionSemanalCard** en Hub: muestra hasta 8 conceptos debiles ordenados por score
+- Cada badge muestra: concepto, score%, color segun urgencia (rojo si needs_reinforcement)
+
+### Block 5 — DAKI Guia Paso a Paso
+- Boton `▸ GUIA PASO A PASO` en HUD cuando `failStreak >= 8`
+- Revela hints de `challenge.hints[]` en secuencia: PISTA 1/3 -> PISTA 2/3 -> PISTA FINAL
+- Kind: `intervention` (purpura) para el header, `enigma` para el contenido
+- Estado `guidedHintStep` se resetea al cambiar de challenge
+
+---
+
+## 21. Checklist para Retomar Trabajo
 
 - [ ] Verificar DakiIntelCard en challenge sin theory_content (probar en produccion)
 - [ ] Verificar Fin de Turno: completar 2+ misiones -> volver al Hub -> boton aparece
 - [ ] Verificar Milestones: primera victoria debe disparar MilestoneModal
 - [ ] Verificar Modo Socrático: primer fail debe mostrar preguntas en consola
-- [ ] RadarMaestriaModal: conectar a datos reales de progreso por concepto
-- [ ] Expandir conceptGlossary.ts con mas conceptos (OOP, excepciones, comprehensions)
+- [ ] Verificar Block 1-5 en produccion (deploy Vercel + Render)
+- [ ] Verificar RevisionSemanalCard en Hub con datos reales (requiere 7+ dias de uso)
+- [ ] Verificar DAKI Error Explainer en produccion con cada tipo de error
 
 ---
 
