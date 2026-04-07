@@ -65,6 +65,20 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "DAKI Nexo <noreply@dakiedtech.com>"
 
+    # ── Whitelist Alpha (Directiva 041) ──────────────────────────────────────
+    # Lista de emails autorizados, separados por coma.
+    # Vacío = whitelist desactivada (registro abierto).
+    # Activar en Render: ALPHA_WHITELIST=email1@gmail.com,email2@gmail.com,...
+    # El rol FOUNDER siempre bypassa esta validación.
+    ALPHA_WHITELIST: str = ""
+
+    @property
+    def alpha_allowed_emails(self) -> set[str]:
+        """Set de emails en minúsculas. Vacío = sin restricción."""
+        if not self.ALPHA_WHITELIST.strip():
+            return set()
+        return {e.strip().lower() for e in self.ALPHA_WHITELIST.split(",") if e.strip()}
+
     # TTL del JWT de admin en minutos (8 horas por defecto)
     ADMIN_TOKEN_EXPIRE_MINUTES: int = 480
 

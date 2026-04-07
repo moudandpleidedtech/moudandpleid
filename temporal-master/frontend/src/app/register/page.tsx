@@ -185,7 +185,9 @@ export default function RegisterPage() {
 
       // ── Errores ────────────────────────────────────────────────────────────
       const err = await res.json().catch(() => ({})) as { detail?: string }
-      if (res.status === 409) {
+      if (res.status === 403 && err.detail === 'ALPHA_CLOSED') {
+        setConsole({ text: 'ACCESO DENEGADO — LA FASE ALPHA ESTÁ CERRADA. ÚNETE A LA LISTA DE ESPERA.', state: 'error' })
+      } else if (res.status === 409) {
         const detail = typeof err.detail === 'string' ? err.detail : 'CONFLICTO DE IDENTIDAD'
         setConsole({ text: `ERROR 409: ${detail.toUpperCase()}`, state: 'error' })
       } else if (res.status === 422) {

@@ -45,6 +45,9 @@ from app.core.database import get_db
 from app.core.security import create_user_token, hash_password
 from app.models.user import User
 
+# Constante de error para whitelist — usada en redirect y frontend
+_ALPHA_CLOSED_ERROR = "alpha_closed"
+
 router = APIRouter(prefix="/auth", tags=["google-oauth"])
 
 # ─── Constantes ───────────────────────────────────────────────────────────────
@@ -223,6 +226,15 @@ async def google_callback(
             # Vincular google_id a la cuenta existente
             user.google_id = google_id
         else:
+            # ── Whitelist Alpha (Directiva 041) ───────────────────────────────
+            # Solo se aplica a cuentas nuevas. Usuarios existentes siempre pasan.
+            allowed = settings.alpha_allowed_emails
+            if allowed and email not in allowed:
+                return RedirectResponse(
+                    url=f"{frontend_base}/login?google_error={_ALPHA_CLOSED_ERROR}",
+                    status_code=302,
+                )
+
             # Crear cuenta nueva — callsign derivado del nombre de Google
             is_new_user = True
             base_callsign = _sanitize_callsign(name)

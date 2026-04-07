@@ -41,9 +41,18 @@ export default function LoginPage() {
   const [password,     setPassword]     = useState('')
   const [isLoading,    setIsLoading]    = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [alphaClosed,  setAlphaClosed]  = useState(false)
   const [console_,     setConsole]      = useState<ConsoleLine>({
     text: 'Esperando credenciales', state: 'idle',
   })
+
+  // ── Detectar error de whitelist Alpha en URL (redirigido desde Google OAuth) ─
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('google_error') === 'alpha_closed') {
+      setAlphaClosed(true)
+    }
+  }, [])
 
   const emailRef    = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
@@ -168,6 +177,21 @@ export default function LoginPage() {
             DAKIedtech {'//'}  TERMINAL DE ACCESO
           </h1>
         </div>
+
+        {/* Alpha Closed Banner */}
+        {alphaClosed && (
+          <div
+            className="mb-6 rounded border px-4 py-4 space-y-2"
+            style={{ background: '#0d0000', borderColor: '#7f1d1d' }}
+          >
+            <p className="text-xs tracking-[0.35em] uppercase font-bold" style={{ color: '#ef4444' }}>
+              {'// ACCESO DENEGADO'}
+            </p>
+            <p className="text-sm" style={{ color: '#fca5a5' }}>
+              La fase Alpha actualmente se encuentra cerrada. Únete a la lista de espera.
+            </p>
+          </div>
+        )}
 
         {/* Boot log */}
         {bootLines.length > 0 && (

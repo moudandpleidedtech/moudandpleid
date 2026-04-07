@@ -170,6 +170,15 @@ async def register(
     payload: RegisterRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
+    # ── Whitelist Alpha (Directiva 041) ──────────────────────────────────────────
+    # Si ALPHA_WHITELIST está configurada, solo emails autorizados pueden registrarse.
+    allowed = settings.alpha_allowed_emails
+    if allowed and payload.email.lower() not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ALPHA_CLOSED",
+        )
+
     # ── Unicidad de email y callsign (mensaje unificado para evitar enumeración) ─
     _conflict = HTTPException(
         status_code=status.HTTP_409_CONFLICT,
