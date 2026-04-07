@@ -320,7 +320,10 @@ export default function MisionesPage() {
     if (branchParam && BRANCH_LABELS[branchParam]) setActiveBranch(branchParam)
 
     fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then((data: Mission[]) => {
         // Merge local cache: marcar como completadas las misiones que constan en localStorage
         const merged = data.map(m =>
@@ -342,7 +345,7 @@ export default function MisionesPage() {
           }
         }
       })
-      .catch(err => { console.log('[Misiones] Error:', err); setFetchError(true) })
+      .catch(() => { setFetchError(true) })
       .finally(() => setLoading(false))
   }, [_hasHydrated, userId, router])
 

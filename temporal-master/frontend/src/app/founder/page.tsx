@@ -73,14 +73,22 @@ export default function FounderPage() {
   const fetchData = useCallback(async () => {
     setLoading(true); setError('')
     try {
+      // Producción: frontend y backend son cross-domain (Vercel ↔ Render).
+      // SameSite=lax bloquea cookies en fetch cross-origin → usar JWT de localStorage.
+      const token = typeof window !== 'undefined'
+        ? (localStorage.getItem('daki_token') ?? '')
+        : ''
+
       const res = await fetch(`${API_BASE}/api/v1/admin/users-progress`, {
-        credentials: 'include',   // envía cookie httpOnly daki_auth
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
       })
       if (res.status === 401 || res.status === 403) {
         router.replace('/hub'); return
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      setData(await res.json() as UsersProgressResponse)
+      const json = await res.json() as UsersProgressResponse
+      setData(json)
     } catch {
       setError('Error al cargar datos. Intentá de nuevo.')
     } finally {
@@ -109,11 +117,14 @@ export default function FounderPage() {
       return sortAsc ? cmp : -cmp
     })
 
-  const users      = data?.users ?? []
-  const activeCount    = users.filter(u => u.subscription_status === 'ACTIVE').length
-  const trialCount     = users.filter(u => u.subscription_status === 'TRIAL').length
-  const avgLevel       = users.length ? Math.round(users.reduce((s, u) => s + u.current_level, 0) / users.length) : 0
-  const activeLast24h  = users.filter(u => u.last_login && Date.now() - new Date(u.last_login).getTime() < 86_400_000).length
+  const users         = data?.users ?? []
+  const activeCount   = users.filter(u => u.subscription_status === 'ACTIVE').length
+  const trialCount    = users.filter(u => u.subscription_status === 'TRIAL').length
+  const avgLevel      = users.length ? Math.round(users.reduce((s, u) => s + (u.current_level ?? 0), 0) / users.length) : 0
+  const activeLast24h = users.filter(u => {
+    if (!u.last_login) return false
+    try { return Date.now() - new Date(u.last_login).getTime() < 86_400_000 } catch { return false }
+  }).length
 
   const SortBtn = ({ col, label }: { col: typeof sortBy; label: string }) => (
     <button
@@ -241,8 +252,8 @@ export default function FounderPage() {
                       </td>
                       <td className="px-4 py-2.5" style={{ color: '#6b7280' }}>{u.email}</td>
                       <td className="px-4 py-2.5 text-center font-black" style={{ color: '#00FF41' }}>{u.current_level}</td>
-                      <td className="px-4 py-2.5 text-center" style={{ color: '#9ca3af' }}>{u.total_xp.toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-center" style={{ color: '#60a5fa' }}>{u.challenges_completed}</td>
+                      <td className="px-4 py-2.5 text-center" style={{ color: '#9ca3af' }}>{(u.total_xp ?? 0).toLocaleString()}</td>
+                      <td className="px-4 py-2.5 text-center" style={{ color: '#60a5fa' }}>{u.challenges_completed ?? 0}</td>
                       <td className="px-4 py-2.5">
                         <span
                           className="text-[9px] font-black tracking-widest border px-2 py-0.5 rounded"
@@ -265,7 +276,7 @@ export default function FounderPage() {
                 NIV. PROMEDIO: <strong style={{ color: '#e5e7eb' }}>{avgLevel}</strong>
               </span>
               <span className="text-[9px] tracking-widest uppercase" style={{ color: '#374151' }}>
-                XP TOTAL: <strong style={{ color: '#e5e7eb' }}>{users.reduce((s, u) => s + u.total_xp, 0).toLocaleString()}</strong>
+                XP TOTAL: <strong style={{ color: '#e5e7eb' }}>{users.reduce((s, u) => s + (u.total_xp ?? 0), 0).toLocaleString()}</strong>
               </span>
             </div>
           </div>

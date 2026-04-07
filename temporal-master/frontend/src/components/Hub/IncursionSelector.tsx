@@ -47,14 +47,16 @@ export default function IncursionSelector({ onNavigate, isFounder = false, hasAc
       : `${API}/api/v1/incursions`
 
     fetch(url, { signal: controller.signal })
-      .then(r => r.json() as Promise<unknown>)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json() as Promise<unknown>
+      })
       .then(data => {
-        console.log('DATA DEL BACKEND:', data)
         setIncursions(Array.isArray(data) ? data as IncursionData[] : [])
         setLoading(false)
       })
-      .catch(e => {
-        if (e.name === 'AbortError') return
+      .catch((e: unknown) => {
+        if (e instanceof Error && e.name === 'AbortError') return
         setFetchError(true)
         setLoading(false)
       })
