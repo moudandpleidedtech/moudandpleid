@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
 
+    # ── Email Transaccional (Resend) ──────────────────────────────────────────
+    # Obtener en: resend.com → API Keys
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "DAKI Nexo <noreply@dakiedtech.com>"
+
     # TTL del JWT de admin en minutos (8 horas por defecto)
     ADMIN_TOKEN_EXPIRE_MINUTES: int = 480
 

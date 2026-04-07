@@ -637,3 +637,86 @@ async def get_admin_dashboard(
         ),
         levels=level_metrics,
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ENDPOINTS 6 & 7 — Email Check Triggers (JWT Bearer, admin-only)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class EmailCheckResult(BaseModel):
+    checked: int
+    emails_sent: int
+
+
+@router.post(
+    "/trigger-trial-check",
+    response_model=EmailCheckResult,
+    summary="Dispara emails de aviso de vencimiento de trial",
+    dependencies=[Depends(require_admin)],
+)
+async def trigger_trial_check(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> EmailCheckResult:
+    from datetime import timedelta  # already imported via datetime above
+    from app.services.email import send_trial_expiry
+
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(User).where(
+            User.subscription_status == "TRIAL",
+            User.trial_end_date.isnot(None),
+        )
+    )
+    users = result.scalars().all()
+
+    sent = 0
+    for user in users:
+        if not user.trial_end_date or not user.email:
+            continue
+        delta = user.trial_end_date - now
+        days_left = max(0, delta.days)
+        if days_left in (0, 1, 2, 5):
+            ok = await send_trial_expiry(user.email, user.callsign, days_left)
+            if ok:
+                sent += 1
+
+    return EmailCheckResult(checked=len(users), emails_sent=sent)
+
+
+@router.post(
+    "/trigger-reengagement",
+    response_model=EmailCheckResult,
+    summary="Dispara emails de re-engagement a usuarios inactivos 5-30 días",
+    dependencies=[Depends(require_admin)],
+)
+async def trigger_reengagement(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> EmailCheckResult:
+    from datetime import timedelta
+    from app.services.email import send_reengagement
+
+    cutoff_5d  = datetime.now(timezone.utc) - timedelta(days=5)
+    cutoff_30d = datetime.now(timezone.utc) - timedelta(days=30)
+
+    result = await db.execute(
+        select(User).where(
+            User.last_login.isnot(None),
+            User.last_login < cutoff_5d,
+            User.last_login > cutoff_30d,
+            User.subscription_status.in_(["TRIAL", "ACTIVE"]),
+        )
+    )
+    users = result.scalars().all()
+
+    sent = 0
+    for user in users:
+        if not user.email or not user.last_login:
+            continue
+        days_absent = (datetime.now(timezone.utc) - user.last_login).days
+        ok = await send_reengagement(user.email, user.callsign, days_absent)
+        if ok:
+            sent += 1
+
+    return EmailCheckResult(checked=len(users), emails_sent=sent)

@@ -64,13 +64,18 @@ interface DakiStatsData {
 
 interface RecentUser {
   id: string
-  username: string
+  callsign: string
   email: string
   current_level: number
   total_xp: number
-  is_paid: boolean
+  is_licensed: boolean
   league_tier: string
   created_at: string
+}
+
+interface NotifResult {
+  checked: number
+  emails_sent: number
 }
 
 interface SectorBar {
@@ -93,14 +98,23 @@ async function apiFetch<T>(path: string, token: string): Promise<T> {
   return res.json()
 }
 
-async function apiLogin(username: string, password: string) {
+async function apiLogin(callsign: string, password: string) {
   const res = await fetch(`${API_BASE}/api/v1/admin/auth/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ callsign, password }),
   })
   if (!res.ok) throw new Error('Credenciales inválidas')
-  return res.json() as Promise<{ access_token: string; username: string; expires_in_minutes: number }>
+  return res.json() as Promise<{ access_token: string; callsign: string; expires_in_minutes: number }>
+}
+
+async function apiTrigger(path: string, token: string): Promise<{ checked: number; emails_sent: number }> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
 }
 
 // ─── Data aggregation ──────────────────────────────────────────────────────────
@@ -293,7 +307,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, username: string) =
     setLoading(true)
     try {
       const data = await apiLogin(username, password)
-      onLogin(data.access_token, data.username)
+      onLogin(data.access_token, data.callsign)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
@@ -395,13 +409,14 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, username: string) =
 
 // ─── Sidebar ───────────────────────────────────────────────────────────────────
 
-type Section = 'overview' | 'funnel' | 'daki' | 'users'
+type Section = 'overview' | 'funnel' | 'daki' | 'users' | 'notifications'
 
 const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
-  { id: 'overview', label: 'Overview',  icon: '◈' },
-  { id: 'funnel',   label: 'Embudo',    icon: '▼' },
-  { id: 'daki',     label: 'DAKI',      icon: '◎' },
-  { id: 'users',    label: 'Usuarios',  icon: '◷' },
+  { id: 'overview',       label: 'Overview',   icon: '◈' },
+  { id: 'funnel',         label: 'Embudo',     icon: '▼' },
+  { id: 'daki',           label: 'DAKI',       icon: '◎' },
+  { id: 'users',          label: 'Usuarios',   icon: '◷' },
+  { id: 'notifications',  label: 'Emails',     icon: '◌' },
 ]
 
 function Sidebar({
@@ -489,6 +504,9 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
   const [sectorBars,  setSectorBars]  = useState<SectorBar[]>([])
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
+  const [notifLoading, setNotifLoading] = useState<'trial' | 'reengagement' | null>(null)
+  const [notifResults, setNotifResults] = useState<{ trial: NotifResult | null; reengagement: NotifResult | null }>({ trial: null, reengagement: null })
+  const [notifError,   setNotifError]   = useState('')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -517,6 +535,22 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
   }, [token, onLogout])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  const triggerCheck = useCallback(async (type: 'trial' | 'reengagement') => {
+    setNotifLoading(type)
+    setNotifError('')
+    const path = type === 'trial'
+      ? '/api/v1/admin/trigger-trial-check'
+      : '/api/v1/admin/trigger-reengagement'
+    try {
+      const result = await apiTrigger(path, token)
+      setNotifResults(prev => ({ ...prev, [type]: result }))
+    } catch (err: unknown) {
+      setNotifError(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setNotifLoading(null)
+    }
+  }, [token])
 
   const CONTENT_CLS = 'ml-14 md:ml-52 min-h-screen p-6 md:p-8'
 
@@ -580,10 +614,11 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
                 DAKI EdTech // CEO Dashboard
               </p>
               <h1 className="text-2xl font-black font-mono tracking-wider" style={{ color: '#f9fafb' }}>
-                {section === 'overview' && 'Vista General'}
-                {section === 'funnel'   && 'Embudo de Deserción'}
-                {section === 'daki'     && 'Estadísticas DAKI'}
-                {section === 'users'    && 'Usuarios Recientes'}
+                {section === 'overview'       && 'Vista General'}
+                {section === 'funnel'         && 'Embudo de Deserción'}
+                {section === 'daki'           && 'Estadísticas DAKI'}
+                {section === 'users'          && 'Usuarios Recientes'}
+                {section === 'notifications'  && 'Notificaciones Email'}
               </h1>
             </div>
             <div className="text-right hidden md:block">
@@ -877,6 +912,105 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
           )}
 
           {/* ════════════════════════════════════════════════════════════ */}
+          {/* NOTIFICATIONS                                                */}
+          {/* ════════════════════════════════════════════════════════════ */}
+          {section === 'notifications' && (
+            <div className="space-y-6">
+              <p className="text-xs font-mono" style={{ color: '#4b5563' }}>
+                {'// Dispara checks de email manualmente. En producción, corren vía cron.'}
+              </p>
+
+              {notifError && (
+                <div className="rounded border px-4 py-3" style={{ background: '#150a0a', borderColor: '#7f1d1d' }}>
+                  <p className="text-xs font-mono" style={{ color: '#ef4444' }}>{'// ERROR: '}{notifError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Trial expiry */}
+                <div className="rounded border p-6 space-y-4" style={{ background: '#0d0d1a', borderColor: '#1a1a2e' }}>
+                  <div>
+                    <SectionTitle>Trial Expiry Check</SectionTitle>
+                    <p className="text-xs mt-1" style={{ color: '#374151' }}>
+                      Envía email a usuarios TRIAL con vencimiento en 0, 1, 2 o 5 días.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => triggerCheck('trial')}
+                    disabled={notifLoading !== null}
+                    className="w-full py-3 font-mono text-xs tracking-[0.2em] uppercase transition-all duration-200 rounded"
+                    style={{
+                      background: notifLoading === 'trial' ? '#052e16' : '#0d1f0d',
+                      color: notifLoading === 'trial' ? '#166534' : '#00FF41',
+                      border: '1px solid #166534',
+                      cursor: notifLoading !== null ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {notifLoading === 'trial' ? '[ ENVIANDO... ]' : '[ EJECUTAR TRIAL CHECK ]'}
+                  </button>
+                  {notifResults.trial && (
+                    <div className="rounded px-4 py-3 space-y-1" style={{ background: '#050510' }}>
+                      <p className="text-[10px] tracking-widest uppercase" style={{ color: '#374151' }}>Resultado</p>
+                      <p className="text-sm font-mono" style={{ color: '#00FF41' }}>
+                        Chequeados: <strong>{notifResults.trial.checked}</strong>
+                        {' · '}
+                        Enviados: <strong style={{ color: notifResults.trial.emails_sent > 0 ? '#22c55e' : '#6b7280' }}>
+                          {notifResults.trial.emails_sent}
+                        </strong>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Re-engagement */}
+                <div className="rounded border p-6 space-y-4" style={{ background: '#0d0d1a', borderColor: '#1a1a2e' }}>
+                  <div>
+                    <SectionTitle>Re-engagement Check</SectionTitle>
+                    <p className="text-xs mt-1" style={{ color: '#374151' }}>
+                      Envía email a operadores inactivos entre 5 y 30 días (TRIAL o ACTIVE).
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => triggerCheck('reengagement')}
+                    disabled={notifLoading !== null}
+                    className="w-full py-3 font-mono text-xs tracking-[0.2em] uppercase transition-all duration-200 rounded"
+                    style={{
+                      background: notifLoading === 'reengagement' ? '#0a1a2e' : '#0d1520',
+                      color: notifLoading === 'reengagement' ? '#1d4ed8' : '#00bfff',
+                      border: '1px solid #1e3a5f',
+                      cursor: notifLoading !== null ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {notifLoading === 'reengagement' ? '[ ENVIANDO... ]' : '[ EJECUTAR REENGAGEMENT ]'}
+                  </button>
+                  {notifResults.reengagement && (
+                    <div className="rounded px-4 py-3 space-y-1" style={{ background: '#050510' }}>
+                      <p className="text-[10px] tracking-widest uppercase" style={{ color: '#374151' }}>Resultado</p>
+                      <p className="text-sm font-mono" style={{ color: '#00bfff' }}>
+                        Chequeados: <strong>{notifResults.reengagement.checked}</strong>
+                        {' · '}
+                        Enviados: <strong style={{ color: notifResults.reengagement.emails_sent > 0 ? '#22c55e' : '#6b7280' }}>
+                          {notifResults.reengagement.emails_sent}
+                        </strong>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded border px-5 py-4" style={{ background: '#08080f', borderColor: '#0f0f1a' }}>
+                <p className="text-[10px] tracking-[0.4em] uppercase mb-2" style={{ color: '#374151' }}>
+                  Automatización en producción
+                </p>
+                <ul className="space-y-1 text-xs font-mono" style={{ color: '#4b5563' }}>
+                  <li>{'→'} <code style={{ color: '#6b7280' }}>POST /api/v1/notifications/trial-expiry-check</code> — cron diario (X-Admin-Key)</li>
+                  <li>{'→'} <code style={{ color: '#6b7280' }}>POST /api/v1/notifications/reengagement-check</code> — cron diario (X-Admin-Key)</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════ */}
           {/* RECENT USERS                                                 */}
           {/* ════════════════════════════════════════════════════════════ */}
           {section === 'users' && (
@@ -915,7 +1049,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
                           }}
                         >
                           <td className="px-4 py-3 font-bold" style={{ color: '#e5e7eb' }}>
-                            {u.username}
+                            {u.callsign}
                           </td>
                           <td className="px-4 py-3 max-w-[180px] truncate" style={{ color: '#6b7280' }}>
                             {u.email}
@@ -935,7 +1069,7 @@ function Dashboard({ token, username, onLogout }: { token: string; username: str
                             <LeagueBadge tier={u.league_tier} />
                           </td>
                           <td className="px-4 py-3">
-                            <Pill label={u.is_paid ? 'PAID' : 'FREE'} active={u.is_paid} />
+                            <Pill label={u.is_licensed ? 'PAID' : 'FREE'} active={u.is_licensed} />
                           </td>
                           <td className="px-4 py-3" style={{ color: '#4b5563' }}>
                             {formatDate(u.created_at)}

@@ -528,6 +528,67 @@ function OnboardingModal({ onClose, onStart }: { onClose: () => void; onStart: (
   )
 }
 
+// ─── Trial Countdown Banner ───────────────────────────────────────────────────
+
+function TrialCountdownBanner({
+  subscriptionStatus,
+  trialEndDate,
+  onSubscribe,
+}: {
+  subscriptionStatus: string
+  trialEndDate: string | null
+  onSubscribe: () => void
+}) {
+  if (subscriptionStatus !== 'TRIAL') return null
+
+  const daysLeft = trialEndDate
+    ? Math.max(0, Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / 86400000))
+    : null
+
+  const urgent  = daysLeft !== null && daysLeft <= 2
+  const warning = daysLeft !== null && daysLeft <= 5
+
+  const color     = urgent ? '#FF4040' : warning ? '#FFB800' : '#00E5FF'
+  const colorDim  = urgent ? 'rgba(255,64,64,0.15)' : warning ? 'rgba(255,184,0,0.10)' : 'rgba(0,229,255,0.08)'
+  const colorBdr  = urgent ? 'rgba(255,64,64,0.40)' : warning ? 'rgba(255,184,0,0.35)' : 'rgba(0,229,255,0.25)'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full font-mono border-b flex items-center justify-between px-6 py-2 gap-4"
+      style={{ background: colorDim, borderColor: colorBdr }}
+    >
+      <div className="flex items-center gap-3">
+        <motion.span
+          style={{ color }}
+          animate={{ opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 1.6, repeat: Infinity }}
+          className="text-sm"
+        >
+          {urgent ? '⚠' : '◉'}
+        </motion.span>
+        <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color }}>
+          {urgent
+            ? `TRIAL EXPIRA EN ${daysLeft === 0 ? 'HOY' : `${daysLeft}D`} — ACCESO EN RIESGO`
+            : daysLeft !== null
+              ? `TRIAL ACTIVO — ${daysLeft} DÍAS RESTANTES`
+              : 'PERÍODO DE PRUEBA ACTIVO'}
+        </span>
+      </div>
+      <motion.button
+        onClick={onSubscribe}
+        className="text-[9px] tracking-[0.35em] uppercase px-3 py-1 border shrink-0"
+        style={{ borderColor: colorBdr, color, background: colorDim }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.97 }}
+      >
+        ACTIVAR LICENCIA →
+      </motion.button>
+    </motion.div>
+  )
+}
+
 // ─── Página Hub ────────────────────────────────────────────────────────────────
 
 export default function HubPage() {
@@ -817,6 +878,13 @@ export default function HubPage() {
           </button>
         </div>
       </header>
+
+      {/* ── Trial Countdown Banner ── */}
+      <TrialCountdownBanner
+        subscriptionStatus={subscriptionStatus}
+        trialEndDate={useUserStore.getState().trialEndDate}
+        onSubscribe={handleStripeCheckout}
+      />
 
       {/* ── Boss Warning Banner ── */}
       <BossWarningBanner level={level} />

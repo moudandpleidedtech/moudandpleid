@@ -33,6 +33,7 @@ from app.core.rate_limit import limiter
 from app.core.security import create_user_token, hash_password, verify_password
 from app.models.beta_code import BetaCode
 from app.models.tactical_key import TacticalAccessKey
+from app.services.email import send_welcome
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -211,6 +212,10 @@ async def register(
 
     await db.commit()
     await db.refresh(user)
+
+    # ── Email de bienvenida (fire-and-forget) ──────────────────────────────
+    import asyncio
+    asyncio.create_task(send_welcome(user.email, user.callsign))
 
     token = create_user_token(
         user_id=str(user.id),

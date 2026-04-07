@@ -44,50 +44,126 @@ interface LockedModalState {
 }
 
 // ─── Estructura del Mapa de Campaña ───────────────────────────────────────────
+// Los IDs de nodos deben coincidir con _NODES en campaign.py (backend).
 
 const ZONES: CampaignZone[] = [
   {
     codex_id: 'python_core',
     title: 'PYTHON CORE',
-    subtitle: 'Protocolo de Iniciación',
+    subtitle: 'Protocolo de Iniciación — S00 a S07',
     color: '#00FF41',
     icon: '⬡',
     status: 'active',
     nodes: [
       {
-        id: 'py_s00',
-        title: 'SECTOR 00',
-        subtitle: 'Calibración Sináptica',
-        level_range: 'L01 – L10',
+        id: 's00_s03',
+        title: 'INICIACIÓN',
+        subtitle: 'Tutorial · Variables · Flujo · Ciclos',
+        level_range: 'L00 – L30',
         is_boss: false,
         nav_path: '/sector/0',
       },
       {
-        id: 'py_s01',
-        title: 'SECTOR 01',
-        subtitle: 'Fundamentos Neuronales',
-        level_range: 'L11 – L25',
-        is_boss: false,
-        required_boss_name: 'Boss del Sector 00',
-        nav_path: '/sector/1',
-      },
-      {
-        id: 'py_s02',
-        title: 'SECTOR 02',
-        subtitle: 'Estructuras de Control',
-        level_range: 'L26 – L50',
-        is_boss: false,
-        required_boss_name: 'Boss del Sector 01',
-        nav_path: '/sector/2',
-      },
-      {
-        id: 'py_boss_final',
-        title: '[ BOSS FINAL ]',
-        subtitle: 'The Infinite Looper',
-        level_range: 'L51',
+        id: 's04_s07',
+        title: 'ESTRUCTURAS & FUNCIONES',
+        subtitle: 'While · Listas · Funciones · Comprensiones',
+        level_range: 'L31 – L66',
         is_boss: true,
-        required_boss_name: 'Boss del Sector 02',
-        nav_path: '/boss/infinite-looper',
+        required_boss_name: 'Boss de Iniciación (L30)',
+        nav_path: '/sector/4',
+      },
+    ],
+  },
+  {
+    codex_id: 'python_avanzado',
+    title: 'OPERACIONES AVANZADAS',
+    subtitle: 'Práctica de profundidad — S08 a S13',
+    color: '#00E5FF',
+    icon: '◈',
+    status: 'active',
+    nodes: [
+      {
+        id: 's08_s10',
+        title: 'CADENAS & BÓVEDA',
+        subtitle: 'Strings · Lógica compleja · Contratos',
+        level_range: 'L67 – L96',
+        is_boss: false,
+        required_boss_name: 'Boss NEXUS-06 (L59)',
+        nav_path: '/sector/8',
+      },
+      {
+        id: 's11_s13',
+        title: 'PRÁCTICA INTENSIVA',
+        subtitle: '30 misiones de consolidación táctica',
+        level_range: 'L97 – L126',
+        is_boss: false,
+        required_boss_name: 'Boss del Sector 10',
+        nav_path: '/sector/11',
+      },
+    ],
+  },
+  {
+    codex_id: 'python_elite',
+    title: 'ESPECIALIZACIÓN DE ÉLITE',
+    subtitle: 'Módulos · OOP · Errores · Proyecto — S14 a S18',
+    color: '#FFB800',
+    icon: '▣',
+    status: 'active',
+    nodes: [
+      {
+        id: 's14_s15',
+        title: 'MÓDULOS & ARCHIVOS',
+        subtitle: 'stdlib · math · datetime · File I/O · CSV',
+        level_range: 'L127 – L142',
+        is_boss: true,
+        required_boss_name: 'Boss Práctica Intensiva (L126)',
+        nav_path: '/sector/14',
+      },
+      {
+        id: 's16_s18',
+        title: 'OOP & PROYECTO FINAL',
+        subtitle: 'Clases · Herencia · Errores · Boss Integrador',
+        level_range: 'L143 – L161',
+        is_boss: true,
+        required_boss_name: 'Boss ARCHIVO-01 (L142)',
+        nav_path: '/sector/16',
+      },
+    ],
+  },
+  {
+    codex_id: 'protocolos_elite',
+    title: 'PROTOCOLOS DE ÉLITE',
+    subtitle: 'Debug · Entrevistas · Predicción — S19 a S21',
+    color: '#BD00FF',
+    icon: '◉',
+    status: 'active',
+    nodes: [
+      {
+        id: 's19_debug',
+        title: 'MODO DEBUG',
+        subtitle: 'Bugs reales: NameError · TypeError · Off-by-one',
+        level_range: 'L162 – L169',
+        is_boss: false,
+        required_boss_name: 'Boss NEXUS-FINAL (L161)',
+        nav_path: '/sector/19',
+      },
+      {
+        id: 's20_interview',
+        title: 'PROTOCOLO DE ENTREVISTA',
+        subtitle: 'Two Sum · Palíndromo · Greedy · Boss Screening',
+        level_range: 'L170 – L179',
+        is_boss: false,
+        required_boss_name: 'Boss Debug (L169)',
+        nav_path: '/sector/20',
+      },
+      {
+        id: 's21_predict',
+        title: 'SISTEMA DE PREDICCIÓN',
+        subtitle: 'Leer código · Predecir output · Sin ejecutar',
+        level_range: 'L180 – L189',
+        is_boss: true,
+        required_boss_name: 'Boss Interview (L179)',
+        nav_path: '/sector/21',
       },
     ],
   },
@@ -720,12 +796,8 @@ export default function CampaignMap() {
     setLockedModal({ node, zone })
   }
 
-  const handleUnlockedNode = (_node: MapNode, zone: CampaignZone) => {
-    // Por ahora navega al sector correspondiente de la zona
-    // En el futuro: router.push(node.nav_path)
-    if (zone.codex_id === 'python_core') {
-      router.push('/hub')
-    }
+  const handleUnlockedNode = (node: MapNode, _zone: CampaignZone) => {
+    router.push(node.nav_path)
   }
 
   return (

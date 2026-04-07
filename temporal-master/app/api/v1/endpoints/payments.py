@@ -44,6 +44,7 @@ from app.core.database import get_db
 from app.core.security import get_current_operator
 from app.models.user import User
 from app.services.alerts import fire_sale_alert
+from app.services.email import send_subscription_active
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -226,6 +227,7 @@ async def payment_webhook(
             await db.flush()
 
             asyncio.create_task(fire_sale_alert(user.email))
+            asyncio.create_task(send_subscription_active(user.email, user.callsign))
 
             return {
                 "received":  True,

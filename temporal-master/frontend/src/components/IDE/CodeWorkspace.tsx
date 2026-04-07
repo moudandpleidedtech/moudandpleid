@@ -34,6 +34,10 @@ import { TIER_LABEL, TIER_COLOR } from '@/lib/tierLabels'
 import MicroBroadcast from '@/components/UI/MicroBroadcast'
 import { useMicroBroadcast } from '@/hooks/useMicroBroadcast'
 import { useSecretMissions } from '@/hooks/useSecretMissions'
+import { useRetrievalMode }   from '@/hooks/useRetrievalMode'
+import { usePatternCallout }  from '@/hooks/usePatternCallout'
+import { usePredictionWidget } from '@/hooks/usePredictionWidget'
+import { useRubberDuck }      from '@/hooks/useRubberDuck'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -483,16 +487,26 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [activeMilestone, setActiveMilestone] = useState<MilestoneUnlock | null>(null)
   const [sessionAttempts, setSessionAttempts] = useState(0)  // intentos en misión actual
 
-  // ── Pedagogía avanzada ────────────────────────────────────────────────────────
-  // F1-pred: Predicción antes de ejecutar (L30+)
-  const [prediction, setPrediction]           = useState('')
-  const [predictionResult, setPredictionResult] = useState<'correct' | 'wrong' | null>(null)
-  // F3-duck: Rubber Duck Gate
-  const [showRubberDuck, setShowRubberDuck]   = useState(false)
-  const [rubberDuckText, setRubberDuckText]   = useState('')
-  // F7-ret: Retrieval mode (activado por ?mode=retrieval en URL)
-  const [isRetrievalMode, setIsRetrievalMode] = useState(false)
-  // F2-pred: predict challenge — respuesta del operador
+  // ── Pedagogía avanzada — hooks extraídos ───────────────────────────────────
+  const isRetrievalMode = useRetrievalMode()
+
+  const {
+    prediction, setPrediction,
+    predictionResult,
+    evaluatePrediction,
+    resetPrediction,
+  } = usePredictionWidget()
+
+  const {
+    showRubberDuck,
+    rubberDuckText, setRubberDuckText,
+    openRubberDuck, closeRubberDuck,
+    confirmRubberDuck,
+    shouldGate: rubberDuckShouldGate,
+    MIN_CHARS: RUBBER_DUCK_MIN_CHARS,
+  } = useRubberDuck()
+
+  // F2-pred: predict challenge — respuesta del operador (estado local, liviano)
   const [predictAnswer, setPredictAnswer]     = useState('')
   const [predictFeedback, setPredictFeedback] = useState<'correct' | 'wrong' | null>(null)
 
@@ -820,43 +834,25 @@ export default function CodeWorkspace({ challengeId }: Props) {
     }
   }, [level, previousLevel])
 
-  // F7-ret: detectar modo retrieval por query param
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('mode') === 'retrieval') setIsRetrievalMode(true)
-    } catch { /* */ }
-  }, [])
+  // F7-ret: useRetrievalMode hook (lee ?mode=retrieval al montar — ver hooks/useRetrievalMode.ts)
 
   // F5-pattern: callout de patrón entre challenges (L20+, 1.5s después de cargar)
-  useEffect(() => {
-    if (!challenge || !userId || (challenge.level_order ?? 0) < 20) return
-    const t = setTimeout(() => {
-      fetch(`${API_BASE}/api/v1/intel/pattern-callout?user_id=${userId}&challenge_id=${challenge.id}`)
-        .then(r => r.ok ? r.json() : null)
-        .then((d: { previous_title?: string; previous_level?: number; concept?: string } | null) => {
-          if (d?.previous_title && d.concept) {
-            setOutput(prev => [
-              ...prev,
-              { text: `[DAKI] Patrón reconocido: '${d.concept.replace(/_/g, ' ')}' — lo trabajaste en L${d.previous_level} (${d.previous_title}). Buscá la conexión.`, kind: 'daki-explain' as const },
-            ])
-          }
-        })
-        .catch(() => {})
-    }, 1500)
-    return () => clearTimeout(t)
-  }, [challenge?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  usePatternCallout({
+    challengeId: challenge?.id ?? null,
+    userId,
+    levelOrder: challenge?.level_order ?? null,
+    onMatch: (line) =>
+      setOutput(prev => [...prev, { text: line, kind: 'daki-explain' as const }]),
+  })
 
   // Resetear estados pedagógicos al cambiar de challenge
   useEffect(() => {
-    setPrediction('')
-    setPredictionResult(null)
+    resetPrediction()
     setPredictAnswer('')
     setPredictFeedback(null)
-    setShowRubberDuck(false)
-    setRubberDuckText('')
+    closeRubberDuck()
     pendingHintRef.current = false
-  }, [challengeId])
+  }, [challengeId, resetPrediction, closeRubberDuck])
 
   // Par de líneas del reto actual
   const parLines = useMemo(() => {
@@ -990,9 +986,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
     if (isRetrievalMode) return
 
     // F3-duck: Rubber Duck Gate — L30+ y failStreak >= 3 → articular antes de recibir ayuda
-    const isEarlyLevel = (challenge.level_order ?? 0) < 30
-    if (!isEarlyLevel && failStreak >= 3 && !pendingHintRef.current) {
-      setShowRubberDuck(true)
+    if (rubberDuckShouldGate(failStreak, challenge.level_order, challenge.is_ironman, isRetrievalMode, pendingHintRef.current)) {
+      openRubberDuck()
       return
     }
     pendingHintRef.current = false
@@ -1304,14 +1299,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
       // F1-pred: comparación predicción vs output real (L30+)
       if (prediction.trim() && (challenge?.level_order ?? 0) >= 30) {
-        const normalize = (s: string) => s.replace(/\r\n/g, '\n').trim()
-        const actualOut = normalize(data.stdout || '')
-        const userPred  = normalize(prediction)
-        const hit = actualOut === userPred
-        setPredictionResult(hit ? 'correct' : 'wrong')
-        lines.unshift(hit
+        const hit = evaluatePrediction(data.stdout || '')
+        lines.unshift(hit === 'correct'
           ? { text: '◆ PREDICCIÓN CORRECTA — Modelo mental activo', kind: 'success' as const }
-          : { text: `△ Predijiste: "${userPred}" — Output real: "${actualOut}" | Analizá la brecha.`, kind: 'daki-explain' as const }
+          : { text: `△ Predijiste: "${prediction.trim()}" — Output real: "${(data.stdout || '').trim()}" | Analizá la brecha.`, kind: 'daki-explain' as const }
         )
       }
 
@@ -2453,29 +2444,29 @@ export default function CodeWorkspace({ challengeId }: Props) {
                     placeholder="¿Qué es exactamente lo que no entendés?"
                     className="w-full bg-transparent border text-xs leading-5 p-3 outline-none resize-none placeholder:opacity-20 transition-colors"
                     style={{
-                      borderColor: rubberDuckText.length >= 15 ? 'rgba(0,180,255,0.4)' : 'rgba(0,180,255,0.15)',
+                      borderColor: rubberDuckText.length >= RUBBER_DUCK_MIN_CHARS ? 'rgba(0,180,255,0.4)' : 'rgba(0,180,255,0.15)',
                       color: 'rgba(0,180,255,0.8)',
                       fontFamily: 'monospace',
                     }}
                     autoFocus
                   />
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-[8px] tracking-widest" style={{ color: rubberDuckText.length >= 15 ? 'rgba(0,255,65,0.4)' : 'rgba(255,255,255,0.15)' }}>
-                      {rubberDuckText.length}/15 mín
+                    <span className="text-[8px] tracking-widest" style={{ color: rubberDuckText.length >= RUBBER_DUCK_MIN_CHARS ? 'rgba(0,255,65,0.4)' : 'rgba(255,255,255,0.15)' }}>
+                      {rubberDuckText.length}/{RUBBER_DUCK_MIN_CHARS} mín
                     </span>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setShowRubberDuck(false)}
+                        onClick={closeRubberDuck}
                         className="text-[9px] tracking-[0.3em] opacity-25 hover:opacity-50 transition-opacity uppercase"
                       >[ Cancelar ]</button>
                       <motion.button
                         onClick={() => {
-                          if (rubberDuckText.trim().length < 15) return
-                          setShowRubberDuck(false)
-                          pendingHintRef.current = true
-                          requestHint(output)
+                          confirmRubberDuck(() => {
+                            pendingHintRef.current = true
+                            requestHint(output)
+                          })
                         }}
-                        disabled={rubberDuckText.trim().length < 15}
+                        disabled={rubberDuckText.trim().length < RUBBER_DUCK_MIN_CHARS}
                         className="text-[9px] tracking-[0.35em] uppercase px-4 py-2 border transition-all disabled:opacity-25"
                         style={{ borderColor: 'rgba(0,180,255,0.35)', color: 'rgba(0,180,255,0.8)', background: 'rgba(0,180,255,0.06)' }}
                         whileTap={{ scale: 0.97 }}
