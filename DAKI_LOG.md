@@ -1,7 +1,7 @@
 # DAKI_LOG — Contexto Completo del Proyecto Nexo EdTech
 
 > Archivo de contexto para sesiones futuras.
-> Ultima actualizacion: 2026-04-07 (sesion 5 — Protocolo Guerrero: 11 features pedagogicas)
+> Ultima actualizacion: 2026-04-07 (sesion 6 — 8 Frentes de Producto: funnel, emails, campaign map, tests, hooks, migraciones, admin)
 
 ---
 
@@ -61,21 +61,42 @@
 - GET  /api/v1/daily-anomaly           (sin auth, determinista SHA-256)
 - GET  /api/v1/achievements/{user_id}
 - GET  /api/v1/skill-tree/{user_id}
+- GET  /api/v1/campaign/map?user_id=X  → { zones: { codex_id: { node_id: {completed, unlocked, boss_completed} } } }
+- GET  /api/v1/leaderboard             → top 50 global
+- GET  /api/v1/users/profile/{callsign}→ perfil publico sin auth
+- GET  /api/v1/intel/pattern-callout   (sesion 5)
+- GET  /api/v1/intel/retrieval-challenge (sesion 5)
+- GET  /api/v1/intel/weekly-review     (sesion 4)
+- GET  /api/v1/intel/mastery-radar     (sesion 3)
+- POST /api/v1/notifications/trial-expiry-check  → requiere X-Admin-Key header
+- POST /api/v1/notifications/reengagement-check  → requiere X-Admin-Key header
+- POST /api/v1/admin/trigger-trial-check    → requiere JWT admin (desde dashboard)
+- POST /api/v1/admin/trigger-reengagement   → requiere JWT admin (desde dashboard)
+- POST /api/v1/admin/auth/token             → login admin → JWT
+- GET  /api/v1/admin/overview / drop-off / daki-stats / recent-users / users-progress
 
 ---
 
 ## 5. Modelos de Base de Datos
 
-User:          id, username, email, level, xp, created_at, last_seen
+User:          id, callsign, email, password_hash, current_level, total_xp,
+               streak_days, league_tier, is_licensed, is_admin, role,
+               subscription_status ('TRIAL'|'ACTIVE'|'EXPIRED'|'FREE'),
+               trial_end_date, last_login, created_at
 Challenge:     id, slug, title, description, starter_code, solution,
                hints (JSON), concepts_taught_json (JSON), difficulty_tier (1/2/3),
-               xp_reward, theory_content (nullable), lore_briefing (nullable)
-UserChallenge: user_id, challenge_id, completed, attempts, best_time_ms, completed_at
+               xp_reward, level_order, sector_id, difficulty,
+               theory_content, lore_briefing, pedagogical_objective,
+               challenge_type ('standard'|'debug'|'predict'),
+               expected_output, is_ironman, edge_cases_json (JSON)
+UserProgress:  user_id, challenge_id, completed, attempts, hints_used,
+               time_spent_ms, completed_at, boss_completed, score
+UserMetric:    user_id, challenge_id, status, attempts, hints_used,
+               time_spent_ms, syntax_errors_log (JSON), last_attempt_at
 Achievement:   id, user_id, name, description, icon, xp_bonus, rarity, unlocked_at
-DakiLog:       id, user_id, challenge_id, error_type, hint_used, time_ms, created_at
 
-Patron init_db(): no usa Alembic. Cada startup corre ALTER TABLE IF NOT EXISTS +
-CREATE TABLE IF NOT EXISTS. Idempotente.
+Patron init_db(): no usa Alembic. 9 funciones versionadas (_migrate_v1 → _migrate_v9_pedagogy).
+Cada funcion corre ALTER TABLE IF NOT EXISTS idempotente. Orden fijo en init_db().
 
 ---
 
@@ -384,6 +405,11 @@ Al pedir pista (ENIGMA):
 8. Theory universal: glossary estatico TypeScript (sin LLM, respuesta inmediata)
 9. Session log en sessionStorage (no localStorage) — limpia al cerrar tab
 10. Modo Socrático en consola (sin refactor de UI de hint)
+11. No Alembic: init_db() self-migrating con 9 funciones versionadas (v1→v9)
+12. Campaign map: ZONES const en frontend (estructura visual), backend solo retorna progress por node_id
+13. Emails vía httpx directo a Resend API (no SDK) — silent no-op si RESEND_API_KEY vacío
+14. Hooks extraídos de CodeWorkspace: useRetrievalMode, usePatternCallout, usePredictionWidget, useRubberDuck
+15. Admin dashboard: notificaciones email disparables via JWT Bearer (no X-Admin-Key) desde UI
 
 ---
 
@@ -707,19 +733,23 @@ para que los niveles iniciales (L0-L30) sigan siendo accesibles y el operador av
 
 ## 24. Checklist para Retomar Trabajo
 
-- [ ] Verificar DakiIntelCard en challenge sin theory_content (probar en produccion)
-- [ ] Verificar Fin de Turno: completar 2+ misiones -> volver al Hub -> boton aparece
-- [ ] Verificar Milestones: primera victoria debe disparar MilestoneModal
-- [ ] Verificar Modo Socrático: primer fail debe mostrar preguntas en consola
-- [ ] Verificar Block 1-5 en produccion (deploy Vercel + Render)
-- [ ] Verificar RevisionSemanalCard en Hub con datos reales (requiere 7+ dias de uso)
-- [ ] Verificar DAKI Error Explainer en produccion con cada tipo de error
+### Sesión 5 (pedagogy)
 - [ ] Verificar Predict Challenges L180-L189 sembrados correctamente en startup
 - [ ] Verificar ironman marking en init_db() (1 challenge por sector 8-20)
-- [ ] Verificar Rubber Duck Gate dispara correctamente con failStreak >= 3 en L30+
+- [ ] Verificar Rubber Duck Gate dispara con failStreak >= 3 en L30+
 - [ ] Verificar Edge Cases visibles en consola post-victoria de boss challenges
 - [ ] Verificar Pattern Callout en L20+ con overlap de conceptos
 - [ ] Verificar Retrieval Mode desde RevisionSemanalCard
+
+### Sesión 6 (8 frentes) — requiere deploy en Render + Vercel
+- [ ] Configurar RESEND_API_KEY en Render env vars para activar emails reales
+- [ ] Verificar TrialCountdownBanner en Hub con usuario subscription_status='TRIAL'
+- [ ] Verificar Campaign Map en /hub: sectores S19, S20, S21 visibles y navegables
+- [ ] Verificar admin dashboard: login con callsign (no username)
+- [ ] Verificar admin dashboard: tabla usuarios muestra is_licensed (no is_paid)
+- [ ] Verificar admin dashboard: sección "Emails" → botones trial-check + reengagement
+- [ ] Configurar cron externo (GitHub Actions o Render Cron) para notificaciones automáticas
+- [ ] Verificar tests con pytest (temporal-master/tests/test_new_features.py — 22 tests)
 
 ---
 
@@ -746,6 +776,115 @@ para que los niveles iniciales (L0-L30) sigan siendo accesibles y el operador av
 | **21** | **predict** | **180-189** | **10** | — |
 
 **Total: 190 challenges. 13 con Modo Ironman. 7 con Edge Case Gauntlet.**
+
+---
+
+---
+
+## 26. 8 Frentes de Producto (2026-04-07 — Sesion 6)
+
+### Frente 1 — Funnel de Conversión: TrialCountdownBanner
+- Componente en `hub/page.tsx`, visible solo si `subscription_status === 'TRIAL'`
+- Cuenta los días restantes desde `user.trialEndDate` (campo nuevo en Zustand store)
+- Colores: urgente (≤2 dias) rojo `#FF4040`, warning (≤5 dias) amarillo `#FFB800`, normal cyan `#00E5FF`
+- Botón `ACTIVAR LICENCIA →` llama `handleStripeCheckout()`
+- Insertado entre el `<header>` y el `<BossWarningBanner />`
+
+### Frente 2 — Emails Transaccionales (Resend)
+- Archivo: `app/services/email.py` — httpx directo a `https://api.resend.com/emails`
+- 4 emails implementados:
+  - `send_welcome(email, callsign)` — post-registro
+  - `send_trial_expiry(email, callsign, days_left)` — aviso 0/1/2/5 días antes
+  - `send_reengagement(email, callsign, days_absent)` — inactivos 5-30 días
+  - `send_subscription_active(email, callsign)` — post-pago Stripe
+- HTML cyberpunk-themed, silent no-op si `RESEND_API_KEY` vacío
+- Disparados via `asyncio.create_task()` (fire-and-forget)
+- Triggers: `auth.py` post-registro, `payments.py` post-webhook Stripe
+- Variable de entorno requerida: `RESEND_API_KEY` (agregar en Render)
+- Remitente: `DAKI Nexo <noreply@dakiedtech.com>` (config en `config.py`)
+
+### Frente 3 — Campaign Map Sectores 19-21
+**Backend:** `app/api/v1/endpoints/campaign.py`
+- `GET /api/v1/campaign/map?user_id=UUID` — sin auth requerida
+- 9 nodos: s00_s03, s04_s07, s08_s10, s11_s13, s14_s15, s16_s18, s19_debug, s20_interview, s21_predict
+- Retorna: `{ zones: { codex_id: { node_id: { completed, unlocked, boss_completed } } }, total_completed }`
+- Registrado en `router.py`
+
+**Frontend:** `CampaignMap.tsx` — ZONES const reescrita con 4 zonas y 9 nodos
+| Zone | Nodo | Niveles |
+|------|------|---------|
+| PYTHON CORE | s00_s03, s04_s07 | L0-L66 |
+| OPERACIONES AVANZADAS | s08_s10, s11_s13 | L67-L126 |
+| ESPECIALIZACIÓN DE ÉLITE | s14_s15, s16_s18 | L127-L161 |
+| PROTOCOLOS DE ÉLITE | s19_debug, s20_interview, s21_predict | L162-L189 |
+
+- `handleUnlockedNode` corregido: navega a `node.nav_path` (antes siempre iba a `/hub`)
+
+### Frente 4 — Tests de Integración
+- Archivo: `temporal-master/tests/test_new_features.py`
+- 22 tests con pytest + httpx ASGITransport
+- Clases: TestCampaignMap, TestIntelWeeklyReview, TestIntelMasteryRadar, TestIntelPatternCallout, TestIntelRetrievalChallenge, TestChallengeOutNuevosCampos, TestLeaderboard, TestPublicProfile, TestCampaignMapProgresion
+- Fixtures: `test_engine`, `session_factory`, `client`, `test_user`, `ironman_challenge`, `predict_challenge`
+- Usa `callsign` (no `username`) y `password_hash` (no `hashed_password`)
+- Correr con: `cd temporal-master && pytest tests/test_new_features.py -v`
+
+### Frente 5 — Leaderboard en Hub
+- Ya existía (`GET /api/v1/leaderboard`). Confirmado operativo. Sin cambios.
+
+### Frente 6 — Refactor CodeWorkspace en Hooks
+4 hooks nuevos extraídos de `CodeWorkspace.tsx` (que tenía ~2608 líneas):
+
+| Hook | Archivo | Responsabilidad |
+|------|---------|----------------|
+| `useRetrievalMode` | `hooks/useRetrievalMode.ts` | Lee `?mode=retrieval` de URL, retorna boolean |
+| `usePatternCallout` | `hooks/usePatternCallout.ts` | Fetch /intel/pattern-callout 1.5s post-carga |
+| `usePredictionWidget` | `hooks/usePredictionWidget.ts` | Estado prediccion, evaluatePrediction(), reset |
+| `useRubberDuck` | `hooks/useRubberDuck.ts` | Modal rubber duck gate, shouldGate(), MIN_CHARS=15 |
+
+`CodeWorkspace.tsx` los importa y delega state/lógica. Funcionalidad idéntica.
+
+### Frente 7 — Refactor init_db() en Migraciones Versionadas
+- Archivo: `app/core/database.py` — reescritura completa
+- Antes: monolito de ~380 líneas en `init_db()`
+- Ahora: 9 funciones versionadas + `init_db()` como entry point limpio
+
+| Función | Contenido |
+|---------|-----------|
+| `_migrate_v1_curriculum` | columnas base de Challenge y User |
+| `_migrate_v2_gamification` | XP, streak, achievements |
+| `_migrate_v3_architecture` | sector_id, level_order, difficulty |
+| `_migrate_v4_access` | role, is_admin, FOUNDER fields |
+| `_migrate_v5_subscriptions` | subscription_status, trial_end_date |
+| `_migrate_v6_skill_tree` | codex_id, prerequisite, boss_completed |
+| `_migrate_v7_cleanup` | índices, normalizaciones |
+| `_migrate_v8_auth` | Google OAuth, last_login |
+| `_migrate_v9_pedagogy` | is_ironman (CTE UPDATE), edge_cases_json, expected_output, challenge_type |
+
+### Frente 8 — Admin Dashboard Actualizado
+**Bugs corregidos:**
+- Login enviaba `{ username }` pero backend espera `{ callsign }` — FIJO
+- Respuesta login retornaba `data.username` → corregido a `data.callsign`
+- Tabla usuarios usaba `u.username` / `u.is_paid` (campos inexistentes) → `u.callsign` / `u.is_licensed`
+
+**Nueva sección "Emails" (5to item en sidebar):**
+- Botón `EJECUTAR TRIAL CHECK` → `POST /api/v1/admin/trigger-trial-check` (JWT Bearer)
+- Botón `EJECUTAR REENGAGEMENT` → `POST /api/v1/admin/trigger-reengagement` (JWT Bearer)
+- Muestra resultado: "Chequeados: N · Enviados: M"
+- Referencia crons automáticos (X-Admin-Key) documentada
+
+**Nuevos endpoints en admin.py:**
+- `POST /api/v1/admin/trigger-trial-check` — require_admin (JWT)
+- `POST /api/v1/admin/trigger-reengagement` — require_admin (JWT)
+
+---
+
+## 27. Variables de Entorno Nuevas (Sesion 6)
+
+Agregar en Render (backend):
+```
+RESEND_API_KEY=re_...         # para activar emails (sin esto, silent no-op)
+EMAIL_FROM=DAKI Nexo <noreply@dakiedtech.com>   # ya en config.py con default
+```
 
 ---
 
