@@ -4,8 +4,8 @@
  * MisionDebriefModal — Bucle metacognitivo post-misión
  *
  * Aparece inmediatamente después de completar una misión.
- * DAKI formula una pregunta de reflexión táctica.
- * El Operador responde en 2-3 líneas → activa retención a largo plazo.
+ * DAKI formula una pregunta de reflexión táctica + code review profesional.
+ * El Operador responde → activa retención a largo plazo.
  */
 
 import { useEffect, useState } from 'react'
@@ -18,8 +18,9 @@ interface Props {
   userId: string
   challengeId: string
   attemptCount: number
-  operatorLevel?: number    // nivel del operador — calibra dificultad de la pregunta
-  difficultyTier?: number   // tier del challenge — 1=básico, 2=intermedio, 3=avanzado
+  operatorLevel?: number
+  difficultyTier?: number
+  userCode?: string          // código que el Operador envió al ganar
   onClose: () => void
 }
 
@@ -30,20 +31,29 @@ export default function MisionDebriefModal({
   attemptCount,
   operatorLevel = 1,
   difficultyTier = 1,
+  userCode,
   onClose,
 }: Props) {
-  const [question, setQuestion] = useState('')
-  const [answer,   setAnswer]   = useState('')
-  const [loading,  setLoading]  = useState(true)
-  const [submitted, setSubmitted] = useState(false)
+  const [question,    setQuestion]    = useState('')
+  const [codeReview,  setCodeReview]  = useState('')
+  const [answer,      setAnswer]      = useState('')
+  const [loading,     setLoading]     = useState(true)
+  const [submitted,   setSubmitted]   = useState(false)
 
   useEffect(() => {
     if (!visible || !challengeId) return
     setLoading(true)
     setAnswer('')
     setSubmitted(false)
+    setCodeReview('')
 
-    fetch(`${API_BASE}/api/v1/daki/debrief`, {
+    const fallbackQuestion = operatorLevel <= 5 || difficultyTier <= 1
+      ? '¿Con tus palabras, qué hizo el código que escribiste?'
+      : operatorLevel <= 15 || difficultyTier <= 2
+      ? '¿Qué cambiarías si el valor de entrada fuera diferente?'
+      : '¿Cómo aplicarías este patrón si los datos de entrada cambiaran de tipo?'
+
+    const debriefPromise = fetch(`${API_BASE}/api/v1/daki/debrief`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -55,18 +65,31 @@ export default function MisionDebriefModal({
       }),
     })
       .then(r => r.ok ? r.json() : null)
-      .then((d: { question: string } | null) => {
-        const fallback = operatorLevel <= 5 || difficultyTier <= 1
-          ? '¿Con tus palabras, qué hizo el código que escribiste?'
-          : operatorLevel <= 15 || difficultyTier <= 2
-          ? '¿Qué cambiarías si el valor de entrada fuera diferente?'
-          : '¿Cómo aplicarías este patrón si los datos de entrada cambiaran de tipo?'
-        setQuestion(d?.question ?? fallback)
-      })
-      .catch(() => {
-        setQuestion(operatorLevel <= 5 || difficultyTier <= 1
-          ? '¿Con tus palabras, qué hizo el código que escribiste?'
-          : '¿Qué modificarías en tu solución si el tipo de dato cambiara?')
+      .then((d: { question: string } | null) => d?.question ?? fallbackQuestion)
+      .catch(() => fallbackQuestion)
+
+    // Code review solo si tenemos código y el operador tiene nivel suficiente
+    const reviewPromise = userCode && userCode.trim().length > 10
+      ? fetch(`${API_BASE}/api/v1/daki/code-review`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id:        userId,
+            challenge_id:   challengeId,
+            user_code:      userCode,
+            difficulty_tier: difficultyTier,
+            operator_level:  operatorLevel,
+          }),
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then((d: { review: string } | null) => d?.review ?? '')
+          .catch(() => '')
+      : Promise.resolve('')
+
+    Promise.all([debriefPromise, reviewPromise])
+      .then(([q, cr]) => {
+        setQuestion(q)
+        setCodeReview(cr)
       })
       .finally(() => setLoading(false))
   }, [visible, challengeId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -131,6 +154,25 @@ export default function MisionDebriefModal({
                 </h2>
               </div>
 
+              {/* ── CODE REVIEW — visible si DAKI encontró algo que decir ── */}
+              {!loading && codeReview && (
+                <motion.div
+                  className="px-6 py-4 border-b border-[#FFB800]/12"
+                  style={{ background: 'rgba(255,184,0,0.03)' }}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <p className="text-[8px] tracking-[0.45em] text-[#FFB800]/40 uppercase mb-2">
+                    {'> [DAKI] CODE REVIEW'}
+                  </p>
+                  <p className="text-[11px] text-[#FFB800]/75 leading-5 tracking-wide"
+                    style={{ whiteSpace: 'pre-wrap' }}>
+                    {codeReview}
+                  </p>
+                </motion.div>
+              )}
+
               {/* DAKI question */}
               <div className="px-6 py-5 border-b border-[#00FF41]/08">
                 <p className="text-[9px] tracking-[0.4em] text-[#00FF41]/30 uppercase mb-3">
@@ -145,8 +187,8 @@ export default function MisionDebriefModal({
                     className="text-xs text-[#00FF41]/70 leading-5 tracking-wide"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   >
-                    Respuesta registrada. El conocimiento que articulas se ancla más profundo
-                    que el que solo ejecutas.
+                    Respuesta registrada. El conocimiento que articulás se ancla más profundo
+                    que el que solo ejecutás.
                   </motion.p>
                 ) : (
                   <p className="text-xs text-[#00FF41]/80 leading-6 tracking-wide"

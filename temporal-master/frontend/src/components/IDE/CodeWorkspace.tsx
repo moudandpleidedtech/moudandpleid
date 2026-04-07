@@ -464,6 +464,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const audioRunRef      = useRef<HTMLAudioElement | null>(null)
   const audioHintRef     = useRef<HTMLAudioElement | null>(null)
   const audioAmbientRef  = useRef<HTMLAudioElement | null>(null)
+  const lastWinCodeRef   = useRef<string>('')   // Feature 1: code review — código al momento de la victoria
 
   const [failStreak, setFailStreak]       = useState(0)
   const [hintFreeStreak, setHintFreeStreak] = useState(0)  // F5: misiones seguidas sin pistas
@@ -1318,6 +1319,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
         setTimeout(() => fireMicro(), 1200)
 
         // F4: Debrief post-éxito — aparece antes del modal de victoria
+        // Feature 1: guardar el código ganador para code review en el debrief
+        lastWinCodeRef.current = code
         debriefAttempts.current = failStreak + 1
         setTimeout(() => setShowDebrief(true), 700)
       } else if (!data.output_matched) {
@@ -1451,6 +1454,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
         attemptCount={debriefAttempts.current}
         operatorLevel={level ?? 1}
         difficultyTier={challenge?.difficulty_tier ?? 1}
+        userCode={lastWinCodeRef.current}
         onClose={() => { setShowDebrief(false); setShowVictory(true) }}
       />
 
@@ -1896,6 +1900,25 @@ export default function CodeWorkspace({ challengeId }: Props) {
               >
                 {syncProgress}%
               </motion.span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Banner DEBUG MODE — Feature 2 ── */}
+        {challenge?.challenge_type === 'debug' && (
+          <div className="shrink-0 px-4 py-2 border-b backdrop-blur-sm"
+            style={{ background: 'rgba(255,40,40,0.04)', borderColor: 'rgba(255,80,80,0.18)' }}>
+            <div className="flex items-center gap-2">
+              <motion.span
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.4, repeat: Infinity }}
+                style={{ color: 'rgba(255,80,80,0.85)' }}
+                className="text-[10px]"
+              >⚠</motion.span>
+              <span className="text-[8px] tracking-[0.45em] font-bold"
+                style={{ color: 'rgba(255,80,80,0.65)' }}>
+                MODO DEBUG — Encontrá y corregí el bug en el código inicial
+              </span>
             </div>
           </div>
         )}

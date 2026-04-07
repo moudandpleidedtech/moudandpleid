@@ -508,6 +508,81 @@ async def mission_debrief(
     return DebriefResponse(question=question)
 
 
+# ─── POST /api/v1/daki/code-review — Code Review Profesional Post-Victoria ───
+
+_CODE_REVIEW_DIRECTIVE = """\
+[DIRECTIVA: CODE REVIEW PROFESIONAL — MENTOR SENIOR PYTHON]
+El Operador acaba de resolver correctamente una incursión. Su código FUNCIONA.
+Tu misión: retroalimentación de code review real, como la daría un senior Python engineer.
+Reglas estrictas:
+  1. El código ES correcto — no cuestionés si pasa los tests.
+  2. Identificá UNA sola área de mejora: Pythonicidad, PEP 8, rendimiento, claridad,
+     o patrón más idiomático. Ejemplos: usar enumerate() en vez de range(len(x)),
+     list comprehension en vez de bucle for con append, f-string en vez de concatenación,
+     .get() en vez de acceso directo a dict, walrus operator, etc.
+  3. Si el código ya está bien escrito y es idiomático, felicitá brevemente y señalá
+     qué hace correctamente (ej: "Usaste enumerate() — exactamente como lo haría un senior.").
+  4. Máximo 3 líneas. Sin saludos. Empezá directo con la observación técnica.
+  5. Sé concreto: nombrá la línea, función o patrón exacto.
+Tono: code reviewer senior — constructivo, directo, sin relleno.\
+"""
+
+
+class CodeReviewRequest(BaseModel):
+    user_id: uuid.UUID
+    challenge_id: uuid.UUID
+    user_code: str
+    difficulty_tier: int = 1
+    operator_level: int = 1
+
+
+class CodeReviewResponse(BaseModel):
+    review: str
+
+
+@router.post(
+    "/daki/code-review",
+    response_model=CodeReviewResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Code review profesional post-victoria",
+)
+async def code_review(
+    payload: CodeReviewRequest,
+    db: AsyncSession = Depends(get_db),
+) -> CodeReviewResponse:
+    """
+    Recibe el código fuente del Operador al completar una misión.
+    DAKI lo analiza como senior Python engineer y devuelve retroalimentación
+    de code review en máximo 3 líneas: Pythonicidad, PEP 8, rendimiento, etc.
+    """
+    fallback = "Código correcto. Revisá si podés usar list comprehensions o enumerate() donde corresponda — son marcadores de código Pythónico."
+
+    challenge = await db.get(Challenge, payload.challenge_id)
+    if challenge is None:
+        return CodeReviewResponse(review=fallback)
+
+    concepts = _extract_concepts(challenge)
+    concept_str = ", ".join(concepts[:3]) if concepts else "Python"
+    code_snippet = payload.user_code[:1500]
+
+    user_msg = (
+        f"{_CODE_REVIEW_DIRECTIVE}\n\n"
+        f"--- CONTEXTO DE LA INCURSIÓN ---\n"
+        f"Nombre: {challenge.title}\n"
+        f"Conceptos evaluados: {concept_str}\n"
+        f"Nivel del Operador: {payload.operator_level}\n\n"
+        f"--- CÓDIGO DEL OPERADOR ---\n"
+        f"```python\n{code_snippet}\n```\n\n"
+        "Produce el code review. Solo la retroalimentación, nada más."
+    )
+
+    review = await _call_haiku(user_msg, max_tokens=150)
+    if not review or review.startswith("[DAKI_SYS]"):
+        review = fallback
+
+    return CodeReviewResponse(review=review)
+
+
 # ─── POST /api/v1/daki/session-summary — Informe de Fin de Turno ─────────────
 
 @router.post(
