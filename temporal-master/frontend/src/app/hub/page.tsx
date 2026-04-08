@@ -910,10 +910,18 @@ export default function HubPage() {
               BIENVENIDO, OPERADOR
             </p>
             <h2
-              className="text-3xl font-black tracking-[0.15em] mb-3 font-mono"
+              className={[
+                'font-black tracking-[0.15em] mb-3 font-mono w-full overflow-hidden',
+                !username || username.length <= 8  ? 'text-3xl' :
+                username.length <= 11              ? 'text-2xl' :
+                username.length <= 14              ? 'text-xl'  :
+                username.length <= 18              ? 'text-lg'  : 'text-base',
+              ].join(' ')}
+              title={username?.toUpperCase()}
               style={{
                 color:      '#4ade80',
                 textShadow: '0 0 20px rgba(74,222,128,0.65), 0 0 50px rgba(74,222,128,0.25)',
+                wordBreak:  'break-all',
               }}
             >
               {username?.toUpperCase() ?? '—'}
