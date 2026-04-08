@@ -93,6 +93,7 @@ export default function LoginPage() {
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))
         localStorage.setItem('daki_licensed', String(data.is_licensed))
+        localStorage.setItem('daki_token',    data.access_token)
         setUser({
           id:           data.user_id,
           username:     data.callsign,

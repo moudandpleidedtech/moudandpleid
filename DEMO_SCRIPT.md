@@ -10,7 +10,7 @@
 - [ ] Ejecutar `python -m scripts.create_demo_user --no-dry-run` en Render (o local con DB de prod)
 - [ ] Agregar `demo@dakiedtech.com` a `ALPHA_WHITELIST` en Render si está activa
 - [ ] Abrir dakiedtech.com en el browser y loguear con el usuario demo
-- [ ] Verificar que el Hub cargue con el progreso visible (nivel 28, liga Plata)
+- [ ] Verificar que el Hub cargue con el progreso visible (todas las misiones completadas, liga Diamante)
 - [ ] Tener una pestaña extra con la landing page / para el CTA final
 - [ ] Silenciar notificaciones del sistema
 
@@ -57,7 +57,7 @@ Mostrá el Hub con el usuario demo logueado.
 **Puntos a señalar:**
 1. **Campaign Map** — "Esto es el currículo. 190 niveles organizados en zonas.
    El dev no elige qué estudiar — el sistema lo guía al siguiente paso crítico."
-2. **Badge de Rango** — "El progreso es visible. Liga Plata, 7 días de racha.
+2. **Badge de Rango** — "El progreso es visible. Liga Diamante, 30 días de racha.
    Esto gamifica el aprendizaje sin hacer que parezca un juego de celular."
 3. **Revisión Semanal** — "El sistema trackea qué conceptos tienen baja maestría
    y los vuelve a presentar. Spaced Repetition automático."
@@ -174,9 +174,10 @@ Si pide más información:
 | URL | dakiedtech.com |
 | Email | demo@dakiedtech.com |
 | Password | DemoDaki2025! |
-| Nivel | 28 |
-| Liga | Plata |
-| XP | 4.850 |
+| Nivel | (total challenges en BD + 1) |
+| Liga | Diamante |
+| XP | 45.000 |
+| Racha | 30 días |
 
 ---
 

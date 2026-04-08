@@ -1,53 +1,48 @@
 """
 scripts/create_demo_user.py — Usuario de demostración DAKI EdTech
 
-Crea (o resetea) una cuenta de demo con progreso pre-cargado, lista para
-presentar a clientes técnicos. El usuario llega al Nexo en un estado
-intermedio realista: ha completado el bloque de fundamentos y está
-explorando lógica de control — exactamente el punto donde DAKI se vuelve
-más visible e impresionante.
+Crea (o resetea) una cuenta de demo con TODAS las misiones completadas.
+El usuario aparece como el mejor estudiante posible: cada challenge de
+Python Core resuelto, stats de élite, listo para impresionar a un CTO.
 
 PERFIL DEL USUARIO DEMO
 ──────────────────────
   Callsign  : DEMO_OPERATOR
   Email     : demo@dakiedtech.com       ← agregar a ALPHA_WHITELIST si está activa
   Password  : DemoDaki2025!
-  Nivel     : 28 (en el tramo final del Sector 2 — Flujo de Control)
-  XP        : 4.850
-  Racha     : 7 días
-  Liga      : Plata
+  XP        : 45.000
+  Racha     : 30 días
+  Liga      : Diamante
   Suscripción: ACTIVE (acceso completo)
 
-PROGRESO PRE-CARGADO (27 challenges completados)
-─────────────────────────────────────────────────
-  Sector 0  Tutorial         — 1 completado
-  Sector 1  Fundamentos      — 10 completados (L1-L10, incluyendo boss)
-  Sector 2  Flujo de Control — 10 completados (L11-L20, incluyendo boss)
-  Sector 3  Ciclos For       — 6 completados  (L21-L26, en curso)
+  Nivel actual: se calcula automáticamente como el total de challenges
+  en BD + 1 (siempre estará en el siguiente nivel disponible).
 
-  El demo está parado en L27 "Suma de Pares" — un nivel de ciclos
-  intermedio, bueno para mostrar el IDE en acción.
+PROGRESO PRE-CARGADO
+────────────────────
+  Completa TODOS los challenges de Python Core (codex_id IS NULL o
+  'python_core') en el mismo orden que los retorna el endpoint /challenges.
+  Eso garantiza que la cadena de unlock quede 100% verde.
 
 USO
 ───
-  # Crear (dry-run por defecto — solo muestra qué haría):
+  # Dry-run (solo muestra qué haría):
   python -m scripts.create_demo_user
 
   # Crear en la BD:
   python -m scripts.create_demo_user --no-dry-run
 
-  # Resetear un demo existente (si ya existe, lo borra y recrea):
+  # Resetear un demo existente:
   python -m scripts.create_demo_user --no-dry-run --reset
 
-  # Email personalizado (para una empresa específica):
+  # Email personalizado:
   python -m scripts.create_demo_user --no-dry-run --email demo@cliente.com --callsign DEV_LEAD
 
 DESPUÉS DE EJECUTAR
 ───────────────────
   1. Agregar el email a ALPHA_WHITELIST en Render (si está activa)
   2. Ir a dakiedtech.com/login
-  3. Ingresar con las credenciales del script
-  4. El usuario ya tiene progreso — no hay onboarding ni pantalla de carga lenta
+  3. Ingresar con las credenciales — aterriza directo en /hub con todo completado
 """
 
 import argparse
@@ -58,7 +53,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, nulls_last, or_, select
 
 from app.core.database import AsyncSessionLocal, init_db
 from app.core.security import hash_password
@@ -73,14 +68,9 @@ DEMO_EMAIL    = "demo@dakiedtech.com"
 DEMO_CALLSIGN = "DEMO_OPERATOR"
 DEMO_PASSWORD = "DemoDaki2025!"
 
-DEMO_LEVEL    = 28
-DEMO_XP       = 4_850
-DEMO_STREAK   = 7
-DEMO_LEAGUE   = "Plata"
-
-# Rangos de level_order completados
-# El demo llega hasta L26 completado — L27 está abierto para mostrar en vivo
-COMPLETED_LEVEL_ORDERS = list(range(0, 27))   # L0 a L26 inclusive (27 niveles)
+DEMO_XP      = 45_000
+DEMO_STREAK  = 30
+DEMO_LEAGUE  = "Diamante"
 
 
 # ─── Core ─────────────────────────────────────────────────────────────────────
@@ -117,23 +107,26 @@ async def run(
                 print(f"♻  Usuario anterior eliminado: {existing.callsign!r}")
             existing = None
 
-        # ── Cargar challenges para armar el progreso ───────────────────────────
+        # ── Cargar challenges — EXACTAMENTE igual que el endpoint /challenges ──
+        # codex_id IS NULL (legacy Python) o 'python_core' explícito
+        python_only = or_(Challenge.codex_id.is_(None), Challenge.codex_id == "python_core")
         ch_result = await session.execute(
             select(Challenge)
-            .where(Challenge.level_order.in_(COMPLETED_LEVEL_ORDERS))
-            .order_by(Challenge.level_order)
+            .where(python_only)
+            .order_by(nulls_last(Challenge.level_order), Challenge.base_xp_reward)
         )
         challenges = ch_result.scalars().all()
 
-        found_orders = {c.level_order for c in challenges}
-        missing = [lo for lo in COMPLETED_LEVEL_ORDERS if lo not in found_orders]
-        if missing:
-            print(f"⚠  {len(missing)} levels no encontrados en BD: {missing[:5]}{'...' if len(missing) > 5 else ''}")
-            print("   El progreso se creará solo para los levels existentes.")
-            challenges = [c for c in challenges if c.level_order not in missing]
+        if not challenges:
+            print("⚠  No se encontraron challenges de Python Core en la BD.")
+            print("   Verificá que la base de datos tenga datos cargados.")
+            return
+
+        # El nivel demo es el siguiente al último challenge (siempre un paso adelante)
+        demo_level = len(challenges) + 1
 
         # ── Preview ───────────────────────────────────────────────────────────
-        _print_preview(email, callsign, challenges, dry_run)
+        _print_preview(email, callsign, challenges, demo_level, dry_run)
 
         if dry_run:
             print("\n[DRY RUN] Sin cambios. Pasá --no-dry-run para aplicar.\n")
@@ -145,7 +138,7 @@ async def run(
             email=email,
             callsign=callsign,
             password_hash=hash_password(password),
-            current_level=DEMO_LEVEL,
+            current_level=demo_level,
             total_xp=DEMO_XP,
             streak_days=DEMO_STREAK,
             league_tier=DEMO_LEAGUE,
@@ -157,16 +150,24 @@ async def run(
         session.add(user)
         await session.flush()  # obtener user.id
 
-        # ── Crear progreso y métricas ──────────────────────────────────────────
+        # ── Crear progreso y métricas para TODOS los challenges ────────────────
+        n = len(challenges)
         for i, challenge in enumerate(challenges):
-            is_boss = (challenge.challenge_type == "boss") if challenge.challenge_type else False
+            is_boss = challenge.challenge_type == "boss" if challenge.challenge_type else False
 
-            # Variación realista: los primeros niveles más rápido, los últimos con más intentos
-            attempts = max(1, 1 + (i % 3))         # 1, 2, 3, 1, 2, 3...
-            hints    = max(0, (i % 4) - 1)          # 0, 0, 1, 2, 0, 0, 1, 2...
-            time_ms  = (90 + i * 15) * 1_000        # 90s a ~495s, crece con el nivel
+            # Stats que parecen de un estudiante élite:
+            # - Siempre resuelve en el primer o segundo intento
+            # - Usa pocas pistas (solo en los niveles más difíciles)
+            # - Cada vez más rápido (mejora visible)
+            attempts = 1 if i % 5 != 3 else 2          # 80% primer intento
+            hints    = 0 if i < n * 0.7 else (1 if not is_boss else 0)  # pistas solo al final
+            time_ms  = max(45_000, (180 - i) * 800)    # rápido y mejora con el tiempo
 
-            completed_at = now - timedelta(days=(len(challenges) - i) * 0.8)
+            # Distribuye los completed_at en los últimos 35 días (1 por día aprox)
+            days_ago = (n - i) * (35.0 / n)
+            completed_at = now - timedelta(days=days_ago)
+
+            codex = challenge.codex_id or "python_core"
 
             session.add(UserProgress(
                 user_id=user.id,
@@ -176,7 +177,7 @@ async def run(
                 attempts=attempts,
                 hints_used=hints,
                 completed_at=completed_at,
-                codex_id=challenge.codex_id if hasattr(challenge, "codex_id") else "python_core",
+                codex_id=codex,
             ))
 
             session.add(UserMetric(
@@ -193,63 +194,93 @@ async def run(
         await session.commit()
         await session.refresh(user)
 
-        _print_success(user, len(challenges), email, password)
+        _print_success(user, n, email, password)
 
 
-def _print_preview(email: str, callsign: str, challenges: list, dry_run: bool) -> None:
+def _print_preview(
+    email: str,
+    callsign: str,
+    challenges: list,
+    demo_level: int,
+    dry_run: bool,
+) -> None:
     tag = "[DRY RUN] " if dry_run else ""
-    print()
-    print(f"╔══════════════════════════════════════════════════════╗")
-    print(f"║       DAKI EDTECH — USUARIO DE DEMOSTRACIÓN          ║")
-    print(f"╠══════════════════════════════════════════════════════╣")
-    print(f"║  {tag}Callsign  : {callsign:<40}║"[:57] + "║")
-    print(f"║  {tag}Email     : {email:<40}║"[:57] + "║")
-    print(f"║  {tag}Password  : {DEMO_PASSWORD:<40}║"[:57] + "║")
-    print(f"║  {tag}Nivel     : {DEMO_LEVEL:<40}║"[:57] + "║")
-    print(f"║  {tag}XP        : {DEMO_XP:<40}║"[:57] + "║")
-    print(f"║  {tag}Racha     : {DEMO_STREAK} días{'':<35}║"[:57] + "║")
-    print(f"║  {tag}Liga      : {DEMO_LEAGUE:<40}║"[:57] + "║")
-    print(f"║  {tag}Progreso  : {len(challenges)} challenges completados{'':<20}║"[:57] + "║")
-    print(f"╚══════════════════════════════════════════════════════╝")
+    n   = len(challenges)
+    w   = 54
 
-    sector_map = {0: "Tutorial", 1: "Fundamentos", 2: "Flujo", 3: "Ciclos For"}
+    print()
+    print(f"╔{'═' * w}╗")
+    print(f"║{'  DAKI EDTECH — USUARIO DE DEMOSTRACIÓN':^{w}}║")
+    print(f"╠{'═' * w}╣")
+    rows = [
+        ("Callsign",  callsign),
+        ("Email",     email),
+        ("Password",  DEMO_PASSWORD),
+        ("Nivel",     str(demo_level)),
+        ("XP",        f"{DEMO_XP:,}"),
+        ("Racha",     f"{DEMO_STREAK} días"),
+        ("Liga",      DEMO_LEAGUE),
+        ("Progreso",  f"{n} challenges (TODOS completados)"),
+    ]
+    for label, value in rows:
+        line = f"  {tag}{label:<10}: {value}"
+        print(f"║{line:<{w}}║")
+    print(f"╚{'═' * w}╝")
+
+    # Resumen por sector
     by_sector: dict[int, list] = {}
     for c in challenges:
-        s = c.sector_id if c.sector_id is not None else (c.level_order // 10 if c.level_order else 0)
+        s = c.sector_id if c.sector_id is not None else (
+            c.level_order // 10 if c.level_order is not None else 99
+        )
         by_sector.setdefault(s, []).append(c)
+
+    sector_names = {
+        0: "Tutorial",
+        1: "Fundamentos",
+        2: "Flujo de Control",
+        3: "Ciclos For",
+        4: "Funciones",
+        5: "Listas",
+        6: "Dicts & Sets",
+        7: "POO",
+        8: "Excepciones",
+        9: "Archivos & Módulos",
+        99: "Sin sector",
+    }
 
     print("\n  Progreso por sector:")
     for s in sorted(by_sector):
-        chs = by_sector[s]
-        label = sector_map.get(s, f"Sector {s}")
-        titles = ", ".join(c.title[:20] for c in chs[:3])
-        dots = "..." if len(chs) > 3 else ""
-        print(f"    S{s:02d} {label:<18} — {len(chs):2d} completados  ({titles}{dots})")
+        chs   = by_sector[s]
+        label = sector_names.get(s, f"Sector {s}")
+        print(f"    S{s:02d} {label:<20} — {len(chs):3d} completados  ✓")
     print()
 
 
 def _print_success(user: User, n_challenges: int, email: str, password: str) -> None:
-    print(f"\n{'='*56}")
+    w = 56
+    print(f"\n{'=' * w}")
     print(f"  ✅  DEMO USER CREADO EXITOSAMENTE")
-    print(f"{'='*56}")
+    print(f"{'=' * w}")
     print(f"  Callsign : {user.callsign}")
     print(f"  Email    : {email}")
     print(f"  Password : {password}")
     print(f"  Nivel    : {user.current_level}  |  XP: {user.total_xp:,}  |  Liga: {user.league_tier}")
-    print(f"  Progress : {n_challenges} challenges completados (L0–L{COMPLETED_LEVEL_ORDERS[-1]})")
+    print(f"  Racha    : {user.streak_days} días")
+    print(f"  Progreso : {n_challenges} challenges completados (TODOS)")
     print(f"\n  PRÓXIMOS PASOS:")
     print(f"  1. Agregar a ALPHA_WHITELIST en Render: {email}")
     print(f"  2. Ir a dakiedtech.com/login")
     print(f"  3. Ingresar con las credenciales de arriba")
-    print(f"  4. El usuario aterriza directo en /hub con progreso visible")
-    print(f"{'='*56}\n")
+    print(f"  4. El usuario aterriza en /hub con todas las misiones completadas")
+    print(f"{'=' * w}\n")
 
 
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Crea un usuario de demo con progreso pre-cargado para presentaciones.",
+        description="Crea un usuario de demo con TODAS las misiones completadas.",
     )
     parser.add_argument(
         "--email", default=DEMO_EMAIL,

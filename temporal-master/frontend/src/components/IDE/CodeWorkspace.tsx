@@ -1876,7 +1876,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
               <span>🔥<strong className="text-[#00FF41]">{streakDays}d</strong></span>
             )}
             {failStreak >= 2 && !loadingHint && (
-              {!challenge?.is_ironman && !isRetrievalMode ? (
+              !challenge?.is_ironman && !isRetrievalMode ? (
                 <motion.span
                   initial={{ opacity: 0 }} animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 1.2, repeat: Infinity }}
@@ -1892,7 +1892,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                   title={challenge?.is_ironman ? 'Modo Ironman — sin asistencia' : 'Modo Recuperación — sin pistas'}>
                   ENIGMA
                 </span>
-              )}
+              )
             )}
             {/* Block 5: DAKI guía paso a paso — tras 8+ fallos */}
             {failStreak >= 8 && challenge?.hints && challenge.hints.length > 0 && guidedHintStep < challenge.hints.length - 1 && (
@@ -2121,7 +2121,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                 <div className="flex items-center gap-1.5 mr-2">
                   <input
                     value={prediction}
-                    onChange={e => { setPrediction(e.target.value); setPredictionResult(null) }}
+                    onChange={e => { setPrediction(e.target.value) }}
                     placeholder="¿Cuál será el output?"
                     className="text-[9px] tracking-wide bg-transparent border px-2 py-1 outline-none w-36 font-mono"
                     style={{

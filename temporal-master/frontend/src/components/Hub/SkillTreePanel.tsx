@@ -8,10 +8,10 @@ import { Check, Zap, Lock, X, BookOpen, Trophy, ChevronRight } from 'lucide-reac
 // Ajustables sin tocar el render. Refleja cuántas misiones completan cada nodo.
 
 const THRESHOLDS = {
-  BASICO_DONE:        5,   // misiones para completar Básico
-  MEDIO_DONE:        15,   // misiones para completar Medio
-  AVANZADO_DONE:     25,   // misiones para completar Avanzado
-  BRANCHES_UNLOCK:   15,   // misiones para desbloquear ramas (= empezar Avanzado)
+  BASICO_DONE:        45,  // misiones para completar Básico   (~24% de 190)
+  MEDIO_DONE:         95,  // misiones para completar Medio    (~50%)
+  AVANZADO_DONE:     140,  // misiones para completar Avanzado (~74%)
+  BRANCHES_UNLOCK:    95,  // misiones para desbloquear ramas  (= completar Medio)
 } as const
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
@@ -32,11 +32,11 @@ const BASE_NODES: Omit<CoreNode, 'state'>[] = [
 ]
 
 const SPEC_CARDS: SpecCard[] = [
-  { id: 'auto', icon: '⚙', branchId: 'auto', title: 'Automatización y Scripting',  tag: 'Scripts · CLI · Bots',           jobs: ['DevOps Engineer', 'SRE', 'Backend Dev'],          unlockAt: 60 },
-  { id: 'qa',   icon: '⬡', branchId: 'qa',   title: 'Testing y QA',               tag: 'Pytest · Playwright · CI',        jobs: ['QA Engineer', 'SDET', 'Test Automation'],         unlockAt: 70 },
-  { id: 'api',  icon: '◈', branchId: 'api',  title: 'APIs y Backend',             tag: 'FastAPI · Django · REST',         jobs: ['Backend Developer', 'API Engineer', 'Full Stack'], unlockAt: 75 },
-  { id: 'data', icon: '◉', branchId: 'data', title: 'Data Science y Análisis',    tag: 'Pandas · NumPy · Visualización',  jobs: ['Data Analyst', 'Data Scientist', 'BI Developer'],  unlockAt: 80 },
-  { id: 'ai',   icon: '◬', branchId: 'ai',   title: 'Inteligencia Artificial',    tag: 'ML · Modelos base',               jobs: ['ML Engineer', 'AI Developer', 'Data Scientist'],   unlockAt: 90 },
+  { id: 'auto', icon: '⚙', branchId: 'auto', title: 'Automatización y Scripting',  tag: 'Scripts · CLI · Bots',           jobs: ['DevOps Engineer', 'SRE', 'Backend Dev'],          unlockAt: 150 },
+  { id: 'qa',   icon: '⬡', branchId: 'qa',   title: 'Testing y QA',               tag: 'Pytest · Playwright · CI',        jobs: ['QA Engineer', 'SDET', 'Test Automation'],         unlockAt: 160 },
+  { id: 'api',  icon: '◈', branchId: 'api',  title: 'APIs y Backend',             tag: 'FastAPI · Django · REST',         jobs: ['Backend Developer', 'API Engineer', 'Full Stack'], unlockAt: 165 },
+  { id: 'data', icon: '◉', branchId: 'data', title: 'Data Science y Análisis',    tag: 'Pandas · NumPy · Visualización',  jobs: ['Data Analyst', 'Data Scientist', 'BI Developer'],  unlockAt: 170 },
+  { id: 'ai',   icon: '◬', branchId: 'ai',   title: 'Inteligencia Artificial',    tag: 'ML · Modelos base',               jobs: ['ML Engineer', 'AI Developer', 'Data Scientist'],   unlockAt: 180 },
 ]
 
 // S2 — Contenido del pre-brief por índice de nodo
@@ -247,11 +247,14 @@ function NodeBriefModal({
               </p>
             </div>
           ) : isCompleted ? (
-            <button onClick={onClose}
-              className="w-full py-2.5 text-[11px] font-black tracking-[0.4em] border transition-colors"
-              style={{ borderColor: 'rgba(6,182,212,0.40)', color: 'rgba(6,182,212,0.85)', background: 'rgba(6,182,212,0.07)' }}>
-              ✓ MÓDULO COMPLETADO
-            </button>
+            <motion.button onClick={onGo}
+              className="w-full py-2.5 text-[11px] font-black tracking-[0.4em] flex items-center justify-center gap-2 border transition-colors"
+              style={{ borderColor: 'rgba(6,182,212,0.40)', color: 'rgba(6,182,212,0.85)', background: 'rgba(6,182,212,0.07)' }}
+              whileHover={{ background: 'rgba(6,182,212,0.14)', borderColor: 'rgba(6,182,212,0.70)' }}
+              whileTap={{ scale: 0.98 }}>
+              ✓ REVISAR MISIONES
+              <ChevronRight size={12} />
+            </motion.button>
           ) : (
             <motion.button onClick={onGo}
               className="w-full py-2.5 font-black tracking-[0.3em] text-[11px] flex items-center justify-center gap-2 border transition-all"

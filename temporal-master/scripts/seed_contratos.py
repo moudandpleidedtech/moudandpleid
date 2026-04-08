@@ -1,20 +1,21 @@
 """
-Seed — CONTRATOS: Proyectos Finales de Certificación (niveles 50, 60, 70).
+Seed — CONTRATOS: Proyectos Finales de Certificación (niveles 50, 60, 70, 130, 175).
 
 Uso (desde la raíz del proyecto):
     python -m scripts.seed_contratos
 
 Comportamiento:
-    1. Elimina solo los challenges con sector_id IN (5, 6, 7) (idempotente).
-    2. Inserta los 3 contratos de dificultad EXPERT, uno por sector.
+    1. Elimina solo los challenges con sector_id IN (5, 6, 7, 13, 17) (idempotente).
+    2. Inserta los 5 contratos de dificultad EXPERT, uno por sector.
 
 Contratos:
-    50 — Sector 05 — Terminal de Acceso    (login con 3 intentos, while + dict)
-    60 — Sector 06 — Procesador de Datos   (función + lista de dicts, salario promedio)
-    70 — Sector 07 — Calculadora de Daño   (función + dict de modificadores matemáticos)
+    50  — Sector 05 — Terminal de Acceso         (while + dict, autenticación)
+    60  — Sector 06 — Procesador de Datos        (función + lista de dicts, promedio)
+    70  — Sector 07 — Calculadora de Daño        (función + dict modificadores)
+    130 — Sector 13 — Clasificador de Operadores (OOP: herencia + override + max/key)
+    175 — Sector 17 — Procesador Táctico         (Strategy pattern + Protocol + testing)
 
-test_validacion: el script de validación interna de cada contrato se almacena
-en theory_content como documentación técnica para el evaluador y el operador.
+theory_content almacena la especificación técnica y el script de validación interna.
 """
 
 import asyncio
@@ -132,6 +133,143 @@ empleados_C = [
     {"nombre": "Z", "salario": 3000},
 ]
 assert salario_promedio(empleados_C) == 2000.0
+```
+"""
+
+SPEC_C130 = """\
+## CONTRATO-130 — Especificación Técnica: Clasificador de Operadores
+
+### Clases requeridas
+
+```python
+class Operador:
+    def __init__(self, nombre: str, nivel: int) -> None: ...
+    def eficiencia(self) -> int: ...   # retorna nivel * 10
+
+class OperadorElite(Operador):
+    def eficiencia(self) -> int: ...   # override: retorna nivel * 15
+```
+
+### Función requerida
+
+```python
+def seleccionar_lider(equipo: list) -> str:
+    \"\"\"Retorna el nombre del operador con mayor eficiencia.\"\"\"
+```
+
+### Datos de prueba (predefinidos en el skeleton)
+
+```python
+equipo = [
+    Operador("VASQUEZ", 8),      # eficiencia = 80
+    OperadorElite("NOVA", 6),    # eficiencia = 90  (elite: 6*15)
+    Operador("ROOK", 10),        # eficiencia = 100
+]
+```
+
+### Formato de salida
+
+```
+ROOK
+100
+```
+
+---
+
+### Script de Validación Interna
+
+```python
+# Verificar eficiencias base
+assert Operador("X", 5).eficiencia()      == 50
+assert OperadorElite("Y", 5).eficiencia() == 75   # 5*15
+
+# Verificar herencia
+assert isinstance(OperadorElite("Z", 3), Operador)
+
+# Verificar selección
+equipo_test = [Operador("A", 4), OperadorElite("B", 3), Operador("C", 7)]
+# A:40, B:45 (elite), C:70 → lider=C
+assert seleccionar_lider(equipo_test) == "C"
+
+# Verificar que retorna string, no objeto
+assert isinstance(seleccionar_lider(equipo_test), str)
+```
+"""
+
+SPEC_C175 = """\
+## CONTRATO-175 — Especificación Técnica: Procesador Táctico
+
+### Interfaz requerida (Protocol o ABC)
+
+```python
+from typing import Protocol
+
+class EstrategiaOrden(Protocol):
+    def ordenar(self, datos: list[int]) -> list[int]: ...
+```
+
+### Clases de estrategia requeridas
+
+```python
+class OrdenAscendente:
+    def ordenar(self, datos: list[int]) -> list[int]:
+        return sorted(datos)                  # de menor a mayor
+
+class OrdenDescendente:
+    def ordenar(self, datos: list[int]) -> list[int]:
+        return sorted(datos, reverse=True)    # de mayor a menor
+```
+
+### Clase principal requerida
+
+```python
+class ProcesadorTactico:
+    def __init__(self, estrategia: EstrategiaOrden) -> None: ...
+    def cambiar_estrategia(self, estrategia: EstrategiaOrden) -> None: ...
+    def procesar(self, datos: list[int]) -> str:
+        # Aplica estrategia y une con espacio: "7 15 23 42 99"
+```
+
+### Función de test requerida
+
+```python
+def test_procesador() -> bool:
+    proc = ProcesadorTactico(OrdenAscendente())
+    assert proc.procesar([5, 1, 3]) == "1 3 5"
+    proc.cambiar_estrategia(OrdenDescendente())
+    assert proc.procesar([5, 1, 3]) == "5 3 1"
+    return True
+```
+
+### Formato de salida
+
+```
+7 15 23 42 99
+99 42 23 15 7
+TEST: OK
+```
+
+---
+
+### Script de Validación Interna
+
+```python
+datos = [42, 7, 15, 99, 23]
+
+proc = ProcesadorTactico(OrdenAscendente())
+assert proc.procesar(datos) == "7 15 23 42 99"
+
+proc.cambiar_estrategia(OrdenDescendente())
+assert proc.procesar(datos) == "99 42 23 15 7"
+
+# Verifica que test_procesador no modifica la lista original
+original = [5, 1, 3]
+copia = original.copy()
+proc2 = ProcesadorTactico(OrdenAscendente())
+proc2.procesar(original)
+assert original == copia, "procesar() no debe mutar la lista original"
+
+assert test_procesador() == True
 ```
 """
 
@@ -520,6 +658,291 @@ CONTRATOS = [
             ),
         ]),
     },
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CONTRATO-130: Clasificador de Operadores  (OOP + Algoritmos)
+    # ══════════════════════════════════════════════════════════════════════════
+    {
+        "title": "CONTRATO-130: Clasificador de Operadores",
+        "description": (
+            "**CONTRATO DE CERTIFICACIÓN — SECTOR 13**\n\n"
+            "El Nexo necesita un sistema que identifique automáticamente al operador "
+            "más eficiente de cualquier equipo táctico. Los operadores de élite tienen "
+            "un multiplicador de eficiencia superior al personal estándar.\n\n"
+            "**Tu misión:** Implementa la jerarquía de clases y la función de selección.\n\n"
+            "**Clases requeridas:**\n"
+            "- `Operador(nombre, nivel)` → `eficiencia()` retorna `nivel * 10`\n"
+            "- `OperadorElite(Operador)` → override: `eficiencia()` retorna `nivel * 15`\n\n"
+            "**Función requerida:**\n"
+            "- `seleccionar_lider(equipo)` → retorna el **nombre** del más eficiente\n\n"
+            "**Equipo de prueba:**\n"
+            "```python\n"
+            "equipo = [\n"
+            '    Operador("VASQUEZ", 8),    # eficiencia = 80\n'
+            '    OperadorElite("NOVA", 6),  # eficiencia = 90\n'
+            '    Operador("ROOK", 10),      # eficiencia = 100\n'
+            "]\n"
+            "```\n\n"
+            "**Salida esperada:**\n"
+            "```\n"
+            "ROOK\n"
+            "100\n"
+            "```"
+        ),
+        "difficulty_tier": DifficultyTier.ADVANCED,
+        "difficulty": "expert",
+        "sector_id": 13,
+        "level_order": 130,
+        "base_xp_reward": 3000,
+        "is_project": True,
+        "telemetry_goal_time": 1200,
+        "challenge_type": "python",
+        "phase": "contrato",
+        "concepts_taught_json": json.dumps([
+            "clases", "herencia", "override", "polimorfismo",
+            "max() con key", "lambda", "type hints", "OOP"
+        ]),
+        "initial_code": (
+            "# ╔══════════════════════════════════════════════════════╗\n"
+            "# ║  CONTRATO-130: CLASIFICADOR DE OPERADORES            ║\n"
+            "# ║  Dificultad: EXPERT — Proyecto de Certificación     ║\n"
+            "# ╚══════════════════════════════════════════════════════╝\n"
+            "#\n"
+            "# Implementa Operador, OperadorElite y seleccionar_lider().\n"
+            "\n"
+            "\n"
+            "class Operador:\n"
+            "    def __init__(self, nombre: str, nivel: int) -> None:\n"
+            "        # Almacena nombre y nivel como atributos de instancia\n"
+            "        pass\n"
+            "\n"
+            "    def eficiencia(self) -> int:\n"
+            "        # Retorna nivel * 10\n"
+            "        pass\n"
+            "\n"
+            "\n"
+            "class OperadorElite(Operador):\n"
+            "    def eficiencia(self) -> int:\n"
+            "        # Override: retorna nivel * 15  (bonus de élite)\n"
+            "        pass\n"
+            "\n"
+            "\n"
+            "def seleccionar_lider(equipo: list) -> str:\n"
+            "    \"\"\"Retorna el nombre del operador con mayor eficiencia.\"\"\"\n"
+            "    # Usa max() con key=lambda op: op.eficiencia()\n"
+            "    # Retorna .nombre del ganador (string, no el objeto)\n"
+            "    pass\n"
+            "\n"
+            "\n"
+            "# ── No modificar lo de abajo ──\n"
+            "equipo = [\n"
+            '    Operador("VASQUEZ", 8),\n'
+            '    OperadorElite("NOVA", 6),\n'
+            '    Operador("ROOK", 10),\n'
+            "]\n"
+            "\n"
+            "lider = seleccionar_lider(equipo)\n"
+            "print(lider)\n"
+            "print(max(op.eficiencia() for op in equipo))\n"
+        ),
+        "expected_output": "ROOK\n100",
+        "test_inputs_json": json.dumps([]),
+        "lore_briefing": (
+            "El Nexo enfrenta una misión de infiltración de máxima complejidad. "
+            "Para optimizar las probabilidades de éxito, el sistema de asignación táctica "
+            "debe identificar automáticamente al operador más capaz del equipo disponible. "
+            "Los Operadores de Élite tienen una ventaja de rendimiento sobre el personal estándar "
+            "gracias a su entrenamiento especializado. DAKI necesita que construyas el clasificador "
+            "que hará esta determinación de forma precisa y sin margen de error."
+        ),
+        "pedagogical_objective": (
+            "Contrato integrador de Sectores 01-13. Evalúa OOP completa: definición de clase, "
+            "__init__ con atributos de instancia, método de instancia, herencia, override de método, "
+            "polimorfismo implícito (max() llama eficiencia() sin saber el tipo real). "
+            "Combina con algoritmo: max() con key=lambda para selección óptima."
+        ),
+        "syntax_hint": (
+            "class Operador:\n"
+            "    def __init__(self, nombre: str, nivel: int) -> None:\n"
+            "        self.nombre = nombre\n"
+            "        self.nivel  = nivel\n"
+            "    def eficiencia(self) -> int:\n"
+            "        return self.nivel * 10\n"
+            "\n"
+            "class OperadorElite(Operador):\n"
+            "    def eficiencia(self) -> int:\n"
+            "        return self.nivel * 15\n"
+            "\n"
+            "def seleccionar_lider(equipo: list) -> str:\n"
+            "    lider = max(equipo, key=lambda op: op.eficiencia())\n"
+            "    return lider.nombre"
+        ),
+        "theory_content": SPEC_C130,
+        "hints_json": json.dumps([
+            (
+                "En __init__ de Operador: self.nombre = nombre y self.nivel = nivel. "
+                "OperadorElite hereda __init__ automáticamente — no lo repitas."
+            ),
+            (
+                "OperadorElite solo necesita redefinir eficiencia(): return self.nivel * 15. "
+                "Todo lo demás (nombre, nivel, __init__) lo hereda de Operador."
+            ),
+            (
+                "seleccionar_lider: lider = max(equipo, key=lambda op: op.eficiencia()). "
+                "Retorna lider.nombre — el string, no el objeto."
+            ),
+        ]),
+    },
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CONTRATO-175: Procesador Táctico  (Design Patterns + Testing)
+    # ══════════════════════════════════════════════════════════════════════════
+    {
+        "title": "CONTRATO-175: Procesador Táctico",
+        "description": (
+            "**CONTRATO DE CERTIFICACIÓN — SECTOR 17**\n\n"
+            "El sistema de análisis del Nexo necesita un procesador flexible que pueda "
+            "cambiar su estrategia de ordenamiento en tiempo de ejecución sin reescribir "
+            "el código principal. La solución debe seguir el patrón Strategy e incluir "
+            "un test integrado que valide el comportamiento.\n\n"
+            "**Tu misión:** Implementa el patrón Strategy con Protocol y un test real.\n\n"
+            "**Clases requeridas:**\n"
+            "- `EstrategiaOrden` (Protocol) — interfaz con `ordenar(datos) -> list[int]`\n"
+            "- `OrdenAscendente` — implementación ascendente\n"
+            "- `OrdenDescendente` — implementación descendente\n"
+            "- `ProcesadorTactico` — composición + `cambiar_estrategia()`\n\n"
+            "**Función de test requerida:**\n"
+            "- `test_procesador()` — al menos 2 `assert`, retorna `True`\n\n"
+            "**Datos de prueba:** `[42, 7, 15, 99, 23]`\n\n"
+            "**Salida esperada:**\n"
+            "```\n"
+            "7 15 23 42 99\n"
+            "99 42 23 15 7\n"
+            "TEST: OK\n"
+            "```"
+        ),
+        "difficulty_tier": DifficultyTier.ADVANCED,
+        "difficulty": "expert",
+        "sector_id": 17,
+        "level_order": 175,
+        "base_xp_reward": 4000,
+        "is_project": True,
+        "telemetry_goal_time": 1800,
+        "challenge_type": "python",
+        "phase": "contrato",
+        "concepts_taught_json": json.dumps([
+            "Strategy pattern", "Protocol", "composición", "type hints",
+            "assert", "testing", "inyección de dependencia", "sorted()"
+        ]),
+        "initial_code": (
+            "# ╔══════════════════════════════════════════════════════╗\n"
+            "# ║  CONTRATO-175: PROCESADOR TÁCTICO                   ║\n"
+            "# ║  Dificultad: EXPERT — Proyecto de Certificación     ║\n"
+            "# ╚══════════════════════════════════════════════════════╝\n"
+            "#\n"
+            "# Implementa el patrón Strategy con Protocol.\n"
+            "# Incluye test_procesador() con assert reales.\n"
+            "\n"
+            "from typing import Protocol\n"
+            "\n"
+            "\n"
+            "class EstrategiaOrden(Protocol):\n"
+            "    def ordenar(self, datos: list[int]) -> list[int]: ...\n"
+            "\n"
+            "\n"
+            "class OrdenAscendente:\n"
+            "    def ordenar(self, datos: list[int]) -> list[int]:\n"
+            "        # Retorna la lista ordenada de menor a mayor\n"
+            "        pass\n"
+            "\n"
+            "\n"
+            "class OrdenDescendente:\n"
+            "    def ordenar(self, datos: list[int]) -> list[int]:\n"
+            "        # Retorna la lista ordenada de mayor a menor\n"
+            "        pass\n"
+            "\n"
+            "\n"
+            "class ProcesadorTactico:\n"
+            "    def __init__(self, estrategia: EstrategiaOrden) -> None:\n"
+            "        # Almacena la estrategia como atributo privado\n"
+            "        pass\n"
+            "\n"
+            "    def cambiar_estrategia(self, estrategia: EstrategiaOrden) -> None:\n"
+            "        # Reemplaza la estrategia actual\n"
+            "        pass\n"
+            "\n"
+            "    def procesar(self, datos: list[int]) -> str:\n"
+            "        # Aplica la estrategia y retorna los números separados por espacio\n"
+            '        # Ejemplo: [7, 15, 23] → "7 15 23"\n'
+            "        pass\n"
+            "\n"
+            "\n"
+            "def test_procesador() -> bool:\n"
+            "    # Test 1: orden ascendente\n"
+            "    proc = ProcesadorTactico(OrdenAscendente())\n"
+            '    assert proc.procesar([5, 1, 3]) == "1 3 5", "FALLA: ascendente"\n'
+            "    # Test 2: cambio de estrategia a descendente\n"
+            "    proc.cambiar_estrategia(OrdenDescendente())\n"
+            '    assert proc.procesar([5, 1, 3]) == "5 3 1", "FALLA: descendente"\n'
+            "    return True\n"
+            "\n"
+            "\n"
+            "# ── No modificar lo de abajo ──\n"
+            "datos = [42, 7, 15, 99, 23]\n"
+            "proc = ProcesadorTactico(OrdenAscendente())\n"
+            "print(proc.procesar(datos))\n"
+            "proc.cambiar_estrategia(OrdenDescendente())\n"
+            "print(proc.procesar(datos))\n"
+            'print("TEST:", "OK" if test_procesador() else "FALLA")\n'
+        ),
+        "expected_output": "7 15 23 42 99\n99 42 23 15 7\nTEST: OK",
+        "test_inputs_json": json.dumps([]),
+        "lore_briefing": (
+            "El sistema de inteligencia del Nexo procesa streams de datos críticos en tiempo real. "
+            "El problema: diferentes misiones requieren diferentes ordenamientos — "
+            "a veces prioridad ascendente, a veces descendente según la amenaza. "
+            "Reescribir el procesador para cada caso sería insostenible en producción. "
+            "DAKI necesita que construyas un sistema flexible con intercambio de estrategias en caliente, "
+            "respaldado por tests que garanticen que el cambio de estrategia funcione sin efectos secundarios."
+        ),
+        "pedagogical_objective": (
+            "Contrato integrador de Sectores 01-17. Evalúa diseño de software avanzado: "
+            "patrón Strategy con Protocol como contrato de interfaz, composición sobre herencia, "
+            "inyección de dependencia en __init__, cambio de comportamiento en runtime. "
+            "Introduce testing con assert como práctica profesional básica."
+        ),
+        "syntax_hint": (
+            "class OrdenAscendente:\n"
+            "    def ordenar(self, datos: list[int]) -> list[int]:\n"
+            "        return sorted(datos)\n"
+            "\n"
+            "class ProcesadorTactico:\n"
+            "    def __init__(self, estrategia: EstrategiaOrden) -> None:\n"
+            "        self._estrategia = estrategia\n"
+            "    def cambiar_estrategia(self, estrategia: EstrategiaOrden) -> None:\n"
+            "        self._estrategia = estrategia\n"
+            "    def procesar(self, datos: list[int]) -> str:\n"
+            '        return " ".join(str(x) for x in self._estrategia.ordenar(datos))'
+        ),
+        "theory_content": SPEC_C175,
+        "hints_json": json.dumps([
+            (
+                "OrdenAscendente: return sorted(datos). "
+                "OrdenDescendente: return sorted(datos, reverse=True). "
+                "sorted() nunca muta la lista original — siempre retorna una nueva."
+            ),
+            (
+                "ProcesadorTactico.__init__: self._estrategia = estrategia. "
+                "cambiar_estrategia: self._estrategia = estrategia. "
+                "El underscore indica atributo privado por convención."
+            ),
+            (
+                'procesar: resultado = self._estrategia.ordenar(datos). '
+                'Luego: return " ".join(str(x) for x in resultado). '
+                "Esto convierte [7, 15, 23] → \"7 15 23\"."
+            ),
+        ]),
+    },
 ]
 
 
@@ -530,11 +953,11 @@ async def seed() -> None:
     SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
     async with SessionLocal() as session:
-        # Idempotente: elimina sectores 5, 6, 7
+        # Idempotente: elimina sectores 5, 6, 7, 13, 17
         from sqlalchemy import or_
         deleted = await session.execute(
             delete(Challenge).where(
-                Challenge.sector_id.in_([5, 6, 7])
+                Challenge.sector_id.in_([5, 6, 7, 13, 17])
             )
         )
         deleted_count = deleted.rowcount
@@ -555,7 +978,7 @@ async def seed() -> None:
 
     await engine.dispose()
     print(f"\n✅  {len(CONTRATOS)} Contratos cargados.")
-    print("    Los Contratos 50, 60 y 70 están disponibles para certificación.\n")
+    print("    Los Contratos 50, 60, 70, 130 y 175 están disponibles para certificación.\n")
 
 
 if __name__ == "__main__":

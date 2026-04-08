@@ -56,9 +56,11 @@ function formatCountdown(ms: number) {
 // ─── Config visual por contrato ───────────────────────────────────────────────
 
 const CFG: Record<number, { glyph: string; color: string; rank: string }> = {
-  50: { glyph: '⬡', color: '#00FF41', rank: 'ALFA' },
-  60: { glyph: '◈', color: '#FFB800', rank: 'BETA' },
-  70: { glyph: '⬟', color: '#FF6B35', rank: 'GAMMA' },
+  50:  { glyph: '⬡', color: '#00FF41', rank: 'ALFA'    },
+  60:  { glyph: '◈', color: '#FFB800', rank: 'BETA'    },
+  70:  { glyph: '⬟', color: '#FF6B35', rank: 'GAMMA'   },
+  130: { glyph: '◬', color: '#00CFFF', rank: 'DELTA'   },
+  175: { glyph: '◆', color: '#FF3E9B', rank: 'EPSILON' },
 }
 const CFG_DEFAULT = { glyph: '◆', color: '#00CFFF', rank: 'DELTA' }
 

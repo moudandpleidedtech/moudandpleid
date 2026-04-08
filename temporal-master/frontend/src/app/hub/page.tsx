@@ -244,7 +244,7 @@ function GlitchCTA({ onClick }: { onClick: () => void }) {
 
 // ─── Python Core Status ───────────────────────────────────────────────────────
 
-const CORE_THRESHOLDS = { BASICO: 5, MEDIO: 15, AVANZADO: 25 }
+const CORE_THRESHOLDS = { BASICO: 45, MEDIO: 95, AVANZADO: 140 }
 const CORE_NODES = [
   { label: 'BÁSICO',   sub: 'Fundamentos'           },
   { label: 'MEDIO',    sub: 'Estructuras y Lógica'  },
@@ -378,15 +378,14 @@ function PythonCoreStatus({ completedCount }: { completedCount: number }) {
 // ─── Barra de Progreso Global ─────────────────────────────────────────────────
 
 const MILESTONES = [
-  { at: 10,  label: 'Sector 00 completo' },
-  { at: 25,  label: 'Sector 01 completo' },
-  { at: 50,  label: 'Sector 02 completo' },
-  { at: 75,  label: 'Sector 03 completo' },
-  { at: 100, label: 'BOSS FINAL'          },
+  { at:  45, label: 'BÁSICO completado'    },
+  { at:  95, label: 'MEDIO completado'     },
+  { at: 140, label: 'AVANZADO completado'  },
+  { at: 190, label: 'PYTHON CORE COMPLETO' },
 ]
 
 function GlobalProgressBar({ completedCount }: { completedCount: number }) {
-  const TOTAL = 100
+  const TOTAL = 190
   const pct   = Math.min(100, Math.round((completedCount / TOTAL) * 100))
   const next  = MILESTONES.find(m => m.at > completedCount)
   const toNext = next ? next.at - completedCount : 0

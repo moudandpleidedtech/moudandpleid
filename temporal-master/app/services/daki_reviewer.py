@@ -23,7 +23,7 @@ from app.core.config import settings
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BASE DE CONOCIMIENTO POR CONTRATO
-# Keyed by level_order (50, 60, 70)
+# Keyed by level_order (50, 60, 70, 130, 175)
 # ─────────────────────────────────────────────────────────────────────────────
 
 CONTRACT_KNOWLEDGE: dict[int, dict] = {
@@ -190,6 +190,136 @@ CONTRACT_KNOWLEDGE: dict[int, dict] = {
             "Confirma que usa el diccionario MODIFICADORES (no if/elif). "
             "Chequea la fórmula: nivel_defensa * 0.5 (no / 2 que puede diferir con round). "
             "La función debe ser pura — solo return, sin print."
+        ),
+    },
+
+    130: {
+        "title": "Clasificador de Operadores",
+        "skill_level": "Avanzado — Sectores 01-13 (OOP + Algoritmos)",
+        "criteria": [
+            {
+                "id": "class_definition",
+                "name": "Clase Operador bien definida",
+                "description": "Operador.__init__ almacena self.nombre y self.nivel correctamente.",
+                "check_for": "self.nombre = nombre, self.nivel = nivel en __init__",
+            },
+            {
+                "id": "base_eficiencia",
+                "name": "eficiencia() base correcta",
+                "description": "Operador.eficiencia() retorna self.nivel * 10 (no print, no hardcodeo).",
+                "check_for": "return self.nivel * 10",
+            },
+            {
+                "id": "inheritance",
+                "name": "Herencia correcta",
+                "description": "OperadorElite hereda de Operador: class OperadorElite(Operador).",
+                "check_for": "class OperadorElite(Operador):",
+            },
+            {
+                "id": "override_eficiencia",
+                "name": "Override de eficiencia() en OperadorElite",
+                "description": "OperadorElite.eficiencia() retorna self.nivel * 15 (no * 10).",
+                "check_for": "return self.nivel * 15 en OperadorElite",
+            },
+            {
+                "id": "max_with_key",
+                "name": "seleccionar_lider() usa max() con key",
+                "description": "La función usa max(equipo, key=lambda op: op.eficiencia()) o equivalente.",
+                "check_for": "max() con key que invoca .eficiencia()",
+            },
+            {
+                "id": "return_nombre",
+                "name": "Retorna el nombre (string), no el objeto",
+                "description": "seleccionar_lider() retorna lider.nombre — no el objeto Operador.",
+                "check_for": "return ...nombre (str), no return el objeto completo",
+            },
+        ],
+        "common_antipatterns": [
+            "OperadorElite no hereda Operador → no puede usar super().__init__()",
+            "eficiencia() en OperadorElite llama al padre con super() en vez de override directo",
+            "seleccionar_lider() itera manualmente con if en vez de max(key=...)",
+            "Retornar el objeto Operador en vez de .nombre → TypeError al imprimir",
+            "Multiplicar por 10 en ambas clases → el override no tiene efecto real",
+        ],
+        "good_patterns": [
+            "super().__init__(nombre, nivel) en OperadorElite si se redefine __init__",
+            "max(equipo, key=lambda op: op.eficiencia()) — una línea, legible",
+            "No duplicar código: OperadorElite solo sobreescribe eficiencia(), no __init__",
+            "Type hints en las firmas: def eficiencia(self) -> int:",
+        ],
+        "daki_review_focus": (
+            "Verifica que OperadorElite hereda de Operador (no copia la clase). "
+            "Confirma que eficiencia() retorna nivel*15 en Elite y nivel*10 en base. "
+            "Chequea que seleccionar_lider() use max() con key y retorne .nombre (string)."
+        ),
+    },
+
+    175: {
+        "title": "Procesador Táctico",
+        "skill_level": "Expert — Sectores 01-17 (Design Patterns + Testing)",
+        "criteria": [
+            {
+                "id": "protocol_interface",
+                "name": "Interfaz EstrategiaOrden definida",
+                "description": "EstrategiaOrden es un Protocol (o ABC) con método ordenar(datos) -> list[int].",
+                "check_for": "class EstrategiaOrden(Protocol): def ordenar(self, datos: list[int]) -> list[int]: ...",
+            },
+            {
+                "id": "ascendente_impl",
+                "name": "OrdenAscendente.ordenar() correcto",
+                "description": "Retorna sorted(datos) — de menor a mayor.",
+                "check_for": "return sorted(datos) sin reverse=True",
+            },
+            {
+                "id": "descendente_impl",
+                "name": "OrdenDescendente.ordenar() correcto",
+                "description": "Retorna sorted(datos, reverse=True) — de mayor a menor.",
+                "check_for": "return sorted(datos, reverse=True)",
+            },
+            {
+                "id": "composition",
+                "name": "ProcesadorTactico usa composición",
+                "description": "Almacena la estrategia como self._estrategia en __init__. No hereda de la estrategia.",
+                "check_for": "self._estrategia = estrategia en __init__",
+            },
+            {
+                "id": "cambiar_estrategia",
+                "name": "cambiar_estrategia() funciona en runtime",
+                "description": "El método actualiza self._estrategia sin reinicializar el objeto.",
+                "check_for": "self._estrategia = estrategia en cambiar_estrategia()",
+            },
+            {
+                "id": "procesar_format",
+                "name": "procesar() retorna string con espacio",
+                "description": "Llama self._estrategia.ordenar() y une con ' '.join(str(x) for x in ...).",
+                "check_for": "\" \".join(str(x) for x in self._estrategia.ordenar(datos))",
+            },
+            {
+                "id": "test_assertions",
+                "name": "test_procesador() tiene al menos 2 assert",
+                "description": "La función de test usa assert para validar comportamiento real, no solo print.",
+                "check_for": "assert proc.procesar([5, 1, 3]) == \"1 3 5\" y assert para descendente",
+            },
+        ],
+        "common_antipatterns": [
+            "ProcesadorTactico hereda de la estrategia en vez de componerla → acoplamiento duro",
+            "procesar() modifica la lista original con .sort() en vez de sorted() → efecto secundario",
+            "cambiar_estrategia() crea un nuevo ProcesadorTactico en vez de actualizar el atributo",
+            "test_procesador() usa print() en vez de assert → no valida nada",
+            "No usar Protocol → las clases de estrategia son anónimas sin contrato de interfaz",
+        ],
+        "good_patterns": [
+            "Inyección de dependencia: ProcesadorTactico recibe cualquier objeto con .ordenar()",
+            "sorted() no muta la lista original → funciones puras sin efectos secundarios",
+            "Protocol como documentación viva del contrato de la estrategia",
+            "test_procesador() con assert y mensaje de error claro en cada assertion",
+            "Type hints en todos los métodos → código auto-documentado",
+        ],
+        "daki_review_focus": (
+            "Verifica que ProcesadorTactico usa composición (no herencia). "
+            "Confirma que OrdenAscendente y OrdenDescendente implementan ordenar() correctamente. "
+            "Chequea que procesar() delega en la estrategia y une con espacio. "
+            "Evalúa que test_procesador() tiene assert reales que fallarían si el código es incorrecto."
         ),
     },
 }
