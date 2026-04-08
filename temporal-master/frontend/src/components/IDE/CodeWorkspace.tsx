@@ -1869,7 +1869,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
             {failStreak > 0 && (
               <span className="text-[#FFB800]/60 tabular-nums">{failStreak}✕</span>
             )}
-            <span className="text-[#00FF41]/40">{username}</span>
+            <span className="text-[#00FF41]/40 max-w-[80px] truncate" title={username}>{username}</span>
             <span>RNG <strong className="text-[#00FF41]">{level}</strong></span>
             <span id="xp-display">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
             {streakDays > 0 && (

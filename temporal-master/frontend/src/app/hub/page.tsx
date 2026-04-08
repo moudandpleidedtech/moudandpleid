@@ -835,7 +835,7 @@ export default function HubPage() {
         
         {/* Panel de Controles & Rango (CSS Flex con wrapping y gaps fijos) */}
         <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-5 text-xs text-[#00FF41]/45">
-          <span className="text-[#00FF41]/30 hidden lg:block whitespace-nowrap">{username}</span>
+          <span className="text-[#00FF41]/30 hidden lg:block truncate max-w-[120px]" title={username}>{username}</span>
           <span className="whitespace-nowrap">RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span className="whitespace-nowrap">XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
           {streakDays > 0 && <span className="whitespace-nowrap">🔥 <strong className="text-[#00FF41]">{streakDays}d</strong></span>}

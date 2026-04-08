@@ -163,10 +163,11 @@ function PodiumCard({
       </div>
 
       {/* Info */}
-      <div className="text-center">
+      <div className="text-center w-full overflow-hidden">
         <div
-          className="font-mono font-bold text-sm tracking-widest"
+          className="font-mono font-bold text-sm tracking-widest truncate w-full"
           style={{ color: cfg.color }}
+          title={entry.username}
         >
           {entry.username}
         </div>
@@ -226,21 +227,22 @@ function TableRow({
 
       {/* Avatar + username */}
       <td className="py-2.5 pr-4">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Avatar username={entry.username} size="sm" leagueTier={entry.league_tier} />
-          <div>
+          <div className="min-w-0">
             <div
-              className={`font-bold tracking-widest ${
+              className={`font-bold tracking-widest truncate ${
                 isCurrentUser ? 'text-[#00FF41]' : 'text-[#00FF41]/85'
               }`}
               style={isCurrentUser ? { textShadow: '0 0 6px #00FF4180' } : {}}
+              title={entry.username}
             >
               {entry.username}
               {isCurrentUser && (
                 <span className="ml-2 text-[9px] text-[#00FF41]/50 tracking-widest">← TÚ</span>
               )}
             </div>
-            <div className="text-[9px] text-[#00FF41]/30 tracking-widest mt-0.5">
+            <div className="text-[9px] text-[#00FF41]/30 tracking-widest mt-0.5 truncate">
               {getTitleForLevel(entry.current_level)} · RANGO {entry.current_level}
             </div>
           </div>
@@ -351,7 +353,7 @@ export default function LeaderboardPage() {
           </span>
         </div>
         <div className="flex items-center gap-5 text-xs text-[#00FF41]/50">
-          <span>{username}</span>
+          <span className="max-w-[110px] truncate" title={username}>{username}</span>
           <span>RANGO <strong className="text-[#00FF41]">{level}</strong></span>
           <span>XP <strong className="text-[#00FF41]">{totalXp.toLocaleString()}</strong></span>
         </div>
