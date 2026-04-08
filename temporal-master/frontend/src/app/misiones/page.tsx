@@ -679,46 +679,83 @@ export default function MisionesPage() {
                 {!loading && (
                   <>
                     {/* JEFE FINAL */}
-                    <div className="px-5 pt-5 pb-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="h-px flex-1 bg-red-500/20" />
-                        <span className="text-[11px] tracking-[0.3em] text-red-500/60">JEFE FINAL</span>
-                        <div className="h-px flex-1 bg-red-500/20" />
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => router.push('/boss')}
-                      className="w-full text-left px-5 py-3.5 border-b border-l-4 border-l-red-700/60 border-b-red-500/10 transition-all duration-200 cursor-pointer hover:translate-x-1"
-                      style={{ background: 'rgba(127,0,0,0.15)' }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(127,0,0,0.25)'
-                        e.currentTarget.style.boxShadow = '0 0 30px rgba(255,0,0,0.15), inset 0 0 20px rgba(255,0,0,0.08)'
-                        e.currentTarget.style.borderLeftColor = 'rgba(239,68,68,0.8)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = 'rgba(127,0,0,0.15)'
-                        e.currentTarget.style.boxShadow = 'none'
-                        e.currentTarget.style.borderLeftColor = 'rgba(185,28,28,0.6)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <motion.span
-                            className="text-red-500/70 text-base"
-                            animate={{ opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1.8, repeat: Infinity }}
+                    {(() => {
+                      const completedCount = missions.filter(m => m.completed).length
+                      const BOSS_THRESHOLD = 140
+                      const bossUnlocked = completedCount >= BOSS_THRESHOLD
+                      const remaining = Math.max(0, BOSS_THRESHOLD - completedCount)
+                      return (
+                        <>
+                          <div className="px-5 pt-5 pb-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="h-px flex-1 bg-red-500/20" />
+                              <span className="text-[11px] tracking-[0.3em] text-red-500/60">JEFE FINAL</span>
+                              <div className="h-px flex-1 bg-red-500/20" />
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => bossUnlocked && router.push('/boss')}
+                            disabled={!bossUnlocked}
+                            className={[
+                              'w-full text-left px-5 py-3.5 border-b border-l-4 border-b-red-500/10 transition-all duration-200',
+                              bossUnlocked
+                                ? 'border-l-red-700/60 cursor-pointer hover:translate-x-1'
+                                : 'border-l-red-900/30 cursor-not-allowed opacity-50',
+                            ].join(' ')}
+                            style={{ background: bossUnlocked ? 'rgba(127,0,0,0.15)' : 'rgba(40,0,0,0.10)' }}
+                            onMouseEnter={e => {
+                              if (!bossUnlocked) return
+                              e.currentTarget.style.background = 'rgba(127,0,0,0.25)'
+                              e.currentTarget.style.boxShadow = '0 0 30px rgba(255,0,0,0.15), inset 0 0 20px rgba(255,0,0,0.08)'
+                              e.currentTarget.style.borderLeftColor = 'rgba(239,68,68,0.8)'
+                            }}
+                            onMouseLeave={e => {
+                              if (!bossUnlocked) return
+                              e.currentTarget.style.background = 'rgba(127,0,0,0.15)'
+                              e.currentTarget.style.boxShadow = 'none'
+                              e.currentTarget.style.borderLeftColor = 'rgba(185,28,28,0.6)'
+                            }}
                           >
-                            ∞
-                          </motion.span>
-                          <span className="text-[13px] font-bold tracking-wide text-red-400 drop-shadow-[0_0_8px_rgba(255,0,0,0.6)]">
-                            THE INFINITE LOOPER
-                          </span>
-                        </div>
-                        <span className="text-[11px] tracking-widest text-red-400/60 border border-red-500/30 px-1.5 py-0.5">
-                          BOSS
-                        </span>
-                      </div>
-                    </button>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {bossUnlocked ? (
+                                  <motion.span
+                                    className="text-red-500/70 text-base"
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{ duration: 1.8, repeat: Infinity }}
+                                  >∞</motion.span>
+                                ) : (
+                                  <span className="text-red-900/60 text-base">🔒</span>
+                                )}
+                                <div>
+                                  <span className={[
+                                    'text-[13px] font-bold tracking-wide',
+                                    bossUnlocked
+                                      ? 'text-red-400 drop-shadow-[0_0_8px_rgba(255,0,0,0.6)]'
+                                      : 'text-red-900/60',
+                                  ].join(' ')}>
+                                    THE INFINITE LOOPER
+                                  </span>
+                                  {!bossUnlocked && (
+                                    <div className="text-[9px] tracking-[0.2em] text-red-900/50 mt-0.5">
+                                      {remaining} MISIONES RESTANTES
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <span className={[
+                                'text-[11px] tracking-widest border px-1.5 py-0.5',
+                                bossUnlocked
+                                  ? 'text-red-400/60 border-red-500/30'
+                                  : 'text-red-900/40 border-red-900/20',
+                              ].join(' ')}>
+                                BOSS
+                              </span>
+                            </div>
+                          </button>
+                        </>
+                      )
+                    })()}
 
                   </>
                 )}

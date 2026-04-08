@@ -29,15 +29,33 @@ const GRID_ROWS = 6
 const BOSS_DURATION_MS = 45_000   // 45 s para corromper todo
 const TICK_MS = 100               // intervalo del timer
 
-const INITIAL_CODE = `def factorial_iterativo(n):
-    # El ∞ LOOPER ejecuta: while True: contador += 1
-    # Tu misión: detenerlo con un bucle FOR acotado.
-    # Retorna n! (n factorial) usando for, no recursion.
-    # Ejemplo: factorial_iterativo(5) → 120
-    pass
+const INITIAL_CODE = `class ControladorNexo:
+    def __init__(self, nombre):
+        # Guarda el nombre como atributo de instancia
+        # Inicializa self.operaciones en 0
+        pass
 
-n = int(input())
-print(factorial_iterativo(n))
+    def suma_divisibles(self, n):
+        # Suma de todos los múltiplos de 3 o 5 menores que n
+        # Usar bucle for acotado
+        pass
+
+    def pasos_collatz(self, n):
+        # Pasos para llegar a 1 en la secuencia de Collatz
+        # Si n es par  → n //= 2
+        # Si n es impar → n = 3*n + 1
+        # Usar bucle while
+        pass
+
+    def analizar(self, n):
+        s = self.suma_divisibles(n)
+        p = self.pasos_collatz(n)
+        self.operaciones += 1
+        print(f"{self.nombre}: suma={s}, pasos={p}")
+
+
+ctrl = ControladorNexo("NEXO-ALPHA")
+ctrl.analizar(int(input()))
 `
 
 // Fragmentos de "código corrupto" que se muestran en las celdas
@@ -453,7 +471,7 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            MÓDULO: BUCLES — JEFE FINAL
+            PYTHON CORE — JEFE FINAL
           </motion.div>
         </motion.div>
 
@@ -465,17 +483,22 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
           transition={{ delay: 0.8 }}
         >
           <p className="mb-3">
-            El <span className="text-red-400 font-bold">∞ LOOPER</span> ejecuta{' '}
-            <code className="bg-red-900/40 text-red-300 px-1 rounded">while True: contador += 1</code>{' '}
-            sin parar, corrompiendo el sistema línea a línea.
+            El <span className="text-red-400 font-bold">∞ LOOPER</span> ha evolucionado.
+            Ya no es un bucle simple — infectó{' '}
+            <span className="text-red-300">tres módulos del Nexo simultáneamente</span>{': '}
+            un acumulador sin cota, una trampa de Collatz y un colapso de instancias.
           </p>
-          <p>
-            Escribe <span className="text-green-400 font-semibold">factorial_iterativo(n)</span> usando un{' '}
-            <code className="bg-green-900/40 text-green-300 px-1 rounded">for</code> acotado
-            para detenerlo antes de que la integridad llegue a 0.
+          <p className="mb-3">
+            Implementa{' '}
+            <code className="bg-green-900/40 text-green-300 px-1 rounded">ControladorNexo</code>
+            {' '}— clase con{' '}
+            <code className="bg-green-900/40 text-green-300 px-1 rounded">__init__</code>,
+            un <code className="bg-green-900/40 text-green-300 px-1 rounded">for</code> acotado
+            y un <code className="bg-green-900/40 text-green-300 px-1 rounded">while</code>{' '}
+            de convergencia — para neutralizar los tres vectores de ataque.
           </p>
-          <p className="mt-4 text-yellow-400 font-semibold">
-            Tienes 45 segundos. Recompensa: 1 500 XP.
+          <p className="text-yellow-400 font-semibold">
+            Tienes 45 segundos. Recompensa: 5 000 XP.
           </p>
         </motion.div>
 
@@ -690,7 +713,7 @@ export default function TheInfiniteLooper({ userId, onVictory, onDefeat }: Props
                 <span style={{ color: '#00FF41', textShadow: '0 0 8px #00FF4160' }}>ARCHITECT OF VOID</span>
                 <span style={{ color: 'rgba(0,229,255,0.3)' }}>  ·  </span>
                 <span style={{ color: 'rgba(0,229,255,0.55)' }}>SKILL: </span>
-                <span style={{ color: '#00FF41', textShadow: '0 0 8px #00FF4160' }}>LOOP MASTERY</span>
+                <span style={{ color: '#00FF41', textShadow: '0 0 8px #00FF4160' }}>PYTHON CORE ARCHITECT</span>
               </div>
             </div>
 
