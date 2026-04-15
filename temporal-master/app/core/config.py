@@ -61,9 +61,10 @@ class Settings(BaseSettings):
     LICENSE_PRICE_USD: float = 49.0
 
     # ── Hotmart — Pasarela de Pagos ──────────────────────────────────────────
-    # Hottok: Dashboard → Webhooks → configurar → campo "Hottok" (secreto de verificación)
-    # El mismo hottok aplica a AMBOS productos (configurar en cada webhook)
+    # Hottok del producto Vitalicio (pago único)
     HOTMART_HOTTOK: str = ""
+    # Hottok del producto Mensual — puede ser diferente al vitalicio
+    HOTMART_SUBSCRIPTION_HOTTOK: str = ""
 
     # ── Producto 1: Licencia Vitalicia ($97 pago único) ───────────────────────
     # Product Key: Dashboard → Productos → tu producto → ícono de compartir → clave tipo "A12345678B"
