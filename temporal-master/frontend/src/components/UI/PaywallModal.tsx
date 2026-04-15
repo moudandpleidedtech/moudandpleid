@@ -106,9 +106,10 @@ export default function PaywallModal({
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/checkout/redeem`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, code_string: codeInput.trim() }),
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body:        JSON.stringify({ code_string: codeInput.trim() }),
       })
       const data = await res.json()
 

@@ -77,8 +77,9 @@ async def redeem_tactical_key(
 
     # ── 3. Activar licencia + consumir uso ────────────────────────────────────
     # El operador autenticado es el receptor — sin posibilidad de suplantación
-    key.current_uses   += 1
-    operator.is_licensed = True
+    key.current_uses          += 1
+    operator.is_licensed       = True
+    operator.subscription_status = "ACTIVE"
 
     # ── 4. Respuesta ──────────────────────────────────────────────────────────
     return RedeemResponse(

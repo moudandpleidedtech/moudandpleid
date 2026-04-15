@@ -740,12 +740,14 @@ export default function HubPage() {
     const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
     fetch(`${API_BASE}/api/v1/user/me`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
-      .then((data: { subscription_status?: string; trial_end_date?: string | null; role?: string; league_tier?: string } | null) => {
+      .then((data: { subscription_status?: string; trial_end_date?: string | null; role?: string; league_tier?: string; is_licensed?: boolean } | null) => {
         if (!data) return
         if (data.subscription_status && data.subscription_status !== 'INACTIVE') {
           setSubscription(data.subscription_status, data.trial_end_date ?? null)
           if (data.subscription_status === 'ACTIVE') setIsPaid(true)
         }
+        // is_licensed=True cubre códigos de override táctico (subscription_status puede ser INACTIVE en DB legacy)
+        if (data.is_licensed) setIsPaid(true)
         if (data.role) setRole(data.role)
         if (data.role === 'FOUNDER') {
           setSubscription(data.subscription_status ?? 'ACTIVE', null)
@@ -756,7 +758,7 @@ export default function HubPage() {
       .catch(() => {})
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Retorno desde Stripe Checkout exitoso ───────────────────────────────────
+  // ── Retorno desde Checkout exitoso (Hotmart o Stripe) ─────────────────────
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
