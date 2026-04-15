@@ -32,8 +32,9 @@ export default function FinDeTurnoModal({ visible, missions, operatorLevel, user
     setSummary('')
 
     fetch(`${API_BASE}/api/v1/daki/session-summary`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_id:        userId,
         missions,

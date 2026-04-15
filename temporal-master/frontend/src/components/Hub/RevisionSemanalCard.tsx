@@ -37,7 +37,7 @@ export default function RevisionSemanalCard({ userId }: { userId: string }) {
 
   useEffect(() => {
     if (!userId) return
-    fetch(`${API_BASE}/api/v1/intel/weekly-review?user_id=${userId}`)
+    fetch(`${API_BASE}/api/v1/intel/weekly-review?user_id=${userId}`, { credentials: 'include' })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.concepts?.length) setConcepts(data.concepts)

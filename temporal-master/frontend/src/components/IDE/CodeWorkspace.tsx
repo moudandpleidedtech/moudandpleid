@@ -619,8 +619,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
     if (!challenge || !userId) return
     try {
       const res = await fetch(`${API_BASE}/api/v1/daki/intervene`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId,
           challenge_id: challengeId,
@@ -743,8 +744,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/daki/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, challenge_id: challengeId, question: q }),
       })
       const data = await res.json()
@@ -771,8 +773,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Carga la lista completa de misiones para detectar el siguiente nodo
   useEffect(() => {
     if (!hydrated || !userId) return
-    fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`)
-      .then((r) => r.json())
+    fetch(`${API_BASE}/api/v1/challenges?user_id=${userId}`, { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : [])
       .then((data: ChallengeListItem[]) => setAllChallenges(data))
       .catch(() => {})
   }, [hydrated, userId])
@@ -819,7 +821,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   useEffect(() => {
     if (!hydrated || !userId) return
     const controller = new AbortController()
-    fetch(`${API_BASE}/api/v1/challenges/${challengeId}?user_id=${userId}`, { signal: controller.signal })
+    fetch(`${API_BASE}/api/v1/challenges/${challengeId}?user_id=${userId}`, { signal: controller.signal, credentials: 'include' })
       .then((r) => r.json())
       .then((data: Challenge) => {
         // Reto bloqueado → toast + redirección
@@ -1075,8 +1077,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
     const errorType = errorTypeMatch ? errorTypeMatch[1] : (errorText ? 'output_mismatch' : '')
     try {
       const res = await fetch(`${API_BASE}/api/v1/hint`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, error_output: errorText,

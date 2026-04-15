@@ -247,8 +247,8 @@ export default function ArenaPage() {
   // Fetch inbox on mount
   useEffect(() => {
     if (!userId) return
-    fetch(`${API}/api/v1/duels/inbox?user_id=${userId}`)
-      .then(r => r.json())
+    fetch(`${API}/api/v1/duels/inbox?user_id=${userId}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
       .then((data: InboxItem[]) => setInbox(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [userId])
@@ -271,8 +271,9 @@ export default function ArenaPage() {
     setError(null)
     try {
       const res = await fetch(`${API}/api/v1/duels/challenge`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId }),
       })
       if (!res.ok) {
@@ -297,8 +298,9 @@ export default function ArenaPage() {
     setError(null)
     try {
       const res = await fetch(`${API}/api/v1/duels/${duel.duel_id}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, source_code: code }),
       })
       const data: SubmitResult = await res.json()
@@ -317,7 +319,7 @@ export default function ArenaPage() {
 
   const handleAcceptInbox = useCallback(async (duelId: string) => {
     if (!userId) return
-    const res = await fetch(`${API}/api/v1/duels/${duelId}`)
+    const res = await fetch(`${API}/api/v1/duels/${duelId}`, { credentials: 'include' })
     if (!res.ok) return
     const data: DuelData = await res.json()
     setDuel(data)

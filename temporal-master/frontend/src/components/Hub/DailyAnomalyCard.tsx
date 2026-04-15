@@ -36,7 +36,7 @@ export default function DailyAnomalyCard() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/daily-anomaly`)
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then((data: Anomaly) => {
         setAnomaly(data)
         // Persistir para que CodeWorkspace pueda detectar la coincidencia

@@ -88,7 +88,7 @@ export default function ArchivoFallasModal({ userId, onClose }: Props) {
 
   useEffect(() => {
     if (!userId) return
-    fetch(`${API_BASE}/api/v1/intel/error-vault?user_id=${userId}`)
+    fetch(`${API_BASE}/api/v1/intel/error-vault?user_id=${userId}`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then((d: VaultData | null) => { if (d) setData(d) })
       .catch(() => {})

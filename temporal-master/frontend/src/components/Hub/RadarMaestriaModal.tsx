@@ -157,7 +157,7 @@ export default function RadarMaestriaModal({ userId, onClose }: Props) {
 
   useEffect(() => {
     if (!userId) return
-    fetch(`${API_BASE}/api/v1/intel/mastery-radar?user_id=${userId}`)
+    fetch(`${API_BASE}/api/v1/intel/mastery-radar?user_id=${userId}`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then((d: RadarData | null) => { if (d) setData(d) })
       .catch(() => {})
