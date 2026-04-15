@@ -337,9 +337,9 @@ export default function PaywallModal({
               <div
                 className="mt-5 pt-4 px-3 pb-3"
                 style={{
-                  borderTop:  '1px solid rgba(0,255,65,0.22)',
-                  border:     '1px solid rgba(0,255,65,0.18)',
-                  background: 'rgba(0,255,65,0.03)',
+                  border:       '1px solid rgba(0,255,65,0.18)',
+                  borderTop:    '1px solid rgba(0,255,65,0.22)',
+                  background:   'rgba(0,255,65,0.03)',
                 }}
               >
                 {/* Header */}

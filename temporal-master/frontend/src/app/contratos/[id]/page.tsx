@@ -219,7 +219,14 @@ export default function ContractIDEPage({ params }: Props) {
   }
 
   const levelOrder = contract?.level_order ?? 50
-  const accentColor = levelOrder === 50 ? '#00FF41' : levelOrder === 60 ? '#FFB800' : '#FF4444'
+  const CONTRACT_ACCENT: Record<number, string> = {
+    50:  '#00FF41',  // Sector 05 — verde operacional
+    60:  '#FFB800',  // Sector 06 — ámbar
+    70:  '#00BFFF',  // Sector 07 — cian
+    130: '#FF6B00',  // Sector 13 — naranja
+    175: '#CC00FF',  // Sector 17 — púrpura
+  }
+  const accentColor = CONTRACT_ACCENT[levelOrder] ?? '#FF4444'
 
   if (!contract) {
     return (

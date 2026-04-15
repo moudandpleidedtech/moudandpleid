@@ -442,7 +442,7 @@ function OnboardingModal({ onClose, onStart }: { onClose: () => void; onStart: (
     {
       icon:  '⬡',
       title: 'Python Core — Tu primera formación',
-      body:  '100 misiones. 4 sectores de dificultad creciente. 1 Boss Final. Python Core es la base de todo lo que vendrá después en el Nexo.',
+      body:  '190 misiones. 4 fases de dificultad creciente. 1 Boss Final. Python Core es la base de todo lo que vendrá después en el Nexo.',
       cta:   'CONTINUAR',
     },
     {

@@ -91,13 +91,13 @@ export default function MissionsSection() {
             <div className="h-px bg-[#00FF41]/15" />
 
             <p className="text-[#C0C0C0]/70 text-sm leading-6 tracking-wide flex-1">
-              Vence al Infinite Looper. Domina Python desde cero hasta APIs REST y estructuras de datos reales en 100 niveles de combate.
+              Vence al Infinite Looper. Domina Python desde cero hasta APIs REST y estructuras de datos reales en 190 niveles de combate.
             </p>
 
             {/* Progress hint */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] text-[#00FF41]/40 tracking-[0.3em]">
-                <span>NIVELES 1 → 100</span>
+                <span>NIVELES 1 → 190</span>
                 <span>NIVEL ACTUAL</span>
               </div>
               <div className="h-px bg-[#00FF41]/10 relative">
