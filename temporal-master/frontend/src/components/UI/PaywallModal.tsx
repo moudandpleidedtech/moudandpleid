@@ -75,11 +75,15 @@ export default function PaywallModal({
     setCheckoutState('loading')
     setCheckoutError('')
     try {
+      // Leer cookie de afiliado si existe (seteada por AffiliateTracker vía ?ref=)
+      const refMatch = document.cookie.match(/(?:^|; )daki_ref=([^;]*)/)
+      const ref = refMatch ? decodeURIComponent(refMatch[1]) : undefined
+
       const res = await fetch(`${API_BASE}/api/v1/hotmart/checkout`, {
         method:      'POST',
         headers:     { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body:        JSON.stringify({ plan: 'lifetime' }),
+        body:        JSON.stringify({ plan: 'lifetime', ...(ref ? { ref } : {}) }),
       })
       const data = await res.json()
       if (!res.ok) {

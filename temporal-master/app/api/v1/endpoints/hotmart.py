@@ -59,18 +59,21 @@ router = APIRouter(prefix="/hotmart", tags=["hotmart"])
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-def _build_checkout_url(plan: str, email: str) -> str:
+def _build_checkout_url(plan: str, email: str, ref: str | None = None) -> str:
     """
     Construye la URL de checkout de Hotmart.
     Hotmart pre-llena el email del comprador para reducir fricción.
 
     - plan "lifetime"  → usa HOTMART_PRODUCT_KEY      (producto pago único $97)
     - plan "monthly"   → usa HOTMART_SUBSCRIPTION_KEY (producto suscripción $29/mes)
+    - ref              → código de afiliado (se pasa como src= para acreditar comisión)
     """
     params: dict[str, str] = {
         "buyerEmail": email,
         "checkoutMode": "2",   # modo checkout moderno de Hotmart
     }
+    if ref:
+        params["src"] = ref
 
     if plan == "monthly":
         if not settings.HOTMART_SUBSCRIPTION_KEY:
@@ -119,7 +122,8 @@ async def _activate_user_by_email(
 # ─── Ruta 1: Generar URL de checkout ─────────────────────────────────────────
 
 class CheckoutRequest(BaseModel):
-    plan: str = "lifetime"   # "monthly" | "lifetime"
+    plan: str = "lifetime"        # "monthly" | "lifetime"
+    ref:  str | None = None       # código de afiliado capturado vía ?ref= en el frontend
 
 
 class CheckoutResponse(BaseModel):
@@ -136,7 +140,7 @@ async def create_hotmart_checkout(
     body:     CheckoutRequest,
     operator: User = Depends(get_current_operator),
 ) -> CheckoutResponse:
-    url = _build_checkout_url(plan=body.plan, email=operator.email)
+    url = _build_checkout_url(plan=body.plan, email=operator.email, ref=body.ref)
     return CheckoutResponse(checkout_url=url)
 
 

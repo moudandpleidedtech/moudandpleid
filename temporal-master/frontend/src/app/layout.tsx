@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import './globals.css'
 import TopNav from '@/components/UI/TopNav'
 import NeuralInstabilityEvent from '@/components/UI/NeuralInstabilityEvent'
 import BunkerAtmosphere from '@/components/UI/BunkerAtmosphere'
+import AffiliateTracker from '@/components/UI/AffiliateTracker'
 
 export const metadata: Metadata = {
   title: 'DAKI EdTech — Aprende Python jugando',
@@ -33,6 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <BunkerAtmosphere />
         <TopNav />
         <NeuralInstabilityEvent />
+        <Suspense fallback={null}>
+          <AffiliateTracker />
+        </Suspense>
         {children}
       </body>
     </html>
