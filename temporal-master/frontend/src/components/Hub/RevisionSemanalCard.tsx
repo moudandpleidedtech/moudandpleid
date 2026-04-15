@@ -52,7 +52,8 @@ export default function RevisionSemanalCard({ userId }: { userId: string }) {
     setLoading(concept)
     try {
       const res = await fetch(
-        `${API_BASE}/api/v1/intel/retrieval-challenge?user_id=${userId}&concept=${encodeURIComponent(concept)}`
+        `${API_BASE}/api/v1/intel/retrieval-challenge?user_id=${userId}&concept=${encodeURIComponent(concept)}`,
+        { credentials: 'include' }
       )
       if (!res.ok) return
       const d = await res.json()
