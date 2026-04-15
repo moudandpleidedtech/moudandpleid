@@ -1,0 +1,90 @@
+flowchart TD
+    %% ── HUB ───────────────────────────────────────────────────────
+    HUB["/hub — Centro de Operaciones"]
+
+    HUB --> BADGE["Badge de Rango\nXP · Nivel · Liga · Streak"]
+    HUB --> CTA["CTA — CONTINUAR MISIÓN"]
+    HUB --> CAMPAIGN["Campaign Map\n4 zonas · 9 nodos · backend /campaign/map"]
+    HUB --> ANOMALY["Daily Anomaly Card\nSHA-256 determinista · sin DB"]
+    HUB --> MEMORIA["Daki Memoria Card\nsessionStorage · resumen del turno"]
+    HUB --> REVISION["Revisión Semanal\n/intel/weekly-review · conceptos < 70% mastery"]
+    HUB --> LEADERBOARD["Leaderboard\n/leaderboard · top 50 global"]
+    HUB --> FINDETUR["Fin de Turno\nPOST /daki/session-summary\n≥ 2 misiones en sesión"]
+    HUB --> PROFILE["/p/[callsign]\nPerfil público · sin auth"]
+
+    %% ── CAMPAIGN MAP ──────────────────────────────────────────────
+    CAMPAIGN --> Z1["PYTHON CORE\nS00–S07 · L0–L66"]
+    CAMPAIGN --> Z2["OPERACIONES AVANZADAS\nS08–S13 · L67–L126"]
+    CAMPAIGN --> Z3["ESPECIALIZACIÓN ÉLITE\nS14–S18 · L127–L161"]
+    CAMPAIGN --> Z4["PROTOCOLOS ÉLITE\nS19 Debug · S20 Interview · S21 Predict\nL162–L189"]
+
+    Z1 & Z2 & Z3 & Z4 --> CTYPE{"Tipo de\nChallenge"}
+    CTYPE -->|standard| IDE_STD["/challenge/[id] — IDE Estándar"]
+    CTYPE -->|debug| IDE_DBG["IDE — Modo Debug\nBanner rojo · bug intencional"]
+    CTYPE -->|predict| IDE_PRD["IDE — Modo Predict\nEscribí el output SIN ejecutar"]
+    CTYPE -->|ironman| IDE_IRON["IDE — Modo Ironman\nBanner dorado · sin DAKI · sin pistas"]
+
+    %% ── IDE LOAD ──────────────────────────────────────────────────
+    IDE_STD & IDE_DBG & IDE_IRON --> VIEW{"viewMode\ninicial"}
+    VIEW -->|theory_content presente| BRIEFING["MisionBriefing\nlore + objetivo pedagógico"]
+    VIEW -->|concepts sin theory| INTEL["DakiIntelCard\nglosario estático · 50+ conceptos · sin LLM"]
+    VIEW -->|ya completado| EDITOR
+    BRIEFING --> EDITOR["Monaco Editor\nPython · tema oscuro · syntax highlight"]
+    INTEL --> EDITOR
+
+    IDE_PRD --> PREDICT_IN["Input de predicción\nescribí el output antes de ver nada"]
+    PREDICT_IN --> EDITOR
+
+    %% ── PEDAGOGY HOOKS ────────────────────────────────────────────
+    EDITOR --> PHOOKS["Hooks pedagógicos activos"]
+    PHOOKS --> PC["usePatternCallout\n1.5s post-carga · L20+\nGET /intel/pattern-callout\n→ línea en consola si hay overlap"]
+    PHOOKS --> PW["usePredictionWidget\npredicción pre-ejecución · L30+\nevalúa normalize(pred) vs output real"]
+    PHOOKS --> RETR{"?mode=\nretrieval"}
+    RETR -->|Sí| RETR_BANNER["Modo Retrieval\nbanner morado · sin pistas\nGET /intel/retrieval-challenge"]
+
+    %% ── EJECUCIÓN ─────────────────────────────────────────────────
+    EDITOR -->|Ctrl+Enter / RUN| RUN["POST /challenges/{id}/submit\nPiston API · timeout 6s\nfallback subprocess Python · 4s"]
+    RUN --> RESULT{"passed?"}
+
+    %% ── FAIL FLOW ─────────────────────────────────────────────────
+    RESULT -->|false| FAIL["failStreak++\nOutput en consola · border rojo stderr"]
+    FAIL --> EXPLAINER["DAKI Error Explainer\n11 error_type → explicación en español\nkind: daki-explain · naranja"]
+    FAIL --> FCHECK{"failStreak\ncondición"}
+    FCHECK -->|≥ 3 · L30+ · no ironman| RD["Rubber Duck Gate\nModal cyan · min 15 chars\narticulate tu razonamiento antes del hint"]
+    FCHECK -->|≥ 4| INTV["POST /daki/intervention\nDAKI proactivo · interrumpe"]
+    FCHECK -->|≥ 8| GUIDED["Guía Paso a Paso\nhints[] secuencial: 1/3 → 2/3 → FINAL\nkind: intervention + enigma"]
+    RD -->|confirmado| HINT
+    FCHECK -->|ENIGMA click| HINT["POST /daki/hint\nModo Socrático si primer fallo\n2 preguntas en consola\nluego hint escalado"]
+    HINT --> DAKI_AI["ai_mentor.py\nClaude Haiku 4.5 · Tool Use\nget_concept_explanation\nget_next_hint · escalate_to_human"]
+
+    %% ── WIN FLOW ──────────────────────────────────────────────────
+    RESULT -->|true| WIN["Victoria\nAudio vol 0.3\nXP + animaciones"]
+    WIN --> LOG["pushMission()\nsessionStorage · para Fin de Turno"]
+    LOG --> CODEREVIEW["POST /daki/code-review\nClaude Haiku 4.5\nfeedback Pythonic · PEP8 · ≤ 3 líneas"]
+    CODEREVIEW --> DEBRIEF["MisionDebriefModal · 700ms\npregunta metacognitiva calibrada\npor operator_level + difficulty_tier"]
+    DEBRIEF --> EDGE["Edge Case Gauntlet\nsi boss + primera victoria\nrevela edge_cases_json en consola\nkind: edge-case · ámbar"]
+    EDGE --> SECRETS["checkSecretMissions()\n5 misiones: VELOCISTA · PURO\nPERSISTENTE · MADRUGADOR · PERFECCIONISTA\nSecretMissionRevealModal · 6s auto-dismiss"]
+    SECRETS --> MILESTONES["useMilestones()\n10 hitos narrativos\nMilestoneModal · 7s · slide up\npersistidos en localStorage"]
+    MILESTONES --> FMOD{"missions\n% 3 === 0"}
+    FMOD -->|Sí| FLASH["FlashRecallModal\nSpaced Repetition · 15 preguntas Python\nweighted pick: errores +2 · match +3 · dom -1"]
+    FMOD -->|No| NEXT["handleNextChallenge()\nsiguiente level_order"]
+    FLASH --> NEXT
+
+    %% ── STYLES ────────────────────────────────────────────────────
+    classDef hub     fill:#0a0a1a,stroke:#00bfff,color:#00bfff
+    classDef zone    fill:#0d0d2a,stroke:#3b82f6,color:#818cf8
+    classDef ide     fill:#0d0d1a,stroke:#a78bfa,color:#a78bfa
+    classDef exec    fill:#0a0a10,stroke:#6b7280,color:#9ca3af
+    classDef fail    fill:#1a0800,stroke:#f97316,color:#f97316
+    classDef win     fill:#0d1f0d,stroke:#00FF41,color:#00FF41
+    classDef daki    fill:#1a0a1a,stroke:#f0abfc,color:#f0abfc
+    classDef hook    fill:#0f0a1a,stroke:#7c3aed,color:#c4b5fd
+
+    class HUB,BADGE,CTA,ANOMALY,MEMORIA,REVISION,LEADERBOARD,FINDETUR,PROFILE hub
+    class CAMPAIGN,Z1,Z2,Z3,Z4,CTYPE zone
+    class IDE_STD,IDE_DBG,IDE_PRD,IDE_IRON,VIEW,BRIEFING,INTEL,EDITOR,PREDICT_IN ide
+    class RUN,RESULT exec
+    class FAIL,EXPLAINER,FCHECK,RD,INTV,GUIDED fail
+    class WIN,LOG,CODEREVIEW,DEBRIEF,EDGE,SECRETS,MILESTONES,FMOD,FLASH,NEXT win
+    class HINT,DAKI_AI daki
+    class PHOOKS,PC,PW,RETR,RETR_BANNER hook

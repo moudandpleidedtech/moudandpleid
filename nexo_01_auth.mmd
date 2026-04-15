@@ -1,0 +1,68 @@
+flowchart TD
+    %% ── ENTRY POINTS ──────────────────────────────────────────────
+    LANDING["/ — Portal Principal"]
+    LOGIN["/login — Terminal de Acceso"]
+    REGISTER["/register — Reclutamiento"]
+    GOOGLE["Google OAuth 2.0"]
+
+    LANDING --> LOGIN
+    LANDING --> REGISTER
+    LOGIN -->|email + password| BACKEND_LOGIN["POST /auth/login"]
+    REGISTER -->|email + callsign + password| BACKEND_REGISTER["POST /auth/register"]
+    LOGIN -->|Continuar con Google| GOOGLE
+    REGISTER -->|Continuar con Google| GOOGLE
+    GOOGLE --> CALLBACK["GET /auth/google/callback"]
+
+    %% ── WHITELIST ─────────────────────────────────────────────────
+    BACKEND_REGISTER --> WCHECK{ALPHA_WHITELIST\nactiva?}
+    WCHECK -->|email no autorizado| ERR403["403 ALPHA_CLOSED\nmensaje en consola de terminal"]
+    WCHECK -->|email autorizado| CREATE_USER["Crear usuario en BD\nPostgreSQL — Neon"]
+
+    CALLBACK --> WCHECK2{Cuenta\nexistente?}
+    WCHECK2 -->|No — email no en whitelist| ERR_REDIRECT["Redirect\n/login?google_error=alpha_closed\n→ banner rojo"]
+    WCHECK2 -->|No — email autorizado| CREATE_USER
+    WCHECK2 -->|Sí — ya registrado| UPDATE_LOGIN["Vincular google_id\nActualizar last_login"]
+
+    %% ── AUTH ──────────────────────────────────────────────────────
+    BACKEND_LOGIN --> AUTH{Credenciales\nválidas?}
+    AUTH -->|No| ERR401["401 Inválidas\nmensaje genérico anti-enumeración"]
+    AUTH -->|Sí| STREAK["Calcular streak_days\nActualizar last_login"]
+    STREAK --> ACHIEVEMENTS["check_and_grant()\nLogros de racha"]
+    ACHIEVEMENTS --> JWT
+
+    CREATE_USER --> JWT["JWT firmado\nHS256 · 60min\nsub · callsign · level · is_licensed · role"]
+    UPDATE_LOGIN --> JWT
+
+    %% ── SESSION ───────────────────────────────────────────────────
+    JWT --> COOKIE["Cookie httpOnly daki_auth\n+ localStorage\n+ Zustand store"]
+    COOKIE --> ONBOARD{onboarding\ncompleto?}
+    ONBOARD -->|No| ONBOARDING["/onboarding\nStandard o Beginner\n11 pasos · analogías latinas"]
+    ONBOARD -->|Sí| BOOT{boot_seen?}
+    BOOT -->|No| BOOTSEQ["/boot-sequence"]
+    BOOT -->|Sí| HUB["/hub — Centro de Operaciones"]
+    ONBOARDING --> HUB
+    BOOTSEQ --> HUB
+
+    %% ── ROLES ─────────────────────────────────────────────────────
+    JWT --> ROLES{"role en\nJWT payload"}
+    ROLES -->|USER| USER_ACCESS["Acceso estándar\nCurrículo desbloqueado por progreso"]
+    ROLES -->|FOUNDER| FOUNDER_ACCESS["God Mode\nBypass de todas las compuertas\nCandado dorado en nodos ENCRYPTED"]
+    ROLES -->|ADMIN| ADMIN_ACCESS["Acceso admin\nJWT separado · /admin/dashboard"]
+
+    %% ── LOGOUT ────────────────────────────────────────────────────
+    HUB -->|POST /auth/logout| LOGOUT["Eliminar cookie daki_auth\nLimpiar localStorage + Zustand"]
+
+    %% ── STYLES ────────────────────────────────────────────────────
+    classDef entry   fill:#0d1f0d,stroke:#00FF41,color:#00FF41
+    classDef gate    fill:#1a0800,stroke:#f97316,color:#f97316
+    classDef error   fill:#1a0000,stroke:#ef4444,color:#ef4444
+    classDef auth    fill:#0a0a1a,stroke:#00bfff,color:#00bfff
+    classDef session fill:#0d0d1a,stroke:#a78bfa,color:#a78bfa
+    classDef role    fill:#1a1000,stroke:#fbbf24,color:#fbbf24
+
+    class LANDING,LOGIN,REGISTER,GOOGLE entry
+    class WCHECK,WCHECK2,AUTH gate
+    class ERR403,ERR401,ERR_REDIRECT error
+    class BACKEND_LOGIN,BACKEND_REGISTER,CALLBACK,CREATE_USER,UPDATE_LOGIN,STREAK,ACHIEVEMENTS,JWT auth
+    class COOKIE,ONBOARD,BOOT,ONBOARDING,BOOTSEQ,HUB,LOGOUT session
+    class ROLES,USER_ACCESS,FOUNDER_ACCESS,ADMIN_ACCESS role

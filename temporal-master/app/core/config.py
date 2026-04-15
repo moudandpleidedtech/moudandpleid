@@ -31,13 +31,18 @@ class Settings(BaseSettings):
             origins.append(self.FRONTEND_URL)
         return origins
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 días — alineado con cookie
     ALGORITHM: str = "HS256"
 
     ANTHROPIC_API_KEY: str = ""
 
     # Activar SSL para conexión a BD (requerido en Supabase / producción)
     DB_SSL: bool = False
+
+    # Clave de administrador para activación manual de licencias (/payments/verify).
+    # DEBE ser diferente a SECRET_KEY.
+    # Generar con: python -c "import secrets; print(secrets.token_hex(32))"
+    ADMIN_API_KEY: str = "change-me-in-production"
 
     # Webhook secret compartido con la pasarela de pagos.
     # Generar con: python -c "import secrets; print(secrets.token_hex(32))"
@@ -54,6 +59,28 @@ class Settings(BaseSettings):
 
     # Precio de la Licencia de Operador en USD (para proyección de ingresos)
     LICENSE_PRICE_USD: float = 49.0
+
+    # ── Hotmart — Pasarela de Pagos ──────────────────────────────────────────
+    # Hottok: Dashboard → Webhooks → configurar → campo "Hottok" (secreto de verificación)
+    # El mismo hottok aplica a AMBOS productos (configurar en cada webhook)
+    HOTMART_HOTTOK: str = ""
+
+    # ── Producto 1: Licencia Vitalicia ($97 pago único) ───────────────────────
+    # Product Key: Dashboard → Productos → tu producto → ícono de compartir → clave tipo "A12345678B"
+    HOTMART_PRODUCT_KEY: str = ""
+    # Offer code de la Licencia Vitalicia — Productos → Ofertas → copiar código
+    # Dejar vacío si el producto tiene una sola oferta (Hotmart usará la default)
+    HOTMART_LIFETIME_OFFER: str = ""
+
+    # ── Producto 2: Suscripción Mensual ($29/mes recurrente) ──────────────────
+    # Product Key del segundo producto (Suscripción)
+    HOTMART_SUBSCRIPTION_KEY: str = ""
+    # Offer code del plan mensual — Productos → Ofertas → copiar código
+    HOTMART_MONTHLY_OFFER: str = ""
+
+    # URL de redirección post-compra (configurar en Hotmart → Página de Agradecimiento)
+    # Configurar en AMBOS productos. Hotmart redirige aquí después del pago exitoso.
+    HOTMART_REDIRECT_URL: str = ""
 
     # ── Google OAuth ──────────────────────────────────────────────────────────
     GOOGLE_CLIENT_ID: str = ""

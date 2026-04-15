@@ -1,0 +1,72 @@
+flowchart TD
+    %% ── ADMIN ENTRY ───────────────────────────────────────────────
+    ADMIN_PAGE["/admin/dashboard\nLogin — callsign + password"]
+    ADMIN_PAGE --> ADMIN_AUTH["POST /admin/auth/token\nVerifica is_admin=True en BD\nJWT separado · HS256 · 8h\nrate limit: 5/min · timing-safe"]
+    ADMIN_AUTH -->|JWT Bearer| DASHBOARD["Dashboard — Centro de Comando CEO"]
+
+    %% ── SECCIONES ─────────────────────────────────────────────────
+    DASHBOARD --> OV["OVERVIEW\nGET /admin/overview"]
+    DASHBOARD --> FUNNEL["EMBUDO\nGET /admin/drop-off"]
+    DASHBOARD --> DAKI_S["DAKI STATS\nGET /admin/daki-stats"]
+    DASHBOARD --> USERS["USUARIOS\nGET /admin/recent-users\nGET /admin/users-progress"]
+    DASHBOARD --> EMAILS["EMAILS\nTriggers manuales"]
+
+    %% ── OVERVIEW ──────────────────────────────────────────────────
+    OV --> OV_DETAIL["KPIs del Negocio\n─────────────────\ntotal_users · paid_users\nunpaid_users · conversion_rate\nprojected_revenue_usd\nusers_with_progress\nusers_who_started · users_completed_all\nactive_last_24h"]
+
+    %% ── FUNNEL / DROP-OFF ─────────────────────────────────────────
+    FUNNEL --> FUNNEL_DETAIL["Drop-off por nivel y sector\n─────────────────\nusers_attempted · users_completed\nusers_stuck · drop_off_rate\navg_attempts_stuck\nis_bottleneck si drop > 40%\nTop 3 cuellos de botella"]
+    FUNNEL_DETAIL --> CHART1["BarChart por sector\nVerde < 25% · Naranja 25-40%\nRojo > 40% cuello de botella"]
+
+    %% ── DAKI STATS ────────────────────────────────────────────────
+    DAKI_S --> DAKI_DETAIL["Dependencia vs Autonomía\n─────────────────\navg_hints · pct_no_hints\npct_one_hint · pct_max_hints\ndaki_dependency_score 0-100\nautonomy_alert si score > 60\nglobal_avg_hints"]
+    DAKI_DETAIL --> CHART2["LineChart por sector\n0 = autónomos\n100 = máxima dependencia"]
+
+    %% ── USERS ─────────────────────────────────────────────────────
+    USERS --> USERS_DETAIL["Tabla de operadores\n─────────────────\ncallsign · email · nivel\ntotal_xp · league_tier\nis_licensed · created_at\nstreak_days · challenges_completed\nrequiere role FOUNDER"]
+
+    %% ── EMAILS ────────────────────────────────────────────────────
+    EMAILS --> TRIAL_BTN["EJECUTAR TRIAL CHECK\nPOST /admin/trigger-trial-check"]
+    EMAILS --> REENG_BTN["EJECUTAR REENGAGEMENT\nPOST /admin/trigger-reengagement"]
+
+    TRIAL_BTN --> TRIAL_LOGIC["Busca usuarios TRIAL\ncon trial_end_date en 0/1/2/5 días\n→ send_trial_expiry()"]
+    REENG_BTN --> REENG_LOGIC["Busca usuarios inactivos\n5–30 días · TRIAL o ACTIVE\n→ send_reengagement()"]
+
+    TRIAL_LOGIC --> EMAIL_SVC["email.py — Resend API\nhttpx directo · sin SDK\nsilent no-op si RESEND_API_KEY vacío"]
+    REENG_LOGIC --> EMAIL_SVC
+
+    %% ── EMAIL SERVICE ─────────────────────────────────────────────
+    EMAIL_SVC --> EML1["send_welcome()\nPost-registro\ndisparado por auth.py"]
+    EMAIL_SVC --> EML2["send_trial_expiry()\nAviso 0/1/2/5 días antes\nHTML urgente o warning"]
+    EMAIL_SVC --> EML3["send_reengagement()\nInactivos 5–30 días\nvoz DAKI · cyberpunk theme"]
+    EMAIL_SVC --> EML4["send_subscription_active()\nPost-pago Stripe webhook\ndisparado por payments.py"]
+
+    %% ── CRON AUTOMÁTICO ───────────────────────────────────────────
+    CRON["Cron externo\nGitHub Actions o Render Cron\ncada 24h"] --> CRON1["POST /notifications/trial-expiry-check\nX-Admin-Key header"]
+    CRON --> CRON2["POST /notifications/reengagement-check\nX-Admin-Key header"]
+    CRON1 & CRON2 --> EMAIL_SVC
+
+    %% ── STRIPE ────────────────────────────────────────────────────
+    STRIPE["Stripe Webhook\ncheckout.session.completed"] --> PAYMENTS["payments.py\nActiva is_licensed=True\nActualiza subscription_status"]
+    PAYMENTS --> EML4
+
+    %% ── FOUNDER TOOLS ─────────────────────────────────────────────
+    FOUNDER["FOUNDER only\nrole=FOUNDER en BD"] --> FT1["GET /admin/users-progress\nListado completo con progreso"]
+    FOUNDER --> FT2["scripts/create_founder.py\nCLI idempotente\n--email + --no-dry-run"]
+
+    %% ── STYLES ────────────────────────────────────────────────────
+    classDef admin   fill:#0a0a00,stroke:#fbbf24,color:#fbbf24
+    classDef section fill:#0d0d00,stroke:#d97706,color:#d97706
+    classDef detail  fill:#08080a,stroke:#374151,color:#9ca3af
+    classDef email   fill:#0a001a,stroke:#7c3aed,color:#c4b5fd
+    classDef cron    fill:#001a0a,stroke:#059669,color:#34d399
+    classDef stripe  fill:#001020,stroke:#3b82f6,color:#93c5fd
+    classDef founder fill:#1a0a00,stroke:#f97316,color:#fdba74
+
+    class ADMIN_PAGE,ADMIN_AUTH,DASHBOARD admin
+    class OV,FUNNEL,DAKI_S,USERS,EMAILS section
+    class OV_DETAIL,FUNNEL_DETAIL,CHART1,DAKI_DETAIL,CHART2,USERS_DETAIL detail
+    class TRIAL_BTN,REENG_BTN,TRIAL_LOGIC,REENG_LOGIC,EMAIL_SVC,EML1,EML2,EML3,EML4 email
+    class CRON,CRON1,CRON2 cron
+    class STRIPE,PAYMENTS stripe
+    class FOUNDER,FT1,FT2 founder

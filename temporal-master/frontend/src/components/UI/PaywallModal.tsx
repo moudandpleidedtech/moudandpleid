@@ -14,7 +14,7 @@
  *   userId      — UUID del operador (requerido para el override táctico)
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -23,34 +23,76 @@ interface Props {
   visible: boolean
   onClose: () => void
   onGranted: () => void   // activa isPaid en el store y cierra el modal
-  paymentUrl?: string
   userId?: string
 }
 
 const FEATURES = [
-  'Acceso completo a los 90 niveles del Nexo (L11–L100)',
-  'Sistema de Duelos PvP contra operadores globales',
-  'Certificado de Operador al completar el 100%',
-  'DAKI Compañero — nivel evolutivo máximo desbloqueado',
-  'Soporte prioritario y actualizaciones de por vida',
+  'Acceso completo a los 190 desafíos del Nexo (todos los sectores)',
+  'Sistema de Duelos PvP — Arena contra operadores globales',
+  'Certificados descargables por sector completado',
+  'DAKI IA ilimitada — hints, debrief y mentoría sin restricciones',
+  '1 sesión de coaching individual con el Arquitecto del Sistema',
 ]
 
 type OverrideState = 'idle' | 'loading' | 'success' | 'error'
-
-// Fase 1: pagos en modo simulación. Para activar en Fase 2:
-//   NEXT_PUBLIC_PAYMENT_ENABLED=true en el panel de Vercel.
-const PAYMENT_ENABLED = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === 'true'
+type CheckoutState = 'idle' | 'loading' | 'error'
 
 export default function PaywallModal({
   visible,
   onClose,
   onGranted,
-  paymentUrl = process.env.NEXT_PUBLIC_PAYMENT_URL || 'https://pay.dakiedtech.com',
   userId,
 }: Props) {
-  const [codeInput,     setCodeInput]     = useState('')
-  const [overrideState, setOverrideState] = useState<OverrideState>('idle')
-  const [overrideMsg,   setOverrideMsg]   = useState('')
+  const [codeInput,      setCodeInput]      = useState('')
+  const [overrideState,  setOverrideState]  = useState<OverrideState>('idle')
+  const [overrideMsg,    setOverrideMsg]    = useState('')
+  const [checkoutState,  setCheckoutState]  = useState<CheckoutState>('idle')
+  const [checkoutError,  setCheckoutError]  = useState('')
+  const [personalMsg,    setPersonalMsg]    = useState<string | null>(null)
+
+  // Feature 2: Personalización — leer patrones de errores del operador en localStorage
+  useEffect(() => {
+    if (!visible) return
+    try {
+      const errorMap: Record<string, string> = {
+        SyntaxError:      'Tuviste dificultad con SyntaxError. En el Sector 02 la estructura de Python se vuelve tan natural que ese error desaparece.',
+        TypeError:        'TypeError apareció en tus incursiones. En el Sector 02 dominarás la conversión de tipos — ese error deja de existir.',
+        NameError:        'El NameError te visitó más de una vez. En el Sector 02 entenderás el scope de variables de forma definitiva.',
+        IndentationError: 'La indentación te costó en el Sector 01. Los bucles del Sector 02 la convierten en segunda naturaleza.',
+        ValueError:       'Tuviste ValueError con conversiones. En el Sector 02 aprenderás a validar datos antes de operar con ellos.',
+      }
+      const topError = Object.keys(errorMap)
+        .map((t) => ({ type: t, count: parseInt(localStorage.getItem(`daki_pattern_${t}`) ?? '0', 10) }))
+        .filter((e) => e.count > 0)
+        .sort((a, b) => b.count - a.count)[0]
+      if (topError) setPersonalMsg(errorMap[topError.type])
+    } catch { /* localStorage bloqueado */ }
+  }, [visible])
+
+  const handleCheckout = async (plan: 'monthly' | 'lifetime') => {
+    if (!userId || checkoutState === 'loading') return
+    setCheckoutState('loading')
+    setCheckoutError('')
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/hotmart/checkout`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ plan }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCheckoutState('error')
+        setCheckoutError(data.detail ?? 'Error al generar el enlace de pago.')
+        return
+      }
+      setCheckoutState('idle')
+      window.open(data.checkout_url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setCheckoutState('error')
+      setCheckoutError('Sin conexión con el Nexo. Intentá de nuevo.')
+    }
+  }
 
   const handleRedeem = async () => {
     if (!codeInput.trim() || !userId || overrideState === 'loading') return
@@ -183,6 +225,24 @@ export default function PaywallModal({
                 REQUIERE LICENCIA DE FUNDADOR
               </p>
 
+              {/* Feature 2: Mensaje personalizado DAKI basado en historial del operador */}
+              {personalMsg && (
+                <motion.div
+                  className="mb-4 px-4 py-3 border-l-2"
+                  style={{ borderColor: 'rgba(0,255,65,0.35)', background: 'rgba(0,255,65,0.03)' }}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <div className="text-[8px] tracking-[0.45em] mb-1.5" style={{ color: 'rgba(0,255,65,0.35)' }}>
+                    DAKI ANALIZÓ TUS INCURSIONES
+                  </div>
+                  <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,255,65,0.70)' }}>
+                    {personalMsg}
+                  </p>
+                </motion.div>
+              )}
+
               {/* Divider */}
               <div className="h-px mb-5" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,80,30,0.25),transparent)' }} />
 
@@ -206,73 +266,85 @@ export default function PaywallModal({
               {/* Divider */}
               <div className="h-px mb-5" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,80,30,0.25),transparent)' }} />
 
-              {/* Price + CTA */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-[9px] tracking-[0.4em]" style={{ color: 'rgba(255,150,80,0.5)' }}>
-                    LICENCIA DE FUNDADOR
-                  </div>
-                  <div
-                    className="text-2xl font-black tracking-wide mt-0.5"
-                    style={{ color: '#00FF41', textShadow: '0 0 12px rgba(0,255,65,0.5)' }}
-                  >
-                    $24.90
-                    <span className="text-sm font-normal ml-1" style={{ color: 'rgba(0,255,65,0.5)' }}>USD</span>
-                  </div>
-                  <div className="text-[8px] tracking-widest mt-0.5" style={{ color: 'rgba(0,255,65,0.3)' }}>
-                    PAGO ÚNICO · ACCESO DE POR VIDA
+              {/* Opciones de precio */}
+              <div className="flex gap-3 mb-4">
+                {/* Plan mensual */}
+                <div className="flex-1 p-3 text-center" style={{ border: '1px solid rgba(0,255,65,0.20)', background: 'rgba(0,255,65,0.03)' }}>
+                  <div className="text-[8px] tracking-[0.3em] mb-1" style={{ color: 'rgba(0,255,65,0.40)' }}>MENSUAL</div>
+                  <div className="text-lg font-black" style={{ color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.4)' }}>
+                    $29<span className="text-xs font-normal">/mes</span>
                   </div>
                 </div>
-
-                {/* Glitch chip */}
-                <div
-                  className="px-3 py-1.5 text-[9px] tracking-[0.3em] font-bold"
-                  style={{
-                    border:     '1px solid rgba(0,255,65,0.25)',
-                    color:      'rgba(0,255,65,0.45)',
-                    background: 'rgba(0,255,65,0.04)',
-                  }}
-                >
-                  PAGO ÚNICO
+                {/* Licencia Vitalicia — destacada */}
+                <div className="flex-1 p-3 text-center relative" style={{ border: '1px solid rgba(255,80,30,0.45)', background: 'rgba(255,50,10,0.06)' }}>
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] tracking-[0.3em] px-2 py-0.5 font-black"
+                    style={{ background: 'rgba(255,80,30,0.85)', color: '#fff' }}>
+                    POPULAR
+                  </div>
+                  <div className="text-[8px] tracking-[0.3em] mb-0.5" style={{ color: 'rgba(255,150,80,0.6)' }}>VITALICIA</div>
+                  {/* Feature 3: Anchor de precio — tachado */}
+                  <div className="text-[9px] line-through mb-0.5" style={{ color: 'rgba(255,150,80,0.35)' }}>$197</div>
+                  <div className="text-lg font-black" style={{ color: '#FF5020', textShadow: '0 0 8px rgba(255,80,30,0.4)' }}>
+                    $97<span className="text-xs font-normal"> único</span>
+                  </div>
+                  <div className="text-[7px] tracking-wider mt-0.5" style={{ color: 'rgba(255,150,80,0.40)' }}>PRECIO FUNDADOR</div>
                 </div>
               </div>
 
-              {/* Main CTA */}
-              {PAYMENT_ENABLED ? (
-                <motion.a
-                  href={paymentUrl}
-                  rel="noopener noreferrer"
-                  className="block w-full text-center py-3.5 text-xs font-black tracking-[0.3em] transition-all duration-150"
+              {/* CTAs */}
+              <div className="flex flex-col gap-2 mb-1">
+                <motion.button
+                  onClick={() => handleCheckout('lifetime')}
+                  disabled={checkoutState === 'loading'}
+                  className="w-full py-3.5 text-xs font-black tracking-[0.3em] transition-all duration-150"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255,80,30,0.85), rgba(255,40,10,0.75))',
+                    background: checkoutState === 'loading' ? 'rgba(255,50,10,0.30)' : 'linear-gradient(135deg, rgba(255,80,30,0.85), rgba(255,40,10,0.75))',
                     border:     '1px solid rgba(255,100,40,0.5)',
                     color:      '#fff',
                     textShadow: '0 1px 4px rgba(0,0,0,0.5)',
                     boxShadow:  '0 0 20px rgba(255,50,10,0.25)',
+                    cursor:     checkoutState === 'loading' ? 'wait' : 'pointer',
                   }}
-                  whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(255,60,10,0.40)' }}
+                  whileHover={checkoutState !== 'loading' ? { scale: 1.02, boxShadow: '0 0 30px rgba(255,60,10,0.40)' } : {}}
                   whileTap={{ scale: 0.98 }}
                 >
-                  ADQUIRIR LICENCIA DE FUNDADOR →
-                </motion.a>
-              ) : (
-                <div
-                  className="block w-full text-center py-3.5"
+                  {checkoutState === 'loading' ? '[ GENERANDO ENLACE... ]' : 'LICENCIA VITALICIA — $97 USD →'}
+                </motion.button>
+
+                <motion.button
+                  onClick={() => handleCheckout('monthly')}
+                  disabled={checkoutState === 'loading'}
+                  className="w-full py-2.5 text-[10px] font-black tracking-[0.3em] transition-all duration-150"
                   style={{
-                    border:     '1px solid rgba(255,100,40,0.2)',
-                    background: 'rgba(255,50,10,0.04)',
-                    cursor:     'not-allowed',
-                    opacity:    0.5,
+                    border:  '1px solid rgba(0,255,65,0.35)',
+                    color:   'rgba(0,255,65,0.75)',
+                    cursor:  checkoutState === 'loading' ? 'wait' : 'pointer',
                   }}
+                  whileHover={checkoutState !== 'loading' ? { borderColor: 'rgba(0,255,65,0.70)', color: '#00FF41' } : {}}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <div className="text-xs font-black tracking-[0.3em] text-white/50">
-                    ADQUIRIR LICENCIA — PRÓXIMAMENTE
-                  </div>
-                  <div className="text-[8px] tracking-widest mt-0.5" style={{ color: 'rgba(0,255,65,0.4)' }}>
-                    Usa el Override Táctico ↓
-                  </div>
-                </div>
+                  PLAN MENSUAL — $29/MES
+                </motion.button>
+              </div>
+
+              {checkoutError && (
+                <p className="text-[9px] text-center tracking-wide mt-1" style={{ color: 'rgba(255,100,50,0.9)' }}>
+                  ✗ {checkoutError}
+                </p>
               )}
+
+              {/* Feature 3: Framing emocional — comparación de valor */}
+              <div className="mt-3 mb-1 space-y-1">
+                {[
+                  '▸ Un libro de Python cuesta más y no te da práctica real.',
+                  '▸ Platzi / Coursera cobran mensual. Acá pagás una sola vez.',
+                  '▸ Un bootcamp: $3.000 USD. Nexo: $97 con acceso de por vida.',
+                ].map((line, i) => (
+                  <p key={i} className="text-[8px] tracking-wider" style={{ color: 'rgba(0,255,65,0.28)' }}>
+                    {line}
+                  </p>
+                ))}
+              </div>
 
               {/* Dismiss link */}
               <button

@@ -30,8 +30,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import create_user_token, hash_password, verify_password
+from app.core.security import create_user_token, get_current_operator, hash_password, verify_password
 from app.models.beta_code import BetaCode
+from app.models.pending_activation import PendingActivation
 from app.models.tactical_key import TacticalAccessKey
 from app.services.email import send_welcome
 from app.models.user import User
@@ -46,12 +47,16 @@ _COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 def _set_auth_cookie(response: Response, token: str) -> None:
     """Establece el JWT en una cookie HttpOnly para protección contra XSS."""
+    # SameSite=none + Secure=True: permite fetch cross-origin (Firefox/Safari).
+    # Requerido cuando frontend (Vercel) y backend (Render) son dominios distintos.
+    # SameSite=none solo funciona sobre HTTPS (secure=True en producción).
+    in_prod = not settings.DEBUG
     response.set_cookie(
         key="daki_auth",
         value=token,
         httponly=True,
-        secure=not settings.DEBUG,   # Secure en producción (HTTPS)
-        samesite="lax",              # lax: permite navegación normal, bloquea CSRF cross-site
+        secure=in_prod,
+        samesite="none" if in_prod else "lax",
         max_age=_COOKIE_MAX_AGE,
         path="/",
     )
@@ -83,8 +88,8 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+        if len(v) < 12:
+            raise ValueError("La contraseña debe tener al menos 12 caracteres.")
         return v
 
 
@@ -219,6 +224,24 @@ async def register(
         tak_to_consume.current_uses += 1
         tak_to_consume.claimed_by    = user.id
 
+    # ── Activación pendiente de Hotmart (pagó antes de registrarse) ───────────
+    # Si existe un PendingActivation para este email, activamos la licencia
+    # y eliminamos el registro para no procesarlo dos veces.
+    if not user.is_licensed:
+        pa_result = await db.execute(
+            select(PendingActivation)
+            .where(PendingActivation.email == payload.email.lower().strip())
+            .order_by(PendingActivation.created_at.desc())
+            .limit(1)
+        )
+        pending = pa_result.scalar_one_or_none()
+        if pending is not None:
+            user.is_licensed         = True
+            user.subscription_status = "ACTIVE"
+            user.payment_id          = pending.transaction_id
+            await db.delete(pending)
+            founder_code_applied = True   # reutilizamos la flag para indicar activación en la respuesta
+
     await db.commit()
     await db.refresh(user)
 
@@ -322,4 +345,30 @@ async def logout(response: Response) -> None:
     response.delete_cookie(
         key="daki_auth", path="/",
         samesite="none" if not settings.DEBUG else "lax",
+    )
+
+
+class UserInfoResponse(BaseModel):
+    user_id:     str
+    callsign:    str
+    level:       int
+    is_licensed: bool
+    role:        str
+
+
+@router.get(
+    "/me",
+    response_model=UserInfoResponse,
+    summary="Perfil del operador autenticado (sin exponer el token)",
+    description="Devuelve el perfil del operador a partir de la cookie httpOnly. Útil para OAuth.",
+)
+async def get_me(
+    operator: User = Depends(get_current_operator),
+) -> UserInfoResponse:
+    return UserInfoResponse(
+        user_id=str(operator.id),
+        callsign=operator.callsign,
+        level=operator.current_level,
+        is_licensed=operator.is_licensed,
+        role=operator.role,
     )

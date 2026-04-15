@@ -1,0 +1,143 @@
+flowchart TD
+    %% ── ENTRY POINTS ──────────────────────────────────────────────
+    LANDING["/ — Portal Principal"]
+    LOGIN["/login — Terminal de Acceso"]
+    REGISTER["/register — Reclutamiento"]
+    GOOGLE["Google OAuth 2.0"]
+
+    LANDING --> LOGIN
+    LANDING --> REGISTER
+    LOGIN -->|email + password| BACKEND_LOGIN
+    REGISTER -->|email + callsign + password| BACKEND_REGISTER
+    LOGIN -->|Continuar con Google| GOOGLE
+    REGISTER -->|Continuar con Google| GOOGLE
+
+    %% ── WHITELIST GATE ────────────────────────────────────────────
+    BACKEND_REGISTER["POST /auth/register"]
+    BACKEND_LOGIN["POST /auth/login"]
+    GOOGLE --> CALLBACK["GET /auth/google/callback"]
+
+    BACKEND_REGISTER --> WCHECK{ALPHA_WHITELIST\nactiva?}
+    CALLBACK --> WCHECK2{Email en\nwhitelist?}
+    WCHECK -->|email no autorizado| ERR403["403 ALPHA_CLOSED\n→ mensaje en consola"]
+    WCHECK -->|email autorizado| CREATE_USER["Crear usuario en BD"]
+    WCHECK2 -->|No — cuenta nueva| ERR_REDIRECT["/login?google_error=alpha_closed\n→ banner rojo"]
+    WCHECK2 -->|Sí / cuenta existente| JWT_COOKIE
+
+    %% ── AUTH ──────────────────────────────────────────────────────
+    BACKEND_LOGIN --> AUTH{Credenciales\nválidas?}
+    AUTH -->|No| ERR401["401 Inválidas"]
+    AUTH -->|Sí| JWT_COOKIE
+    CREATE_USER --> JWT_COOKIE["JWT → Cookie daki_auth\n+ localStorage"]
+
+    %% ── ONBOARDING ────────────────────────────────────────────────
+    JWT_COOKIE --> ONBOARD{onboarding\ncompleto?}
+    ONBOARD -->|No| ONBOARDING["/onboarding\nStandard o Beginner"]
+    ONBOARD -->|Sí| BOOT{boot_seen?}
+    BOOT -->|No| BOOTSEQ["/boot-sequence"]
+    BOOT -->|Sí| HUB
+
+    ONBOARDING --> HUB["/hub — Centro de Operaciones"]
+    BOOTSEQ --> HUB
+
+    %% ── HUB ───────────────────────────────────────────────────────
+    HUB --> WIDGETS["Widgets del Hub"]
+    WIDGETS --> BADGE["Badge de Rango\nXP · Nivel · Liga · Streak"]
+    WIDGETS --> CTA["CTA — CONTINUAR MISIÓN"]
+    WIDGETS --> CAMPAIGN_MAP["Campaign Map\n4 zonas · 9 nodos"]
+    WIDGETS --> ANOMALY["Daily Anomaly Card"]
+    WIDGETS --> MEMORIA["Daki Memoria Card\n(sesión activa)"]
+    WIDGETS --> REVISION["Revisión Semanal\nConceptos débiles"]
+    WIDGETS --> LEADERBOARD["Leaderboard\nTop 50 global"]
+
+    %% ── CAMPAIGN MAP ──────────────────────────────────────────────
+    CAMPAIGN_MAP --> ZONE1["PYTHON CORE\nS00-S03 · S04-S07\nL0–L66"]
+    CAMPAIGN_MAP --> ZONE2["OPERACIONES AVANZADAS\nS08-S10 · S11-S13\nL67–L126"]
+    CAMPAIGN_MAP --> ZONE3["ESPECIALIZACIÓN ÉLITE\nS14-S15 · S16-S18\nL127–L161"]
+    CAMPAIGN_MAP --> ZONE4["PROTOCOLOS ÉLITE\nS19 Debug · S20 Interview · S21 Predict\nL162–L189"]
+
+    %% ── CHALLENGE TYPES ───────────────────────────────────────────
+    ZONE1 & ZONE2 & ZONE3 & ZONE4 --> CHALLENGE_TYPE{"Tipo de\nChallenge"}
+    CHALLENGE_TYPE -->|standard| IDE["/challenge/[id]\nIDE — CodeWorkspace"]
+    CHALLENGE_TYPE -->|debug| DEBUG_IDE["IDE — Modo Debug\nBanner rojo · bug intencional"]
+    CHALLENGE_TYPE -->|predict| PREDICT["IDE — Modo Predict\nEscribí el output SIN ejecutar"]
+
+    %% ── IDE / CODEWORKSPACE ───────────────────────────────────────
+    IDE --> VIEW{viewMode}
+    VIEW -->|theory_content| BRIEFING["MisionBriefing\n(lore + objetivo)"]
+    VIEW -->|concepts sin theory| INTEL["DakiIntelCard\n(glosario estático)"]
+    VIEW -->|ya completado| EDITOR["Monaco Editor\nPython · tema oscuro"]
+    BRIEFING --> EDITOR
+    INTEL --> EDITOR
+
+    DEBUG_IDE --> EDITOR
+    PREDICT --> PREDICT_INPUT["Input de predicción\n→ comparar con output real"]
+
+    %% ── EJECUCIÓN ─────────────────────────────────────────────────
+    EDITOR -->|Ctrl+Enter / RUN| EXECUTE["POST /challenges/{id}/submit\nPiston API · timeout 6s"]
+    PREDICT_INPUT --> EXECUTE
+
+    EXECUTE -->|passed=false| FAIL_FLOW["failStreak++\nerror en consola"]
+    EXECUTE -->|passed=true| WIN_FLOW["Victoria"]
+
+    %% ── FAIL FLOW ─────────────────────────────────────────────────
+    FAIL_FLOW --> ERR_EXPLAINER["DAKI Error Explainer\n11 tipos de error → explicación"]
+    FAIL_FLOW --> FAIL_CHECK{failStreak\ncondición}
+    FAIL_CHECK -->|≥3 y L30+ y no ironman| RUBBER_DUCK["Rubber Duck Gate\nModal — articulá tu razonamiento\n15 chars mín"]
+    FAIL_CHECK -->|≥4| INTERVENTION["DAKI Intervention\nPOST /daki/intervention"]
+    FAIL_CHECK -->|≥8| GUIDED["Guía Paso a Paso\nhints secuencial"]
+    RUBBER_DUCK -->|confirmado| DAKI_HINT
+    FAIL_CHECK -->|ENIGMA click| DAKI_HINT["POST /daki/hint\nModo Socrático + pista escalada"]
+
+    %% ── WIN FLOW ──────────────────────────────────────────────────
+    WIN_FLOW --> XP["XP + animaciones\npushMission → sessionStorage"]
+    XP --> CODE_REVIEW["POST /daki/code-review\nFeedback Pythonic · 3 líneas"]
+    CODE_REVIEW --> DEBRIEF["MisionDebriefModal\n700ms · pregunta metacognitiva"]
+    DEBRIEF --> EDGE_CASES["Edge Case Gauntlet\n(si boss y primera victoria)"]
+    EDGE_CASES --> SECRET["checkSecretMissions\n5 misiones secretas"]
+    SECRET --> MILESTONE["useMilestones\n10 hitos narrativos"]
+    MILESTONE --> FLASH{missions\n% 3 === 0}
+    FLASH -->|Sí| FLASH_RECALL["FlashRecallModal\nSpaced Repetition\n15 preguntas Python"]
+    FLASH -->|No| NEXT["handleNextChallenge"]
+    FLASH_RECALL --> NEXT
+
+    %% ── DAKI AI ───────────────────────────────────────────────────
+    DAKI_HINT --> AI_MENTOR["ai_mentor.py\nClaude Haiku 4.5 · Tool Use"]
+    AI_MENTOR --> TOOLS["Herramientas:\nget_concept_explanation\nget_next_hint\nescalate_to_human"]
+
+    %% ── PEDAGOGY HOOKS ────────────────────────────────────────────
+    EDITOR --> PATTERN_CALLOUT["usePatternCallout\n1.5s post-carga · L20+"]
+    EDITOR --> PREDICTION["usePredictionWidget\nPredicción pre-ejecución · L30+"]
+    EDITOR --> RETRIEVAL{mode=\nretrieval?}
+    RETRIEVAL -->|Sí| RETRIEVAL_BANNER["Modo Retrieval\nBanner morado · sin pistas"]
+
+    %% ── PERFIL PÚBLICO ────────────────────────────────────────────
+    HUB --> PUBLIC_PROFILE["/p/[callsign]\nPerfil público · sin auth"]
+
+    %% ── ADMIN ─────────────────────────────────────────────────────
+    ADMIN_LOGIN["/admin/dashboard\nLogin JWT admin"] --> ADMIN_SECTIONS["Secciones"]
+    ADMIN_SECTIONS --> OV["Overview · KPIs"]
+    ADMIN_SECTIONS --> FUNNEL["Embudo · Drop-off por sector"]
+    ADMIN_SECTIONS --> DAKI_STATS["DAKI Stats · dependencia vs autonomía"]
+    ADMIN_SECTIONS --> USERS["Usuarios recientes"]
+    ADMIN_SECTIONS --> NOTIF_PANEL["Emails · trigger manual\ntrial-check · reengagement"]
+
+    %% ── EMAIL SERVICE ─────────────────────────────────────────────
+    NOTIF_PANEL --> EMAIL["email.py — Resend API\nsend_welcome · send_trial_expiry\nsend_reengagement · send_subscription_active"]
+
+    %% ── STYLES ────────────────────────────────────────────────────
+    classDef entry    fill:#0d1f0d,stroke:#00FF41,color:#00FF41
+    classDef gate     fill:#1a0a00,stroke:#f97316,color:#f97316
+    classDef hub      fill:#0a0a1a,stroke:#00bfff,color:#00bfff
+    classDef ide      fill:#0d0d1a,stroke:#a78bfa,color:#a78bfa
+    classDef daki     fill:#1a0a1a,stroke:#f0abfc,color:#f0abfc
+    classDef admin    fill:#0a0a00,stroke:#fbbf24,color:#fbbf24
+    classDef error    fill:#1a0000,stroke:#ef4444,color:#ef4444
+
+    class LANDING,LOGIN,REGISTER,GOOGLE entry
+    class WCHECK,WCHECK2,AUTH gate
+    class HUB,WIDGETS,CAMPAIGN_MAP,ZONE1,ZONE2,ZONE3,ZONE4 hub
+    class IDE,DEBUG_IDE,PREDICT,EDITOR,EXECUTE ide
+    class DAKI_HINT,AI_MENTOR,TOOLS,INTERVENTION,CODE_REVIEW,DEBRIEF daki
+    class ADMIN_LOGIN,ADMIN_SECTIONS,OV,FUNNEL,DAKI_STATS,USERS,NOTIF_PANEL admin
+    class ERR403,ERR401,ERR_REDIRECT error

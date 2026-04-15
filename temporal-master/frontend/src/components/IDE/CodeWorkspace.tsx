@@ -23,6 +23,7 @@ import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
 import FlashRecallModal from '@/components/Game/FlashRecallModal'
 import SecretMissionRevealModal from '@/components/Game/SecretMissionRevealModal'
 import MilestoneModal from '@/components/Game/MilestoneModal'
+import SectorCompleteModal from '@/components/Game/SectorCompleteModal'
 import DakiIntelCard from '@/components/IDE/DakiIntelCard'
 import { useMilestones, type MilestoneUnlock } from '@/hooks/useMilestones'
 import { pushMission } from '@/hooks/useSessionLog'
@@ -57,6 +58,8 @@ interface Challenge {
   theory_content?: string | null
   lore_briefing?: string | null
   level_order?: number | null
+  telemetry_goal_time?: number | null
+  sector_id?: number | null
   challenge_type?: string
   hints?: string[]
   is_free?: boolean
@@ -96,6 +99,31 @@ const DAKI_ERROR_EXPLANATIONS: Record<string, string> = {
   ZeroDivisionError:'▸ ZeroDivisionError: División por cero. Verificá que el denominador no sea 0 antes de dividir.',
   RecursionError:   '▸ RecursionError: La función se llamó a sí misma demasiadas veces. Asegurate de que tu función recursiva tenga un caso base que detenga la recursión.',
   RuntimeError:     '▸ RuntimeError: Error en tiempo de ejecución. Revisá la lógica del programa y el mensaje de error para más contexto.',
+}
+
+// ─── DAKI Preemptivo — advertencia proactiva al abrir el nivel ────────────────
+// Se muestra al cargar el nivel por primera vez (no completado).
+// Clave: concepto (de concepts_taught_json). DAKI "predice" el error antes de que ocurra.
+const DAKI_PREEMPTIVE: Record<string, string> = {
+  'print':               '▸ DAKI: print() necesita el texto entre comillas. Así: print("texto"). Sin comillas, Python cree que es una variable.',
+  'strings':             '▸ DAKI: Los strings van entre comillas. No mezcles simples y dobles en el mismo string.',
+  'variables':           '▸ DAKI: El = asigna, no compara. El nombre va a la izquierda: nombre = "valor".',
+  'int':                 '▸ DAKI: Los enteros no llevan comillas. energia = 100, no energia = "100". Sin comillas.',
+  'múltiples variables': '▸ DAKI: Cada variable y cada print() en su propia línea. Python ejecuta de arriba hacia abajo.',
+  'input':               '▸ DAKI: input() siempre devuelve texto (str). Para números: int(input()).',
+  'int()':               '▸ DAKI: int(input()) convierte el texto del usuario a número. Sin int(), la suma concatena en lugar de sumar.',
+  'concatenación':       '▸ DAKI: Solo podés concatenar str con str. Para mezclar con números: str(numero) o f-string.',
+  'aritmética':          '▸ DAKI: No podés operar str con int directamente. Convertí primero con int() o usá f-strings.',
+  'f-strings':           '▸ DAKI: El f va antes de la comilla: f"texto {variable}". Sin la f, las llaves {} se imprimen literalmente.',
+  'formato':             '▸ DAKI: El formato exacto importa — mayúsculas, espacios y guiones deben coincidir byte a byte.',
+  'if':                  '▸ DAKI: El if necesita dos puntos al final (if condicion:) y el bloque con 4 espacios de indentación.',
+  'else':                '▸ DAKI: else no lleva condición. Solo: else: y el bloque indentado. Nunca else(condicion).',
+  'condicionales':       '▸ DAKI: Usá == para comparar, no =. Un = asigna. Dos == compara. Son operaciones distintas.',
+  '//':                  '▸ DAKI: // es división entera (descarta decimales). % devuelve el resto. Son operadores distintos.',
+  '%':                   '▸ DAKI: % es el módulo (el resto). 10 % 3 = 1 porque 3×3=9 y sobra 1.',
+  'return':              '▸ DAKI: return devuelve el valor al caller. print() lo muestra en pantalla. Son distintos — no los mezcles.',
+  'def':                 '▸ DAKI: Función = def + nombre + paréntesis + dos puntos. Así: def nombre(): y el cuerpo indentado.',
+  'integración':         '▸ DAKI: Proyecto integrador. Todo lo del sector se usa junto: input(), int(), f-strings, print(). Sin shortcuts.',
 }
 
 interface ErrorInfo {
@@ -365,7 +393,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const {
     userId, username, level, previousLevel, totalXp, streakDays,
     completedChallengeIds, applyGamificationResult, markChallengeCompleted,
-    dakiLevel, isPaid, setIsPaid, setSubscription, subscriptionStatus,
+    dakiLevel, isPaid, setIsPaid, setSubscription, subscriptionStatus, role,
   } = useUserStore()
 
   const [challenge, setChallenge]         = useState<Challenge | null>(null)
@@ -385,6 +413,10 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const [victoryXp, setVictoryXp]         = useState(0)
   const [showDebrief, setShowDebrief]     = useState(false)  // F4: debrief post-éxito
   const debriefAttempts                   = useRef(0)
+  // Feature C: Sector Complete
+  const [showSectorComplete, setShowSectorComplete] = useState(false)
+  const [sectorCompleteXp, setSectorCompleteXp]     = useState(0)
+  const [sectorAttempts, setSectorAttempts]          = useState(0)
   const [showRadar, setShowRadar]         = useState(false)  // F2: Mapa de Sinapsis
   const [showFlashRecall, setShowFlashRecall] = useState(false)  // F1: Flash Recall
 
@@ -432,9 +464,12 @@ export default function CodeWorkspace({ challengeId }: Props) {
   }, [])
 
   // Paywall modal: se muestra si el backend devuelve 402 (usuarios con trial/licensed vencido)
-  const [showPaywall,    setShowPaywall]    = useState(false)
+  const [showPaywall,       setShowPaywall]       = useState(false)
   // Alpha Code modal: se muestra si el backend devuelve 402 y el usuario no tiene ningún acceso
-  const [showAlphaModal, setShowAlphaModal] = useState(false)
+  const [showAlphaModal,    setShowAlphaModal]    = useState(false)
+  // Coaching modal: se muestra al 5to intento fallido consecutivo
+  const [showCoachingModal, setShowCoachingModal] = useState(false)
+  const coachingDismissedRef = useRef(false) // evita re-mostrar si ya fue cerrado en este desafío
 
   // ── Intel Drawer (Fase 1) ─────────────────────────────────────────────────
   const [showIntelDrawer, setShowIntelDrawer] = useState(false)
@@ -472,8 +507,9 @@ export default function CodeWorkspace({ challengeId }: Props) {
   const audioRunRef      = useRef<HTMLAudioElement | null>(null)
   const audioHintRef     = useRef<HTMLAudioElement | null>(null)
   const audioAmbientRef  = useRef<HTMLAudioElement | null>(null)
-  const lastWinCodeRef   = useRef<string>('')   // Feature 1: code review — código al momento de la victoria
-  const pendingHintRef   = useRef(false)         // Feature 3: Rubber Duck — evita doble-trigger
+  const lastWinCodeRef      = useRef<string>('')   // Feature 1: code review — código al momento de la victoria
+  const pendingHintRef      = useRef(false)         // Feature 3: Rubber Duck — evita doble-trigger
+  const slowWarningFiredRef = useRef(false)         // Feature B: evita repetir la alerta de tiempo
 
   const [failStreak, setFailStreak]       = useState(0)
   const [hintFreeStreak, setHintFreeStreak] = useState(0)  // F5: misiones seguidas sin pistas
@@ -546,6 +582,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Guardia de hidratación: esperar a que Zustand lea localStorage antes de evaluar userId
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => { setHydrated(true) }, [])
+
+  // ── Tracking: guardar último desafío visitado para "continuar donde quedaste" ─
+  useEffect(() => {
+    try { localStorage.setItem('daki_last_challenge_id', challengeId) } catch { /* */ }
+    // Resetear coaching dismissed cuando el operador cambia de desafío
+    coachingDismissedRef.current = false
+  }, [challengeId])
 
   // ── DAKI Presence transitions ─────────────────────────────────────────────
   useEffect(() => {
@@ -662,6 +705,24 @@ export default function CodeWorkspace({ challengeId }: Props) {
     return () => clearInterval(id)
   }, [challengeId])
 
+  // ── Feature B: Intervención por tiempo — DAKI alerta si el operador va muy lento ──
+  useEffect(() => {
+    if (!challenge?.telemetry_goal_time || !sessionSecs) return
+    if (slowWarningFiredRef.current || challenge.completed) return
+    if (sessionSecs < challenge.telemetry_goal_time * 1.5) return
+    slowWarningFiredRef.current = true
+    setViewMode('editor')
+    setOutput((prev) => [
+      ...prev,
+      { text: '━━━ DAKI · ALERTA DE TIEMPO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+      { text: `  Operador, llevas ${Math.floor(sessionSecs / 60)}m ${sessionSecs % 60}s en esta incursión.`, kind: 'intervention' as const },
+      { text: '  El tiempo de referencia fue superado. Activando soporte.', kind: 'intervention' as const },
+      { text: '  → Usá el botón ENIGMA para recibir la siguiente pista.', kind: 'intervention' as const },
+      { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+    ])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionSecs, challenge?.telemetry_goal_time, challenge?.completed])
+
   // ── Focus mode: Escape key exits ──────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setFocusMode(false) }
@@ -726,6 +787,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     setGuidedHintStep(-1)
     challengeStartMs.current = Date.now()
     errorHistoryRef.current = []  // F7: reset historial de errores al cambiar de misión
+    slowWarningFiredRef.current = false  // Feature B: reset alerta de tiempo
     // Limpiar debounce pendiente del reto anterior
     if (codeDraftRef.current) clearTimeout(codeDraftRef.current)
     // F6: micro-transmisión a los 30s de actividad en un nuevo challenge
@@ -820,6 +882,23 @@ export default function CodeWorkspace({ challengeId }: Props) {
           }
         } else {
           setViewMode('editor')
+        }
+        // ── Feature A: DAKI Preemptivo — advertencia narrativa al abrir nivel ──────
+        // Solo en primera visita (no completado) y no en el tutorial
+        if (!mergedData.completed && mergedData.challenge_type !== 'tutorial') {
+          const conceptsRaw = mergedData.concepts_taught_json
+          const concepts: string[] = Array.isArray(conceptsRaw) ? conceptsRaw : []
+          const preemptiveMsg = concepts.map((c) => DAKI_PREEMPTIVE[c]).find(Boolean)
+          if (preemptiveMsg) {
+            setTimeout(() => {
+              setOutput((prev) => [
+                ...prev,
+                { text: '──────────────────────────────────────────────────────', kind: 'daki-explain' as const },
+                { text: preemptiveMsg, kind: 'daki-explain' as const },
+                { text: '──────────────────────────────────────────────────────', kind: 'daki-explain' as const },
+              ])
+            }, 1200)
+          }
         }
       })
       .catch((err) => { if (err?.name !== 'AbortError') {} })
@@ -1068,13 +1147,24 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
 
       if (!res.ok) {
-        // ── 402: sin acceso — Alpha modal (INACTIVE) o Paywall (trial expirado) ─
+        // ── 402: sin acceso — Alpha modal (INACTIVE) o Paywall ─────────────────
         if (res.status === 402) {
-          if (subscriptionStatus === 'INACTIVE') {
-            setShowAlphaModal(true)
-          } else {
-            setShowPaywall(true)
-          }
+          // Reveal dramático: DAKI anuncia la zona restringida antes del modal
+          setOutput([
+            { text: '━━━ DAKI · ZONA RESTRINGIDA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+            { text: '  Incursión detectada en sector de pago.', kind: 'intervention' as const },
+            { text: '  Tu lógica es correcta. Solo falta activar el acceso.', kind: 'intervention' as const },
+            { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+          ])
+          triggerShake('soft')
+          scrollConsole()
+          setTimeout(() => {
+            if (subscriptionStatus === 'INACTIVE') {
+              setShowAlphaModal(true)
+            } else {
+              setShowPaywall(true)
+            }
+          }, 700)
           return
         }
         const err = await res.json()
@@ -1225,10 +1315,16 @@ export default function CodeWorkspace({ challengeId }: Props) {
         errorHistoryRef.current.push(ei.error_type)
         const sameCount = errorHistoryRef.current.filter((t) => t === ei.error_type).length
         if (sameCount === 3) {
+          // Feature A: persistir patrón en localStorage para cross-challenge tracking
+          try {
+            const key = `daki_pattern_${ei.error_type}`
+            const accumulated = parseInt(localStorage.getItem(key) ?? '0', 10)
+            localStorage.setItem(key, String(accumulated + 3))
+          } catch { /* storage bloqueado */ }
           const warningAchievement: Achievement = {
             id: `pattern-${ei.error_type}-${Date.now()}`,
             name: 'PATRÓN REGISTRADO',
-            description: `${ei.error_type} detectado 3 veces. DAKI ha catalogado tu punto débil.`,
+            description: `${ei.error_type} × 3 en esta sesión. DAKI catalogó tu punto débil. Revisá la teoría.`,
             icon: '⚠',
             xp_bonus: 0,
             rarity: 'epic',
@@ -1340,6 +1436,23 @@ export default function CodeWorkspace({ challengeId }: Props) {
         const timeSpent = Date.now() - challengeStartMs.current
         checkSecretMissions(usedHintThisMission, timeSpent, failStreak === 0)
 
+        // Feature B: Badge Operador Veloz — terminó en menos del 50% del tiempo esperado
+        if (challenge?.telemetry_goal_time && !challenge?.is_ironman) {
+          const goalMs = challenge.telemetry_goal_time * 1000
+          if (timeSpent < goalMs * 0.5) {
+            const speedAchievement: Achievement = {
+              id: `fast-${challengeId}-${Date.now()}`,
+              name: 'OPERADOR VELOZ',
+              description: `Incursión completada en ${Math.floor(timeSpent / 1000)}s. Tiempo óptimo superado.`,
+              icon: '⚡',
+              xp_bonus: 10,
+              rarity: 'rare',
+              unlocked_at: new Date().toISOString(),
+            }
+            setTimeout(() => setActiveAchievements((prev) => [...prev, speedAchievement]), 600)
+          }
+        }
+
         // Session log — registrar misión completada para Fin de Turno e Hub memoria
         const totalCompleted = parseInt(localStorage.getItem('pq-missions-completed') || '0', 10) + 1
         pushMission({
@@ -1381,6 +1494,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => setShowCombo(true), 320)
         }
 
+
         // Logros desbloqueados
         if (data.achievements_unlocked?.length) {
           setTimeout(() => setActiveAchievements(data.achievements_unlocked), 400)
@@ -1405,11 +1519,23 @@ export default function CodeWorkspace({ challengeId }: Props) {
         // F6: micro-transmisión al completar misión (refuerzo variable)
         setTimeout(() => fireMicro(), 1200)
 
+        // Feature C: detectar fin del free tier
+        const isLastFreeLevel = challenge?.is_free === true && (!next || next.isLocked === true)
+        if (isLastFreeLevel) {
+          setSectorCompleteXp(data.gamification.xp_earned)
+          setSectorAttempts(failStreak + 1)
+        }
+
         // F4: Debrief post-éxito — aparece antes del modal de victoria
         // Feature 1: guardar el código ganador para code review en el debrief
         lastWinCodeRef.current = code
         debriefAttempts.current = failStreak + 1
-        setTimeout(() => setShowDebrief(true), 700)
+        if (isLastFreeLevel) {
+          // Sector complete: skip debrief, mostrar pantalla de cierre
+          setTimeout(() => setShowSectorComplete(true), 800)
+        } else {
+          setTimeout(() => setShowDebrief(true), 700)
+        }
       } else if (!data.output_matched) {
         triggerShake('soft')
         triggerEditorAnim('anim-error-flash', 500)
@@ -1419,6 +1545,21 @@ export default function CodeWorkspace({ challengeId }: Props) {
       if (!data.output_matched) {
         const newStreak = failStreak + 1
         setFailStreak(newStreak)
+
+        // ── Coaching triggers — intervención emocional escalada ───────────────
+        // Al 3er intento: DAKI empatiza y normaliza la dificultad
+        if (newStreak === 3 && !challenge?.is_ironman) {
+          const empathyMsg = `Operador, este nodo tiene resistencia alta. El 60% de los recrutas necesita más de 4 intentos — estás dentro del patrón normal. Analizá el mensaje de error línea por línea, un carácter a la vez.`
+          setDakiMessage(empathyMsg)
+          speakDaki(empathyMsg)
+          activateWaveform(empathyMsg)
+        }
+        // Al 5to intento: mostrar modal de coaching (solo una vez por desafío)
+        if (newStreak === 5 && !coachingDismissedRef.current && !challenge?.is_ironman) {
+          setTimeout(() => setShowCoachingModal(true), 800)
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Niveles BEGINNER (tier 1): pistas en el 1er, 3er y 5to fallo — el principiante no puede esperar
         // Niveles INTERMEDIATE/ADVANCED: pistas en el 2do, 4to y 6to fallo
         const isEasy = (challenge?.difficulty_tier ?? 2) === 1
@@ -1429,6 +1570,27 @@ export default function CodeWorkspace({ challengeId }: Props) {
             const maxIdx = (challenge?.hints?.length ?? 1) - 1
             return Math.min(prev + 1, maxIdx)
           })
+        }
+        // Feature B: Modo Asistencia Completo al 5to intento fallido
+        if (newStreak === 5 && !challenge?.is_ironman) {
+          setActiveAchievements((prev) => [...prev, {
+            id: `assist-${challengeId}-${Date.now()}`,
+            name: 'MODO ASISTENCIA',
+            description: 'DAKI activó soporte completo. Revisá la teoría del nivel y usá ENIGMA.',
+            icon: '🛟',
+            xp_bonus: 0,
+            rarity: 'common' as const,
+            unlocked_at: new Date().toISOString(),
+          }])
+          setOutput((prev) => [
+            ...prev,
+            { text: '━━━ DAKI · PROTOCOLO DE RESCATE ━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+            { text: '  5 intentos sin éxito detectados. Esto es para que aprendas.', kind: 'intervention' as const },
+            { text: '  → Activá el panel de Teoría (botón BRIEFING arriba).', kind: 'intervention' as const },
+            { text: '  → Usá ENIGMA para la pista completa.', kind: 'intervention' as const },
+            { text: '  No hay vergüenza en pedir ayuda — hay vergüenza en rendirse.', kind: 'intervention' as const },
+            { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+          ])
         }
       } else {
         setFailStreak(0)
@@ -1534,6 +1696,15 @@ export default function CodeWorkspace({ challengeId }: Props) {
         />
       )}
 
+      {/* Feature C: Sector Complete — fin del free tier */}
+      <SectorCompleteModal
+        visible={showSectorComplete}
+        xpEarned={sectorCompleteXp}
+        totalAttempts={sectorAttempts}
+        onUpgrade={() => { setShowSectorComplete(false); setShowPaywall(true) }}
+        onHub={() => { setShowSectorComplete(false); router.push('/hub') }}
+      />
+
       {/* F4: Debrief post-éxito */}
       <MisionDebriefModal
         visible={showDebrief}
@@ -1574,6 +1745,132 @@ export default function CodeWorkspace({ challengeId }: Props) {
         onGranted={() => setIsPaid(true)}
         userId={userId}
       />
+
+      {/* ── Coaching / Retención — aparece al 5to intento fallido ──────────────────── */}
+      <AnimatePresence>
+        {showCoachingModal && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+              onClick={() => { setShowCoachingModal(false); coachingDismissedRef.current = true }}
+            />
+            <motion.div
+              className="relative z-10 w-full max-w-md border font-mono overflow-hidden"
+              style={{
+                borderColor: 'rgba(255,140,0,0.35)',
+                background:  'linear-gradient(135deg, rgba(0,0,0,0.97) 0%, rgba(20,10,0,0.97) 100%)',
+                boxShadow:   '0 0 60px rgba(255,140,0,0.10)',
+              }}
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1,    y: 0  }}
+              exit={{    opacity: 0, scale: 0.92, y: 20  }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <span className="absolute top-0 left-0 w-3 h-3 border-t border-l" style={{ borderColor: 'rgba(255,140,0,0.5)' }} />
+              <span className="absolute top-0 right-0 w-3 h-3 border-t border-r" style={{ borderColor: 'rgba(255,140,0,0.5)' }} />
+              <span className="absolute bottom-0 left-0 w-3 h-3 border-b border-l" style={{ borderColor: 'rgba(255,140,0,0.5)' }} />
+              <span className="absolute bottom-0 right-0 w-3 h-3 border-b border-r" style={{ borderColor: 'rgba(255,140,0,0.5)' }} />
+              <div className="px-8 py-7">
+                <div className="text-center mb-6">
+                  <motion.div
+                    className="text-4xl mb-3 select-none"
+                    animate={{ scale: [1, 1.12, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    ⚡
+                  </motion.div>
+                  <p className="text-[8px] tracking-[0.6em] mb-2" style={{ color: 'rgba(255,140,0,0.45)' }}>
+                    SISTEMA NEXO — INTERVENCIÓN TÁCTICA
+                  </p>
+                  <h2
+                    className="text-base font-black tracking-[0.15em] leading-tight"
+                    style={{ color: '#FF8C00', textShadow: '0 0 16px rgba(255,140,0,0.5)' }}
+                  >
+                    ZONA DE ALTA RESISTENCIA DETECTADA
+                  </h2>
+                </div>
+                <div
+                  className="mb-6 p-4 text-[11px] leading-relaxed tracking-wide"
+                  style={{ borderLeft: '2px solid rgba(255,140,0,0.30)', color: 'rgba(255,255,255,0.70)' }}
+                >
+                  <p className="mb-2">
+                    El sistema registró <strong style={{ color: '#FF8C00' }}>5 intentos consecutivos</strong> en este nodo.
+                    Esto no es un fracaso — es señal de que necesitás una perspectiva diferente.
+                  </p>
+                  <p>
+                    {(isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER')
+                      ? 'Como operador licenciado, tenés acceso a una sesión directa con el Arquitecto del Sistema. 45 minutos para desbloquear exactamente donde estás trabado.'
+                      : 'Los operadores con Licencia de Fundador tienen acceso a una sesión individual con el Arquitecto del Sistema. 45 minutos, en vivo, para desbloquear este nodo y lo que venga después.'
+                    }
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {(isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER') ? (
+                    <motion.a
+                      href="https://calendly.com/moundandpleidedtech/30min"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 text-center text-[11px] font-black tracking-[0.25em] uppercase cursor-pointer block"
+                      style={{
+                        background: 'rgba(255,140,0,0.12)',
+                        border:     '1px solid rgba(255,140,0,0.60)',
+                        color:      '#FF8C00',
+                        textShadow: '0 0 8px rgba(255,140,0,0.5)',
+                      }}
+                      whileHover={{ background: 'rgba(255,140,0,0.20)', borderColor: 'rgba(255,140,0,0.90)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { setShowCoachingModal(false); coachingDismissedRef.current = true }}
+                    >
+                      AGENDAR SESIÓN CON EL ARQUITECTO →
+                    </motion.a>
+                  ) : (
+                    <motion.button
+                      className="w-full py-3 text-[11px] font-black tracking-[0.25em] uppercase cursor-pointer"
+                      style={{
+                        background: 'rgba(255,140,0,0.12)',
+                        border:     '1px solid rgba(255,140,0,0.60)',
+                        color:      '#FF8C00',
+                        textShadow: '0 0 8px rgba(255,140,0,0.5)',
+                      }}
+                      whileHover={{ background: 'rgba(255,140,0,0.20)', borderColor: 'rgba(255,140,0,0.90)' }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setShowCoachingModal(false)
+                        coachingDismissedRef.current = true
+                        setShowPaywall(true)
+                      }}
+                    >
+                      ACTIVAR LICENCIA + SESIÓN CON EL ARQUITECTO
+                    </motion.button>
+                  )}
+                  <div className="flex items-center gap-2 text-[8px] tracking-widest" style={{ color: 'rgba(255,255,255,0.20)' }}>
+                    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                    <span>O</span>
+                    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  </div>
+                  <motion.button
+                    className="w-full py-2.5 text-[10px] tracking-[0.3em] uppercase cursor-pointer"
+                    style={{ border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.30)' }}
+                    whileHover={{ color: 'rgba(255,255,255,0.60)', borderColor: 'rgba(255,255,255,0.25)' }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setShowCoachingModal(false); coachingDismissedRef.current = true }}
+                  >
+                    SEGUIR INTENTANDO — SOY UN OPERADOR
+                  </motion.button>
+                </div>
+                <p className="text-center text-[7px] tracking-widest mt-4" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                  // SISTEMA NEXO v2.7.1 · INTERVENCIÓN TÁCTICA · CONFIDENCIAL
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Logros desbloqueados ────────────────────────────────────────────── */}
       <AchievementToast

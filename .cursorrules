@@ -1,0 +1,38 @@
+# .cursorrules — Reglas de Arquitectura DAKI EdTech
+
+## Stack
+- Frontend: Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion
+- Backend: FastAPI (Python 3.11+), SQLAlchemy async, Alembic
+- DB: PostgreSQL en Neon (conexión async via asyncpg)
+- IA: Anthropic Claude API (claude-sonnet-4-6)
+- Auth: JWT con bcrypt
+
+## Reglas de Código
+
+### TypeScript / Next.js
+- Tipado estricto en todos los componentes. Sin `any`.
+- Componentes Server por defecto. `'use client'` solo cuando se necesite estado o efectos.
+- Rutas API en `app/api/` solo si es lógica exclusiva de frontend; la lógica de negocio vive en FastAPI.
+- Imágenes y assets estáticos en `public/assets/`.
+- Variables de entorno sensibles solo en `.env.local` (nunca hardcoded).
+
+### Python / FastAPI
+- Endpoints en `app/api/v1/endpoints/`. Router en `app/api/v1/router.py`.
+- Servicios de negocio en `app/services/`. Los endpoints solo coordinan, no ejecutan lógica.
+- Modelos SQLAlchemy en `app/models/`. Schemas Pydantic en `app/schemas/`.
+- Todo endpoint async. Manejo de errores con `HTTPException` y bloques `try/except`.
+- Nunca exponer stacktraces al cliente en producción.
+
+### Base de Datos
+- Migraciones con Alembic. Nunca modificar tablas manualmente en producción.
+- Índices en foreign keys y campos de búsqueda frecuente.
+- UUIDs como PK en todas las tablas de usuario.
+
+## Economía de Tokens
+- Respuestas quirúrgicas: solo el código que cambia.
+- Sin explicaciones teóricas salvo petición explícita.
+- Sin repetir código que no fue modificado.
+
+## Auto-documentación
+- Actualizar `DAKI_LOG.md` al finalizar CADA tarea exitosa.
+- Formato: fecha · archivos modificados · dependencias nuevas · estado.

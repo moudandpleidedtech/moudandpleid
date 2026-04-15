@@ -624,6 +624,15 @@ export default function HubPage() {
   const [showDakiGreeting,   setShowDakiGreeting]   = useState(false)
   const [sessionLog,         setSessionLog]         = useState<SessionMission[]>([])
   const [showFinDeTurno,     setShowFinDeTurno]     = useState(false)
+  const [lastChallengeId,   setLastChallengeId]    = useState<string | null>(null)
+
+  // ── Último desafío visitado — para CTA "CONTINUAR" ────────────────────────
+  useEffect(() => {
+    try {
+      const id = localStorage.getItem('daki_last_challenge_id')
+      if (id) setLastChallengeId(id)
+    } catch { /* */ }
+  }, [])
 
   // ── Saludo de DAKI — una vez por sesión de navegador ──────────────────────
   useEffect(() => {
@@ -958,24 +967,135 @@ export default function HubPage() {
                   // ACCESO TOTAL
                 </span>
               </motion.div>
-            ) : (
-              <motion.div
-                className="inline-flex items-center gap-2 px-4 py-1.5 border mb-5 mx-auto"
-                style={{ borderColor: 'rgba(74,222,128,0.30)', background: 'rgba(74,222,128,0.05)' }}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.35 }}
-              >
-                <span className="text-[10px] font-black tracking-[0.5em] font-mono"
-                  style={{ color: '#4ade80', textShadow: '0 0 8px rgba(74,222,128,0.50)' }}>
-                  OPERADOR
-                </span>
-                <span className="text-[8px] font-mono" style={{ color: 'rgba(74,222,128,0.45)' }}>// NIV. {level}</span>
-              </motion.div>
-            )}
-            {/* Espacio base — sin CTA aquí */}
-            <div className="mb-1" />
+            ) : (() => {
+              // Feature 5: Badge "Operador Calibrado" post-free-tier
+              const isCalibrated = typeof window !== 'undefined' && !!localStorage.getItem('nexo_calibrated')
+              return isCalibrated ? (
+                <motion.div
+                  className="inline-flex flex-col items-center gap-1 px-4 py-2 border mb-5 mx-auto"
+                  style={{ borderColor: 'rgba(0,255,65,0.35)', background: 'rgba(0,255,65,0.05)' }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <motion.span
+                      className="text-xs"
+                      style={{ color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.8)' }}
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      ◈
+                    </motion.span>
+                    <span className="text-[10px] font-black tracking-[0.45em] font-mono"
+                      style={{ color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.50)' }}>
+                      OPERADOR CALIBRADO
+                    </span>
+                  </div>
+                  <span className="text-[7px] font-mono tracking-[0.4em]" style={{ color: 'rgba(0,255,65,0.35)' }}>
+                    PENDIENTE DE ACTIVACIÓN
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border mb-5 mx-auto"
+                  style={{ borderColor: 'rgba(74,222,128,0.30)', background: 'rgba(74,222,128,0.05)' }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <span className="text-[10px] font-black tracking-[0.5em] font-mono"
+                    style={{ color: '#4ade80', textShadow: '0 0 8px rgba(74,222,128,0.50)' }}>
+                    OPERADOR
+                  </span>
+                  <span className="text-[8px] font-mono" style={{ color: 'rgba(74,222,128,0.45)' }}>// NIV. {level}</span>
+                </motion.div>
+              )
+            })()}
+          </motion.div>
 
+          {/* ── STREAK COUNTER ── */}
+          {streakDays > 0 && (
+            <motion.div
+              className="w-full max-w-sm mb-5 flex flex-col items-center"
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.42, duration: 0.4 }}
+            >
+              <div
+                className="flex items-center gap-3 px-5 py-2.5 border w-full justify-center"
+                style={{
+                  borderColor: 'rgba(255,140,0,0.32)',
+                  background:  'rgba(255,140,0,0.06)',
+                  boxShadow:   '0 0 18px rgba(255,140,0,0.07)',
+                }}
+              >
+                <motion.span
+                  className="text-xl leading-none select-none"
+                  animate={{ scale: [1, 1.18, 1] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  🔥
+                </motion.span>
+                <div className="text-center">
+                  <p
+                    className="text-3xl font-black font-mono leading-none"
+                    style={{ color: '#FF8C00', textShadow: '0 0 14px rgba(255,140,0,0.65)' }}
+                  >
+                    {streakDays}
+                  </p>
+                  <p className="text-[8px] tracking-[0.45em] font-mono mt-0.5"
+                    style={{ color: 'rgba(255,140,0,0.50)' }}>
+                    DÍAS DE RACHA
+                  </p>
+                </div>
+                <motion.span
+                  className="text-xl leading-none select-none"
+                  animate={{ scale: [1, 1.18, 1] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+                >
+                  🔥
+                </motion.span>
+              </div>
+              <p className="text-[7px] tracking-[0.4em] mt-1 font-mono text-center"
+                style={{ color: 'rgba(255,140,0,0.28)' }}>
+                {streakDays === 1 ? '— PRIMER DÍA, NO PARES —' : streakDays >= 7 ? '— RACHA ÉLITE, OPERADOR —' : '— CONSTANCIA = DOMINIO —'}
+              </p>
+            </motion.div>
+          )}
+
+          {/* ── XP PROGRESS BAR ── */}
+          <motion.div
+            className="w-full max-w-sm mb-5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.48, duration: 0.4 }}
+          >
+            <div className="flex justify-between mb-1.5">
+              <span className="text-[8px] font-mono tracking-widest"
+                style={{ color: 'rgba(0,255,65,0.40)' }}>NIV. {level}</span>
+              <span className="text-[8px] font-mono tracking-widest"
+                style={{ color: 'rgba(0,255,65,0.30)' }}>
+                {xpToNext > 0 ? `${xpToNext.toLocaleString()} XP → NIV. ${level + 1}` : 'NIVEL MÁXIMO'}
+              </span>
+            </div>
+            <div className="w-full h-2 overflow-hidden"
+              style={{ background: 'rgba(0,255,65,0.07)', border: '1px solid rgba(0,255,65,0.10)' }}>
+              <motion.div
+                className="h-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${xpProgress * 100}%` }}
+                transition={{ delay: 1.1, duration: 1.0, ease: 'easeOut' }}
+                style={{
+                  background: 'linear-gradient(90deg, rgba(0,255,65,0.7), #00FF41)',
+                  boxShadow:  '0 0 10px rgba(0,255,65,0.55)',
+                }}
+              />
+            </div>
+            <p className="text-[7px] tracking-[0.4em] font-mono mt-1 text-center"
+              style={{ color: 'rgba(0,255,65,0.22)' }}>
+              PROGRESO XP — {Math.round(xpProgress * 100)}% AL SIGUIENTE NIVEL
+            </p>
           </motion.div>
 
           {/* Divisor */}
@@ -1155,7 +1275,8 @@ export default function HubPage() {
               onClick={() => {
                 const access = isPaid || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'ACTIVE' || role === 'FOUNDER'
                 if (!access) { setShowAlphaModal(true); return }
-                navigateWithFade('/misiones')
+                if (lastChallengeId) navigateWithFade(`/challenge/${lastChallengeId}`)
+                else navigateWithFade('/misiones')
               }}
               className="w-full py-4 font-black text-base tracking-[0.2em] uppercase font-mono relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF41]/50"
               style={{
@@ -1180,7 +1301,7 @@ export default function HubPage() {
               />
               <span className="flex items-center justify-center gap-3">
                 <span>▶</span>
-                <span>CONTINUAR MISIÓN</span>
+                <span>{lastChallengeId ? 'CONTINUAR MISIÓN' : 'INICIAR MISIONES'}</span>
                 <span className="text-[10px] text-[#00FF41]/50 font-normal tracking-widest">
                   {Math.min(Math.round((completedOrders.length / 10) * 100), 100)}% completado
                 </span>
@@ -1193,6 +1314,19 @@ export default function HubPage() {
               />
             </motion.button>
           </motion.div>
+
+          {/* Sub-link: ver mapa completo */}
+          {lastChallengeId && (
+            <motion.button
+              onClick={() => navigateWithFade('/misiones')}
+              className="w-full text-center text-[8px] font-mono tracking-[0.4em] py-1 cursor-pointer transition-colors"
+              style={{ color: 'rgba(0,255,65,0.28)' }}
+              whileHover={{ color: 'rgba(0,255,65,0.60)' }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+            >
+              VER MAPA DE MISIONES →
+            </motion.button>
+          )}
 
           {/* ── ARENA — Modo PvP ── */}
           <motion.div

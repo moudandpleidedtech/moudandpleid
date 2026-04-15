@@ -26,12 +26,16 @@ from app.core.config import settings
 
 _connect_args: dict = {"ssl": True} if settings.DB_SSL else {}
 
+# pool_size + max_overflow = conexiones físicas máximas al mismo tiempo.
+# Con Neon Launch + pooler (PgBouncer): pool_size=15, max_overflow=15 → 30 físicas
+# El pooler de Neon multiplexa N sesiones lógicas sobre estas físicas,
+# por lo que 200+ usuarios simultáneos funcionan sin problema.
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=30,
+    pool_size=15,
+    max_overflow=15,
     connect_args=_connect_args,
 )
 
@@ -280,6 +284,22 @@ async def _migrate_v8_auth(conn) -> None:
     ))
 
 
+async def _migrate_v10_pending_activations(conn) -> None:
+    """Hotmart: tabla de activaciones pendientes para pagos previos al registro."""
+    await conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS pending_activations (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email VARCHAR(255) NOT NULL,
+            transaction_id VARCHAR(255) NOT NULL,
+            event VARCHAR(50) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+    """))
+    await conn.execute(text(
+        "CREATE INDEX IF NOT EXISTS ix_pending_activations_email ON pending_activations (email)"
+    ))
+
+
 async def _migrate_v9_pedagogy(conn) -> None:
     """Protocolo Guerrero: Ironman, Edge Cases y marcado de datos iniciales."""
     for stmt in [
@@ -346,6 +366,7 @@ async def init_db() -> None:
     import app.models.incursion          # noqa: F401
     import app.models.challenge_prerequisite  # noqa: F401
     import app.models.intelligence_report    # noqa: F401
+    import app.models.pending_activation     # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -358,3 +379,4 @@ async def init_db() -> None:
         await _migrate_v7_cleanup(conn)
         await _migrate_v8_auth(conn)
         await _migrate_v9_pedagogy(conn)
+        await _migrate_v10_pending_activations(conn)
