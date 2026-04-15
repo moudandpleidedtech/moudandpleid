@@ -159,26 +159,30 @@ async def hotmart_webhook(
     db:      AsyncSession = Depends(get_db),
     hottok:  str | None   = Query(None),
 ) -> dict:
-    # ── Verificación de hottok ────────────────────────────────────────────────
-    if not settings.HOTMART_HOTTOK:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="HOTMART_HOTTOK no configurado.",
-        )
-
-    if hottok != settings.HOTMART_HOTTOK:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Hottok inválido — evento rechazado.",
-        )
-
-    # ── Parseo del payload ────────────────────────────────────────────────────
+    # ── Parseo del payload (antes de verificar para leer hottok del body) ─────
     try:
         payload: dict = await request.json()
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Payload no es JSON válido.",
+        )
+
+    # ── Verificación de hottok ────────────────────────────────────────────────
+    # Hotmart v2 puede enviar el hottok como query param (?hottok=...) o
+    # como campo en el body. Aceptamos ambos para máxima compatibilidad.
+    hottok_received = hottok or payload.get("hottok")
+
+    if not settings.HOTMART_HOTTOK:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="HOTMART_HOTTOK no configurado.",
+        )
+
+    if hottok_received != settings.HOTMART_HOTTOK:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Hottok inválido — evento rechazado.",
         )
 
     event = payload.get("event", "").upper()

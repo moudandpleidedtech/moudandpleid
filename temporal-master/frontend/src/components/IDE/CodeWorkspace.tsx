@@ -17,7 +17,6 @@ import TutorialPanel from '@/components/IDE/TutorialPanel'
 import DakiWaveform from '@/components/UI/DakiWaveform'
 import DakiTerminalLine from '@/components/IDE/DakiTerminalLine'
 import PaywallModal from '@/components/UI/PaywallModal'
-import AlphaCodeModal from '@/components/UI/AlphaCodeModal'
 import MisionDebriefModal from '@/components/Game/MisionDebriefModal'
 import RadarMaestriaModal from '@/components/Hub/RadarMaestriaModal'
 import FlashRecallModal from '@/components/Game/FlashRecallModal'
@@ -466,7 +465,6 @@ export default function CodeWorkspace({ challengeId }: Props) {
   // Paywall modal: se muestra si el backend devuelve 402 (usuarios con trial/licensed vencido)
   const [showPaywall,       setShowPaywall]       = useState(false)
   // Alpha Code modal: se muestra si el backend devuelve 402 y el usuario no tiene ningún acceso
-  const [showAlphaModal,    setShowAlphaModal]    = useState(false)
   // Coaching modal: se muestra al 5to intento fallido consecutivo
   const [showCoachingModal, setShowCoachingModal] = useState(false)
   const coachingDismissedRef = useRef(false) // evita re-mostrar si ya fue cerrado en este desafío
@@ -831,17 +829,13 @@ export default function CodeWorkspace({ challengeId }: Props) {
           setTimeout(() => router.replace('/misiones'), 2200)
           return
         }
-        // Misión de pago + usuario freemium → Alpha modal o Paywall
+        // Misión de pago + usuario freemium → Paywall con opción de compra
         // Guardia: las primeras 10 misiones (level_order 0-9) son siempre libres
         const isFreeLevel = data.is_free === true
           || data.challenge_type === 'tutorial'
           || (typeof data.level_order === 'number' && data.level_order <= 9)
         if (!isFreeLevel && !isPaid) {
-          if (subscriptionStatus === 'INACTIVE') {
-            setShowAlphaModal(true)
-          } else {
-            setShowPaywall(true)
-          }
+          setShowPaywall(true)
         }
         // Merge local cache: si ya se completó en esta sesión, reflejarlo sin esperar a la API
         const mergedData = completedChallengeIds.includes(data.id)
@@ -1159,11 +1153,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
           triggerShake('soft')
           scrollConsole()
           setTimeout(() => {
-            if (subscriptionStatus === 'INACTIVE') {
-              setShowAlphaModal(true)
-            } else {
-              setShowPaywall(true)
-            }
+            setShowPaywall(true)
           }, 700)
           return
         }
@@ -1727,16 +1717,6 @@ export default function CodeWorkspace({ challengeId }: Props) {
           ? '[ CALIBRACIÓN COMPLETADA. RIESGO CEREBRAL AL 0%. ACCESO AL NEXO CONCEDIDO ]'
           : undefined
         }
-      />
-
-      <AlphaCodeModal
-        visible={showAlphaModal}
-        onClose={() => setShowAlphaModal(false)}
-        onGranted={(trialEndDate) => {
-          setSubscription('TRIAL', trialEndDate)
-          setIsPaid(true)
-          setShowAlphaModal(false)
-        }}
       />
 
       <PaywallModal

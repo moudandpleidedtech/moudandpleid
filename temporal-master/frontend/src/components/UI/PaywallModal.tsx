@@ -37,6 +37,7 @@ const FEATURES = [
 type OverrideState = 'idle' | 'loading' | 'success' | 'error'
 type CheckoutState = 'idle' | 'loading' | 'error'
 
+
 export default function PaywallModal({
   visible,
   onClose,
@@ -69,16 +70,16 @@ export default function PaywallModal({
     } catch { /* localStorage bloqueado */ }
   }, [visible])
 
-  const handleCheckout = async (plan: 'monthly' | 'lifetime') => {
-    if (!userId || checkoutState === 'loading') return
+  const handleCheckout = async () => {
+    if (checkoutState === 'loading') return
     setCheckoutState('loading')
     setCheckoutError('')
     try {
       const res = await fetch(`${API_BASE}/api/v1/hotmart/checkout`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ plan }),
+        body:        JSON.stringify({ plan: 'lifetime' }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -87,7 +88,7 @@ export default function PaywallModal({
         return
       }
       setCheckoutState('idle')
-      window.open(data.checkout_url, '_blank', 'noopener,noreferrer')
+      window.location.href = data.checkout_url   // misma pestaña, flujo limpio
     } catch {
       setCheckoutState('error')
       setCheckoutError('Sin conexión con el Nexo. Intentá de nuevo.')
@@ -266,64 +267,37 @@ export default function PaywallModal({
               {/* Divider */}
               <div className="h-px mb-5" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,80,30,0.25),transparent)' }} />
 
-              {/* Opciones de precio */}
-              <div className="flex gap-3 mb-4">
-                {/* Plan mensual */}
-                <div className="flex-1 p-3 text-center" style={{ border: '1px solid rgba(0,255,65,0.20)', background: 'rgba(0,255,65,0.03)' }}>
-                  <div className="text-[8px] tracking-[0.3em] mb-1" style={{ color: 'rgba(0,255,65,0.40)' }}>MENSUAL</div>
-                  <div className="text-lg font-black" style={{ color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.4)' }}>
-                    $29<span className="text-xs font-normal">/mes</span>
-                  </div>
+              {/* Precio */}
+              <div className="mb-4 p-4 text-center relative" style={{ border: '1px solid rgba(255,80,30,0.45)', background: 'rgba(255,50,10,0.06)' }}>
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] tracking-[0.3em] px-2 py-0.5 font-black"
+                  style={{ background: 'rgba(255,80,30,0.85)', color: '#fff' }}>
+                  PRECIO FUNDADOR
                 </div>
-                {/* Licencia Vitalicia — destacada */}
-                <div className="flex-1 p-3 text-center relative" style={{ border: '1px solid rgba(255,80,30,0.45)', background: 'rgba(255,50,10,0.06)' }}>
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] tracking-[0.3em] px-2 py-0.5 font-black"
-                    style={{ background: 'rgba(255,80,30,0.85)', color: '#fff' }}>
-                    POPULAR
-                  </div>
-                  <div className="text-[8px] tracking-[0.3em] mb-0.5" style={{ color: 'rgba(255,150,80,0.6)' }}>VITALICIA</div>
-                  {/* Feature 3: Anchor de precio — tachado */}
-                  <div className="text-[9px] line-through mb-0.5" style={{ color: 'rgba(255,150,80,0.35)' }}>$197</div>
-                  <div className="text-lg font-black" style={{ color: '#FF5020', textShadow: '0 0 8px rgba(255,80,30,0.4)' }}>
-                    $97<span className="text-xs font-normal"> único</span>
-                  </div>
-                  <div className="text-[7px] tracking-wider mt-0.5" style={{ color: 'rgba(255,150,80,0.40)' }}>PRECIO FUNDADOR</div>
+                <div className="text-[9px] line-through mb-1" style={{ color: 'rgba(255,150,80,0.35)' }}>$197 USD</div>
+                <div className="text-3xl font-black" style={{ color: '#FF5020', textShadow: '0 0 12px rgba(255,80,30,0.4)' }}>
+                  $97 <span className="text-sm font-normal">USD</span>
                 </div>
+                <div className="text-[8px] tracking-wider mt-1" style={{ color: 'rgba(255,150,80,0.50)' }}>PAGO ÚNICO · ACCESO DE POR VIDA</div>
               </div>
 
-              {/* CTAs */}
-              <div className="flex flex-col gap-2 mb-1">
+              {/* CTA único */}
+              <div className="mb-1">
                 <motion.button
-                  onClick={() => handleCheckout('lifetime')}
+                  onClick={handleCheckout}
                   disabled={checkoutState === 'loading'}
-                  className="w-full py-3.5 text-xs font-black tracking-[0.3em] transition-all duration-150"
+                  className="w-full py-4 text-sm font-black tracking-[0.25em] transition-all duration-150"
                   style={{
-                    background: checkoutState === 'loading' ? 'rgba(255,50,10,0.30)' : 'linear-gradient(135deg, rgba(255,80,30,0.85), rgba(255,40,10,0.75))',
+                    background: checkoutState === 'loading' ? 'rgba(255,50,10,0.30)' : 'linear-gradient(135deg, rgba(255,80,30,0.90), rgba(255,40,10,0.80))',
                     border:     '1px solid rgba(255,100,40,0.5)',
                     color:      '#fff',
                     textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-                    boxShadow:  '0 0 20px rgba(255,50,10,0.25)',
+                    boxShadow:  '0 0 24px rgba(255,50,10,0.30)',
                     cursor:     checkoutState === 'loading' ? 'wait' : 'pointer',
                   }}
-                  whileHover={checkoutState !== 'loading' ? { scale: 1.02, boxShadow: '0 0 30px rgba(255,60,10,0.40)' } : {}}
+                  whileHover={checkoutState !== 'loading' ? { scale: 1.02, boxShadow: '0 0 36px rgba(255,60,10,0.45)' } : {}}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {checkoutState === 'loading' ? '[ GENERANDO ENLACE... ]' : 'LICENCIA VITALICIA — $97 USD →'}
-                </motion.button>
-
-                <motion.button
-                  onClick={() => handleCheckout('monthly')}
-                  disabled={checkoutState === 'loading'}
-                  className="w-full py-2.5 text-[10px] font-black tracking-[0.3em] transition-all duration-150"
-                  style={{
-                    border:  '1px solid rgba(0,255,65,0.35)',
-                    color:   'rgba(0,255,65,0.75)',
-                    cursor:  checkoutState === 'loading' ? 'wait' : 'pointer',
-                  }}
-                  whileHover={checkoutState !== 'loading' ? { borderColor: 'rgba(0,255,65,0.70)', color: '#00FF41' } : {}}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  PLAN MENSUAL — $29/MES
+                  {checkoutState === 'loading' ? '[ CONECTANDO CON HOTMART... ]' : 'OBTENER LICENCIA VITALICIA →'}
                 </motion.button>
               </div>
 

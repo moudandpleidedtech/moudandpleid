@@ -300,6 +300,13 @@ async def _migrate_v10_pending_activations(conn) -> None:
     ))
 
 
+async def _migrate_v11_updated_at(conn) -> None:
+    """Agrega updated_at a users (campo presente en el modelo pero sin migración previa)."""
+    await conn.execute(text(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()"
+    ))
+
+
 async def _migrate_v9_pedagogy(conn) -> None:
     """Protocolo Guerrero: Ironman, Edge Cases y marcado de datos iniciales."""
     for stmt in [
@@ -380,3 +387,4 @@ async def init_db() -> None:
         await _migrate_v8_auth(conn)
         await _migrate_v9_pedagogy(conn)
         await _migrate_v10_pending_activations(conn)
+        await _migrate_v11_updated_at(conn)

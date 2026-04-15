@@ -155,7 +155,7 @@ async def send_trial_expiry(
       </a>
 
       <p style="color:rgba(255,255,255,0.3);font-size:11px;margin:24px 0 0;">
-        Acceso total · $25 USD/mes · Cancelá cuando quieras
+        Acceso total · $97 USD pago único · Licencia de por vida
       </p>
     """)
     return await _send(email, f"⚠ Tu trial vence en {days_left}d — {callsign}", html)

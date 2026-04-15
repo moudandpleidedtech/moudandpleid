@@ -7,11 +7,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import func, select, text
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.v1.router import router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.core.rate_limit import limiter
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Añade headers de seguridad HTTP a todas las respuestas."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        if not settings.DEBUG:
+            response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+        return response
 
 # ── Sentry (error tracking) ───────────────────────────────────────────────────
 # Activar: agregar SENTRY_DSN en las env vars de Render.
@@ -270,10 +285,23 @@ async def _ensure_dev_user() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Fail fast si SECRET_KEY no fue cambiada del valor por defecto
-    if settings.SECRET_KEY in ("change-me-in-production", ""):
+    # Fail fast si los secretos críticos no fueron configurados
+    _DEFAULT = "change-me-in-production"
+    if settings.SECRET_KEY in (_DEFAULT, ""):
         raise RuntimeError(
             "SECRET_KEY no configurada. Define la variable de entorno SECRET_KEY antes de iniciar."
+        )
+    if settings.ADMIN_API_KEY in (_DEFAULT, ""):
+        raise RuntimeError(
+            "ADMIN_API_KEY no configurada. Define la variable de entorno ADMIN_API_KEY antes de iniciar."
+        )
+    if settings.SECRET_KEY == settings.ADMIN_API_KEY:
+        raise RuntimeError(
+            "SECRET_KEY y ADMIN_API_KEY no pueden ser iguales. Usa claves independientes."
+        )
+    if not settings.HOTMART_HOTTOK:
+        raise RuntimeError(
+            "HOTMART_HOTTOK no configurado. El webhook de Hotmart rechazará todos los pagos."
         )
     await init_db()
     await _auto_seed()
@@ -319,6 +347,7 @@ app.add_exception_handler(RateLimitExceeded, _daki_rate_limit_handler)
 #   dev  → http://localhost:3000
 #   prod → https://dakiedtech.com, https://www.dakiedtech.com
 # Cualquier origen no listado recibe 403 en la verificación del preflight OPTIONS.
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     # cors_origins = ALLOWED_ORIGINS + FRONTEND_URL (si está definido en env)
