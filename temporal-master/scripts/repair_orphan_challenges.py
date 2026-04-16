@@ -7,11 +7,14 @@ catálogo canónico:
     borra el gemelo (0 UserProgress) y mueve el huérfano a la posición correcta.
   - Si no tiene UserProgress: lo borra directamente.
 
-Resultado: 195 challenges en posiciones correctas, UserProgress intacto.
+Con --force: borra TODOS los huérfanos restantes (incluso los con UserProgress
+que no se pudieron resolver automáticamente). Usar junto con --apply.
+Después de --force, correr complete_founder --no-dry-run para restaurar progreso.
 
 Uso:
-    python -m scripts.repair_orphan_challenges            # dry-run
-    python -m scripts.repair_orphan_challenges --apply    # aplica cambios
+    python -m scripts.repair_orphan_challenges                    # dry-run
+    python -m scripts.repair_orphan_challenges --apply            # aplica cambios (modo seguro)
+    python -m scripts.repair_orphan_challenges --apply --force    # elimina TODO lo que sobra
 """
 
 import argparse
@@ -21,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
@@ -31,7 +34,7 @@ from app.models.user_progress import UserProgress
 from scripts.seed_master import load_sectors
 
 
-async def run(apply: bool) -> None:
+async def run(apply: bool, force: bool = False) -> None:
     # ── 1. Posiciones canónicas del catálogo ──────────────────────────────────
     catalog = load_sectors()
     canon_positions: set[tuple] = {
@@ -121,15 +124,23 @@ async def run(apply: bool) -> None:
 
         if cant_fix:
             print(f"\n  Sin solución automática    : {len(cant_fix)}")
+            for ch in cant_fix:
+                r = await session.execute(
+                    select(func.count()).where(UserProgress.challenge_id == ch.id)
+                )
+                prog_count = r.scalar_one()
+                print(f"    S{ch.sector_id:02d} L{ch.level_order:03d}  {ch.title[:40]}  ({prog_count} progress entries)")
+            if force:
+                print(f"  --force: estos {len(cant_fix)} también serán eliminados (UserProgress incluido)")
 
-        expected_final = len(all_ch) - len(to_delete) - len(to_move)
-        # to_move borra el gemelo (+0 net por challenge, pero elimina el duplicado)
         twins_to_delete = sum(1 for ch, canon in to_move if pos_to_ch.get(canon))
-        expected_final = len(all_ch) - len(to_delete) - twins_to_delete
+        force_delete_count = len(cant_fix) if force else 0
+        expected_final = len(all_ch) - len(to_delete) - twins_to_delete - force_delete_count
         print(f"\n  Challenges esperados post-repair: {expected_final}")
 
         if not apply:
-            print("\n[DRY-RUN] Pasar --apply para ejecutar los cambios.")
+            hint = " --force" if force else ""
+            print(f"\n[DRY-RUN] Pasar --apply{hint} para ejecutar los cambios.")
             await engine.dispose()
             return
 
@@ -151,6 +162,16 @@ async def run(apply: bool) -> None:
             ch.sector_id   = canon_sid
             ch.level_order = canon_lo
             moved += 1
+
+        # --force: borrar los que no se pudieron resolver automáticamente
+        if force and cant_fix:
+            for ch in cant_fix:
+                # Primero borrar UserProgress asociado para evitar FK violation
+                await session.execute(
+                    delete(UserProgress).where(UserProgress.challenge_id == ch.id)
+                )
+                await session.delete(ch)
+                deleted += 1
 
         await session.commit()
 
@@ -174,5 +195,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true",
                         help="Aplica los cambios (sin esto es dry-run)")
+    parser.add_argument("--force", action="store_true",
+                        help="Elimina también los huérfanos irresolubles (borra su UserProgress)")
     args = parser.parse_args()
-    asyncio.run(run(apply=args.apply))
+    asyncio.run(run(apply=args.apply, force=args.force))
