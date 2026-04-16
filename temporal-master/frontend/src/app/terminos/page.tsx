@@ -109,7 +109,7 @@ function LegalDoc() {
           independientemente del lenguaje de programación subyacente.
         </p>
         <ul className="mt-4 space-y-1.5 text-[#00FF41]/60 list-none">
-          <Li>190 incursiones estructuradas en 21 sectores temáticos de dificultad progresiva.</Li>
+          <Li>195 incursiones estructuradas en 22 sectores temáticos de dificultad progresiva.</Li>
           <Li>DAKI — Instructora Neuronal Táctica con sistema de escalación cognitiva de 3 niveles.</Li>
           <Li>Sistema de rangos operacionales, XP, certificado de élite y tabla de clasificación.</Li>
           <Li>Acceso vía navegador web, sin instalación de software adicional.</Li>

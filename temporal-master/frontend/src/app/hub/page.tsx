@@ -381,11 +381,11 @@ const MILESTONES = [
   { at:  45, label: 'BÁSICO completado'    },
   { at:  95, label: 'MEDIO completado'     },
   { at: 140, label: 'AVANZADO completado'  },
-  { at: 190, label: 'PYTHON CORE COMPLETO' },
+  { at: 195, label: 'PYTHON CORE COMPLETO' },
 ]
 
 function GlobalProgressBar({ completedCount }: { completedCount: number }) {
-  const TOTAL = 190
+  const TOTAL = 195
   const pct   = Math.min(100, Math.round((completedCount / TOTAL) * 100))
   const next  = MILESTONES.find(m => m.at > completedCount)
   const toNext = next ? next.at - completedCount : 0
@@ -442,7 +442,7 @@ function OnboardingModal({ onClose, onStart }: { onClose: () => void; onStart: (
     {
       icon:  '⬡',
       title: 'Python Core — Tu primera formación',
-      body:  '190 misiones. 4 fases de dificultad creciente. 1 Boss Final. Python Core es la base de todo lo que vendrá después en el Nexo.',
+      body:  '195 misiones. 4 fases de dificultad creciente. 1 Boss Final. Python Core es la base de todo lo que vendrá después en el Nexo.',
       cta:   'CONTINUAR',
     },
     {

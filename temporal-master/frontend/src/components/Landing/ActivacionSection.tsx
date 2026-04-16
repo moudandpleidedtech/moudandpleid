@@ -15,7 +15,7 @@ import { motion } from 'framer-motion'
 const FREE_ACCESS = [
   {
     icon: '⬡',
-    label: 'Python Core — 190 misiones',
+    label: 'Python Core — 195 misiones',
     detail: 'De variables a sistemas en producción. Sin atajos. Sin relleno.',
   },
   {

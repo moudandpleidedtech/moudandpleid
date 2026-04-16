@@ -45,7 +45,7 @@ const PILARES = [
     title:   'CÓDIGO QUE CORRE',
     tagline: 'Sandbox real. Output real.',
     body:    'Cada misión evalúa lo que hace tu código. Sin múltiple choice. Si falla, falla. Si pasa, pasó.',
-    stat:    '190 misiones ejecutables en vivo',
+    stat:    '195 misiones ejecutables en vivo',
     termTitle: 'SANDBOX · EJECUCIÓN EN VIVO',
     delay:   900,
     lines: [
@@ -276,7 +276,7 @@ export default function SolucionSection() {
           className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#00FF41]/10 pt-3"
         >
           <p className="text-[11px] text-white/30 tracking-[0.18em] text-center sm:text-left">
-            <span style={{ color: 'rgba(0,255,65,0.65)' }}>190 misiones reales.</span>
+            <span style={{ color: 'rgba(0,255,65,0.65)' }}>195 misiones reales.</span>
             {' · '}
             <span style={{ color: 'rgba(245,158,11,0.65)' }}>1 Boss Final.</span>
             {' · '}

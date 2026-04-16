@@ -27,7 +27,7 @@ interface Props {
 }
 
 const FEATURES = [
-  'Acceso completo a los 190 desafíos del Nexo (todos los sectores)',
+  'Acceso completo a los 195 desafíos del Nexo (todos los sectores)',
   'Sistema de Duelos PvP — Arena contra operadores globales',
   'Certificados descargables por sector completado',
   'DAKI IA ilimitada — hints, debrief y mentoría sin restricciones',
