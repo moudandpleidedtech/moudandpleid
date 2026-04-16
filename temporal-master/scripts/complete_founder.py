@@ -96,6 +96,13 @@ async def run(email: str, dry_run: bool) -> None:
         already_done = {row[0] for row in prog_result.all()}
         pending_challenges = [c for c in all_challenges if c.id not in already_done]
 
+        # Challenges que ya tienen UserMetric (para evitar UniqueViolationError)
+        metrics_result = await session.execute(
+            select(UserMetric.challenge_id)
+            .where(UserMetric.user_id == user.id)
+        )
+        already_has_metrics = {row[0] for row in metrics_result.all()}
+
         # ──────────────────────────────────────────────────────────────────────
         # 2. LOGROS — UserAchievement
         # ──────────────────────────────────────────────────────────────────────
@@ -183,16 +190,17 @@ async def run(email: str, dry_run: bool) -> None:
                 completed_at=completed_at,
                 codex_id=codex,
             ))
-            session.add(UserMetric(
-                user_id=user.id,
-                challenge_id=challenge.id,
-                attempts=attempts,
-                hints_used=hints,
-                time_spent_ms=time_ms,
-                status="success",
-                syntax_errors_log="[]",
-                last_attempt_at=completed_at,
-            ))
+            if challenge.id not in already_has_metrics:
+                session.add(UserMetric(
+                    user_id=user.id,
+                    challenge_id=challenge.id,
+                    attempts=attempts,
+                    hints_used=hints,
+                    time_spent_ms=time_ms,
+                    status="success",
+                    syntax_errors_log="[]",
+                    last_attempt_at=completed_at,
+                ))
 
         # ── Insertar logros pendientes ─────────────────────────────────────────
         for i, achievement_id in enumerate(pending_achievements):
