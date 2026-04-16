@@ -1149,7 +1149,7 @@ export default function MisionesPage() {
                     {/* JEFE FINAL */}
                     {(() => {
                       const completedCount = missions.filter(m => m.completed).length
-                      const BOSS_THRESHOLD = 140
+                      const BOSS_THRESHOLD = missions.length || 190
                       const bossUnlocked = completedCount >= BOSS_THRESHOLD
                       const remaining = Math.max(0, BOSS_THRESHOLD - completedCount)
                       return (
