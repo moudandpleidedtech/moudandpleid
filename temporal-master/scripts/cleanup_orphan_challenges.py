@@ -23,6 +23,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.models.user import User  # noqa: F401 — must be imported before UserProgress
 from app.models.challenge import Challenge
 from app.models.user_progress import UserProgress
 from scripts.seed_master import load_sectors
