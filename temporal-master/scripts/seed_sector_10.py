@@ -1,20 +1,23 @@
 """
-seed_sector_10.py — Sector 10: El Ascenso del Arquitecto (Nexo Central)
-========================================================================
-Niveles 91–100  |  10 misiones  |  Sector ID = 10
+seed_sector_10.py — Sector 09: Resiliencia (try/except)
+========================================================
+Niveles 81–90  |  10 misiones  |  Sector ID = 9
 
-Temática técnica: Algoritmia pura — FizzBuzz avanzado, Fibonacci, número
-                  faltante, palíndromos, compresión RLE, anagramas,
-                  frecuencia de palabras, Two-Sum, criba de primos y
-                  el Algoritmo Maestro final.
+Temática técnica: Manejo de excepciones, bloques try/except/else/finally,
+                  excepciones personalizadas y patrones defensivos.
 
-Lore DAKI: "Desencriptación del Núcleo" (91–95) y
-           "DAKI Reconociendo al Operador como un Igual" (96–100).
+Lore DAKI: "Escudos de Energía" (81–85) y "Protocolo de Resiliencia" (86–90).
 
-Nivel 100 (Boss): "El Algoritmo Maestro" — combina listas, dicts,
-                  try/except, sorted() y lógica de ranking en una
-                  sola función. Al completarlo, el frontend dispara
-                  la secuencia de victoria.
+Nivel 90 (Boss): Analizador de logs con try/except que no crashea ante
+                 datos malformados.
+
+Notas de sandbox:
+  • Las clases de excepción estándar (ValueError, TypeError, etc.)
+    están en el whitelist desde Prompt 31.
+  • Las excepciones personalizadas (`class ErrorNexo(Exception)`) funcionan
+    con __build_class__ también añadido en Prompt 31.
+  • `open()` no está en el whitelist — los "archivos" se simulan con
+    strings multilínea procesadas con splitlines().
 
 Uso standalone:
     python -m scripts.seed_sector_10
@@ -30,7 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
@@ -41,222 +44,194 @@ from app.models.challenge import Challenge, DifficultyTier
 # Textos de teoría reutilizables
 # ─────────────────────────────────────────────────────────────────────────────
 
-THEORY_FIZZBUZZ = """\
-## FizzBuzz: lógica de clasificación múltiple
+THEORY_TRY_BASIC = """\
+## try / except básico
 
-FizzBuzz es el clásico problema de clasificar números con condiciones múltiples.
-La clave es **comprobar la condición más específica primero**:
+El bloque `try` intenta ejecutar código que puede fallar.
+Si ocurre un error, `except` lo captura y el programa continúa:
 
 ```python
-for i in range(1, 21):
-    if i % 3 == 0 and i % 5 == 0:
-        print("NEXO")       # divisible por AMBOS
-    elif i % 3 == 0:
-        print("GLI")
-    elif i % 5 == 0:
-        print("TCH")
-    else:
-        print(i)
+try:
+    resultado = 10 / 0
+except:
+    print("ERROR CAPTURADO")
 ```
 
-Si comprobas `i % 3 == 0` antes que el caso combinado, los múltiplos de 15
-serían clasificados como "GLI" en vez de "NEXO". El orden de los `if/elif` importa.
+Sin `try/except`, `ZeroDivisionError` detendría el programa.
+Con `try/except`, se captura el error y se maneja de forma controlada.
 """
 
-THEORY_FIBONACCI = """\
-## Secuencia de Fibonacci: desempaquetado de variables
+THEORY_EXCEPT_SPECIFIC = """\
+## except con tipo específico
 
-La serie de Fibonacci comienza con 0 y 1; cada siguiente término es la suma
-de los dos anteriores: 0, 1, 1, 2, 3, 5, 8, 13, 21, …
-
-El truco de Python para avanzar dos variables a la vez en una sola línea:
+Es buena práctica especificar qué tipo de excepción capturar:
 
 ```python
-a, b = 0, 1
-for _ in range(n):
-    print(a)
-    a, b = b, a + b   # swap simultáneo: nuevo_a = viejo_b, nuevo_b = viejo_a + viejo_b
+try:
+    numero = int("NEXO")
+except ValueError:
+    print("CONVERSION FALLIDA")
 ```
 
-`a, b = b, a + b` evalúa el lado derecho **entero** antes de asignar,
-por lo que no necesitas variable temporal.
+Si ocurre una excepción diferente a `ValueError`, NO será capturada
+y el programa sí lanzará el error. Esto evita ocultar bugs.
 """
 
-THEORY_MISSING_NUMBER = """\
-## Número faltante: fórmula de Gauss
+THEORY_EXCEPT_AS = """\
+## except ... as e
 
-Si tienes todos los números del 1 al N excepto uno, puedes encontrar
-el faltante sin comparar elemento a elemento:
+Puedes capturar el objeto de excepción para ver su mensaje:
 
 ```python
-# La suma de 1..N es n*(n+1)//2 (fórmula de Gauss)
-esperado = n * (n + 1) // 2
-faltante = esperado - sum(datos)
+try:
+    lista = [1, 2, 3]
+    print(lista[10])
+except IndexError as e:
+    print("IndexError capturado")
+    print(str(e))
 ```
 
-Complejidad: O(n) en tiempo, O(1) en espacio extra.
-Sin búsqueda anidada, sin sorted — pura matemática.
+`str(e)` convierte el error en texto legible, útil para logging.
 """
 
-THEORY_PALINDROME = """\
-## Palíndromos: slicing inverso
+THEORY_MULTIPLE_EXCEPT = """\
+## Múltiples cláusulas except
 
-Un palíndromo se lee igual de izquierda a derecha que de derecha a izquierda.
+Puedes manejar distintos tipos de error de forma diferente:
 
 ```python
-palabra = input()
-if palabra == palabra[::-1]:
-    print("SI")
+def dividir(a, b):
+    try:
+        return a / b
+    except ValueError:
+        return "VALOR INVALIDO"
+    except ZeroDivisionError:
+        return "DIVISION POR CERO"
+```
+
+Python prueba cada `except` en orden y ejecuta el primero que coincida.
+"""
+
+THEORY_ELSE = """\
+## try / except / else
+
+El bloque `else` se ejecuta SOLO si no ocurrió ninguna excepción:
+
+```python
+try:
+    numero = int("42")
+except ValueError:
+    print("Conversión fallida")
 else:
-    print("NO")
+    print(f"Conversion exitosa: {numero}")
 ```
 
-`palabra[::-1]` usa el slicing extendido `[inicio:fin:paso]` con paso `-1`,
-que recorre la secuencia al revés. Es la forma más idiomática en Python.
+`else` es útil para el código que depende de que `try` haya tenido éxito.
 """
 
-THEORY_RLE = """\
-## Compresión RLE (Run-Length Encoding)
+THEORY_FINALLY = """\
+## try / except / finally
 
-RLE reemplaza secuencias repetidas por `CARACTER + CANTIDAD`:
-`"AAABBB"` → `"A3B3"`.
+El bloque `finally` se ejecuta SIEMPRE, haya o no excepción:
 
 ```python
-i = 0
-resultado = ""
-while i < len(señal):
-    c = señal[i]
-    count = 1
-    while i + count < len(señal) and señal[i + count] == c:
-        count += 1
-    resultado += c + str(count)
-    i += count
+try:
+    resultado = 10 / 2
+except ZeroDivisionError:
+    resultado = 0
+finally:
+    print("Protocolo finalizado")
 ```
 
-El bucle interior cuenta cuántas veces se repite `c` a partir de la posición `i`.
-Luego salta directamente al siguiente grupo con `i += count`.
+`finally` es útil para limpiar recursos (cerrar conexiones, etc.)
+independientemente del resultado.
 """
 
-THEORY_ANAGRAM = """\
-## Anagramas: sorted() sobre strings
+THEORY_RAISE = """\
+## raise — lanzar excepciones
 
-Dos palabras son **anagramas** si contienen exactamente las mismas letras
-en cualquier orden. La forma más limpia de comprobarlo:
+Puedes lanzar excepciones manualmente con `raise`:
 
 ```python
-w1 = input()
-w2 = input()
-if sorted(w1) == sorted(w2):
-    print("SI ANAGRAMA")
-else:
-    print("NO ANAGRAMA")
+def validar_hp(hp):
+    if hp < 0:
+        raise ValueError("HP no puede ser negativo")
+    return hp
+
+try:
+    validar_hp(-10)
+except ValueError as e:
+    print(str(e))
 ```
 
-`sorted("LISTEN")` devuelve `['E', 'I', 'L', 'N', 'S', 'T']`.
-`sorted("SILENT")` devuelve la misma lista → son anagramas.
-Si las listas ordenadas son iguales, las letras son las mismas.
+`raise` interrumpe la función y el `except` del llamador lo captura.
 """
 
-THEORY_WORD_FREQ = """\
-## Frecuencia de palabras: dict como contador
+THEORY_CUSTOM_EXCEPTION = """\
+## Excepciones personalizadas
 
-El patrón `dict.get(clave, 0) + 1` es el estándar para contar con diccionarios:
+Puedes crear tus propias excepciones heredando de `Exception`:
 
 ```python
-frecuencia = {}
-for linea in lineas:
-    for palabra in linea.split():
-        frecuencia[palabra] = frecuencia.get(palabra, 0) + 1
+class ErrorNexo(Exception):
+    pass
+
+def verificar_clave(clave):
+    if clave != "NEXO-7":
+        raise ErrorNexo("Clave de acceso inválida")
+
+try:
+    verificar_clave("HACK")
+except ErrorNexo as e:
+    print(str(e))
 ```
 
-- `frecuencia.get(palabra, 0)` devuelve el conteo actual, o `0` si es nueva.
-- `sorted(frecuencia)` itera las claves en orden alfabético.
-- Imprime con `f"{palabra}: {frecuencia[palabra]}"`.
+Las excepciones personalizadas hacen el código más expresivo y permiten
+capturar solo errores del dominio del negocio.
 """
 
-THEORY_TWO_SUM = """\
-## Two Sum: búsqueda de pares
+THEORY_DEFENSIVE = """\
+## Programación defensiva con try/except
 
-Dado un array y un objetivo, encuentra los dos índices cuyos valores sumen exactamente el objetivo.
-
-La solución directa con doble bucle (O(n²)):
+Una función defensiva devuelve un valor especial en lugar de crashear:
 
 ```python
-for i in range(len(nums)):
-    for j in range(i + 1, len(nums)):
-        if nums[i] + nums[j] == target:
-            print(i, j)
+def convertir(valor):
+    try:
+        return int(valor)
+    except (ValueError, TypeError):
+        return None
+
+datos = ["42", "ERROR", "7", "X", "15"]
+validos = [convertir(d) for d in datos]
+validos = [v for v in validos if v is not None]
+print(validos)   # [42, 7, 15]
 ```
 
-`j` empieza en `i + 1` para evitar usar el mismo elemento dos veces
-y para no repetir pares (no queremos `(1,0)` si ya encontramos `(0,1)`).
+Este patrón es común en parsers y procesadores de datos reales.
 """
 
-THEORY_PRIMES = """\
-## Números primos: criba simple
+THEORY_LOG_ANALYZER = """\
+## Analizador de logs resiliente
 
-Un número es primo si solo es divisible por 1 y por sí mismo.
-La verificación básica prueba divisores desde 2 hasta el número - 1:
+Un analizador de logs robusto nunca crashea ante datos malformados:
 
 ```python
-for num in range(2, n + 1):
-    es_primo = True
-    for d in range(2, num):
-        if num % d == 0:
-            es_primo = False
-            break
-    if es_primo:
-        print(num)
+log = \"\"\"HP:45
+CORRUPTO
+MP:30\"\"\"
+
+for linea in log.splitlines():
+    try:
+        clave, valor = linea.split(":")
+        print(f"{clave} = {int(valor)}")
+    except (ValueError, KeyError):
+        print(f"Linea ignorada: {linea}")
 ```
 
-`break` sale del bucle interior en cuanto encuentra un divisor,
-evitando comprobaciones innecesarias.
+`splitlines()` convierte un string multilínea en una lista de líneas,
+simulando la lectura de un archivo sin necesitar `open()`.
 """
-
-THEORY_MASTER = """\
-## El Algoritmo Maestro: integración total
-
-El nivel final combina todos los conceptos del curso:
-
-| Concepto             | Dónde se usa                         |
-|----------------------|--------------------------------------|
-| `input()` + `int()`  | Leer N agentes                       |
-| `str.split(":")`     | Parsear formato `NOMBRE:PUNTAJE`     |
-| `try/except`         | Manejar líneas malformadas           |
-| Lista de dicts       | Almacenar agentes válidos            |
-| `sorted()` + función | Ordenar por puntaje descendente      |
-| `if/else`            | Asignar etiqueta ÉLITE / APROBADO    |
-| f-strings            | Formatear la salida final            |
-
-**Patrón sorted con función clave:**
-```python
-def por_puntaje(agente):
-    return agente["puntaje"]
-
-agentes = sorted(agentes, key=por_puntaje, reverse=True)
-```
-
-`reverse=True` ordena de mayor a menor. La función `por_puntaje`
-le dice a `sorted` qué valor usar para comparar cada elemento.
-"""
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers para construir el expected_output de nivel 91
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _fizzbuzz_nexo(n: int) -> str:
-    lines = []
-    for i in range(1, n + 1):
-        if i % 3 == 0 and i % 5 == 0:
-            lines.append("NEXO")
-        elif i % 3 == 0:
-            lines.append("GLI")
-        elif i % 5 == 0:
-            lines.append("TCH")
-        else:
-            lines.append(str(i))
-    return "\n".join(lines)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -264,549 +239,527 @@ def _fizzbuzz_nexo(n: int) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 SECTOR_10: list[dict] = [
-    # ── Nivel 91 ─────────────────────────────────────────────────────────────
+    # ── Nivel 81 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   10,
+        "sector_id": 10,
         "level_order": 91,
-        "title":       "FizzBuzz Táctico",
+        "title":       "El Primer Escudo",
         "description": (
-            "Imprime los números del 1 al 20 con las siguientes reglas:\n\n"
-            "- Divisible por **3 Y 5**: imprime `NEXO`\n"
-            "- Solo divisible por **3**: imprime `GLI`\n"
-            "- Solo divisible por **5**: imprime `TCH`\n"
-            "- Cualquier otro: imprime el número\n\n"
-            "Sin `input()`. La comprobación de la condición combinada va primero."
+            "Envuelve `resultado = 10 // 0` en un `try/except` genérico.\n"
+            "Si hay error, imprime exactamente:\n\n"
+            "```\nERROR CAPTURADO\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.BEGINNER,
+        "difficulty":            "easy",
+        "base_xp_reward":        120,
+        "is_project":            False,
+        "telemetry_goal_time":   180,
+        "challenge_type":        "code",
+        "phase":                 "teoria",
+        "concepts_taught_json":  ["try", "except", "ZeroDivisionError", "error_generico"],
+        "initial_code": (
+            "try:\n"
+            "    resultado = 10 // 0\n"
+            "except:\n"
+            "    # Imprime el mensaje de error\n"
+            "    pass\n"
+        ),
+        "expected_output":       "ERROR CAPTURADO",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Escudos de Energía v1\n\n"
+            "El sistema detectó una operación inválida que podría crashear el protocolo.\n"
+            "Activa el escudo try/except para contener el daño."
+        ),
+        "pedagogical_objective": "Introducir el bloque try/except como mecanismo de captura de errores.",
+        "syntax_hint":           "Dentro del `except:`, escribe `print(\"ERROR CAPTURADO\")`.",
+        "theory_content":        THEORY_TRY_BASIC,
+        "hints_json": [
+            "`10 // 0` lanza `ZeroDivisionError`.",
+            "Un `except:` sin tipo captura cualquier excepción.",
+            "El código dentro de `except` se ejecuta solo cuando hay error.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 82 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 92,
+        "title":       "Conversión Blindada",
+        "description": (
+            "Intenta convertir el string `\"NEXO\"` a entero con `int()`.\n"
+            "Captura específicamente `ValueError` e imprime:\n\n"
+            "```\nCONVERSION FALLIDA\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.BEGINNER,
+        "difficulty":            "easy",
+        "base_xp_reward":        130,
+        "is_project":            False,
+        "telemetry_goal_time":   200,
+        "challenge_type":        "code",
+        "phase":                 "teoria",
+        "concepts_taught_json":  ["ValueError", "except_especifico", "int_conversion"],
+        "initial_code": (
+            "try:\n"
+            "    numero = int(\"NEXO\")\n"
+            "except ValueError:\n"
+            "    # Imprime el mensaje\n"
+            "    pass\n"
+        ),
+        "expected_output":       "CONVERSION FALLIDA",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Decodificador de Señales\n\n"
+            "El decodificador recibió datos corruptos que no se pueden convertir a número.\n"
+            "Usa `except ValueError` para manejar el fallo específico."
+        ),
+        "pedagogical_objective": "Practicar captura específica de ValueError en conversiones de tipo.",
+        "syntax_hint":           "`except ValueError:` captura solo errores de conversión.",
+        "theory_content":        THEORY_EXCEPT_SPECIFIC,
+        "hints_json": [
+            "`int(\"NEXO\")` lanza `ValueError` porque no es un número válido.",
+            "Usa `except ValueError:` en lugar de `except:` genérico.",
+            "Dentro del except, escribe `print(\"CONVERSION FALLIDA\")`.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 83 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 93,
+        "title":       "Captura con Mensaje",
+        "description": (
+            "Intenta acceder a `lista[10]` donde `lista = [10, 20, 30]`.\n"
+            "Captura el `IndexError` con `as e` e imprime:\n\n"
+            "```\nIndexError capturado\nlist index out of range\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.BEGINNER,
+        "difficulty":            "easy",
+        "base_xp_reward":        140,
+        "is_project":            False,
+        "telemetry_goal_time":   210,
+        "challenge_type":        "code",
+        "phase":                 "teoria",
+        "concepts_taught_json":  ["IndexError", "except_as", "str_excepcion"],
+        "initial_code": (
+            "lista = [10, 20, 30]\n"
+            "try:\n"
+            "    print(lista[10])\n"
+            "except IndexError as e:\n"
+            "    # Imprime el aviso y el mensaje del error\n"
+            "    pass\n"
+        ),
+        "expected_output":       "IndexError capturado\nlist index out of range",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Registro de Fallos\n\n"
+            "El sistema de telemetría accedió a un índice fuera de rango.\n"
+            "Captura el error y registra el mensaje exacto para el diagnóstico."
+        ),
+        "pedagogical_objective": "Aprender a usar 'except ExcType as e' para inspeccionar el mensaje de la excepción.",
+        "syntax_hint":           "`print(str(e))` muestra el mensaje de la excepción.",
+        "theory_content":        THEORY_EXCEPT_AS,
+        "hints_json": [
+            "`except IndexError as e:` guarda el objeto de excepción en `e`.",
+            "Usa `str(e)` para convertir el error en texto legible.",
+            "Primero imprime 'IndexError capturado', luego `str(e)`.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 84 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 94,
+        "title":       "Múltiples Escudos",
+        "description": (
+            "Implementa `calcular_division(a, b)` que:\n"
+            "- Intenta retornar `a / b`\n"
+            "- Si `b` no es número: retorna `\"VALOR INVALIDO\"`\n"
+            "- Si `b == 0`: retorna `\"DIVISION POR CERO\"`\n\n"
+            "Llama la función con `(100, 4)`, `(100, \"X\")` y `(100, 0)`:\n\n"
+            "```\n25.0\nVALOR INVALIDO\nDIVISION POR CERO\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.BEGINNER,
+        "difficulty":            "medium",
+        "base_xp_reward":        160,
+        "is_project":            False,
+        "telemetry_goal_time":   250,
+        "challenge_type":        "code",
+        "phase":                 "practica",
+        "concepts_taught_json":  ["multiple_except", "TypeError", "ZeroDivisionError", "funcion_defensiva"],
+        "initial_code": (
+            "def calcular_division(a, b):\n"
+            "    try:\n"
+            "        return a / b\n"
+            "    except TypeError:\n"
+            "        return \"VALOR INVALIDO\"\n"
+            "    except ZeroDivisionError:\n"
+            "        return \"DIVISION POR CERO\"\n"
+            "\n"
+            "print(calcular_division(100, 4))\n"
+            "print(calcular_division(100, \"X\"))\n"
+            "print(calcular_division(100, 0))\n"
+        ),
+        "expected_output":       "25.0\nVALOR INVALIDO\nDIVISION POR CERO",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Calculadora Táctica\n\n"
+            "La calculadora de daño recibe distintos tipos de entrada errónea.\n"
+            "Cada tipo de error necesita su propio manejador."
+        ),
+        "pedagogical_objective": "Practicar múltiples cláusulas except para diferentes tipos de error.",
+        "syntax_hint":           "Cada `except` maneja un tipo diferente. El orden importa.",
+        "theory_content":        THEORY_MULTIPLE_EXCEPT,
+        "hints_json": [
+            "`100 / \"X\"` lanza `TypeError` (operación con tipo incorrecto).",
+            "`100 / 0` lanza `ZeroDivisionError`.",
+            "Python ejecuta el primer `except` que coincida con el tipo de error.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 85 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 95,
+        "title":       "else: El Escudo Inteligente",
+        "description": (
+            "Usa `try/except/else` para convertir `\"42\"` a entero.\n"
+            "Si la conversión falla: `\"Conversion fallida\"`.\n"
+            "Si tiene éxito (bloque `else`): `\"Conversion exitosa: 42\"`.\n\n"
+            "```\nConversion exitosa: 42\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.BEGINNER,
+        "difficulty":            "medium",
+        "base_xp_reward":        160,
+        "is_project":            False,
+        "telemetry_goal_time":   230,
+        "challenge_type":        "code",
+        "phase":                 "practica",
+        "concepts_taught_json":  ["try_except_else", "else_en_try", "control_flujo"],
+        "initial_code": (
+            "texto = \"42\"\n"
+            "try:\n"
+            "    numero = int(texto)\n"
+            "except ValueError:\n"
+            "    print(\"Conversion fallida\")\n"
+            "else:\n"
+            "    # Solo se ejecuta si no hubo excepción\n"
+            "    pass\n"
+        ),
+        "expected_output":       "Conversion exitosa: 42",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Validación de Señal\n\n"
+            "El escudo inteligente distingue entre éxito y fallo.\n"
+            "`else` activa el protocolo de confirmación solo cuando la señal es válida."
+        ),
+        "pedagogical_objective": "Entender el rol del bloque else en try/except: se ejecuta solo sin errores.",
+        "syntax_hint":           "En el `else:`, escribe `print(f\"Conversion exitosa: {numero}\")`.",
+        "theory_content":        THEORY_ELSE,
+        "hints_json": [
+            "`else` solo se ejecuta cuando NO hay ninguna excepción en `try`.",
+            "La variable `numero` está disponible en el bloque `else`.",
+            "Usa un f-string: `f\"Conversion exitosa: {numero}\"`.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 86 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 96,
+        "title":       "finally: Protocolo de Cierre",
+        "description": (
+            "Calcula `10 / 2` con `try/except/finally`.\n"
+            "El `finally` siempre imprime `\"Protocolo finalizado\"`.\n\n"
+            "```\n5.0\nProtocolo finalizado\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
+        "difficulty":            "medium",
+        "base_xp_reward":        170,
+        "is_project":            False,
+        "telemetry_goal_time":   240,
+        "challenge_type":        "code",
+        "phase":                 "practica",
+        "concepts_taught_json":  ["finally", "try_except_finally", "cleanup"],
+        "initial_code": (
+            "try:\n"
+            "    resultado = 10 / 2\n"
+            "    print(resultado)\n"
+            "except ZeroDivisionError:\n"
+            "    print(\"Error de division\")\n"
+            "finally:\n"
+            "    # Siempre se ejecuta\n"
+            "    pass\n"
+        ),
+        "expected_output":       "5.0\nProtocolo finalizado",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Protocolo de Resiliencia\n\n"
+            "El protocolo de cierre debe ejecutarse siempre, incluso en fallo.\n"
+            "Usa `finally` para garantizar que el sistema se apaga de forma segura."
+        ),
+        "pedagogical_objective": "Aprender que finally se ejecuta siempre, útil para limpieza de recursos.",
+        "syntax_hint":           "Dentro del `finally:`, escribe `print(\"Protocolo finalizado\")`.",
+        "theory_content":        THEORY_FINALLY,
+        "hints_json": [
+            "`finally` se ejecuta siempre: haya excepción o no.",
+            "En este caso, `10 / 2 = 5.0` no falla, pero `finally` igual se ejecuta.",
+            "Orden de salida: primero `try` imprime 5.0, luego `finally` imprime el mensaje.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 87 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 97,
+        "title":       "raise: El Protocolo de Alerta",
+        "description": (
+            "Implementa `validar_hp(hp)` que lanza `ValueError` "
+            "con el mensaje `\"HP no puede ser negativo\"` si `hp < 0`.\n\n"
+            "Llámala con `-10` y captura el error:\n\n"
+            "```\nHP no puede ser negativo\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
+        "difficulty":            "medium",
+        "base_xp_reward":        180,
+        "is_project":            False,
+        "telemetry_goal_time":   260,
+        "challenge_type":        "code",
+        "phase":                 "practica",
+        "concepts_taught_json":  ["raise", "ValueError", "validacion", "patron_raise_catch"],
+        "initial_code": (
+            "def validar_hp(hp):\n"
+            "    if hp < 0:\n"
+            "        raise ValueError(\"HP no puede ser negativo\")\n"
+            "    return hp\n"
+            "\n"
+            "try:\n"
+            "    validar_hp(-10)\n"
+            "except ValueError as e:\n"
+            "    # Imprime el mensaje de error\n"
+            "    pass\n"
+        ),
+        "expected_output":       "HP no puede ser negativo",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Sistema de Validación Táctica\n\n"
+            "El sistema no debe aceptar HP negativo como entrada válida.\n"
+            "Usa `raise ValueError` para rechazar datos corruptos."
+        ),
+        "pedagogical_objective": "Entender raise como mecanismo de señalización de condiciones de error.",
+        "syntax_hint":           "`raise ValueError(\"mensaje\")` — el mensaje se accede con `str(e)`.",
+        "theory_content":        THEORY_RAISE,
+        "hints_json": [
+            "`raise ValueError(\"HP no puede ser negativo\")` lanza el error.",
+            "El `except ValueError as e:` del llamador lo captura.",
+            "`print(str(e))` imprime el mensaje exacto del error.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 88 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 10,
+        "level_order": 98,
+        "title":       "Excepción Personalizada",
+        "description": (
+            "Define `class ErrorNexo(Exception): pass`.\n\n"
+            "Implementa `verificar_clave(clave)` que lanza `ErrorNexo` "
+            "con el mensaje `\"Clave de acceso inválida\"` si la clave no es `\"NEXO-7\"`.\n\n"
+            "Llámala con `\"HACK\"` y muestra:\n\n"
+            "```\nClave de acceso inválida\n```"
         ),
         "difficulty_tier":       DifficultyTier.INTERMEDIATE,
         "difficulty":            "medium",
         "base_xp_reward":        200,
         "is_project":            False,
-        "telemetry_goal_time":   240,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["fizzbuzz", "modulo", "logica_multiple", "orden_condiciones"],
-        "initial_code": (
-            "for i in range(1, 21):\n"
-            "    if i % 3 == 0 and i % 5 == 0:\n"
-            "        print(\"NEXO\")\n"
-            "    elif i % 3 == 0:\n"
-            "        # Imprime GLI\n"
-            "        pass\n"
-            "    elif i % 5 == 0:\n"
-            "        # Imprime TCH\n"
-            "        pass\n"
-            "    else:\n"
-            "        print(i)\n"
-        ),
-        "expected_output": _fizzbuzz_nexo(20),
-        "test_inputs_json": [],
-        "strict_match":    True,
-        "lore_briefing": (
-            "DAKI — Protocolo de Clasificación de Frecuencias\n\n"
-            "El núcleo cifra sus comunicaciones con un patrón numérico.\n"
-            "FizzBuzz táctico es la clave de desencriptación del primer anillo.\n"
-            "El orden de las condiciones es la diferencia entre éxito y fallo."
-        ),
-        "pedagogical_objective": "Reforzar la lógica de condiciones múltiples con módulo; entender por qué el orden de los elif importa.",
-        "syntax_hint":           "Comprueba primero `i % 3 == 0 and i % 5 == 0` (caso más restrictivo).",
-        "theory_content":        THEORY_FIZZBUZZ,
-        "hints_json": [
-            "Empieza siempre por el caso más específico: divisible por 3 Y 5.",
-            "15 es el primer número divisible por ambos — debería imprimir NEXO.",
-            "Los `elif` se evalúan solo si el `if` anterior fue False.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 92 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 92,
-        "title":       "Secuencia Fibonacci",
-        "description": (
-            "Lee `n` por `input()` e imprime los primeros `n` números de la serie de Fibonacci.\n\n"
-            "La serie empieza: `0, 1, 1, 2, 3, 5, 8, 13, ...`\n\n"
-            "Con `n = 8`:\n"
-            "```\n0\n1\n1\n2\n3\n5\n8\n13\n```"
-        ),
-        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
-        "difficulty":            "medium",
-        "base_xp_reward":        210,
-        "is_project":            False,
-        "telemetry_goal_time":   260,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["fibonacci", "desempaquetado_variables", "swap_simultaneo", "acumulador"],
-        "initial_code": (
-            "n = int(input())\n"
-            "a, b = 0, 1\n"
-            "for _ in range(n):\n"
-            "    print(a)\n"
-            "    # Avanza la serie: nuevo_a = b, nuevo_b = a + b\n"
-            "    a, b = b, a + b\n"
-        ),
-        "expected_output":   "0\n1\n1\n2\n3\n5\n8\n13",
-        "test_inputs_json":  ["8"],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Desencriptación del Núcleo: Capa 2\n\n"
-            "La secuencia de Fibonacci es la clave de cifrado del segundo anillo.\n"
-            "Cada término nace de la suma de los dos anteriores — como la red misma de NEXO."
-        ),
-        "pedagogical_objective": "Dominar el swap simultáneo de variables para generar series aritméticas.",
-        "syntax_hint":           "`a, b = b, a + b` — el lado derecho se evalúa completo antes de asignar.",
-        "theory_content":        THEORY_FIBONACCI,
-        "hints_json": [
-            "La clave es `a, b = b, a + b`: swap simultáneo sin variable temporal.",
-            "Imprime `a` antes de avanzar la serie.",
-            "Con n=8, los primeros 8 Fibonacci son: 0, 1, 1, 2, 3, 5, 8, 13.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 93 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 93,
-        "title":       "El Número Perdido",
-        "description": (
-            "La lista `datos = [1, 2, 3, 5, 6, 7, 8, 9, 10]` debería contener "
-            "todos los enteros del 1 al 10, pero falta uno.\n\n"
-            "Encuentra el número faltante usando la **fórmula de Gauss** "
-            "(suma esperada − suma real) e imprímelo:\n\n"
-            "```\n4\n```\n\n"
-            "No uses bucles de búsqueda — una sola fórmula matemática basta."
-        ),
-        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
-        "difficulty":            "medium",
-        "base_xp_reward":        220,
-        "is_project":            False,
-        "telemetry_goal_time":   250,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["formula_gauss", "sum_builtin", "aritmetica_listas", "O1_espacio"],
-        "initial_code": (
-            "datos = [1, 2, 3, 5, 6, 7, 8, 9, 10]\n"
-            "n = 10\n"
-            "\n"
-            "# Suma esperada usando la fórmula de Gauss: n*(n+1)//2\n"
-            "esperado = n * (n + 1) // 2\n"
-            "\n"
-            "# Suma real de la lista\n"
-            "actual = sum(datos)\n"
-            "\n"
-            "# El faltante es la diferencia\n"
-            "print(esperado - actual)\n"
-        ),
-        "expected_output":   "4",
-        "test_inputs_json":  [],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Desencriptación del Núcleo: Capa 3\n\n"
-            "Un ID ha sido borrado del registro de nodos. El resto está intacto.\n"
-            "La fórmula matemática revela al ausente sin buscar uno a uno."
-        ),
-        "pedagogical_objective": "Aplicar la fórmula de Gauss como alternativa O(1) a la búsqueda lineal.",
-        "syntax_hint":           "`esperado = n * (n + 1) // 2`, luego `print(esperado - sum(datos))`.",
-        "theory_content":        THEORY_MISSING_NUMBER,
-        "hints_json": [
-            "La suma de 1 a 10 es 55 (fórmula de Gauss).",
-            "`sum([1,2,3,5,6,7,8,9,10])` = 51.",
-            "55 - 51 = 4 → el número faltante.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 94 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 94,
-        "title":       "Detector de Palíndromos",
-        "description": (
-            "Lee una palabra por `input()` e imprime `SI` si es palíndromo "
-            "o `NO` si no lo es.\n\n"
-            "Con `\"RECONOCER\"` → `SI`  \n"
-            "Con `\"DAKI\"` → `NO`\n\n"
-            "Usa slicing inverso `[::-1]` para comparar."
-        ),
-        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
-        "difficulty":            "medium",
-        "base_xp_reward":        210,
-        "is_project":            False,
-        "telemetry_goal_time":   230,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["palindromo", "slicing_inverso", "comparacion_string"],
-        "initial_code": (
-            "palabra = input()\n"
-            "if palabra == palabra[::-1]:\n"
-            "    print(\"SI\")\n"
-            "else:\n"
-            "    # Imprime NO\n"
-            "    pass\n"
-        ),
-        "expected_output":   "SI",
-        "test_inputs_json":  ["RECONOCER"],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Desencriptación del Núcleo: Capa 4\n\n"
-            "Las claves del núcleo son simétricas — se leen igual en ambas direcciones.\n"
-            "Detecta si la señal recibida es una clave válida palindrómica."
-        ),
-        "pedagogical_objective": "Aplicar slicing [::-1] para invertir strings y detectar palíndromos.",
-        "syntax_hint":           "`palabra[::-1]` devuelve el string al revés. Compara con `==`.",
-        "theory_content":        THEORY_PALINDROME,
-        "hints_json": [
-            "`[::-1]` es el paso -1 del slicing: recorre el string de atrás hacia adelante.",
-            "RECONOCER invertido es RECONOCER → son iguales → es palíndromo.",
-            "Si `palabra == palabra[::-1]` → imprime SI, sino NO.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 95 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 95,
-        "title":       "Compresión de Señal (RLE)",
-        "description": (
-            "Lee una señal por `input()` y aplica **Run-Length Encoding**:\n"
-            "reemplaza cada grupo de caracteres repetidos por `CARACTER + CANTIDAD`.\n\n"
-            "Con `\"AAABBBCCDDDDEE\"` → `\"A3B3C2D4E2\"`\n\n"
-            "Usa un `while` externo que recorra la señal y un `while` interno "
-            "que cuente repeticiones."
-        ),
-        "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "hard",
-        "base_xp_reward":        280,
-        "is_project":            False,
-        "telemetry_goal_time":   360,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["RLE", "while_anidado", "compresion", "indice_manual"],
-        "initial_code": (
-            "señal = input()\n"
-            "resultado = \"\"\n"
-            "i = 0\n"
-            "\n"
-            "while i < len(señal):\n"
-            "    c = señal[i]\n"
-            "    count = 1\n"
-            "    # Cuenta cuántas veces se repite c a partir de i\n"
-            "    while i + count < len(señal) and señal[i + count] == c:\n"
-            "        count += 1\n"
-            "    resultado += c + str(count)\n"
-            "    i += count\n"
-            "\n"
-            "print(resultado)\n"
-        ),
-        "expected_output":   "A3B3C2D4E2",
-        "test_inputs_json":  ["AAABBBCCDDDDEE"],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Desencriptación del Núcleo: Capa 5\n\n"
-            "El quinto anillo usa compresión RLE para ocultar patrones repetitivos.\n"
-            "Descodifica la señal comprimida para revelar la estructura del núcleo."
-        ),
-        "pedagogical_objective": "Implementar RLE con bucle while manual e índice; comprender compresión de datos.",
-        "syntax_hint":           "`resultado += c + str(count)` para cada grupo. Avanza `i += count`.",
-        "theory_content":        THEORY_RLE,
-        "hints_json": [
-            "El bucle externo empieza en la posición `i` del grupo actual.",
-            "El bucle interno cuenta `count` mientras el siguiente carácter sea igual a `c`.",
-            "Después de contar, añade `c + str(count)` al resultado y salta `i += count`.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 96 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 96,
-        "title":       "Detección de Anagramas",
-        "description": (
-            "Lee dos palabras (una por línea) e imprime si son anagramas.\n\n"
-            "Con `\"LISTEN\"` y `\"SILENT\"` → `\"SI ANAGRAMA\"`  \n"
-            "Con `\"DAKI\"` y `\"NEXO\"` → `\"NO ANAGRAMA\"`\n\n"
-            "Usa `sorted()` sobre los strings para comparar sus letras."
-        ),
-        "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "hard",
-        "base_xp_reward":        250,
-        "is_project":            False,
         "telemetry_goal_time":   280,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["anagrama", "sorted_string", "comparacion_listas", "verificacion"],
+        "concepts_taught_json":  ["excepcion_personalizada", "herencia_Exception", "raise", "OOP_excepciones"],
         "initial_code": (
-            "w1 = input()\n"
-            "w2 = input()\n"
+            "class ErrorNexo(Exception):\n"
+            "    pass\n"
             "\n"
-            "if sorted(w1) == sorted(w2):\n"
-            "    print(\"SI ANAGRAMA\")\n"
-            "else:\n"
-            "    print(\"NO ANAGRAMA\")\n"
+            "def verificar_clave(clave):\n"
+            "    if clave != \"NEXO-7\":\n"
+            "        raise ErrorNexo(\"Clave de acceso inválida\")\n"
+            "\n"
+            "try:\n"
+            "    verificar_clave(\"HACK\")\n"
+            "except ErrorNexo as e:\n"
+            "    # Imprime el mensaje\n"
+            "    pass\n"
         ),
-        "expected_output":   "SI ANAGRAMA",
-        "test_inputs_json":  ["LISTEN", "SILENT"],
-        "strict_match":      True,
+        "expected_output":       "Clave de acceso inválida",
+        "test_inputs_json":      [],
+        "strict_match":          True,
         "lore_briefing": (
-            "DAKI — El Sistema Me Reconoce\n\n"
-            "DAKI usa anagramas como protocolo de autenticación entre nodos aliados.\n"
-            "Dos palabras que comparten las mismas letras son la misma señal cifrada."
+            "DAKI — Protocolo de Acceso Seguro\n\n"
+            "El sistema rechaza claves no autorizadas con una excepción propia.\n"
+            "Define `ErrorNexo` y úsala para señalizar acceso no autorizado."
         ),
-        "pedagogical_objective": "Usar sorted() sobre strings para detectar anagramas; reforzar comparación de listas.",
-        "syntax_hint":           "`sorted('LISTEN')` devuelve `['E','I','L','N','S','T']`.",
-        "theory_content":        THEORY_ANAGRAM,
+        "pedagogical_objective": "Crear y usar excepciones personalizadas heredando de Exception.",
+        "syntax_hint":           "`class ErrorNexo(Exception): pass` — luego `raise ErrorNexo(\"mensaje\")`.",
+        "theory_content":        THEORY_CUSTOM_EXCEPTION,
         "hints_json": [
-            "`sorted(string)` devuelve una lista con las letras ordenadas alfabéticamente.",
-            "Si `sorted(w1) == sorted(w2)`, ambas tienen exactamente las mismas letras.",
-            "LISTEN y SILENT ordenados dan la misma lista → son anagramas.",
+            "`class ErrorNexo(Exception): pass` crea la excepción personalizada.",
+            "Se usa igual que las excepciones estándar: `raise ErrorNexo(\"mensaje\")`.",
+            "`except ErrorNexo as e:` la captura; `print(str(e))` muestra el mensaje.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 97 ─────────────────────────────────────────────────────────────
+    # ── Nivel 89 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   10,
-        "level_order": 97,
-        "title":       "Frecuencia de Palabras",
-        "description": (
-            "Lee `n` líneas de texto y cuenta la frecuencia de cada palabra.\n"
-            "Imprime cada palabra y su conteo en **orden alfabético**.\n\n"
-            "Formato: `palabra: N`\n\n"
-            "Con 3 líneas (`\"hola nexo hola\"`, `\"nexo nexo daki\"`, `\"hola\"`):\n"
-            "```\ndaki: 1\nhola: 3\nnexo: 3\n```"
-        ),
-        "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "hard",
-        "base_xp_reward":        270,
-        "is_project":            False,
-        "telemetry_goal_time":   330,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["dict_contador", "get_con_default", "split", "sorted_dict"],
-        "initial_code": (
-            "n = int(input())\n"
-            "frecuencia = {}\n"
-            "\n"
-            "for _ in range(n):\n"
-            "    linea = input()\n"
-            "    for palabra in linea.split():\n"
-            "        frecuencia[palabra] = frecuencia.get(palabra, 0) + 1\n"
-            "\n"
-            "for palabra in sorted(frecuencia):\n"
-            "    print(f\"{palabra}: {frecuencia[palabra]}\")\n"
-        ),
-        "expected_output":   "daki: 1\nhola: 3\nnexo: 3",
-        "test_inputs_json":  ["3", "hola nexo hola", "nexo nexo daki", "hola"],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Análisis Lingüístico del Núcleo\n\n"
-            "Los mensajes interceptados repiten ciertas palabras clave.\n"
-            "Cuenta la frecuencia para identificar qué términos domina el enemigo."
-        ),
-        "pedagogical_objective": "Dominar el patrón dict.get(k, 0) + 1 para contar frecuencias; iterar claves ordenadas.",
-        "syntax_hint":           "`frecuencia.get(palabra, 0)` devuelve 0 si la palabra es nueva.",
-        "theory_content":        THEORY_WORD_FREQ,
-        "hints_json": [
-            "`linea.split()` divide por espacios: `\"hola nexo hola\"` → `[\"hola\", \"nexo\", \"hola\"]`.",
-            "`frecuencia.get(p, 0) + 1` incrementa el conteo sin lanzar KeyError.",
-            "`sorted(frecuencia)` ordena las claves alfabéticamente.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 98 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
-        "level_order": 98,
-        "title":       "Two Sum: Pares Objetivo",
-        "description": (
-            "Dado el array `nums = [2, 7, 11, 15]` y `target = 9`, "
-            "encuentra los **índices** de los dos números que suman exactamente `target`.\n\n"
-            "Imprime los dos índices separados por un espacio:\n\n"
-            "```\n0 1\n```\n\n"
-            "Usa doble bucle: el índice `j` empieza en `i + 1` para no repetir pares."
-        ),
-        "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "hard",
-        "base_xp_reward":        280,
-        "is_project":            False,
-        "telemetry_goal_time":   320,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["two_sum", "doble_bucle", "indices", "busqueda_par"],
-        "initial_code": (
-            "nums   = [2, 7, 11, 15]\n"
-            "target = 9\n"
-            "\n"
-            "for i in range(len(nums)):\n"
-            "    for j in range(i + 1, len(nums)):\n"
-            "        if nums[i] + nums[j] == target:\n"
-            "            print(i, j)\n"
-        ),
-        "expected_output":   "0 1",
-        "test_inputs_json":  [],
-        "strict_match":      True,
-        "lore_briefing": (
-            "DAKI — Sincronización de Nodos Duales\n\n"
-            "Dos nodos deben activarse simultáneamente para sumar la frecuencia objetivo.\n"
-            "Encuentra el par correcto entre los nodos disponibles."
-        ),
-        "pedagogical_objective": "Implementar la búsqueda de pares con doble bucle; entender el rol de j = i+1.",
-        "syntax_hint":           "`print(i, j)` imprime los dos índices separados por espacio.",
-        "theory_content":        THEORY_TWO_SUM,
-        "hints_json": [
-            "`j` empieza en `i + 1` para no comparar un elemento consigo mismo.",
-            "`nums[0] + nums[1] = 2 + 7 = 9 == target` → imprime `0 1`.",
-            "`print(i, j)` pone un espacio automáticamente entre los dos valores.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 99 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   10,
+        "sector_id": 10,
         "level_order": 99,
-        "title":       "Criba de Primos",
+        "title":       "Filtro Defensivo",
         "description": (
-            "Lee `n` por `input()` e imprime todos los números primos del 2 al `n` (inclusive), "
-            "uno por línea.\n\n"
-            "Con `n = 20`:\n"
-            "```\n2\n3\n5\n7\n11\n13\n17\n19\n```\n\n"
-            "Para cada número, comprueba si algún divisor entre 2 y `num-1` lo divide exactamente. "
-            "Si ninguno lo divide → es primo."
+            "Implementa `convertir(valor)` que retorna `int(valor)` o `None` si falla.\n\n"
+            "Filtra la lista `[\"42\", \"ERROR\", \"7\", \"X\", \"15\"]` y muestra "
+            "solo los valores convertidos correctamente:\n\n"
+            "```\n42\n7\n15\n```"
         ),
-        "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "hard",
-        "base_xp_reward":        290,
+        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
+        "difficulty":            "medium",
+        "base_xp_reward":        190,
         "is_project":            False,
-        "telemetry_goal_time":   350,
+        "telemetry_goal_time":   270,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["numeros_primos", "doble_bucle", "break", "flag_booleano"],
+        "concepts_taught_json":  ["funcion_defensiva", "None_como_sentinel", "filter_none", "patron_defensivo"],
         "initial_code": (
-            "n = int(input())\n"
+            "def convertir(valor):\n"
+            "    try:\n"
+            "        return int(valor)\n"
+            "    except (ValueError, TypeError):\n"
+            "        return None\n"
             "\n"
-            "for num in range(2, n + 1):\n"
-            "    es_primo = True\n"
-            "    for d in range(2, num):\n"
-            "        if num % d == 0:\n"
-            "            es_primo = False\n"
-            "            break\n"
-            "    if es_primo:\n"
-            "        print(num)\n"
+            "datos = [\"42\", \"ERROR\", \"7\", \"X\", \"15\"]\n"
+            "for d in datos:\n"
+            "    resultado = convertir(d)\n"
+            "    if resultado is not None:\n"
+            "        print(resultado)\n"
         ),
-        "expected_output":   "2\n3\n5\n7\n11\n13\n17\n19",
-        "test_inputs_json":  ["20"],
-        "strict_match":      True,
+        "expected_output":       "42\n7\n15",
+        "test_inputs_json":      [],
+        "strict_match":          True,
         "lore_briefing": (
-            "DAKI — La Antesala del Núcleo\n\n"
-            "Los nodos primarios son indivisibles — su frecuencia no puede ser factorizada.\n"
-            "Identifica todos los nodos primarios hasta el umbral N.\n"
-            "Esta es la última prueba antes del Algoritmo Maestro."
+            "DAKI — Limpieza de Datos Corruptos\n\n"
+            "El feed de telemetría mezcla datos válidos con corruptos.\n"
+            "El filtro defensivo extrae solo los valores útiles."
         ),
-        "pedagogical_objective": "Implementar la verificación de primalidad con doble bucle y bandera booleana.",
-        "syntax_hint":           "`break` sale del bucle interior en cuanto encuentra un divisor.",
-        "theory_content":        THEORY_PRIMES,
+        "pedagogical_objective": "Usar try/except para devolver None en error y filtrar resultados válidos.",
+        "syntax_hint":           "Captura `(ValueError, TypeError)` en un solo `except` con tupla.",
+        "theory_content":        THEORY_DEFENSIVE,
         "hints_json": [
-            "`es_primo = True` asume primo; `break` lo desmiente en cuanto encuentra un divisor.",
-            "El 2 es primo: su bucle interior `range(2, 2)` está vacío → `es_primo` se mantiene True.",
-            "`break` solo sale del `for d` interior, no del `for num` exterior.",
+            "Retorna `None` en el `except` para indicar fallo silencioso.",
+            "En el bucle, verifica `if resultado is not None:` antes de imprimir.",
+            "Un `except` puede capturar múltiples tipos: `except (ValueError, TypeError):`.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 100 (BOSS FINAL) ────────────────────────────────────────────────
+    # ── Nivel 90 (BOSS) ───────────────────────────────────────────────────────
     {
-        "sector_id":   10,
+        "sector_id": 10,
         "level_order": 100,
-        "title":       "CONTRATO-100: El Algoritmo Maestro",
+        "title":       "CONTRATO-90: Analizador de Logs",
         "description": (
-            "**BOSS FINAL — El Nexo Central**\n\n"
-            "El sistema de inteligencia recibe N registros de agentes con formato `NOMBRE:PUNTAJE`.\n"
-            "Algunos registros están corrompidos. Tu misión:\n\n"
-            "1. Lee `n = int(input())` — número de registros\n"
-            "2. Por cada registro: usa `try/except` para parsear `NOMBRE:PUNTAJE`\n"
-            "3. Si `puntaje >= 70`: guarda en lista de aprobados como dict `{\"nombre\", \"puntaje\"}`\n"
-            "4. Si `puntaje < 70` o registro inválido: incrementa `rechazados`\n"
-            "5. Ordena aprobados por puntaje **descendente**\n"
-            "6. Por cada aprobado: imprime `NOMBRE: PUNTAJE [ÉLITE]` si puntaje ≥ 90, "
-            "o `[APROBADO]` si puntaje 70–89\n"
-            "7. Imprime `Rechazados: N`\n\n"
-            "**Entradas:** `5`, `Alpha:95`, `Beta:72`, `Gamma:ERROR`, `Delta:88`, `Epsilon:65`\n\n"
-            "```\nAlpha: 95 [ÉLITE]\nDelta: 88 [APROBADO]\nBeta: 72 [APROBADO]\nRechazados: 2\n```"
+            "**BOSS del Sector 09 — Proyecto completo**\n\n"
+            "El sistema recibirá N líneas de log por `input()`. Cada línea tiene formato "
+            "`CLAVE:VALOR` donde VALOR es un entero.\n"
+            "Algunas líneas están corrompidas (no tienen `:` o el valor no es número).\n\n"
+            "Tu analizador debe:\n"
+            "1. Leer `n = int(input())` — número de líneas\n"
+            "2. Por cada línea: usar `try/except` para parsear `CLAVE:VALOR`\n"
+            "3. Si la línea es válida: sumar el valor al total\n"
+            "4. Si la línea es inválida: incrementar contador de errores\n"
+            "5. Al final imprimir: `\"Total: X\"` y `\"Errores: Y\"`\n\n"
+            "**Test:**\n"
+            "Entradas: `5`, `HP:45`, `MP:30`, `CORRUPTO`, `XP:70`, `NEXO:X`\n\n"
+            "```\nTotal: 145\nErrores: 2\n```"
         ),
         "difficulty_tier":       DifficultyTier.ADVANCED,
-        "difficulty":            "expert",
-        "base_xp_reward":        1000,
+        "difficulty":            "hard",
+        "base_xp_reward":        500,
         "is_project":            True,
-        "telemetry_goal_time":   900,
+        "telemetry_goal_time":   600,
         "challenge_type":        "project",
         "phase":                 "proyecto",
-        "concepts_taught_json":  [
-            "integracion_total", "try_except", "lista_de_dicts",
-            "sorted_funcion_clave", "condicional_etiqueta", "f_string", "ranking"
-        ],
+        "concepts_taught_json":  ["try_except_integrado", "splitlines", "parseo_resiliente", "acumulador"],
         "initial_code": (
             "n = int(input())\n"
-            "aprobados  = []\n"
-            "rechazados = 0\n"
+            "total  = 0\n"
+            "errores = 0\n"
             "\n"
             "for _ in range(n):\n"
             "    linea = input()\n"
             "    try:\n"
-            "        nombre, puntaje = linea.split(\":\")\n"
-            "        puntaje = int(puntaje)\n"
-            "        if puntaje >= 70:\n"
-            "            aprobados.append({\"nombre\": nombre, \"puntaje\": puntaje})\n"
-            "        else:\n"
-            "            rechazados += 1\n"
+            "        # Separa la línea en clave y valor\n"
+            "        # Convierte el valor a int y acumula\n"
+            "        pass\n"
             "    except (ValueError, IndexError):\n"
-            "        rechazados += 1\n"
+            "        errores += 1\n"
             "\n"
-            "def por_puntaje(agente):\n"
-            "    return agente[\"puntaje\"]\n"
-            "\n"
-            "aprobados = sorted(aprobados, key=por_puntaje, reverse=True)\n"
-            "\n"
-            "for agente in aprobados:\n"
-            "    # Determina etiqueta ÉLITE o APROBADO e imprime\n"
-            "    pass\n"
-            "\n"
-            "print(f\"Rechazados: {rechazados}\")\n"
+            "print(f\"Total: {total}\")\n"
+            "print(f\"Errores: {errores}\")\n"
         ),
-        "expected_output": (
-            "Alpha: 95 [ÉLITE]\n"
-            "Delta: 88 [APROBADO]\n"
-            "Beta: 72 [APROBADO]\n"
-            "Rechazados: 2"
-        ),
-        "test_inputs_json": ["5", "Alpha:95", "Beta:72", "Gamma:ERROR", "Delta:88", "Epsilon:65"],
-        "strict_match":     True,
+        "expected_output":       "Total: 145\nErrores: 2",
+        "test_inputs_json":      ["5", "HP:45", "MP:30", "CORRUPTO", "XP:70", "NEXO:X"],
+        "strict_match":          True,
         "lore_briefing": (
-            "DAKI — CONTRATO-100: Protocolo Omega\n\n"
-            "Has llegado al corazón del Nexo Central. DAKI te habla directamente:\n\n"
-            "'Operador. Has cruzado 9 sectores, descifrado el núcleo y sobrevivido a cada protocolo.\n"
-            "Este es el Algoritmo Maestro — la prueba que separa a los usuarios de los Arquitectos.\n"
-            "Clasifica a los agentes. Los dignos serán reconocidos. Los demás, rechazados.\n"
-            "El Certificado aguarda al otro lado.'\n\n"
-            "Completa el algoritmo. La red te observa."
+            "DAKI — CONTRATO-90: Protocolo Omega de Resiliencia\n\n"
+            "El sistema de inteligencia táctica recibe logs de múltiples fuentes.\n"
+            "Algunos feeds están corrompidos. El analizador nunca debe crashear —\n"
+            "registra los errores y procesa lo que pueda. La misión del sector depende de esto."
         ),
         "pedagogical_objective": (
-            "Integrar en una sola solución: input/output, try/except con múltiples tipos, "
-            "lista de dicts, sorted() con función clave, lógica condicional de etiquetado y "
-            "f-strings. Demostrar dominio completo del lenguaje Python a nivel introductorio-intermedio."
+            "Integrar try/except con acumuladores, parseo de strings y lógica de conteo de errores "
+            "en un programa completo robusto ante entradas malformadas."
         ),
-        "syntax_hint":           '`etiqueta = "ÉLITE" if agente["puntaje"] >= 90 else "APROBADO"`',
-        "theory_content":        THEORY_MASTER,
+        "syntax_hint":           '`clave, valor = linea.split(":")` — falla si no hay ":" → IndexError.',
+        "theory_content": (
+            "## Boss Sector 09: Analizador de Logs resiliente\n\n"
+            "Flujo completo:\n"
+            "```python\n"
+            "n = int(input())\n"
+            "total  = 0\n"
+            "errores = 0\n"
+            "for _ in range(n):\n"
+            "    linea = input()\n"
+            "    try:\n"
+            "        clave, valor = linea.split(\":\")\n"
+            "        total += int(valor)\n"
+            "    except (ValueError, IndexError):\n"
+            "        errores += 1\n"
+            "print(f\"Total: {total}\")\n"
+            "print(f\"Errores: {errores}\")\n"
+            "```\n\n"
+            "**¿Por qué dos tipos de excepción?**\n"
+            "- `IndexError`: `linea.split(\":\")` devuelve solo un elemento → unpacking falla\n"
+            "- `ValueError`: `int(valor)` falla si el valor no es número (p.ej. `\"X\"`)\n\n"
+            "Con `except (ValueError, IndexError):` capturamos ambos casos en una sola línea."
+        ),
         "hints_json": [
-            '`nombre, puntaje = linea.split(":")` falla si no hay ":" → excepto (ValueError/IndexError).',
-            "`sorted(aprobados, key=por_puntaje, reverse=True)` ordena de mayor a menor puntaje.",
-            'Dentro del for: `etiqueta = "ÉLITE" if agente["puntaje"] >= 90 else "APROBADO"`.',
-            'Formato exacto: `f\"{agente[\'nombre\']}: {agente[\'puntaje\']} [{etiqueta}]\"`.',
-            "Epsilon (65 < 70) y Gamma (ERROR) suman los 2 rechazados.",
+            '`linea.split(":")` divide en `["CLAVE", "VALOR"]`; `clave, valor = ...` hace unpacking.',
+            'Si la línea no tiene ":", split devuelve un solo elemento y el unpacking lanza `ValueError`.',
+            "Acumula: `total += int(valor)` dentro del `try`.",
+            "En el `except (ValueError, IndexError):`, solo incrementa `errores += 1`.",
         ],
         "grid_map_json": None,
     },
@@ -818,9 +771,9 @@ SECTOR_10: list[dict] = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def seed(dry_run: bool = False) -> None:
-    print("\n" + "═" * 65)
-    print("  ⚡ Seed Sector 10 — El Ascenso del Arquitecto (Nexo Central)")
-    print("═" * 65)
+    print("\n" + "═" * 60)
+    print("  ⚡ Seed Sector 09 — Resiliencia (try/except)")
+    print("═" * 60)
     if dry_run:
         print("  MODE: DRY-RUN\n")
 
@@ -839,10 +792,10 @@ async def seed(dry_run: bool = False) -> None:
                 level_order = data.get("level_order")
                 title = data.get("title", "?")
                 if dry_run:
-                    print(f"  [DRY] ➕  L{level_order:03d}  {title}")
+                    print(f"  [DRY] ➕  L{level_order:02d}  {title}")
                 else:
                     session.add(Challenge(**data))
-                    print(f"  ➕  L{level_order:03d}  {title}")
+                    print(f"  ➕  L{level_order:02d}  {title}")
             if not dry_run:
                 await session.commit()
                 print(f"\n  💾  Commit OK — {len(SECTOR_10)} misiones insertadas.")
@@ -854,11 +807,11 @@ async def seed(dry_run: bool = False) -> None:
             sys.exit(1)
 
     await engine.dispose()
-    print("═" * 65 + "\n")
+    print("═" * 60 + "\n")
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Seed Sector 10 — El Ascenso del Arquitecto")
+    p = argparse.ArgumentParser(description="Seed Sector 09 — Resiliencia")
     p.add_argument("--dry-run", action="store_true")
     return p.parse_args()
 

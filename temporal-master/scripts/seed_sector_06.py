@@ -1,18 +1,18 @@
 """
-Seed — SECTOR 06: Bóvedas de Memoria (9 niveles, IDs 51–59).
+Seed — SECTOR 06: Manipulación de Señales (9 niveles, IDs 41–49).
 
 Uso (desde la raíz del proyecto):
     python -m scripts.seed_sector_06
 
 Comportamiento:
-    1. Elimina solo los challenges con sector_id=6 y level_order < 60 (preserva CONTRATO-60).
-    2. Inserta los 9 niveles del Sector 06 con curva easy → medium → hard.
-    3. El nivel 60 (Boss) vive en seed_contratos.py — no se toca aquí.
+    1. Elimina solo los challenges con sector_id=5 y level_order < 50 (preserva CONTRATO-50).
+    2. Inserta los 9 niveles del Sector 05 con curva easy → medium → hard.
+    3. El nivel 50 (Boss) vive en seed_contratos.py — no se toca aquí.
 
-Temática técnica: tuplas (creación, acceso, desempaquetado), sets (conjuntos,
-                  .add(), operaciones de conjunto), diccionarios anidados,
-                  listas de diccionarios (búsqueda, filtrado, agregación).
-Narrativa: optimización de almacenamiento, mapeo de la base de datos del Nexo.
+Temática técnica: slicing, .upper()/.lower()/.strip(), f-strings avanzados,
+                  .replace(), .split(), .join(), .count()/.startswith(),
+                  encadenamiento de métodos, ord()/chr() + Cifrado César.
+Narrativa: desencriptación de comunicaciones enemigas, limpieza de logs corruptos.
 """
 
 import asyncio
@@ -31,364 +31,315 @@ from app.models.challenge import Challenge, DifficultyTier
 
 # ─── Contenido teórico por nivel ─────────────────────────────────────────────
 
-THEORY_N51 = """\
-## PROTOCOLO: Tuplas — Registros Inmutables
+THEORY_N41 = """\
+## PROTOCOLO: Strings como Secuencias — Slicing
 
-Una **tupla** es una colección ordenada e **inmutable** de valores.
-Se define con paréntesis `()`:
-
-```python
-coordenada = (10, 25)
-registro   = ("NEXO-7", 42, "ACTIVO")
-```
-
-Se accede por índice igual que una lista:
+Los strings son **secuencias de caracteres** que puedes indexar y "rebanar":
 
 ```python
-print(coordenada[0])    # 10
-print(coordenada[1])    # 25
-print(registro[-1])     # "ACTIVO"
+codigo = "NEXO-ALFA-7"
+print(codigo[0])      # 'N'   → primer carácter
+print(codigo[-1])     # '7'   → último carácter
+print(codigo[0:4])    # 'NEXO' → del índice 0 al 3 (4 excluido)
+print(codigo[5:9])    # 'ALFA'
+print(codigo[:4])     # 'NEXO' → desde el inicio
+print(codigo[5:])     # 'ALFA-7' → hasta el final
 ```
+
+**Sintaxis del slice:** `cadena[inicio:fin]`
+- `inicio` es **inclusivo** (se incluye en el resultado)
+- `fin` es **exclusivo** (no se incluye)
+- Los índices negativos cuentan desde el final: `-1` es el último
 
 ---
 
-## INMUTABILIDAD
+## REGLA DE ORO
 
-A diferencia de las listas, las tuplas **no se pueden modificar** después de crearse:
-
-```python
-coords = (5, 3)
-coords[0] = 10   # ← TypeError: 'tuple' object does not support item assignment
 ```
-
----
-
-## ¿CUÁNDO USAR TUPLAS?
-
-- Datos que **no deben cambiar**: coordenadas, RGB, credenciales
-- **Retornar múltiples valores** desde una función
-- Como **claves de diccionario** (las listas no pueden serlo)
-"""
-
-THEORY_N52 = """\
-## PROTOCOLO: Desempaquetado de Tuplas
-
-El **desempaquetado** asigna los elementos de una tupla a variables individuales en una sola línea:
-
-```python
-registro = ("NEXO-7", 42, "ACTIVO")
-
-# Sin desempaquetado (tedioso):
-nombre = registro[0]
-nivel  = registro[1]
-estado = registro[2]
-
-# Con desempaquetado (elegante):
-nombre, nivel, estado = registro
-```
-
-El número de variables debe coincidir con el número de elementos de la tupla.
-
----
-
-## DESEMPAQUETADO EN for
-
-Muy útil al iterar listas de tuplas:
-
-```python
-puntos = [(1, 2), (3, 4), (5, 6)]
-for x, y in puntos:
-    print(f"({x}, {y})")
-```
-
----
-
-## RETORNO MÚLTIPLE
-
-Las funciones pueden "retornar" múltiples valores empaquetados en una tupla:
-
-```python
-def minmax(lista):
-    return min(lista), max(lista)
-
-minimo, maximo = minmax([3, 1, 4, 1, 5])
+c o d i g o = "N E X O - A L F A - 7"
+índice pos:    0 1 2 3 4 5 6 7 8 9 10
+índice neg:  -11-10-9-8-7-6-5-4-3-2 -1
 ```
 """
 
-THEORY_N53 = """\
-## PROTOCOLO: Sets — Conjuntos Sin Duplicados
+THEORY_N42 = """\
+## PROTOCOLO: Métodos de Transformación
 
-Un **set** es una colección **desordenada** de elementos **únicos**.
-Se define con llaves `{}` o con `set()`:
+Los strings tienen métodos integrados que devuelven **nuevas cadenas** transformadas:
+
+| Método        | Efecto                               | Ejemplo                            |
+|---------------|--------------------------------------|------------------------------------|
+| `.upper()`    | Todo en MAYÚSCULAS                   | `"nexo".upper()` → `"NEXO"`        |
+| `.lower()`    | Todo en minúsculas                   | `"NEXO".lower()` → `"nexo"`        |
+| `.strip()`    | Elimina espacios del inicio y final  | `"  ok  ".strip()` → `"ok"`        |
+| `.lstrip()`   | Solo elimina espacios a la izquierda | `"  ok  ".lstrip()` → `"ok  "`     |
+| `.rstrip()`   | Solo elimina espacios a la derecha   | `"  ok  ".rstrip()` → `"  ok"`     |
+
+---
+
+## ENCADENAMIENTO DE MÉTODOS
+
+Puedes aplicar varios métodos en cadena — se ejecutan de izquierda a derecha:
 
 ```python
-accesos = {"Alpha", "Beta", "Gamma"}
-vacío   = set()   # ← set(), no {} (eso crea un dict vacío)
+log = "  Error Critico  "
+limpio = log.strip().upper()
+print(limpio)   # "ERROR CRITICO"
+```
+
+- Primero `.strip()` elimina los espacios → `"Error Critico"`
+- Luego `.upper()` convierte a mayúsculas → `"ERROR CRITICO"`
+
+Los métodos de string **no modifican** el original — siempre devuelven una nueva cadena.
+"""
+
+THEORY_N43 = """\
+## PROTOCOLO: f-strings — Mensajes con Variables
+
+Los **f-strings** permiten incrustar variables directamente en un string.
+Se definen con la letra `f` antes de las comillas:
+
+```python
+sector = 5
+operador = "Kira"
+estado = "ACTIVO"
+
+print(f"SECTOR {sector} | Operador: {operador} | Estado: {estado}")
+# SECTOR 5 | Operador: Kira | Estado: ACTIVO
+```
+
+Cualquier expresión Python puede ir dentro de `{}`:
+
+```python
+hp = 75
+print(f"HP: {hp}/100 ({hp}%)")        # HP: 75/100 (75%)
+print(f"Daño total: {12 * 5}")        # Daño total: 60
+print(f"{'ALTA' if hp > 50 else 'BAJA'}")   # ALTA
 ```
 
 ---
 
-## OPERACIONES BÁSICAS
+## FORMATO NUMÉRICO
 
 ```python
-accesos = {"Alpha", "Beta"}
-accesos.add("Gamma")       # agrega un elemento
-accesos.add("Alpha")       # ← ignorado, ya existe
-accesos.remove("Beta")     # elimina (KeyError si no existe)
-accesos.discard("Beta")    # elimina si existe, sin error si no
-
-print("Alpha" in accesos)  # True — verificación O(1)
-print(len(accesos))        # 2
-```
-
----
-
-## IMPORTANTE: Los Sets son Desordenados
-
-El orden de iteración es **impredecible**. Para salida determinista usa `sorted()`:
-
-```python
-for elemento in sorted(accesos):
-    print(elemento)
+pi = 3.14159
+print(f"Pi ≈ {pi:.2f}")   # Pi ≈ 3.14  → 2 decimales
+print(f"{42:05d}")          # 00042      → relleno con ceros
 ```
 """
 
-THEORY_N54 = """\
-## PROTOCOLO: Operaciones de Conjuntos
+THEORY_N44 = """\
+## PROTOCOLO: .replace() — Sustitución de Patrones
 
-Los sets soportan las operaciones matemáticas de la teoría de conjuntos:
-
-| Operación       | Sintaxis Python          | Descripción                          |
-|-----------------|--------------------------|--------------------------------------|
-| Unión           | `a | b` o `a.union(b)`   | Todos los elementos de a y b         |
-| Intersección    | `a & b` o `a.intersection(b)` | Solo los que están en ambos     |
-| Diferencia      | `a - b` o `a.difference(b)` | Los de a que NO están en b        |
-| Dif. simétrica  | `a ^ b`                  | Los que están en uno pero no en ambos|
-
----
-
-## EJEMPLO
+`.replace(antiguo, nuevo)` devuelve una **nueva cadena** con todas las apariciones
+de `antiguo` reemplazadas por `nuevo`:
 
 ```python
-sector_a = {"N1", "N2", "N3"}
-sector_b = {"N2", "N3", "N4"}
-
-print(sector_a | sector_b)   # {'N1', 'N2', 'N3', 'N4'}
-print(sector_a & sector_b)   # {'N2', 'N3'}
-print(sector_a - sector_b)   # {'N1'}
+log = "10-NULL-45-NULL-78"
+limpio = log.replace("NULL", "0")
+print(limpio)   # "10-0-45-0-78"
 ```
 
 ---
 
-## CASO DE USO: Deduplicación
+## PUNTOS CLAVE
+
+- `.replace()` **no modifica** el string original — devuelve uno nuevo
+- Reemplaza **todas** las apariciones por defecto
+- Para reemplazar solo las primeras N, usa el tercer argumento:
+  ```python
+  texto = "ERROR ERROR ERROR"
+  print(texto.replace("ERROR", "OK", 1))   # "OK ERROR ERROR"
+  ```
+- Si `nuevo` es `""`, equivale a **eliminar** el texto:
+  ```python
+  datos = "NEX---O"
+  print(datos.replace("-", ""))   # "NEXO"
+  ```
+"""
+
+THEORY_N45 = """\
+## PROTOCOLO: .split() — Descomposición de Cadena
+
+`.split(separador)` divide un string en una **lista** usando el separador indicado:
 
 ```python
-ids_duplicados = ["A1", "B2", "A1", "C3", "B2"]
-ids_unicos = set(ids_duplicados)   # {'A1', 'B2', 'C3'}
+señal = "ROJO,VERDE,AZUL"
+partes = señal.split(",")
+print(partes)        # ['ROJO', 'VERDE', 'AZUL']
+print(partes[0])     # 'ROJO'
+print(len(partes))   # 3
+```
+
+---
+
+## SEPARADOR POR DEFECTO
+
+Sin argumentos, `.split()` divide por espacios en blanco (incluyendo tabs y saltos de línea)
+y elimina las partes vacías:
+
+```python
+frase = "  el   nexo   vive  "
+print(frase.split())   # ['el', 'nexo', 'vive']
+```
+
+---
+
+## COMBINACIÓN CON for
+
+```python
+ids = "A1,B2,C3"
+for id_nodo in ids.split(","):
+    print(f"Escaneando nodo {id_nodo}")
+# Escaneando nodo A1
+# Escaneando nodo B2
+# Escaneando nodo C3
 ```
 """
 
-THEORY_N55 = """\
-## PROTOCOLO: Diccionarios Anidados
+THEORY_N46 = """\
+## PROTOCOLO: .join() — Reconstrucción de Cadena
 
-Un diccionario puede contener otro diccionario como valor.
-Se accede encadenando corchetes:
+`.join(iterable)` une los elementos de una lista en un **único string**,
+insertando el separador entre cada par:
 
 ```python
-nexo = {
-    "sector_1": {"nombre": "Alpha", "energia": 85},
-    "sector_2": {"nombre": "Beta",  "energia": 60},
-}
-
-print(nexo["sector_1"]["nombre"])   # "Alpha"
-print(nexo["sector_2"]["energia"])  # 60
+fragmentos = ["NEXO", "ALFA", "DELTA"]
+resultado = " | ".join(fragmentos)
+print(resultado)   # "NEXO | ALFA | DELTA"
 ```
 
-Cada `[]` baja un nivel en la estructura:
-1. `nexo["sector_1"]` → `{"nombre": "Alpha", "energia": 85}`
-2. `...["nombre"]`    → `"Alpha"`
+**Sintaxis:** `separador.join(lista)`
+
+El separador puede ser cualquier string:
+
+```python
+letras = ["N", "E", "X", "O"]
+print("".join(letras))    # "NEXO"      → sin separador
+print("-".join(letras))   # "N-E-X-O"  → guión
+print(", ".join(letras))  # "N, E, X, O"
+```
 
 ---
 
-## MODIFICAR VALORES ANIDADOS
+## split() Y join() SON INVERSAS
 
 ```python
-nexo["sector_1"]["energia"] = 90   # actualiza el valor
-nexo["sector_3"] = {"nombre": "Gamma", "energia": 70}  # agrega nuevo sector
+original     = "A,B,C"
+partes        = original.split(",")     # ['A', 'B', 'C']
+reconstruido  = ",".join(partes)        # "A,B,C"
 ```
 """
 
-THEORY_N56 = """\
-## PROTOCOLO: Iterar Estructuras Anidadas
+THEORY_N47 = """\
+## PROTOCOLO: Búsqueda en Strings
 
-Para recorrer un diccionario de diccionarios usa `.items()` y accede al
-sub-diccionario dentro del bucle:
+Python ofrece métodos para **detectar patrones** sin necesidad de bucles:
 
-```python
-mapa = {
-    "Alpha": {"energia": 85, "estado": "activo"},
-    "Beta":  {"energia": 60, "estado": "inactivo"},
-}
-
-for nombre, datos in mapa.items():
-    print(f"{nombre}: {datos['energia']}%")
-# Alpha: 85%
-# Beta: 60%
-```
+| Método              | Retorna  | Descripción                                  |
+|---------------------|----------|----------------------------------------------|
+| `.count(sub)`       | int      | Número de apariciones de `sub`               |
+| `.find(sub)`        | int / -1 | Índice de la primera aparición (o -1)        |
+| `.startswith(pre)`  | bool     | `True` si el string comienza con `pre`       |
+| `.endswith(suf)`    | bool     | `True` si el string termina con `suf`        |
+| `sub in cadena`     | bool     | `True` si `sub` aparece en `cadena`          |
 
 ---
 
-## FILTRADO DURANTE LA ITERACIÓN
+## EJEMPLOS
 
 ```python
-for nombre, datos in mapa.items():
-    if datos["estado"] == "activo":
-        print(f"{nombre} está operativo")
-# Alpha está operativo
-```
+log = "CRITICO: ERROR en sector 3. ERROR en nodo 7."
 
----
-
-## NOTA: Orden de los Dicts
-
-En Python 3.7+, los diccionarios mantienen el **orden de inserción**.
-La salida será siempre en el orden en que se definieron las claves.
-"""
-
-THEORY_N57 = """\
-## PROTOCOLO: Listas de Diccionarios — La Base de Datos del Nexo
-
-Una **lista de diccionarios** es la forma más común de representar registros
-tabulares en Python (equivalente a filas de una tabla):
-
-```python
-agentes = [
-    {"id": "A01", "nombre": "Rex",   "nivel": 5},
-    {"id": "A02", "nombre": "Kira",  "nivel": 8},
-    {"id": "A03", "nombre": "Ghost", "nivel": 3},
-]
-```
-
----
-
-## BÚSQUEDA POR CLAVE
-
-Para encontrar un registro específico, recorre la lista con `for` y filtra con `if`:
-
-```python
-for agente in agentes:
-    if agente["id"] == "A02":
-        print(agente["nombre"])   # "Kira"
-        print(agente["nivel"])    # 8
-        break   # opcional: detiene la búsqueda al encontrar el primero
-```
-
----
-
-## ACCESO A CAMPOS
-
-Dentro del bucle, `agente` es un dict normal:
-- `agente["id"]`     → valor de la clave "id"
-- `agente["nombre"]` → valor de la clave "nombre"
-"""
-
-THEORY_N58 = """\
-## PROTOCOLO: Filtrado de Registros
-
-Para obtener un subconjunto de registros que cumplen una condición,
-recorre la lista y usa `if`:
-
-```python
-agentes = [
-    {"nombre": "Rex",   "nivel": 5},
-    {"nombre": "Kira",  "nivel": 8},
-    {"nombre": "Ghost", "nivel": 3},
-]
-
-for agente in agentes:
-    if agente["nivel"] >= 5:
-        print(agente["nombre"])
-# Rex
-# Kira
-```
-
----
-
-## CONSTRUIR UNA LISTA FILTRADA
-
-Para guardar los resultados (no solo imprimirlos):
-
-```python
-elite = []
-for agente in agentes:
-    if agente["nivel"] >= 5:
-        elite.append(agente)
-# elite contiene los dicts de Rex y Kira
-```
-
----
-
-## MÚLTIPLES CONDICIONES
-
-```python
-for agente in agentes:
-    if agente["nivel"] >= 5 and agente["estado"] == "activo":
-        print(agente["nombre"])
+print(log.count("ERROR"))         # 2
+print(log.find("ERROR"))          # 9  (índice de la 1ra aparición)
+print(log.startswith("CRITICO"))  # True
+print(log.endswith("."))          # True
+print("sector" in log)            # True
 ```
 """
 
-THEORY_N59 = """\
-## PROTOCOLO: Agregación sobre Registros
+THEORY_N48 = """\
+## PROTOCOLO: Pipeline de Transformación
 
-Para calcular el **máximo, mínimo o suma** de un campo en una lista de dicts,
-usa el patrón de acumulador con un bucle:
+Las transformaciones de strings se pueden **encadenar** en secuencia:
 
 ```python
-sensores = [
-    {"id": "S1", "lectura": 45},
-    {"id": "S2", "lectura": 78},
-    {"id": "S3", "lectura": 91},
-]
-
-# Encontrar el sensor con mayor lectura
-max_lectura = 0
-max_id = ""
-for s in sensores:
-    if s["lectura"] > max_lectura:
-        max_lectura = s["lectura"]
-        max_id = s["id"]
-
-print(max_id)       # "S3"
-print(max_lectura)  # 91
+entrada = "  nexo alfa  "
+resultado = entrada.strip().replace(" ", "_").upper()
+print(resultado)   # "NEXO_ALFA"
 ```
+
+Orden de ejecución (izquierda a derecha):
+1. `.strip()` → elimina espacios extremos: `"nexo alfa"`
+2. `.replace(" ", "_")` → reemplaza espacios internos: `"nexo_alfa"`
+3. `.upper()` → convierte a mayúsculas: `"NEXO_ALFA"`
 
 ---
 
-## SUMA Y PROMEDIO
+## PATRÓN: split → procesar → join
+
+Dividir, transformar cada parte, y reconstruir:
 
 ```python
-total = 0
-for s in sensores:
-    total += s["lectura"]
-promedio = total / len(sensores)
-print(promedio)   # 71.33...
+datos = "nexo,alfa,delta"
+partes = datos.split(",")
+resultado = "|".join([p.upper() for p in partes])
+print(resultado)   # "NEXO|ALFA|DELTA"
 ```
 """
 
+THEORY_N49 = """\
+## PROTOCOLO: ord() y chr() — El Código de los Caracteres
 
-# ─── Niveles del Sector 06 ────────────────────────────────────────────────────
+Cada carácter tiene un número ASCII/Unicode. Python permite convertir entre ambos:
+
+| Función      | Dirección         | Ejemplo                 |
+|--------------|-------------------|-------------------------|
+| `ord(c)`     | carácter → número | `ord('A')` → `65`       |
+| `chr(n)`     | número → carácter | `chr(65)` → `'A'`       |
+
+Las letras mayúsculas ocupan los códigos 65 (`A`) al 90 (`Z`).
+
+---
+
+## CIFRADO CÉSAR
+
+El **Cifrado César** desplaza cada letra N posiciones en el alfabeto.
+Para descifrar un mensaje cifrado con +3, resta 3 a cada letra:
+
+```python
+# Descifrar shift +3: restar 3 con wrap-around
+cifrado = "QHAR"
+resultado = ""
+for c in cifrado:
+    resultado += chr((ord(c) - ord('A') - 3) % 26 + ord('A'))
+print(resultado)   # "NEXO"
+```
+
+- `ord(c) - ord('A')` convierte la letra a índice 0–25
+- `% 26` permite el **wrap-around** (A−1 → Z)
+- `+ ord('A')` convierte de vuelta a código ASCII
+
+Verificación: Q(81)→N(78), H(72)→E(69), A(65)→X(88), R(82)→O(79)
+"""
+
+
+# ─── Niveles del Sector 05 ────────────────────────────────────────────────────
 
 SECTOR_06 = [
-    # ── NIVEL 51 — Tuplas: creación e indexación ──────────────────────────────
+    # ── NIVEL 41 — Slicing de cadenas ─────────────────────────────────────────
     {
-        "title": "Coordenadas del Nodo",
+        "title": "Fragmento Alfa",
         "description": (
-            "El sistema de navegación del Nexo almacena las coordenadas de cada "
-            "nodo como tuplas inmutables de dos valores: columna y fila.\n\n"
-            "Dada la coordenada `pos = (10, 25)`, imprime la columna (primer elemento) "
-            "y la fila (segundo elemento), cada uno en su propia línea.\n\n"
+            "El sistema de identificación del Nexo usa códigos en el formato "
+            "`NEXO-ALFA-7`. Para el protocolo de autenticación solo son relevantes "
+            "el prefijo y el número de versión.\n\n"
+            "Dada la cadena `codigo = \"NEXO-ALFA-7\"`, imprime:\n"
+            "1. Los primeros **4 caracteres** (`NEXO`)\n"
+            "2. El **último carácter** (`7`)\n\n"
             "Salida esperada:\n"
-            "```\n10\n25\n```"
+            "```\nNEXO\n7\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -398,51 +349,51 @@ SECTOR_06 = [
         "is_project": False,
         "telemetry_goal_time": 90,
         "challenge_type": "python",
-        "phase": "boveda",
-        "concepts_taught_json": json.dumps(["tuplas", "indexación", "inmutabilidad"]),
+        "phase": "cadenas",
+        "concepts_taught_json": json.dumps(["strings", "slicing", "índices", "índice negativo"]),
         "initial_code": (
-            "# MISIÓN: Accede a los elementos de la coordenada\n"
+            "# MISIÓN: Extrae los primeros 4 caracteres y el último\n"
             "\n"
-            "pos = (10, 25)\n"
+            'codigo = "NEXO-ALFA-7"\n'
             "\n"
-            "# Imprime la columna (índice 0)\n"
-            "print(pos[___])\n"
+            "# Imprime los primeros 4 caracteres (slice)\n"
+            "print(codigo[___:___])\n"
             "\n"
-            "# Imprime la fila (índice 1)\n"
-            "print(pos[___])\n"
+            "# Imprime el último carácter (índice negativo)\n"
+            "print(codigo[___])\n"
         ),
-        "expected_output": "10\n25",
+        "expected_output": "NEXO\n7",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El sistema de mapeo del Nexo registra la posición de cada nodo "
-            "como una pareja de coordenadas que no puede ser alterada "
-            "una vez que el nodo se ancla al grid. "
-            "DAKI usa tuplas para garantizar que estas coordenadas son inmutables: "
-            "ningún proceso puede moverlas accidentalmente."
+            "Las comunicaciones del Nexo usan códigos de identificación compuestos. "
+            "El protocolo Alpha solo necesita el prefijo y el número de versión. "
+            "DAKI te enseña a extraer fragmentos precisos de una señal "
+            "para que el sistema no procese datos innecesarios."
         ),
         "pedagogical_objective": (
-            "Introducir tuplas como colecciones inmutables. "
-            "Acceso por índice igual que en listas. "
-            "Diferenciar de listas: no se pueden modificar."
+            "Introducir strings como secuencias indexables. "
+            "Slicing con [inicio:fin] e índices negativos para acceder al último elemento."
         ),
-        "syntax_hint": "print(pos[0])\nprint(pos[1])",
-        "theory_content": THEORY_N51,
+        "syntax_hint": "print(codigo[0:4])\nprint(codigo[-1])",
+        "theory_content": THEORY_N41,
         "hints_json": json.dumps([
-            "Las tuplas se indexan igual que las listas: pos[0] es el primer elemento.",
-            "pos[0] es 10 (columna) y pos[1] es 25 (fila).",
-            "Solución: print(pos[0]) y print(pos[1]).",
+            "Los strings se indexan igual que las listas. codigo[0] es 'N', codigo[1] es 'E'.",
+            "Para un rango usa [inicio:fin]. codigo[0:4] extrae del índice 0 al 3 (el 4 no se incluye).",
+            "El índice -1 apunta siempre al último carácter. Solución: print(codigo[0:4]) y print(codigo[-1]).",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 52 — Desempaquetado de tuplas ───────────────────────────────────
+    # ── NIVEL 42 — .upper(), .lower(), .strip() ───────────────────────────────
     {
-        "title": "Registro de Nodo",
+        "title": "Señal Corrupta",
         "description": (
-            "La bóveda de datos del Sector 06 almacena cada nodo como una tupla "
-            "de tres campos: nombre, nivel y estado.\n\n"
-            "Dada la tupla `registro = (\"NEXO-7\", 42, \"ACTIVO\")`, "
-            "**desempaqueta** los tres valores en variables separadas e imprime:\n\n"
-            "```\nNodo: NEXO-7 | Nivel: 42 | Estado: ACTIVO\n```"
+            "Los sensores del Sector 05 reciben señales con ruido: espacios extra "
+            "al principio y al final, y capitalización inconsistente. "
+            "El sistema de análisis requiere señales normalizadas antes de procesarlas.\n\n"
+            "Dada la señal `señal = \"  error de sistema  \"`, "
+            "imprime el texto sin espacios extremos y en **MAYÚSCULAS**.\n\n"
+            "Salida esperada:\n"
+            "```\nERROR DE SISTEMA\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -450,57 +401,51 @@ SECTOR_06 = [
         "level_order": 52,
         "base_xp_reward": 100,
         "is_project": False,
-        "telemetry_goal_time": 100,
+        "telemetry_goal_time": 90,
         "challenge_type": "python",
-        "phase": "boveda",
-        "concepts_taught_json": json.dumps(["tuplas", "desempaquetado", "f-strings"]),
+        "phase": "cadenas",
+        "concepts_taught_json": json.dumps([
+            "strings", ".strip()", ".upper()", ".lower()", "encadenamiento de métodos"
+        ]),
         "initial_code": (
-            "# MISIÓN: Desempaqueta la tupla en tres variables\n"
+            "# MISIÓN: Limpia la señal y conviértela a mayúsculas\n"
             "\n"
-            'registro = ("NEXO-7", 42, "ACTIVO")\n'
+            'señal = "  error de sistema  "\n'
             "\n"
-            "# Desempaqueta: nombre, nivel, estado = registro\n"
-            "___, ___, ___ = registro\n"
-            "\n"
-            "print(f\"Nodo: {nombre} | Nivel: {nivel} | Estado: {estado}\")\n"
+            "# Elimina espacios del inicio/final y convierte a mayúsculas\n"
+            "print(señal.___().___())\n"
         ),
-        "expected_output": "Nodo: NEXO-7 | Nivel: 42 | Estado: ACTIVO",
+        "expected_output": "ERROR DE SISTEMA",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "La bóveda del Nexo transmite los registros de nodo en formato compacto: "
-            "tres campos en una sola tupla. Para procesar cada campo individualmente, "
-            "DAKI usa el desempaquetado — una forma elegante de asignar los tres "
-            "valores a tres variables en una sola línea de código."
+            "Los logs de error del Nexo llegan con ruido de transmisión: "
+            "espacios fantasma al principio y al final, y mezcla de mayúsculas y minúsculas. "
+            "Antes de que el sistema de alerta los procese, deben ser normalizados. "
+            "DAKI necesita que implementes el protocolo de limpieza de señal."
         ),
         "pedagogical_objective": (
-            "Introducir el desempaquetado de tuplas (tuple unpacking). "
-            "Ver que el número de variables debe coincidir con los elementos. "
-            "Combinar con f-strings para mostrar los valores."
+            "Introducir .strip(), .upper(), .lower(). "
+            "Practicar el encadenamiento de métodos (method chaining): "
+            "cada método retorna un nuevo string sobre el que puedes seguir llamando métodos."
         ),
-        "syntax_hint": (
-            "nombre, nivel, estado = registro\n"
-            'print(f"Nodo: {nombre} | Nivel: {nivel} | Estado: {estado}")'
-        ),
-        "theory_content": THEORY_N52,
+        "syntax_hint": "print(señal.strip().upper())",
+        "theory_content": THEORY_N42,
         "hints_json": json.dumps([
-            "El desempaquetado asigna cada elemento a una variable: a, b, c = (1, 2, 3) — tres variables para tres elementos.",
-            "Las variables deben llamarse nombre, nivel y estado para que el f-string del print funcione.",
-            "Solución: nombre, nivel, estado = registro (una sola línea).",
+            ".strip() elimina los espacios del inicio y del final del string.",
+            ".upper() convierte todas las letras a mayúsculas.",
+            "Encadena los dos métodos: señal.strip().upper() — strip primero, luego upper.",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 53 — Sets: creación y .add() ────────────────────────────────────
+    # ── NIVEL 43 — f-strings avanzados ────────────────────────────────────────
     {
-        "title": "Control de Acceso Único",
+        "title": "Reporte de Estado",
         "description": (
-            "El sistema de control de acceso del Nexo registra los IDs de los "
-            "operadores que entraron al sector. No puede haber duplicados: "
-            "si un operador ya está registrado, el sistema lo ignora.\n\n"
-            "Parte del set `accesos = {\"Alpha\", \"Beta\"}`. "
-            "Agrega `\"Gamma\"` y luego vuelve a agregar `\"Alpha\"` (intento duplicado). "
-            "Imprime los accesos registrados en **orden alfabético**, uno por línea.\n\n"
-            "Salida esperada:\n"
-            "```\nAlpha\nBeta\nGamma\n```"
+            "El módulo de comunicaciones del Nexo genera reportes de estado "
+            "en un formato estandarizado para todos los puntos de acceso.\n\n"
+            "Dadas las variables `sector = 5`, `operador = \"Kira\"` y "
+            "`estado = \"ACTIVO\"`, imprime exactamente:\n\n"
+            "```\nSECTOR 5 | Operador: Kira | Estado: ACTIVO\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -508,132 +453,105 @@ SECTOR_06 = [
         "level_order": 53,
         "base_xp_reward": 125,
         "is_project": False,
-        "telemetry_goal_time": 120,
+        "telemetry_goal_time": 100,
         "challenge_type": "python",
-        "phase": "boveda",
-        "concepts_taught_json": json.dumps(["sets", ".add()", "deduplicación", "sorted()"]),
+        "phase": "cadenas",
+        "concepts_taught_json": json.dumps(["strings", "f-strings", "interpolación de variables"]),
         "initial_code": (
-            "# MISIÓN: Registra accesos sin duplicados\n"
+            "# MISIÓN: Genera el reporte de estado con el formato exacto\n"
             "\n"
-            'accesos = {"Alpha", "Beta"}\n'
+            "sector = 5\n"
+            'operador = "Kira"\n'
+            'estado = "ACTIVO"\n'
             "\n"
-            "# Agrega Gamma\n"
-            'accesos.___(___)\n'
-            "\n"
-            "# Intenta agregar Alpha de nuevo (el set lo ignora)\n"
-            'accesos.___(___)\n'
-            "\n"
-            "# Imprime en orden alfabético\n"
-            "for a in sorted(accesos):\n"
-            "    print(a)\n"
+            "# Imprime: 'SECTOR 5 | Operador: Kira | Estado: ACTIVO'\n"
+            'print(f"___")\n'
         ),
-        "expected_output": "Alpha\nBeta\nGamma",
+        "expected_output": "SECTOR 5 | Operador: Kira | Estado: ACTIVO",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El portal de entrada del Sector 06 registra cada operador que cruza el umbral. "
-            "Si el mismo operador intenta registrarse dos veces — por un bug o un ataque "
-            "de repetición — el sistema descarta silenciosamente el duplicado. "
-            "DAKI diseñó el registro con un set precisamente por esta propiedad: "
-            "unicidad garantizada sin código adicional."
+            "El comando central del Nexo exige que todos los reportes de estado "
+            "lleguen en el mismo formato para poder ser procesados por el sistema de monitoreo. "
+            "DAKI diseñó la plantilla. Tu misión: completar el módulo de formateo "
+            "que toma las variables del sistema y produce el mensaje estándar."
         ),
         "pedagogical_objective": (
-            "Introducir sets. Usar .add() para agregar elementos. "
-            "Observar que los duplicados se ignoran automáticamente. "
-            "Usar sorted() para obtener salida determinista (sets son desordenados)."
+            "Usar f-strings para formatear mensajes con múltiples variables. "
+            "Practicar el formato exacto con texto literal y separadores específicos."
         ),
-        "syntax_hint": (
-            'accesos.add("Gamma")\n'
-            'accesos.add("Alpha")   # ignorado — ya existe'
-        ),
-        "theory_content": THEORY_N53,
+        "syntax_hint": 'print(f"SECTOR {sector} | Operador: {operador} | Estado: {estado}")',
+        "theory_content": THEORY_N43,
         "hints_json": json.dumps([
-            "Para agregar un elemento a un set usa .add(): accesos.add('Gamma')",
-            'Los sets ignoran los duplicados automáticamente. accesos.add("Alpha") no hace nada si ya existe.',
-            "sorted() devuelve los elementos en orden alfabético para que la salida sea determinista.",
+            "Un f-string empieza con f antes de las comillas: f\"texto {variable} texto\".",
+            "Las variables van entre llaves {} dentro del f-string. El texto literal (como ' | ') va fuera.",
+            'Solución: print(f"SECTOR {sector} | Operador: {operador} | Estado: {estado}")',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 54 — Operaciones de conjuntos ───────────────────────────────────
+    # ── NIVEL 44 — .replace() ─────────────────────────────────────────────────
     {
-        "title": "Nodos en Conflicto",
+        "title": "Purga de Datos Nulos",
         "description": (
-            "Dos sectores del Nexo están reclamando la misma zona de memoria. "
-            "Para resolver el conflicto, necesitas identificar exactamente "
-            "qué nodos están siendo reclamados por **ambos** sectores.\n\n"
-            "Dados los sets:\n"
-            "```\nsector_a = {\"N1\", \"N2\", \"N3\", \"N5\"}\n"
-            "sector_b = {\"N2\", \"N3\", \"N4\", \"N6\"}\n```\n\n"
-            "Calcula la **intersección** (nodos en ambos) e imprime los nodos "
-            "en **orden alfabético**, uno por línea.\n\n"
+            "El stream de datos del sensor de energía tiene registros corruptos "
+            "marcados como `NULL`. El analizador del Nexo no puede procesar "
+            "valores nulos — deben ser reemplazados por `0` antes del análisis.\n\n"
+            "Dada la cadena `datos = \"10-NULL-45-NULL-78\"`, "
+            "reemplaza todos los `NULL` por `0` e imprime el resultado.\n\n"
             "Salida esperada:\n"
-            "```\nN2\nN3\n```"
+            "```\n10-0-45-0-78\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
-        "difficulty": "medium",
+        "difficulty": "easy",
         "sector_id": 6,
         "level_order": 54,
-        "base_xp_reward": 150,
+        "base_xp_reward": 125,
         "is_project": False,
-        "telemetry_goal_time": 150,
+        "telemetry_goal_time": 90,
         "challenge_type": "python",
-        "phase": "boveda",
-        "concepts_taught_json": json.dumps([
-            "sets", "intersección (&)", "operaciones de conjuntos", "sorted()"
-        ]),
+        "phase": "cadenas",
+        "concepts_taught_json": json.dumps(["strings", ".replace()", "limpieza de datos"]),
         "initial_code": (
-            "# MISIÓN: Encuentra los nodos reclamados por ambos sectores\n"
+            "# MISIÓN: Reemplaza todos los NULL por 0\n"
             "\n"
-            'sector_a = {"N1", "N2", "N3", "N5"}\n'
-            'sector_b = {"N2", "N3", "N4", "N6"}\n'
+            'datos = "10-NULL-45-NULL-78"\n'
             "\n"
-            "# Intersección: nodos que están en sector_a Y en sector_b\n"
-            "comunes = sector_a ___ sector_b\n"
-            "\n"
-            "# Imprime en orden alfabético\n"
-            "for nodo in sorted(comunes):\n"
-            "    print(nodo)\n"
+            '# Reemplaza "NULL" por "0"\n'
+            "print(datos.___(___,___))\n"
         ),
-        "expected_output": "N2\nN3",
+        "expected_output": "10-0-45-0-78",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El árbitro de conflictos del Nexo necesita identificar los nodos disputados: "
-            "aquellos que dos sectores han marcado como propios simultáneamente. "
-            "Estos nodos deben ser intervenidos por DAKI antes de que el conflicto "
-            "derive en corrupción de datos. La intersección de conjuntos permite "
-            "encontrarlos en una sola operación."
+            "El sensor de energía del Sector 05 tiene intermitencias. "
+            "Cuando pierde la señal registra 'NULL' en lugar del valor real. "
+            "El analizador de DAKI falla si encuentra valores NULL en el stream. "
+            "Antes de procesar los datos, debes aplicar el protocolo de purga "
+            "y convertir todos los NULL a cero para que el sistema pueda continuar."
         ),
         "pedagogical_objective": (
-            "Usar el operador & para la intersección de sets. "
-            "Aplicar sorted() para salida determinista. "
-            "Introducir las operaciones matemáticas de conjuntos."
+            "Usar .replace(antiguo, nuevo) para sustituir todas las ocurrencias "
+            "de un substring. Entender que .replace() retorna un nuevo string "
+            "y no modifica el original."
         ),
-        "syntax_hint": (
-            "comunes = sector_a & sector_b\n"
-            "for nodo in sorted(comunes):\n"
-            "    print(nodo)"
-        ),
-        "theory_content": THEORY_N54,
+        "syntax_hint": 'print(datos.replace("NULL", "0"))',
+        "theory_content": THEORY_N44,
         "hints_json": json.dumps([
-            "El operador & calcula la intersección: los elementos que están en AMBOS sets.",
-            "sector_a & sector_b devuelve un nuevo set con solo los elementos compartidos.",
-            "Envuelve el resultado en sorted() para imprimirlos en orden: for nodo in sorted(comunes):",
+            '.replace() toma dos argumentos: el texto a buscar y el reemplazo. Sintaxis: cadena.replace("buscar", "nuevo")',
+            '.replace() reemplaza TODAS las apariciones automáticamente, no solo la primera.',
+            'Solución: print(datos.replace("NULL", "0"))',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 55 — Diccionario anidado: acceso ─────────────────────────────────
+    # ── NIVEL 45 — .split() ────────────────────────────────────────────────────
     {
-        "title": "Base de Datos del Nexo",
+        "title": "Parseo de Transmisión",
         "description": (
-            "La base de datos del Sector 06 almacena la información de cada "
-            "sub-sector como un diccionario anidado dentro de un diccionario principal.\n\n"
-            "Dado el mapa:\n"
-            "```python\n"
-            'nexo = {\n    "sector_1": {"nombre": "Alpha", "energia": 85},\n'
-            '    "sector_2": {"nombre": "Beta",  "energia": 60},\n}\n'
-            "```\n\n"
-            "Imprime el **nombre** del sector_1 y la **energía** del sector_2.\n\n"
+            "Las transmisiones del sistema de alerta llegan como una cadena "
+            "de componentes separados por comas. El parser del Nexo necesita "
+            "separar cada componente para analizarlos individualmente.\n\n"
+            "Dada la señal `señal = \"ROJO,VERDE,AZUL,BLANCO\"`, "
+            "divide la cadena por comas e imprime cada componente en su propia línea.\n\n"
             "Salida esperada:\n"
-            "```\nAlpha\n60\n```"
+            "```\nROJO\nVERDE\nAZUL\nBLANCO\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
@@ -643,318 +561,276 @@ SECTOR_06 = [
         "is_project": False,
         "telemetry_goal_time": 120,
         "challenge_type": "python",
-        "phase": "boveda",
+        "phase": "cadenas",
         "concepts_taught_json": json.dumps([
-            "diccionarios", "diccionarios anidados", "acceso multinivel"
+            "strings", ".split()", "iteración sobre lista", "parsing"
         ]),
         "initial_code": (
-            "# MISIÓN: Accede a los campos del diccionario anidado\n"
+            "# MISIÓN: Divide la señal por comas e imprime cada componente\n"
             "\n"
-            "nexo = {\n"
-            '    "sector_1": {"nombre": "Alpha", "energia": 85},\n'
-            '    "sector_2": {"nombre": "Beta",  "energia": 60},\n'
-            "}\n"
+            'señal = "ROJO,VERDE,AZUL,BLANCO"\n'
             "\n"
-            '# Imprime el nombre del sector_1\n'
-            'print(nexo[___][___])\n'
-            "\n"
-            '# Imprime la energía del sector_2\n'
-            'print(nexo[___][___])\n'
+            "# Divide la cadena y recorre los componentes\n"
+            "for componente in señal.___(___):  \n"
+            "    print(componente)\n"
         ),
-        "expected_output": "Alpha\n60",
+        "expected_output": "ROJO\nVERDE\nAZUL\nBLANCO",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "La base de datos del Nexo usa una estructura de dos niveles: "
-            "el primer nivel identifica el sector, el segundo contiene los datos del sector. "
-            "DAKI necesita que domines el acceso a este tipo de estructura "
-            "para poder consultar cualquier campo de cualquier sector "
-            "sin necesidad de aplanar la base de datos."
+            "El sistema de alerta del Nexo transmite los códigos de amenaza "
+            "en una sola cadena comprimida para minimizar el ancho de banda. "
+            "Al recibirlos, el parser de DAKI debe descomprimirlos "
+            "y analizar cada código de forma independiente para determinar "
+            "el nivel de respuesta adecuado."
         ),
         "pedagogical_objective": (
-            "Acceder a diccionarios anidados encadenando corchetes []. "
-            "Entender que cada [] baja un nivel en la jerarquía. "
-            "dict[clave_externa][clave_interna]."
+            "Usar .split(separador) para dividir un string en una lista. "
+            "Combinar split() con un for para iterar sobre los componentes resultantes."
         ),
-        "syntax_hint": 'print(nexo["sector_1"]["nombre"])\nprint(nexo["sector_2"]["energia"])',
-        "theory_content": THEORY_N55,
+        "syntax_hint": 'for componente in señal.split(","):\n    print(componente)',
+        "theory_content": THEORY_N45,
         "hints_json": json.dumps([
-            "Para acceder a un diccionario anidado encadenas dos []: nexo['sector_1'] te da el dict interno.",
-            'Luego adds otro [] para la clave interna: nexo["sector_1"]["nombre"] da "Alpha".',
-            'Solución: print(nexo["sector_1"]["nombre"]) y print(nexo["sector_2"]["energia"])',
+            '.split(",") divide la cadena en cada coma y devuelve una lista: ["ROJO", "VERDE", ...].',
+            'Puedes iterar directamente: for componente in señal.split(","):',
+            'Dentro del for solo necesitas print(componente).',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 56 — Diccionario anidado: iteración ──────────────────────────────
+    # ── NIVEL 46 — .join() ────────────────────────────────────────────────────
     {
-        "title": "Mapa de Sectores",
+        "title": "Ensamblado de Protocolo",
         "description": (
-            "El sistema de monitoreo del Nexo necesita un reporte del estado "
-            "energético de todos los sectores activos.\n\n"
-            "Dado el mapa:\n"
-            "```python\n"
-            "mapa = {\n"
-            '    "Alpha": {"energia": 85, "estado": "activo"},\n'
-            '    "Beta":  {"energia": 60, "estado": "inactivo"},\n'
-            '    "Gamma": {"energia": 92, "estado": "activo"},\n'
-            "}\n```\n\n"
-            "Recorre el mapa e imprime cada sector con su nivel de energía "
-            "en el formato `nombre: energia%`.\n\n"
+            "El sistema de protocolos del Nexo recibe identificadores de módulo "
+            "como elementos separados y debe ensamblarlos en una cadena unificada "
+            "para el log de transmisión.\n\n"
+            "Dada la lista `fragmentos = [\"NEXO\", \"ALFA\", \"DELTA\"]`, "
+            "une los elementos con el separador `\" | \"` e imprime el resultado.\n\n"
             "Salida esperada:\n"
-            "```\nAlpha: 85%\nBeta: 60%\nGamma: 92%\n```"
+            "```\nNEXO | ALFA | DELTA\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
         "sector_id": 6,
         "level_order": 56,
-        "base_xp_reward": 175,
+        "base_xp_reward": 150,
         "is_project": False,
-        "telemetry_goal_time": 150,
+        "telemetry_goal_time": 120,
         "challenge_type": "python",
-        "phase": "boveda",
+        "phase": "cadenas",
         "concepts_taught_json": json.dumps([
-            "diccionarios anidados", ".items()", "iteración anidada", "f-strings"
+            "strings", ".join()", "listas", "unión de cadenas"
         ]),
         "initial_code": (
-            "# MISIÓN: Genera el reporte energético de todos los sectores\n"
+            "# MISIÓN: Une los fragmentos con ' | ' como separador\n"
             "\n"
-            "mapa = {\n"
-            '    "Alpha": {"energia": 85, "estado": "activo"},\n'
-            '    "Beta":  {"energia": 60, "estado": "inactivo"},\n'
-            '    "Gamma": {"energia": 92, "estado": "activo"},\n'
-            "}\n"
+            'fragmentos = ["NEXO", "ALFA", "DELTA"]\n'
             "\n"
-            "for nombre, datos in mapa.items():\n"
-            "    # Imprime: 'nombre: energia%'\n"
-            "    print(___)\n"
+            "# Une la lista con ' | ' entre cada elemento\n"
+            "print(___.join(fragmentos))\n"
         ),
-        "expected_output": "Alpha: 85%\nBeta: 60%\nGamma: 92%",
+        "expected_output": "NEXO | ALFA | DELTA",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El sistema de monitoreo energético del Nexo necesita un reporte completo "
-            "que muestre el nivel de carga de cada sector registrado en la bóveda. "
-            "El reporte se genera automáticamente en cada ciclo de mantenimiento. "
-            "DAKI necesita que el módulo iterador produzca exactamente "
-            "el formato que espera el sistema de alertas."
+            "El log de transmisión del Nexo requiere que los identificadores de módulo "
+            "estén unidos con el separador estándar ' | ' para mantener la legibilidad "
+            "del registro de actividad. El módulo de ensamblado de DAKI recibe "
+            "la lista de fragmentos activos y los une en una sola línea de transmisión."
         ),
         "pedagogical_objective": (
-            "Iterar un diccionario de diccionarios con .items(). "
-            "Acceder a los sub-campos del dict interno (datos) dentro del for. "
-            "Formatear la salida con f-strings."
+            "Introducir .join() como el inverso de .split(). "
+            "Entender que el separador va ANTES del .join() y la lista es el argumento."
         ),
-        "syntax_hint": (
-            "for nombre, datos in mapa.items():\n"
-            "    print(f\"{nombre}: {datos['energia']}%\")"
-        ),
-        "theory_content": THEORY_N56,
+        "syntax_hint": 'print(" | ".join(fragmentos))',
+        "theory_content": THEORY_N46,
         "hints_json": json.dumps([
-            ".items() desempaqueta cada par en (nombre, datos). 'datos' es el dict interno.",
-            "Dentro del for, accede a la energía con: datos['energia']",
-            "Usa un f-string: print(f\"{nombre}: {datos['energia']}%\")",
+            ".join() une los elementos de una lista con un separador. El separador va ANTES del punto.",
+            'La sintaxis es: separador.join(lista). El separador aquí es " | " (con espacios).',
+            'Solución: print(" | ".join(fragmentos))',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 57 — Lista de dicts: búsqueda ────────────────────────────────────
+    # ── NIVEL 47 — .count(), .startswith(), .endswith() ───────────────────────
     {
-        "title": "Búsqueda en la Bóveda",
+        "title": "Análisis de Log",
         "description": (
-            "La bóveda de agentes del Nexo almacena los registros como una "
-            "lista de diccionarios. El sistema de identificación necesita "
-            "localizar un agente específico por su ID.\n\n"
-            "Dado el registro de agentes, encuentra el agente con "
-            "`id == \"A02\"` e imprime su **nombre** y **nivel**.\n\n"
+            "El sistema de monitoreo del Nexo analiza logs para determinar "
+            "la gravedad de un incidente.\n\n"
+            "Dado el log:\n"
+            "```\nlog = \"CRITICO: ERROR en sector 3. ERROR en nodo 7.\"\n```\n\n"
+            "Imprime:\n"
+            "1. Cuántas veces aparece la palabra `ERROR` en el log\n"
+            "2. Si el log **comienza** con `CRITICO` (`True` o `False`)\n\n"
             "Salida esperada:\n"
-            "```\nKira\n8\n```"
+            "```\n2\nTrue\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
         "sector_id": 6,
         "level_order": 57,
+        "base_xp_reward": 175,
+        "is_project": False,
+        "telemetry_goal_time": 150,
+        "challenge_type": "python",
+        "phase": "cadenas",
+        "concepts_taught_json": json.dumps([
+            "strings", ".count()", ".startswith()", ".endswith()", ".find()"
+        ]),
+        "initial_code": (
+            "# MISIÓN: Analiza el log sin usar bucles\n"
+            "\n"
+            'log = "CRITICO: ERROR en sector 3. ERROR en nodo 7."\n'
+            "\n"
+            '# Imprime cuántas veces aparece "ERROR"\n'
+            'print(log.___("ERROR"))\n'
+            "\n"
+            '# Imprime True si el log comienza con "CRITICO"\n'
+            'print(log.___("CRITICO"))\n'
+        ),
+        "expected_output": "2\nTrue",
+        "test_inputs_json": json.dumps([]),
+        "lore_briefing": (
+            "El sistema de clasificación de alertas del Nexo necesita dos métricas rápidas: "
+            "cuántos errores contiene el log (para calcular la puntuación del incidente) "
+            "y si fue catalogado como crítico (para el nivel de escalado). "
+            "DAKI diseñó este detector de patrones para el módulo de triaje de incidentes."
+        ),
+        "pedagogical_objective": (
+            "Usar .count() para contar ocurrencias de un substring. "
+            "Usar .startswith() para verificar prefijos. "
+            "Demostrar búsqueda en strings sin necesidad de bucles manuales."
+        ),
+        "syntax_hint": 'print(log.count("ERROR"))\nprint(log.startswith("CRITICO"))',
+        "theory_content": THEORY_N47,
+        "hints_json": json.dumps([
+            '.count("ERROR") cuenta cuántas veces aparece exactamente "ERROR" en el log.',
+            '.startswith("CRITICO") devuelve True si el string comienza con ese prefijo exacto.',
+            'Solución: print(log.count("ERROR")) y print(log.startswith("CRITICO"))',
+        ]),
+        "strict_match": True,
+    },
+    # ── NIVEL 48 — Encadenamiento + input ─────────────────────────────────────
+    {
+        "title": "Pipeline de Transformación",
+        "description": (
+            "Los operadores del campo envían identificadores de sector sin formato. "
+            "El sistema de registro aplica tres transformaciones automáticas: "
+            "elimina espacios extremos, reemplaza los espacios internos con `_`, "
+            "y convierte todo a mayúsculas.\n\n"
+            "Lee una cadena desde la entrada y aplica el pipeline completo.\n\n"
+            "Entrada: `  nexo alfa  `\n\n"
+            "Salida esperada:\n"
+            "```\nNEXO_ALFA\n```"
+        ),
+        "difficulty_tier": DifficultyTier.INTERMEDIATE,
+        "difficulty": "medium",
+        "sector_id": 6,
+        "level_order": 58,
         "base_xp_reward": 200,
         "is_project": False,
         "telemetry_goal_time": 180,
         "challenge_type": "python",
-        "phase": "boveda",
+        "phase": "cadenas",
         "concepts_taught_json": json.dumps([
-            "lista de diccionarios", "búsqueda por clave", "for + if"
+            "strings", "encadenamiento de métodos",
+            ".strip()", ".replace()", ".upper()", "input()"
         ]),
         "initial_code": (
-            "# MISIÓN: Encuentra al agente con id='A02'\n"
+            "# MISIÓN: Lee la entrada y aplica el pipeline de transformación\n"
             "\n"
-            "agentes = [\n"
-            '    {"id": "A01", "nombre": "Rex",   "nivel": 5},\n'
-            '    {"id": "A02", "nombre": "Kira",  "nivel": 8},\n'
-            '    {"id": "A03", "nombre": "Ghost", "nivel": 3},\n'
-            "]\n"
+            "entrada = input()\n"
             "\n"
-            "for agente in agentes:\n"
-            '    if agente[___] == ___:\n'
-            "        print(agente[___])\n"
-            "        print(agente[___])\n"
+            "# Pipeline: strip → replace espacios con _ → upper\n"
+            "resultado = entrada.___().___(___, ___).___()\n"
+            "print(resultado)\n"
         ),
-        "expected_output": "Kira\n8",
-        "test_inputs_json": json.dumps([]),
+        "expected_output": "NEXO_ALFA",
+        "test_inputs_json": json.dumps(["  nexo alfa  "]),
         "lore_briefing": (
-            "El sistema de identificación del Nexo recibe una solicitud urgente: "
-            "localizar al agente con identificador A02 en la bóveda de personal. "
-            "El registro contiene cientos de entradas. El módulo de búsqueda de DAKI "
-            "recorre la lista y extrae solo los datos del agente solicitado "
-            "para el reporte de despliegue táctico."
+            "Los operadores de campo no siempre siguen el formato estándar "
+            "cuando reportan su sector. El módulo de registro de DAKI aplica "
+            "un pipeline automático: elimina el ruido de los extremos, "
+            "estandariza los separadores, y normaliza a mayúsculas "
+            "para que el sistema de indexación lo procese sin errores."
         ),
         "pedagogical_objective": (
-            "Buscar un registro específico en una lista de dicts. "
-            "Patrón: for + if para localizar por valor de clave. "
-            "Acceder a múltiples campos del registro encontrado."
+            "Encadenar .strip(), .replace() y .upper() en un pipeline de una línea. "
+            "Practicar transformaciones de strings con input(). "
+            "Ver que el orden de los métodos importa."
         ),
-        "syntax_hint": (
-            "for agente in agentes:\n"
-            '    if agente["id"] == "A02":\n'
-            '        print(agente["nombre"])\n'
-            '        print(agente["nivel"])'
-        ),
-        "theory_content": THEORY_N57,
+        "syntax_hint": 'resultado = entrada.strip().replace(" ", "_").upper()',
+        "theory_content": THEORY_N48,
         "hints_json": json.dumps([
-            'Dentro del for, accede al id con agente["id"]. Compara con "A02".',
-            'Cuando la condición es True, imprime agente["nombre"] y agente["nivel"].',
-            'Solución: if agente["id"] == "A02": print(agente["nombre"]) + print(agente["nivel"])',
+            "El pipeline se aplica en orden de izquierda a derecha. Empieza con strip() para limpiar extremos.",
+            'Después de strip(), usa .replace(" ", "_") para reemplazar los espacios internos con guión bajo.',
+            'Finalmente .upper() convierte todo a mayúsculas. Cadena completa: entrada.strip().replace(" ", "_").upper()',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 58 — Lista de dicts: filtrado ────────────────────────────────────
+    # ── NIVEL 49 — Cifrado César ───────────────────────────────────────────────
     {
-        "title": "Élite del Nexo",
+        "title": "Descifrado de Señal",
         "description": (
-            "El comando del Nexo necesita convocar solo a los agentes de alto nivel "
-            "para una misión de infiltración. Solo los agentes con "
-            "`nivel >= 5` califican para la Élite.\n\n"
-            "Filtra la lista e imprime el **nombre** de cada agente élite, "
-            "en el orden en que aparecen en el registro.\n\n"
+            "Las comunicaciones enemigas están cifradas con el **Cifrado César**: "
+            "cada letra fue desplazada **3 posiciones hacia adelante** en el alfabeto. "
+            "Debes descifrar el mensaje desplazando cada letra **3 posiciones atrás**.\n\n"
+            "Lee un mensaje cifrado (solo letras mayúsculas, sin espacios ni símbolos) "
+            "y descífralo letra por letra usando `ord()` y `chr()`.\n\n"
+            "Entrada: `QHAR`\n\n"
             "Salida esperada:\n"
-            "```\nRex\nKira\nVex\n```"
+            "```\nNEXO\n```\n\n"
+            "_Verificación: Q(−3)=N, H(−3)=E, A(−3 con wrap)=X, R(−3)=O_"
         ),
-        "difficulty_tier": DifficultyTier.INTERMEDIATE,
-        "difficulty": "hard",
-        "sector_id": 6,
-        "level_order": 58,
-        "base_xp_reward": 250,
-        "is_project": False,
-        "telemetry_goal_time": 200,
-        "challenge_type": "python",
-        "phase": "boveda",
-        "concepts_taught_json": json.dumps([
-            "lista de diccionarios", "filtrado por condición", "for + if"
-        ]),
-        "initial_code": (
-            "# MISIÓN: Imprime solo los agentes con nivel >= 5\n"
-            "\n"
-            "agentes = [\n"
-            '    {"nombre": "Rex",   "nivel": 5},\n'
-            '    {"nombre": "Kira",  "nivel": 8},\n'
-            '    {"nombre": "Ghost", "nivel": 3},\n'
-            '    {"nombre": "Vex",   "nivel": 7},\n'
-            "]\n"
-            "\n"
-            "for agente in agentes:\n"
-            "    if agente[___] >= ___:\n"
-            "        print(agente[___])\n"
-        ),
-        "expected_output": "Rex\nKira\nVex",
-        "test_inputs_json": json.dumps([]),
-        "lore_briefing": (
-            "La misión de infiltración del Nexo es extremadamente peligrosa. "
-            "Solo los agentes con nivel de combate 5 o superior han completado "
-            "el entrenamiento necesario para sobrevivir el sector enemigo. "
-            "DAKI ejecuta el filtro de selección y notifica a los elegidos. "
-            "Ghost se queda en la base — su nivel no es suficiente esta vez."
-        ),
-        "pedagogical_objective": (
-            "Filtrar una lista de dicts con una condición numérica. "
-            "Patrón: for + if sobre campo de dict. "
-            "Distinguir búsqueda (un solo resultado) de filtrado (múltiples resultados)."
-        ),
-        "syntax_hint": (
-            "for agente in agentes:\n"
-            '    if agente["nivel"] >= 5:\n'
-            '        print(agente["nombre"])'
-        ),
-        "theory_content": THEORY_N58,
-        "hints_json": json.dumps([
-            'Dentro del for, accede al nivel con agente["nivel"] y compara con >= 5.',
-            'Si la condición se cumple, imprime agente["nombre"].',
-            'Solución: if agente["nivel"] >= 5: print(agente["nombre"])',
-        ]),
-        "strict_match": True,
-    },
-    # ── NIVEL 59 — Lista de dicts: agregación (máximo) ─────────────────────────
-    {
-        "title": "Sensor Crítico",
-        "description": (
-            "El sistema de detección del Nexo tiene cuatro sensores activos. "
-            "Un pico de lectura inusualmente alto indica una amenaza inminente. "
-            "El protocolo de alerta necesita identificar qué sensor reportó "
-            "la lectura **más alta** y cuál fue su valor.\n\n"
-            "Imprime el **ID** del sensor con mayor lectura y luego la **lectura** misma.\n\n"
-            "Salida esperada:\n"
-            "```\nS4\n91\n```"
-        ),
-        "difficulty_tier": DifficultyTier.INTERMEDIATE,
+        "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "hard",
         "sector_id": 6,
         "level_order": 59,
-        "base_xp_reward": 300,
+        "base_xp_reward": 350,
         "is_project": False,
-        "telemetry_goal_time": 240,
+        "telemetry_goal_time": 300,
         "challenge_type": "python",
-        "phase": "boveda",
+        "phase": "cadenas",
         "concepts_taught_json": json.dumps([
-            "lista de diccionarios", "agregación", "máximo con acumulador",
-            "for sobre lista de dicts"
+            "strings", "ord()", "chr()", "módulo %",
+            "cifrado César", "iteración de string", "concatenación"
         ]),
         "initial_code": (
-            "# MISIÓN: Encuentra el sensor con la lectura más alta\n"
+            "# MISIÓN: Descifra el mensaje César (desplazamiento = -3)\n"
             "\n"
-            "sensores = [\n"
-            '    {"id": "S1", "lectura": 45},\n'
-            '    {"id": "S2", "lectura": 78},\n'
-            '    {"id": "S3", "lectura": 23},\n'
-            '    {"id": "S4", "lectura": 91},\n'
-            "]\n"
+            "cifrado = input()\n"
+            'resultado = ""\n'
             "\n"
-            "max_lectura = 0\n"
-            'max_id = ""\n'
+            "for c in cifrado:\n"
+            "    # Descifra cada letra: desplaza -3 con wrap-around\n"
+            "    # Pista: (ord(c) - ord('A') - 3) % 26 + ord('A')\n"
+            "    letra = chr(___)\n"
+            "    resultado += letra\n"
             "\n"
-            "for s in sensores:\n"
-            "    if s[___] > max_lectura:\n"
-            "        max_lectura = s[___]\n"
-            "        max_id = s[___]\n"
-            "\n"
-            "print(max_id)\n"
-            "print(max_lectura)\n"
+            "print(resultado)\n"
         ),
-        "expected_output": "S4\n91",
-        "test_inputs_json": json.dumps([]),
+        "expected_output": "NEXO",
+        "test_inputs_json": json.dumps(["QHAR"]),
         "lore_briefing": (
-            "La red de sensores del Nexo está en alerta máxima. "
-            "Uno de los cuatro puntos de medición registró una lectura anómala "
-            "que sugiere una brecha en el perímetro de seguridad. "
-            "El sistema de respuesta táctica de DAKI necesita el ID del sensor "
-            "comprometido y el valor exacto de la lectura para priorizar la intervención."
+            "El servicio de inteligencia del Nexo interceptó una transmisión enemiga. "
+            "El análisis de frecuencia reveló que usan el Cifrado César con desplazamiento +3. "
+            "DAKI necesita que construyas el descifrador: un módulo que tome cualquier "
+            "mensaje cifrado y lo convierta al texto original, letra por letra, "
+            "usando la aritmética modular del alfabeto."
         ),
         "pedagogical_objective": (
-            "Encontrar el máximo en una lista de dicts usando acumulador. "
-            "Mantener tanto el valor máximo como el registro completo que lo contiene. "
-            "Patrón clásico de búsqueda de máximo/mínimo sobre registros."
+            "Usar ord() y chr() para operar sobre caracteres numéricamente. "
+            "Aplicar aritmética modular (%) para el wrap-around del alfabeto. "
+            "Construir un string resultado concatenando caracteres en un for."
         ),
         "syntax_hint": (
-            "for s in sensores:\n"
-            '    if s["lectura"] > max_lectura:\n'
-            '        max_lectura = s["lectura"]\n'
-            '        max_id = s["id"]'
+            "for c in cifrado:\n"
+            "    letra = chr((ord(c) - ord('A') - 3) % 26 + ord('A'))\n"
+            "    resultado += letra"
         ),
-        "theory_content": THEORY_N59,
+        "theory_content": THEORY_N49,
         "hints_json": json.dumps([
-            'Accede a la lectura de cada sensor con s["lectura"] dentro del for.',
-            'Si la lectura actual supera max_lectura, actualiza AMBAS variables: max_lectura y max_id.',
-            's["id"] contiene el identificador del sensor. Guárdalo en max_id cuando encuentres un nuevo máximo.',
+            "ord('A') = 65. ord(c) - ord('A') convierte la letra a su índice 0-25 (A=0, B=1, ..., Z=25).",
+            "El % 26 permite el wrap-around: si el índice resulta negativo, % 26 lo lleva al final del alfabeto. Ej: (-3) % 26 = 23.",
+            "La fórmula completa para el chr: (ord(c) - ord('A') - 3) % 26 + ord('A'). Ponla dentro de chr().",
         ]),
         "strict_match": True,
     },
@@ -968,23 +844,23 @@ async def seed() -> None:
     SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
     async with SessionLocal() as session:
-        # Idempotente: elimina solo niveles 51–59 (preserva el CONTRATO-60)
+        # Idempotente: elimina solo niveles 41–49 (preserva el CONTRATO-50)
         deleted = await session.execute(
             delete(Challenge).where(
                 Challenge.sector_id == 6,
-                Challenge.level_order < 60,
+                Challenge.level_order < 50,
             )
         )
         deleted_count = deleted.rowcount
         await session.flush()
-        print(f"🧹  Sector 06 (51-59) anterior eliminado — {deleted_count} challenge(s) removidos.")
+        print(f"🧹  Sector 05 (41-49) anterior eliminado — {deleted_count} challenge(s) removidos.")
 
-        print(f"\n🌱  Insertando {len(SECTOR_06)} niveles del Sector 06...\n")
+        print(f"\n🌱  Insertando {len(SECTOR_06)} niveles del Sector 05...\n")
         for data in SECTOR_06:
             challenge = Challenge(**data)
             session.add(challenge)
             print(
-                f"    [{data['level_order']:02d}/59] {data['title']:<38} "
+                f"    [{data['level_order']:02d}/49] {data['title']:<38} "
                 f"({data['difficulty'].upper()}, {data['base_xp_reward']} XP, "
                 f"~{data['telemetry_goal_time']}s)"
             )
@@ -992,8 +868,8 @@ async def seed() -> None:
         await session.commit()
 
     await engine.dispose()
-    print(f"\n✅  Sector 06 cargado — {len(SECTOR_06)} niveles listos.")
-    print("    Boss CONTRATO-60 preservado (gestionar con seed_contratos.py)\n")
+    print(f"\n✅  Sector 05 cargado — {len(SECTOR_06)} niveles listos.")
+    print("    Boss CONTRATO-50 preservado (gestionar con seed_contratos.py)\n")
 
 
 if __name__ == "__main__":

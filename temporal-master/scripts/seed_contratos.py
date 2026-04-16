@@ -1,19 +1,23 @@
 """
-Seed — CONTRATOS: Proyectos Finales de Certificación (niveles 50, 60, 70, 130, 175).
+Seed — CONTRATOS: Proyectos Finales de Certificación (niveles 60, 70, 80, 140, 185).
+
+NOTA: sector_ids y level_orders actualizados post-migración restructure_sectors.
+  Sector_ids originales (5,6,7,13,17) ahora son (6,7,8,14,18).
+  Level_orders originales (50,60,70,130,175) ahora son (60,70,80,140,185).
 
 Uso (desde la raíz del proyecto):
     python -m scripts.seed_contratos
 
 Comportamiento:
-    1. Elimina solo los challenges con sector_id IN (5, 6, 7, 13, 17) (idempotente).
+    1. Elimina solo los challenges con sector_id IN (6, 7, 8, 14, 18) (idempotente).
     2. Inserta los 5 contratos de dificultad EXPERT, uno por sector.
 
 Contratos:
-    50  — Sector 05 — Terminal de Acceso         (while + dict, autenticación)
-    60  — Sector 06 — Procesador de Datos        (función + lista de dicts, promedio)
-    70  — Sector 07 — Calculadora de Daño        (función + dict modificadores)
-    130 — Sector 13 — Clasificador de Operadores (OOP: herencia + override + max/key)
-    175 — Sector 17 — Procesador Táctico         (Strategy pattern + Protocol + testing)
+    60  — Sector 06 — Terminal de Acceso         (while + dict, autenticación)
+    70  — Sector 07 — Procesador de Datos        (función + lista de dicts, promedio)
+    80  — Sector 08 — Calculadora de Daño        (función + dict modificadores)
+    140 — Sector 14 — Clasificador de Operadores (OOP: herencia + override + max/key)
+    185 — Sector 18 — Procesador Táctico         (Strategy pattern + Protocol + testing)
 
 theory_content almacena la especificación técnica y el script de validación interna.
 """
@@ -355,8 +359,8 @@ CONTRATOS = [
         ),
         "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "expert",
-        "sector_id": 5,
-        "level_order": 50,
+        "sector_id": 6,
+        "level_order": 60,
         "base_xp_reward": 1500,
         "is_project": True,
         "telemetry_goal_time": 600,
@@ -471,8 +475,8 @@ CONTRATOS = [
         ),
         "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "expert",
-        "sector_id": 6,
-        "level_order": 60,
+        "sector_id": 7,
+        "level_order": 70,
         "base_xp_reward": 1500,
         "is_project": True,
         "telemetry_goal_time": 720,
@@ -577,8 +581,8 @@ CONTRATOS = [
         ),
         "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "expert",
-        "sector_id": 7,
-        "level_order": 70,
+        "sector_id": 8,
+        "level_order": 80,
         "base_xp_reward": 2000,
         "is_project": True,
         "telemetry_goal_time": 900,
@@ -691,8 +695,8 @@ CONTRATOS = [
         ),
         "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "expert",
-        "sector_id": 13,
-        "level_order": 130,
+        "sector_id": 14,
+        "level_order": 140,
         "base_xp_reward": 3000,
         "is_project": True,
         "telemetry_goal_time": 1200,
@@ -823,8 +827,8 @@ CONTRATOS = [
         ),
         "difficulty_tier": DifficultyTier.ADVANCED,
         "difficulty": "expert",
-        "sector_id": 17,
-        "level_order": 175,
+        "sector_id": 18,
+        "level_order": 185,
         "base_xp_reward": 4000,
         "is_project": True,
         "telemetry_goal_time": 1800,
@@ -953,14 +957,19 @@ async def seed() -> None:
     SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
     async with SessionLocal() as session:
-        # Idempotente: elimina sectores 5, 6, 7, 13, 17
-        from sqlalchemy import or_
-        deleted = await session.execute(
-            delete(Challenge).where(
-                Challenge.sector_id.in_([5, 6, 7, 13, 17])
+        # Idempotente: elimina SOLO los 5 contratos por (sector_id, level_order)
+        # NO elimina por sector_id completo para no destruir los challenges regulares
+        # de S5 (L41-49), S6 (L51-59) y S7 (L61-69).
+        contrato_keys = [(6, 60), (7, 70), (8, 80), (14, 140), (18, 185)]
+        deleted_count = 0
+        for sid, lo in contrato_keys:
+            result = await session.execute(
+                delete(Challenge).where(
+                    Challenge.sector_id == sid,
+                    Challenge.level_order == lo,
+                )
             )
-        )
-        deleted_count = deleted.rowcount
+            deleted_count += result.rowcount
         await session.flush()
         print(f"🧹  Contratos anteriores eliminados — {deleted_count} challenge(s) removidos.")
 

@@ -2,7 +2,7 @@
 seed_master.py — Orquestador de Inyección DAKI EdTech
 ========================================================
 
-Carga TODOS los niveles de los 10 sectores actuales (hasta level_order 100)
+Carga TODOS los niveles de los 22 sectores (190 niveles totales: L0–L194)
 en la base de datos PostgreSQL usando lógica de UPSERT:
 
   • Si el nivel YA EXISTE  → actualiza campos de contenido (preserva el UUID y
@@ -75,6 +75,18 @@ def load_sectors(filter_sector: int | None = None) -> list[dict[str, Any]]:
         ("scripts.seed_sector_08", "SECTOR_08"),
         ("scripts.seed_sector_09", "SECTOR_09"),
         ("scripts.seed_sector_10", "SECTOR_10"),
+        ("scripts.seed_sector_11", "SECTOR_11"),
+        ("scripts.seed_sector_12", "SECTOR_12"),
+        ("scripts.seed_sector_13", "SECTOR_13"),
+        ("scripts.seed_sector_14", "SECTOR_14"),
+        ("scripts.seed_sector_15", "SECTOR_15"),
+        ("scripts.seed_sector_16", "SECTOR_16"),
+        ("scripts.seed_sector_17", "SECTOR_17"),
+        ("scripts.seed_sector_18", "SECTOR_18"),
+        ("scripts.seed_sector_19", "SECTOR_19"),
+        ("scripts.seed_sector_20", "SECTOR_20"),  # → renombrado a SECTOR_21 post-migración
+        ("scripts.seed_sector_21", "SECTOR_21"),
+        ("scripts.seed_sector_22", "SECTOR_22"),
         ("scripts.seed_contratos", "CONTRATOS"),
     ]
 
@@ -114,6 +126,7 @@ UPSERTABLE_FIELDS = [
     "difficulty",
     "base_xp_reward",
     "is_project",
+    "is_phase_boss",
     "telemetry_goal_time",
     "challenge_type",
     "phase",

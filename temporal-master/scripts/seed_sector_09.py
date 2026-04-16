@@ -1,23 +1,21 @@
 """
-seed_sector_09.py — Sector 09: Resiliencia (try/except)
-========================================================
-Niveles 81–90  |  10 misiones  |  Sector ID = 9
+seed_sector_09.py — Sector 08: El Paradigma de Objetos (POO)
+=============================================================
+Niveles 71–80  |  10 misiones  |  Sector ID = 8
 
-Temática técnica: Manejo de excepciones, bloques try/except/else/finally,
-                  excepciones personalizadas y patrones defensivos.
+Temática técnica: Clases, objetos, __init__, métodos de instancia,
+                  atributos, herencia básica, polimorfismo e isinstance.
 
-Lore DAKI: "Escudos de Energía" (81–85) y "Protocolo de Resiliencia" (86–90).
+Lore DAKI: "Creación de Avatares" (71–75) y "Gestión de Flota de Drones" (76–80).
 
-Nivel 90 (Boss): Analizador de logs con try/except que no crashea ante
-                 datos malformados.
+Nivel 80 (Boss): Clase Drone completa con recibir_dano() y atacar().
 
-Notas de sandbox:
-  • Las clases de excepción estándar (ValueError, TypeError, etc.)
-    están en el whitelist desde Prompt 31.
-  • Las excepciones personalizadas (`class ErrorNexo(Exception)`) funcionan
-    con __build_class__ también añadido en Prompt 31.
-  • `open()` no está en el whitelist — los "archivos" se simulan con
-    strings multilínea procesadas con splitlines().
+NOTA de sandbox:
+  • super().__init__() está bloqueado por el AST guard (Layer 2b bloquea
+    accesos a atributos que empiezan con '_').
+  • Los niveles de herencia redeclaran atributos del padre directamente
+    en __init__ — patrón válido para OOP introductorio.
+  • __build_class__, super y object están en el whitelist desde Prompt 31.
 
 Uso standalone:
     python -m scripts.seed_sector_09
@@ -44,193 +42,183 @@ from app.models.challenge import Challenge, DifficultyTier
 # Textos de teoría reutilizables
 # ─────────────────────────────────────────────────────────────────────────────
 
-THEORY_TRY_BASIC = """\
-## try / except básico
+THEORY_OOP_INTRO = """\
+## Clases y Objetos
 
-El bloque `try` intenta ejecutar código que puede fallar.
-Si ocurre un error, `except` lo captura y el programa continúa:
+Una **clase** es un molde que define atributos (datos) y métodos (acciones).
+Un **objeto** es una instancia concreta de esa clase.
 
 ```python
-try:
-    resultado = 10 / 0
-except:
-    print("ERROR CAPTURADO")
+class Sensor:
+    tipo = "temperatura"          # atributo de clase
+
+    def activar(self):            # método de instancia
+        print("Sensor activado")
+
+s = Sensor()
+s.activar()   # → "Sensor activado"
 ```
 
-Sin `try/except`, `ZeroDivisionError` detendría el programa.
-Con `try/except`, se captura el error y se maneja de forma controlada.
+`self` es la referencia al objeto actual dentro de sus propios métodos.
 """
 
-THEORY_EXCEPT_SPECIFIC = """\
-## except con tipo específico
+THEORY_INIT = """\
+## El Constructor __init__
 
-Es buena práctica especificar qué tipo de excepción capturar:
+`__init__` se ejecuta automáticamente al crear una instancia.
+Recibe los parámetros de inicialización y los guarda como atributos.
 
 ```python
-try:
-    numero = int("NEXO")
-except ValueError:
-    print("CONVERSION FALLIDA")
-```
+class Drone:
+    def __init__(self, nombre, hp):
+        self.nombre = nombre
+        self.hp     = hp
 
-Si ocurre una excepción diferente a `ValueError`, NO será capturada
-y el programa sí lanzará el error. Esto evita ocultar bugs.
+d = Drone("Alpha", 100)
+print(d.nombre)   # → Alpha
+print(d.hp)       # → 100
+```
 """
 
-THEORY_EXCEPT_AS = """\
-## except ... as e
+THEORY_METHODS = """\
+## Métodos de instancia
 
-Puedes capturar el objeto de excepción para ver su mensaje:
+Los métodos acceden y modifican los atributos del objeto a través de `self`.
 
 ```python
-try:
-    lista = [1, 2, 3]
-    print(lista[10])
-except IndexError as e:
-    print("IndexError capturado")
-    print(str(e))
-```
+class Drone:
+    def __init__(self, nombre, hp):
+        self.nombre = nombre
+        self.hp     = hp
 
-`str(e)` convierte el error en texto legible, útil para logging.
+    def estado(self):
+        print(f"{self.nombre}: {self.hp} HP")
+
+d = Drone("Beta", 85)
+d.estado()   # → Beta: 85 HP
+```
 """
 
-THEORY_MULTIPLE_EXCEPT = """\
-## Múltiples cláusulas except
+THEORY_MUTATION = """\
+## Métodos que modifican el estado
 
-Puedes manejar distintos tipos de error de forma diferente:
+Los métodos pueden cambiar los atributos del objeto:
 
 ```python
-def dividir(a, b):
-    try:
-        return a / b
-    except ValueError:
-        return "VALOR INVALIDO"
-    except ZeroDivisionError:
-        return "DIVISION POR CERO"
+class Drone:
+    def __init__(self, hp):
+        self.hp = hp
+
+    def recibir_dano(self, dano):
+        self.hp = max(0, self.hp - dano)
+
+d = Drone(100)
+d.recibir_dano(35)
+print(d.hp)   # → 65
 ```
 
-Python prueba cada `except` en orden y ejecuta el primero que coincida.
+`max(0, ...)` evita que `hp` sea negativo.
 """
 
-THEORY_ELSE = """\
-## try / except / else
+THEORY_STR = """\
+## El método __str__
 
-El bloque `else` se ejecuta SOLO si no ocurrió ninguna excepción:
+`__str__` define cómo se representa el objeto como texto cuando se usa `print()` o `str()`.
 
 ```python
-try:
-    numero = int("42")
-except ValueError:
-    print("Conversión fallida")
-else:
-    print(f"Conversion exitosa: {numero}")
-```
+class Drone:
+    def __init__(self, nombre, hp):
+        self.nombre = nombre
+        self.hp     = hp
 
-`else` es útil para el código que depende de que `try` haya tenido éxito.
+    def __str__(self):
+        return f"Drone[{self.nombre}] HP={self.hp}"
+
+d = Drone("Gamma", 75)
+print(d)   # → Drone[Gamma] HP=75
+```
 """
 
-THEORY_FINALLY = """\
-## try / except / finally
+THEORY_LIST_INSTANCES = """\
+## Listas de objetos
 
-El bloque `finally` se ejecuta SIEMPRE, haya o no excepción:
+Puedes almacenar múltiples instancias en una lista e iterar sobre ellas:
 
 ```python
-try:
-    resultado = 10 / 2
-except ZeroDivisionError:
-    resultado = 0
-finally:
-    print("Protocolo finalizado")
+flota = [Drone("Alpha", 100), Drone("Beta", 85), Drone("Gamma", 60)]
+
+for drone in flota:
+    print(f"{drone.nombre}: {drone.hp} HP")
 ```
 
-`finally` es útil para limpiar recursos (cerrar conexiones, etc.)
-independientemente del resultado.
+Cada elemento de la lista es un objeto independiente con sus propios atributos.
 """
 
-THEORY_RAISE = """\
-## raise — lanzar excepciones
+THEORY_INHERITANCE = """\
+## Herencia básica
 
-Puedes lanzar excepciones manualmente con `raise`:
+Una clase hija hereda los métodos de la clase padre. Para reutilizar
+la inicialización del padre en el sandbox (donde `super().__init__()`
+no está disponible), redeclaramos los atributos directamente:
 
 ```python
-def validar_hp(hp):
-    if hp < 0:
-        raise ValueError("HP no puede ser negativo")
-    return hp
+class DroneBase:
+    def __init__(self, nombre, hp):
+        self.nombre = nombre
+        self.hp     = hp
 
-try:
-    validar_hp(-10)
-except ValueError as e:
-    print(str(e))
+    def descripcion(self):
+        print("Drone Base")
+
+class DroneCombate(DroneBase):
+    def __init__(self, nombre, hp, ataque):
+        self.nombre = nombre   # ← redeclaramos atributos padre
+        self.hp     = hp
+        self.ataque = ataque
+
+    def atacar(self, objetivo):
+        objetivo.hp = max(0, objetivo.hp - self.ataque)
+        print(f"{self.nombre} ataca con {self.ataque} de daño")
 ```
-
-`raise` interrumpe la función y el `except` del llamador lo captura.
 """
 
-THEORY_CUSTOM_EXCEPTION = """\
-## Excepciones personalizadas
+THEORY_POLYMORPHISM = """\
+## Polimorfismo: sobreescribir métodos
 
-Puedes crear tus propias excepciones heredando de `Exception`:
+Una clase hija puede **sobreescribir** un método heredado del padre
+para cambiar su comportamiento:
 
 ```python
-class ErrorNexo(Exception):
-    pass
+class DroneBase:
+    def descripcion(self):
+        print("Drone Base")
 
-def verificar_clave(clave):
-    if clave != "NEXO-7":
-        raise ErrorNexo("Clave de acceso inválida")
+class DroneEspia(DroneBase):
+    def __init__(self, sigilo):
+        self.sigilo = sigilo
 
-try:
-    verificar_clave("HACK")
-except ErrorNexo as e:
-    print(str(e))
+    def descripcion(self):          # sobreescribe al padre
+        print(f"Drone Espía (sigilo: {self.sigilo})")
 ```
 
-Las excepciones personalizadas hacen el código más expresivo y permiten
-capturar solo errores del dominio del negocio.
+Aunque sean del mismo tipo, cada objeto ejecuta su propia versión del método.
 """
 
-THEORY_DEFENSIVE = """\
-## Programación defensiva con try/except
+THEORY_ISINSTANCE = """\
+## isinstance() con herencia
 
-Una función defensiva devuelve un valor especial en lugar de crashear:
-
-```python
-def convertir(valor):
-    try:
-        return int(valor)
-    except (ValueError, TypeError):
-        return None
-
-datos = ["42", "ERROR", "7", "X", "15"]
-validos = [convertir(d) for d in datos]
-validos = [v for v in validos if v is not None]
-print(validos)   # [42, 7, 15]
-```
-
-Este patrón es común en parsers y procesadores de datos reales.
-"""
-
-THEORY_LOG_ANALYZER = """\
-## Analizador de logs resiliente
-
-Un analizador de logs robusto nunca crashea ante datos malformados:
+`isinstance(obj, Clase)` devuelve `True` si el objeto es una instancia
+de `Clase` **o de cualquiera de sus clases hijas**:
 
 ```python
-log = \"\"\"HP:45
-CORRUPTO
-MP:30\"\"\"
+class DroneBase: pass
+class DroneCombate(DroneBase): pass
 
-for linea in log.splitlines():
-    try:
-        clave, valor = linea.split(":")
-        print(f"{clave} = {int(valor)}")
-    except (ValueError, KeyError):
-        print(f"Linea ignorada: {linea}")
+d = DroneCombate()
+print(isinstance(d, DroneCombate))   # → True
+print(isinstance(d, DroneBase))      # → True  (hereda de DroneBase)
+print(isinstance(d, str))            # → False
 ```
-
-`splitlines()` convierte un string multilínea en una lista de líneas,
-simulando la lectura de un archivo sin necesitar `open()`.
 """
 
 
@@ -239,15 +227,16 @@ simulando la lectura de un archivo sin necesitar `open()`.
 # ─────────────────────────────────────────────────────────────────────────────
 
 SECTOR_09: list[dict] = [
-    # ── Nivel 81 ─────────────────────────────────────────────────────────────
+    # ── Nivel 71 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 81,
-        "title":       "El Primer Escudo",
+        "title":       "El Primer Sensor",
         "description": (
-            "Envuelve `resultado = 10 // 0` en un `try/except` genérico.\n"
-            "Si hay error, imprime exactamente:\n\n"
-            "```\nERROR CAPTURADO\n```"
+            "Crea una clase `Sensor` con un atributo de clase `tipo = \"temperatura\"` "
+            "y un método `activar(self)` que imprima exactamente:\n\n"
+            "```\nSensor temperatura activado\n```\n\n"
+            "Luego instancia el objeto y llama al método."
         ),
         "difficulty_tier":       DifficultyTier.BEGINNER,
         "difficulty":            "easy",
@@ -256,42 +245,47 @@ SECTOR_09: list[dict] = [
         "telemetry_goal_time":   180,
         "challenge_type":        "code",
         "phase":                 "teoria",
-        "concepts_taught_json":  ["try", "except", "ZeroDivisionError", "error_generico"],
+        "concepts_taught_json":  ["class", "atributo_clase", "metodo", "self", "instancia"],
         "initial_code": (
-            "try:\n"
-            "    resultado = 10 // 0\n"
-            "except:\n"
-            "    # Imprime el mensaje de error\n"
-            "    pass\n"
+            "class Sensor:\n"
+            "    tipo = \"temperatura\"\n"
+            "\n"
+            "    def activar(self):\n"
+            "        # Imprime el mensaje de activación\n"
+            "        pass\n"
+            "\n"
+            "s = Sensor()\n"
+            "s.activar()\n"
         ),
-        "expected_output":       "ERROR CAPTURADO",
+        "expected_output":       "Sensor temperatura activado",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Escudos de Energía v1\n\n"
-            "El sistema detectó una operación inválida que podría crashear el protocolo.\n"
-            "Activa el escudo try/except para contener el daño."
+            "DAKI — Protocolo Avatares v1.0\n\n"
+            "Para crear entidades autónomas necesitamos un molde base.\n"
+            "Tu primera misión: diseña la clase `Sensor` y actívala."
         ),
-        "pedagogical_objective": "Introducir el bloque try/except como mecanismo de captura de errores.",
-        "syntax_hint":           "Dentro del `except:`, escribe `print(\"ERROR CAPTURADO\")`.",
-        "theory_content":        THEORY_TRY_BASIC,
+        "pedagogical_objective": "Introducir el concepto de clase, atributo de clase y método de instancia.",
+        "syntax_hint":           "Usa `f\"Sensor {self.tipo} activado\"` o concatenación.",
+        "theory_content":        THEORY_OOP_INTRO,
         "hints_json": [
-            "`10 // 0` lanza `ZeroDivisionError`.",
-            "Un `except:` sin tipo captura cualquier excepción.",
-            "El código dentro de `except` se ejecuta solo cuando hay error.",
+            "Una clase define el molde; un objeto es la instancia concreta.",
+            "El método `activar` debe usar `self.tipo` para leer el atributo.",
+            "Crea el objeto con `s = Sensor()` y llama `s.activar()`.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 82 ─────────────────────────────────────────────────────────────
+    # ── Nivel 72 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 82,
-        "title":       "Conversión Blindada",
+        "title":       "Avatar con __init__",
         "description": (
-            "Intenta convertir el string `\"NEXO\"` a entero con `int()`.\n"
-            "Captura específicamente `ValueError` e imprime:\n\n"
-            "```\nCONVERSION FALLIDA\n```"
+            "Crea una clase `Avatar` con un constructor `__init__(self, nombre, hp)` "
+            "que guarde ambos parámetros como atributos.\n\n"
+            "Luego crea un avatar llamado `\"Alpha\"` con 100 HP e imprime:\n\n"
+            "```\nAlpha\n100\n```"
         ),
         "difficulty_tier":       DifficultyTier.BEGINNER,
         "difficulty":            "easy",
@@ -300,42 +294,45 @@ SECTOR_09: list[dict] = [
         "telemetry_goal_time":   200,
         "challenge_type":        "code",
         "phase":                 "teoria",
-        "concepts_taught_json":  ["ValueError", "except_especifico", "int_conversion"],
+        "concepts_taught_json":  ["__init__", "self", "atributo_instancia", "constructor"],
         "initial_code": (
-            "try:\n"
-            "    numero = int(\"NEXO\")\n"
-            "except ValueError:\n"
-            "    # Imprime el mensaje\n"
-            "    pass\n"
+            "class Avatar:\n"
+            "    def __init__(self, nombre, hp):\n"
+            "        # Guarda nombre y hp como atributos\n"
+            "        pass\n"
+            "\n"
+            "a = Avatar(\"Alpha\", 100)\n"
+            "print(a.nombre)\n"
+            "print(a.hp)\n"
         ),
-        "expected_output":       "CONVERSION FALLIDA",
+        "expected_output":       "Alpha\n100",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Decodificador de Señales\n\n"
-            "El decodificador recibió datos corruptos que no se pueden convertir a número.\n"
-            "Usa `except ValueError` para manejar el fallo específico."
+            "DAKI — Módulo de Identidad\n\n"
+            "Cada avatar necesita un nombre y puntos de vida.\n"
+            "Usa `__init__` para inicializar esos datos al nacer."
         ),
-        "pedagogical_objective": "Practicar captura específica de ValueError en conversiones de tipo.",
-        "syntax_hint":           "`except ValueError:` captura solo errores de conversión.",
-        "theory_content":        THEORY_EXCEPT_SPECIFIC,
+        "pedagogical_objective": "Aprender a definir y usar __init__ para inicializar atributos de instancia.",
+        "syntax_hint":           "Dentro de `__init__`: `self.nombre = nombre` y `self.hp = hp`.",
+        "theory_content":        THEORY_INIT,
         "hints_json": [
-            "`int(\"NEXO\")` lanza `ValueError` porque no es un número válido.",
-            "Usa `except ValueError:` en lugar de `except:` genérico.",
-            "Dentro del except, escribe `print(\"CONVERSION FALLIDA\")`.",
+            "`__init__` se ejecuta automáticamente al crear un objeto.",
+            "Asigna cada parámetro a un atributo: `self.nombre = nombre`.",
+            "Accede al atributo desde fuera con `a.nombre`.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 83 ─────────────────────────────────────────────────────────────
+    # ── Nivel 73 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 83,
-        "title":       "Captura con Mensaje",
+        "title":       "Estado del Avatar",
         "description": (
-            "Intenta acceder a `lista[10]` donde `lista = [10, 20, 30]`.\n"
-            "Captura el `IndexError` con `as e` e imprime:\n\n"
-            "```\nIndexError capturado\nlist index out of range\n```"
+            "Añade a la clase `Avatar` un método `estado(self)` que imprima:\n\n"
+            "```\nNexo-7: 85 HP\n```\n\n"
+            "Crea `Avatar(\"Nexo-7\", 85)` y llama al método."
         ),
         "difficulty_tier":       DifficultyTier.BEGINNER,
         "difficulty":            "easy",
@@ -343,356 +340,404 @@ SECTOR_09: list[dict] = [
         "is_project":            False,
         "telemetry_goal_time":   210,
         "challenge_type":        "code",
-        "phase":                 "teoria",
-        "concepts_taught_json":  ["IndexError", "except_as", "str_excepcion"],
+        "phase":                 "practica",
+        "concepts_taught_json":  ["metodo_instancia", "f-string", "self"],
         "initial_code": (
-            "lista = [10, 20, 30]\n"
-            "try:\n"
-            "    print(lista[10])\n"
-            "except IndexError as e:\n"
-            "    # Imprime el aviso y el mensaje del error\n"
-            "    pass\n"
+            "class Avatar:\n"
+            "    def __init__(self, nombre, hp):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
+            "\n"
+            "    def estado(self):\n"
+            "        # Imprime \"nombre: hp HP\"\n"
+            "        pass\n"
+            "\n"
+            "a = Avatar(\"Nexo-7\", 85)\n"
+            "a.estado()\n"
         ),
-        "expected_output":       "IndexError capturado\nlist index out of range",
+        "expected_output":       "Nexo-7: 85 HP",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Registro de Fallos\n\n"
-            "El sistema de telemetría accedió a un índice fuera de rango.\n"
-            "Captura el error y registra el mensaje exacto para el diagnóstico."
+            "DAKI — Monitor de Salud\n\n"
+            "El sistema necesita conocer el estado vital de cada avatar.\n"
+            "Implementa el método `estado()` para reportarlo."
         ),
-        "pedagogical_objective": "Aprender a usar 'except ExcType as e' para inspeccionar el mensaje de la excepción.",
-        "syntax_hint":           "`print(str(e))` muestra el mensaje de la excepción.",
-        "theory_content":        THEORY_EXCEPT_AS,
+        "pedagogical_objective": "Practicar métodos de instancia que leen y formatean atributos propios.",
+        "syntax_hint":           "Usa `f\"{self.nombre}: {self.hp} HP\"`.",
+        "theory_content":        THEORY_METHODS,
         "hints_json": [
-            "`except IndexError as e:` guarda el objeto de excepción en `e`.",
-            "Usa `str(e)` para convertir el error en texto legible.",
-            "Primero imprime 'IndexError capturado', luego `str(e)`.",
+            "Los métodos acceden a los atributos del objeto con `self.atributo`.",
+            "Usa un f-string: `f\"{self.nombre}: {self.hp} HP\"`.",
+            "Recuerda que `estado(self)` lleva `self` como primer parámetro.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 84 ─────────────────────────────────────────────────────────────
+    # ── Nivel 74 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 84,
-        "title":       "Múltiples Escudos",
+        "title":       "Recibir Daño",
         "description": (
-            "Implementa `calcular_division(a, b)` que:\n"
-            "- Intenta retornar `a / b`\n"
-            "- Si `b` no es número: retorna `\"VALOR INVALIDO\"`\n"
-            "- Si `b == 0`: retorna `\"DIVISION POR CERO\"`\n\n"
-            "Llama la función con `(100, 4)`, `(100, \"X\")` y `(100, 0)`:\n\n"
-            "```\n25.0\nVALOR INVALIDO\nDIVISION POR CERO\n```"
+            "Añade el método `recibir_dano(self, dano)` a la clase `Avatar`.\n"
+            "El HP nunca debe bajar de 0.\n\n"
+            "Con `Avatar(\"Nexo-7\", 100)` y `recibir_dano(35)`, imprime:\n\n"
+            "```\n65\n```"
         ),
         "difficulty_tier":       DifficultyTier.BEGINNER,
-        "difficulty":            "medium",
-        "base_xp_reward":        160,
+        "difficulty":            "easy",
+        "base_xp_reward":        150,
         "is_project":            False,
-        "telemetry_goal_time":   250,
+        "telemetry_goal_time":   220,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["multiple_except", "TypeError", "ZeroDivisionError", "funcion_defensiva"],
+        "concepts_taught_json":  ["metodo_mutador", "max", "self"],
         "initial_code": (
-            "def calcular_division(a, b):\n"
-            "    try:\n"
-            "        return a / b\n"
-            "    except TypeError:\n"
-            "        return \"VALOR INVALIDO\"\n"
-            "    except ZeroDivisionError:\n"
-            "        return \"DIVISION POR CERO\"\n"
+            "class Avatar:\n"
+            "    def __init__(self, nombre, hp):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
             "\n"
-            "print(calcular_division(100, 4))\n"
-            "print(calcular_division(100, \"X\"))\n"
-            "print(calcular_division(100, 0))\n"
+            "    def recibir_dano(self, dano):\n"
+            "        # Reduce hp pero nunca por debajo de 0\n"
+            "        pass\n"
+            "\n"
+            "a = Avatar(\"Nexo-7\", 100)\n"
+            "a.recibir_dano(35)\n"
+            "print(a.hp)\n"
         ),
-        "expected_output":       "25.0\nVALOR INVALIDO\nDIVISION POR CERO",
+        "expected_output":       "65",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Calculadora Táctica\n\n"
-            "La calculadora de daño recibe distintos tipos de entrada errónea.\n"
-            "Cada tipo de error necesita su propio manejador."
+            "DAKI — Sistema de Combate v1\n\n"
+            "Los avatares deben poder recibir daño sin morir de forma inválida.\n"
+            "Implementa `recibir_dano` con protección de HP mínimo."
         ),
-        "pedagogical_objective": "Practicar múltiples cláusulas except para diferentes tipos de error.",
-        "syntax_hint":           "Cada `except` maneja un tipo diferente. El orden importa.",
-        "theory_content":        THEORY_MULTIPLE_EXCEPT,
+        "pedagogical_objective": "Aprender a modificar atributos de instancia dentro de métodos usando max().",
+        "syntax_hint":           "`self.hp = max(0, self.hp - dano)`",
+        "theory_content":        THEORY_MUTATION,
         "hints_json": [
-            "`100 / \"X\"` lanza `TypeError` (operación con tipo incorrecto).",
-            "`100 / 0` lanza `ZeroDivisionError`.",
-            "Python ejecuta el primer `except` que coincida con el tipo de error.",
+            "Modifica `self.hp` directamente dentro del método.",
+            "Usa `max(0, self.hp - dano)` para evitar valores negativos.",
+            "El nuevo HP se asigna a `self.hp`, no a una variable local.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 85 ─────────────────────────────────────────────────────────────
+    # ── Nivel 75 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 85,
-        "title":       "else: El Escudo Inteligente",
+        "title":       "Representación __str__",
         "description": (
-            "Usa `try/except/else` para convertir `\"42\"` a entero.\n"
-            "Si la conversión falla: `\"Conversion fallida\"`.\n"
-            "Si tiene éxito (bloque `else`): `\"Conversion exitosa: 42\"`.\n\n"
-            "```\nConversion exitosa: 42\n```"
+            "Añade el método `__str__(self)` a la clase `Drone` para que `print(d)` muestre:\n\n"
+            "```\nDrone[Gamma] HP=75\n```\n\n"
+            "Crea `Drone(\"Gamma\", 75)` e imprímelo directamente."
         ),
         "difficulty_tier":       DifficultyTier.BEGINNER,
-        "difficulty":            "medium",
+        "difficulty":            "easy",
         "base_xp_reward":        160,
         "is_project":            False,
         "telemetry_goal_time":   230,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["try_except_else", "else_en_try", "control_flujo"],
+        "concepts_taught_json":  ["__str__", "representacion_objeto", "f-string"],
         "initial_code": (
-            "texto = \"42\"\n"
-            "try:\n"
-            "    numero = int(texto)\n"
-            "except ValueError:\n"
-            "    print(\"Conversion fallida\")\n"
-            "else:\n"
-            "    # Solo se ejecuta si no hubo excepción\n"
-            "    pass\n"
+            "class Drone:\n"
+            "    def __init__(self, nombre, hp):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
+            "\n"
+            "    def __str__(self):\n"
+            "        # Devuelve el string de representación\n"
+            "        pass\n"
+            "\n"
+            "d = Drone(\"Gamma\", 75)\n"
+            "print(d)\n"
         ),
-        "expected_output":       "Conversion exitosa: 42",
+        "expected_output":       "Drone[Gamma] HP=75",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Validación de Señal\n\n"
-            "El escudo inteligente distingue entre éxito y fallo.\n"
-            "`else` activa el protocolo de confirmación solo cuando la señal es válida."
+            "DAKI — Interfaz de Identificación\n\n"
+            "El sistema necesita visualizar cada drone en el panel de control.\n"
+            "Define `__str__` para que `print(drone)` muestre su identidad."
         ),
-        "pedagogical_objective": "Entender el rol del bloque else en try/except: se ejecuta solo sin errores.",
-        "syntax_hint":           "En el `else:`, escribe `print(f\"Conversion exitosa: {numero}\")`.",
-        "theory_content":        THEORY_ELSE,
+        "pedagogical_objective": "Aprender a implementar __str__ para representación textual de objetos.",
+        "syntax_hint":           "`return f\"Drone[{self.nombre}] HP={self.hp}\"`",
+        "theory_content":        THEORY_STR,
         "hints_json": [
-            "`else` solo se ejecuta cuando NO hay ninguna excepción en `try`.",
-            "La variable `numero` está disponible en el bloque `else`.",
-            "Usa un f-string: `f\"Conversion exitosa: {numero}\"`.",
+            "`__str__` debe RETORNAR un string, no imprimirlo.",
+            "Usa un f-string: `f\"Drone[{self.nombre}] HP={self.hp}\"`.",
+            "`print(d)` llama automáticamente a `d.__str__()`.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 86 ─────────────────────────────────────────────────────────────
+    # ── Nivel 76 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 86,
-        "title":       "finally: Protocolo de Cierre",
+        "title":       "Flota de Drones",
         "description": (
-            "Calcula `10 / 2` con `try/except/finally`.\n"
-            "El `finally` siempre imprime `\"Protocolo finalizado\"`.\n\n"
-            "```\n5.0\nProtocolo finalizado\n```"
+            "Crea una lista con tres drones y llama `estado()` en cada uno.\n\n"
+            "Salida esperada:\n"
+            "```\nAlpha: 100 HP\nBeta: 85 HP\nGamma: 60 HP\n```"
         ),
-        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
+        "difficulty_tier":       DifficultyTier.BEGINNER,
         "difficulty":            "medium",
         "base_xp_reward":        170,
         "is_project":            False,
-        "telemetry_goal_time":   240,
+        "telemetry_goal_time":   250,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["finally", "try_except_finally", "cleanup"],
+        "concepts_taught_json":  ["lista_objetos", "iteracion", "metodo_instancia"],
         "initial_code": (
-            "try:\n"
-            "    resultado = 10 / 2\n"
-            "    print(resultado)\n"
-            "except ZeroDivisionError:\n"
-            "    print(\"Error de division\")\n"
-            "finally:\n"
-            "    # Siempre se ejecuta\n"
-            "    pass\n"
-        ),
-        "expected_output":       "5.0\nProtocolo finalizado",
-        "test_inputs_json":      [],
-        "strict_match":          True,
-        "lore_briefing": (
-            "DAKI — Protocolo de Resiliencia\n\n"
-            "El protocolo de cierre debe ejecutarse siempre, incluso en fallo.\n"
-            "Usa `finally` para garantizar que el sistema se apaga de forma segura."
-        ),
-        "pedagogical_objective": "Aprender que finally se ejecuta siempre, útil para limpieza de recursos.",
-        "syntax_hint":           "Dentro del `finally:`, escribe `print(\"Protocolo finalizado\")`.",
-        "theory_content":        THEORY_FINALLY,
-        "hints_json": [
-            "`finally` se ejecuta siempre: haya excepción o no.",
-            "En este caso, `10 / 2 = 5.0` no falla, pero `finally` igual se ejecuta.",
-            "Orden de salida: primero `try` imprime 5.0, luego `finally` imprime el mensaje.",
-        ],
-        "grid_map_json": None,
-    },
-
-    # ── Nivel 87 ─────────────────────────────────────────────────────────────
-    {
-        "sector_id":   9,
-        "level_order": 87,
-        "title":       "raise: El Protocolo de Alerta",
-        "description": (
-            "Implementa `validar_hp(hp)` que lanza `ValueError` "
-            "con el mensaje `\"HP no puede ser negativo\"` si `hp < 0`.\n\n"
-            "Llámala con `-10` y captura el error:\n\n"
-            "```\nHP no puede ser negativo\n```"
-        ),
-        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
-        "difficulty":            "medium",
-        "base_xp_reward":        180,
-        "is_project":            False,
-        "telemetry_goal_time":   260,
-        "challenge_type":        "code",
-        "phase":                 "practica",
-        "concepts_taught_json":  ["raise", "ValueError", "validacion", "patron_raise_catch"],
-        "initial_code": (
-            "def validar_hp(hp):\n"
-            "    if hp < 0:\n"
-            "        raise ValueError(\"HP no puede ser negativo\")\n"
-            "    return hp\n"
+            "class Drone:\n"
+            "    def __init__(self, nombre, hp):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
             "\n"
-            "try:\n"
-            "    validar_hp(-10)\n"
-            "except ValueError as e:\n"
-            "    # Imprime el mensaje de error\n"
+            "    def estado(self):\n"
+            "        print(f\"{self.nombre}: {self.hp} HP\")\n"
+            "\n"
+            "flota = [\n"
+            "    Drone(\"Alpha\", 100),\n"
+            "    Drone(\"Beta\",  85),\n"
+            "    Drone(\"Gamma\", 60),\n"
+            "]\n"
+            "\n"
+            "# Itera sobre la flota y llama estado() en cada drone\n"
+            "for drone in flota:\n"
             "    pass\n"
         ),
-        "expected_output":       "HP no puede ser negativo",
+        "expected_output":       "Alpha: 100 HP\nBeta: 85 HP\nGamma: 60 HP",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Sistema de Validación Táctica\n\n"
-            "El sistema no debe aceptar HP negativo como entrada válida.\n"
-            "Usa `raise ValueError` para rechazar datos corruptos."
+            "DAKI — Centro de Mando\n\n"
+            "La flota completa debe reportar su estado al sistema central.\n"
+            "Itera sobre la lista y activa el reporte de cada drone."
         ),
-        "pedagogical_objective": "Entender raise como mecanismo de señalización de condiciones de error.",
-        "syntax_hint":           "`raise ValueError(\"mensaje\")` — el mensaje se accede con `str(e)`.",
-        "theory_content":        THEORY_RAISE,
+        "pedagogical_objective": "Practicar listas de objetos e iteración para llamar métodos sobre múltiples instancias.",
+        "syntax_hint":           "Dentro del `for`, llama `drone.estado()`.",
+        "theory_content":        THEORY_LIST_INSTANCES,
         "hints_json": [
-            "`raise ValueError(\"HP no puede ser negativo\")` lanza el error.",
-            "El `except ValueError as e:` del llamador lo captura.",
-            "`print(str(e))` imprime el mensaje exacto del error.",
+            "Cada elemento de `flota` es un objeto `Drone` independiente.",
+            "Dentro del `for drone in flota:`, escribe `drone.estado()`.",
+            "La variable `drone` cambia en cada iteración al siguiente objeto.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 88 ─────────────────────────────────────────────────────────────
+    # ── Nivel 77 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
-        "level_order": 88,
-        "title":       "Excepción Personalizada",
+        "sector_id": 9,
+        "level_order": 87,
+        "title":       "Herencia: Drone de Combate",
         "description": (
-            "Define `class ErrorNexo(Exception): pass`.\n\n"
-            "Implementa `verificar_clave(clave)` que lanza `ErrorNexo` "
-            "con el mensaje `\"Clave de acceso inválida\"` si la clave no es `\"NEXO-7\"`.\n\n"
-            "Llámala con `\"HACK\"` y muestra:\n\n"
-            "```\nClave de acceso inválida\n```"
+            "Crea `DroneBase` con `__init__(nombre, hp)` y `DroneCombate(DroneBase)` "
+            "que añada el atributo `ataque` y el método `atacar(objetivo)`.\n\n"
+            "`atacar` reduce el HP del objetivo y muestra:\n"
+            "```\nRex ataca con 30 de daño\nTarget: 50 HP\n```\n\n"
+            "Úsalo con `rex.atacar(target)` donde `rex = DroneCombate(\"Rex\", 100, 30)` "
+            "y `target = DroneBase(\"Target\", 80, 0)` — pero `DroneBase.__init__` "
+            "acepta un tercer parámetro ignorado para simplificar."
         ),
         "difficulty_tier":       DifficultyTier.INTERMEDIATE,
         "difficulty":            "medium",
         "base_xp_reward":        200,
         "is_project":            False,
-        "telemetry_goal_time":   280,
+        "telemetry_goal_time":   300,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["excepcion_personalizada", "herencia_Exception", "raise", "OOP_excepciones"],
+        "concepts_taught_json":  ["herencia", "clase_hija", "override_init", "metodo_atacar"],
         "initial_code": (
-            "class ErrorNexo(Exception):\n"
-            "    pass\n"
+            "class DroneBase:\n"
+            "    def __init__(self, nombre, hp, extra=None):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
             "\n"
-            "def verificar_clave(clave):\n"
-            "    if clave != \"NEXO-7\":\n"
-            "        raise ErrorNexo(\"Clave de acceso inválida\")\n"
+            "class DroneCombate(DroneBase):\n"
+            "    def __init__(self, nombre, hp, ataque):\n"
+            "        # Redeclara atributos del padre y añade self.ataque\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
+            "        self.ataque = ataque\n"
             "\n"
-            "try:\n"
-            "    verificar_clave(\"HACK\")\n"
-            "except ErrorNexo as e:\n"
-            "    # Imprime el mensaje\n"
-            "    pass\n"
+            "    def atacar(self, objetivo):\n"
+            "        # Reduce objetivo.hp y muestra el mensaje\n"
+            "        pass\n"
+            "\n"
+            "rex    = DroneCombate(\"Rex\", 100, 30)\n"
+            "target = DroneBase(\"Target\", 80)\n"
+            "rex.atacar(target)\n"
+            "print(f\"Target: {target.hp} HP\")\n"
         ),
-        "expected_output":       "Clave de acceso inválida",
+        "expected_output":       "Rex ataca con 30 de daño\nTarget: 50 HP",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Protocolo de Acceso Seguro\n\n"
-            "El sistema rechaza claves no autorizadas con una excepción propia.\n"
-            "Define `ErrorNexo` y úsala para señalizar acceso no autorizado."
+            "DAKI — Protocolo de Combate\n\n"
+            "Los drones de combate heredan características base y añaden capacidad de ataque.\n"
+            "Implementa la herencia y el método `atacar`."
         ),
-        "pedagogical_objective": "Crear y usar excepciones personalizadas heredando de Exception.",
-        "syntax_hint":           "`class ErrorNexo(Exception): pass` — luego `raise ErrorNexo(\"mensaje\")`.",
-        "theory_content":        THEORY_CUSTOM_EXCEPTION,
+        "pedagogical_objective": "Introducir herencia de clases y métodos que interactúan con otros objetos.",
+        "syntax_hint":           "En `atacar`: `objetivo.hp = max(0, objetivo.hp - self.ataque)` y luego `print(...)`.",
+        "theory_content":        THEORY_INHERITANCE,
         "hints_json": [
-            "`class ErrorNexo(Exception): pass` crea la excepción personalizada.",
-            "Se usa igual que las excepciones estándar: `raise ErrorNexo(\"mensaje\")`.",
-            "`except ErrorNexo as e:` la captura; `print(str(e))` muestra el mensaje.",
+            "La clase hija hereda todos los métodos del padre.",
+            "En el sandbox, redeclara `self.nombre` y `self.hp` en el `__init__` hijo.",
+            "El método `atacar` recibe otro objeto como parámetro y modifica su `hp`.",
+            "Usa `max(0, objetivo.hp - self.ataque)` para evitar HP negativo.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 89 ─────────────────────────────────────────────────────────────
+    # ── Nivel 78 ─────────────────────────────────────────────────────────────
     {
-        "sector_id":   9,
-        "level_order": 89,
-        "title":       "Filtro Defensivo",
+        "sector_id": 9,
+        "level_order": 88,
+        "title":       "Polimorfismo: Override de Método",
         "description": (
-            "Implementa `convertir(valor)` que retorna `int(valor)` o `None` si falla.\n\n"
-            "Filtra la lista `[\"42\", \"ERROR\", \"7\", \"X\", \"15\"]` y muestra "
-            "solo los valores convertidos correctamente:\n\n"
-            "```\n42\n7\n15\n```"
+            "Crea `DroneBase` con `descripcion(self)` que imprime `\"Drone Base\"`.\n"
+            "Crea `DroneEspia(DroneBase)` con `__init__(self, sigilo)` y sobreescribe "
+            "`descripcion` para que imprima `\"Drone Espía (sigilo: 95)\"`.\n\n"
+            "Salida esperada:\n"
+            "```\nDrone Base\nDrone Espía (sigilo: 95)\n```"
+        ),
+        "difficulty_tier":       DifficultyTier.INTERMEDIATE,
+        "difficulty":            "medium",
+        "base_xp_reward":        210,
+        "is_project":            False,
+        "telemetry_goal_time":   280,
+        "challenge_type":        "code",
+        "phase":                 "practica",
+        "concepts_taught_json":  ["polimorfismo", "override_metodo", "herencia"],
+        "initial_code": (
+            "class DroneBase:\n"
+            "    def descripcion(self):\n"
+            "        print(\"Drone Base\")\n"
+            "\n"
+            "class DroneEspia(DroneBase):\n"
+            "    def __init__(self, sigilo):\n"
+            "        self.sigilo = sigilo\n"
+            "\n"
+            "    def descripcion(self):\n"
+            "        # Sobreescribe el método padre\n"
+            "        pass\n"
+            "\n"
+            "base  = DroneBase()\n"
+            "espia = DroneEspia(95)\n"
+            "base.descripcion()\n"
+            "espia.descripcion()\n"
+        ),
+        "expected_output":       "Drone Base\nDrone Espía (sigilo: 95)",
+        "test_inputs_json":      [],
+        "strict_match":          True,
+        "lore_briefing": (
+            "DAKI — Diversificación de Flota\n\n"
+            "Distintos tipos de drones se comportan diferente ante el mismo comando.\n"
+            "Implementa polimorfismo sobreescribiendo el método `descripcion`."
+        ),
+        "pedagogical_objective": "Demostrar polimorfismo: mismo nombre de método, comportamiento diferente según la clase.",
+        "syntax_hint":           '`print(f"Drone Espía (sigilo: {self.sigilo})")`',
+        "theory_content":        THEORY_POLYMORPHISM,
+        "hints_json": [
+            "Sobreescribir un método significa definirlo de nuevo en la clase hija.",
+            "Python llama a la versión del método que corresponde a la clase real del objeto.",
+            "Usa `self.sigilo` dentro de `DroneEspia.descripcion` para acceder al atributo.",
+        ],
+        "grid_map_json": None,
+    },
+
+    # ── Nivel 79 ─────────────────────────────────────────────────────────────
+    {
+        "sector_id": 9,
+        "level_order": 89,
+        "title":       "isinstance() en la Jerarquía",
+        "description": (
+            "Verifica la jerarquía de clases con `isinstance()`.\n\n"
+            "Con `DroneBase` y `DroneCombate(DroneBase)`, crea un objeto `dc = DroneCombate()`.\n\n"
+            "Imprime:\n"
+            "```\nTrue\nTrue\nFalse\n```\n\n"
+            "Donde:\n"
+            "- Línea 1: `isinstance(dc, DroneCombate)`\n"
+            "- Línea 2: `isinstance(dc, DroneBase)` (hereda)\n"
+            "- Línea 3: `isinstance(dc, str)`"
         ),
         "difficulty_tier":       DifficultyTier.INTERMEDIATE,
         "difficulty":            "medium",
         "base_xp_reward":        190,
         "is_project":            False,
-        "telemetry_goal_time":   270,
+        "telemetry_goal_time":   260,
         "challenge_type":        "code",
         "phase":                 "practica",
-        "concepts_taught_json":  ["funcion_defensiva", "None_como_sentinel", "filter_none", "patron_defensivo"],
+        "concepts_taught_json":  ["isinstance", "jerarquia_clases", "herencia"],
         "initial_code": (
-            "def convertir(valor):\n"
-            "    try:\n"
-            "        return int(valor)\n"
-            "    except (ValueError, TypeError):\n"
-            "        return None\n"
+            "class DroneBase:\n"
+            "    pass\n"
             "\n"
-            "datos = [\"42\", \"ERROR\", \"7\", \"X\", \"15\"]\n"
-            "for d in datos:\n"
-            "    resultado = convertir(d)\n"
-            "    if resultado is not None:\n"
-            "        print(resultado)\n"
+            "class DroneCombate(DroneBase):\n"
+            "    pass\n"
+            "\n"
+            "dc = DroneCombate()\n"
+            "\n"
+            "# Imprime los tres isinstance\n"
+            "print(isinstance(dc, DroneCombate))\n"
+            "print(isinstance(dc, DroneBase))\n"
+            "print(isinstance(dc, str))\n"
         ),
-        "expected_output":       "42\n7\n15",
+        "expected_output":       "True\nTrue\nFalse",
         "test_inputs_json":      [],
         "strict_match":          True,
         "lore_briefing": (
-            "DAKI — Limpieza de Datos Corruptos\n\n"
-            "El feed de telemetría mezcla datos válidos con corruptos.\n"
-            "El filtro defensivo extrae solo los valores útiles."
+            "DAKI — Sistema de Identificación Táctica\n\n"
+            "El sistema necesita verificar el tipo de cada entidad antes de asignarle órdenes.\n"
+            "Usa `isinstance()` para clasificar correctamente en la jerarquía."
         ),
-        "pedagogical_objective": "Usar try/except para devolver None en error y filtrar resultados válidos.",
-        "syntax_hint":           "Captura `(ValueError, TypeError)` en un solo `except` con tupla.",
-        "theory_content":        THEORY_DEFENSIVE,
+        "pedagogical_objective": "Entender que isinstance() respeta la jerarquía de herencia.",
+        "syntax_hint":           "`isinstance(objeto, Clase)` devuelve `True` si el objeto es de esa clase o hija.",
+        "theory_content":        THEORY_ISINSTANCE,
         "hints_json": [
-            "Retorna `None` en el `except` para indicar fallo silencioso.",
-            "En el bucle, verifica `if resultado is not None:` antes de imprimir.",
-            "Un `except` puede capturar múltiples tipos: `except (ValueError, TypeError):`.",
+            "`isinstance(dc, DroneBase)` es `True` porque `DroneCombate` hereda de `DroneBase`.",
+            "`isinstance(dc, str)` es `False` porque `dc` no es un string.",
+            "No necesitas modificar el código — solo completar las llamadas `isinstance`.",
         ],
         "grid_map_json": None,
     },
 
-    # ── Nivel 90 (BOSS) ───────────────────────────────────────────────────────
+    # ── Nivel 80 (BOSS) ───────────────────────────────────────────────────────
     {
-        "sector_id":   9,
+        "sector_id": 9,
         "level_order": 90,
-        "title":       "CONTRATO-90: Analizador de Logs",
+        "title":       "CONTRATO-80: Batalla de Drones",
         "description": (
-            "**BOSS del Sector 09 — Proyecto completo**\n\n"
-            "El sistema recibirá N líneas de log por `input()`. Cada línea tiene formato "
-            "`CLAVE:VALOR` donde VALOR es un entero.\n"
-            "Algunas líneas están corrompidas (no tienen `:` o el valor no es número).\n\n"
-            "Tu analizador debe:\n"
-            "1. Leer `n = int(input())` — número de líneas\n"
-            "2. Por cada línea: usar `try/except` para parsear `CLAVE:VALOR`\n"
-            "3. Si la línea es válida: sumar el valor al total\n"
-            "4. Si la línea es inválida: incrementar contador de errores\n"
-            "5. Al final imprimir: `\"Total: X\"` y `\"Errores: Y\"`\n\n"
-            "**Test:**\n"
-            "Entradas: `5`, `HP:45`, `MP:30`, `CORRUPTO`, `XP:70`, `NEXO:X`\n\n"
-            "```\nTotal: 145\nErrores: 2\n```"
+            "**BOSS del Sector 08 — Proyecto completo**\n\n"
+            "Implementa la clase `Drone` con:\n"
+            "- `__init__(self, nombre, hp, ataque)`\n"
+            "- `recibir_dano(self, dano)` — HP mínimo 0\n"
+            "- `atacar(self, objetivo)` — reduce HP del objetivo, imprime:\n"
+            "  `\"[nombre] ataca a [objetivo.nombre] — daño: [ataque]\"`\n"
+            "- `estado(self)` — imprime `\"[nombre]: [hp] HP [ACTIVO|DESTRUIDO]\"`\n"
+            "  (DESTRUIDO si hp == 0)\n\n"
+            "Luego ejecuta:\n"
+            "```python\n"
+            "alpha = Drone(\"Alpha\", 100, 25)\n"
+            "beta  = Drone(\"Beta\",  80,  15)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.estado()\n"
+            "beta.estado()\n"
+            "```\n\n"
+            "Salida esperada:\n"
+            "```\nAlpha ataca a Beta — daño: 25\nAlpha ataca a Beta — daño: 25\n"
+            "Alpha ataca a Beta — daño: 25\nAlpha ataca a Beta — daño: 25\n"
+            "Alpha: 100 HP [ACTIVO]\nBeta: 0 HP [DESTRUIDO]\n```"
         ),
         "difficulty_tier":       DifficultyTier.ADVANCED,
         "difficulty":            "hard",
@@ -701,65 +746,71 @@ SECTOR_09: list[dict] = [
         "telemetry_goal_time":   600,
         "challenge_type":        "project",
         "phase":                 "proyecto",
-        "concepts_taught_json":  ["try_except_integrado", "splitlines", "parseo_resiliente", "acumulador"],
+        "concepts_taught_json":  ["clase_completa", "metodos_multiples", "estado_objeto", "OOP_integrado"],
         "initial_code": (
-            "n = int(input())\n"
-            "total  = 0\n"
-            "errores = 0\n"
+            "class Drone:\n"
+            "    def __init__(self, nombre, hp, ataque):\n"
+            "        self.nombre = nombre\n"
+            "        self.hp     = hp\n"
+            "        self.ataque = ataque\n"
             "\n"
-            "for _ in range(n):\n"
-            "    linea = input()\n"
-            "    try:\n"
-            "        # Separa la línea en clave y valor\n"
-            "        # Convierte el valor a int y acumula\n"
+            "    def recibir_dano(self, dano):\n"
             "        pass\n"
-            "    except (ValueError, IndexError):\n"
-            "        errores += 1\n"
             "\n"
-            "print(f\"Total: {total}\")\n"
-            "print(f\"Errores: {errores}\")\n"
+            "    def atacar(self, objetivo):\n"
+            "        pass\n"
+            "\n"
+            "    def estado(self):\n"
+            "        pass\n"
+            "\n"
+            "alpha = Drone(\"Alpha\", 100, 25)\n"
+            "beta  = Drone(\"Beta\",   80,  15)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.atacar(beta)\n"
+            "alpha.estado()\n"
+            "beta.estado()\n"
         ),
-        "expected_output":       "Total: 145\nErrores: 2",
-        "test_inputs_json":      ["5", "HP:45", "MP:30", "CORRUPTO", "XP:70", "NEXO:X"],
-        "strict_match":          True,
+        "expected_output": (
+            "Alpha ataca a Beta — daño: 25\n"
+            "Alpha ataca a Beta — daño: 25\n"
+            "Alpha ataca a Beta — daño: 25\n"
+            "Alpha ataca a Beta — daño: 25\n"
+            "Alpha: 100 HP [ACTIVO]\n"
+            "Beta: 0 HP [DESTRUIDO]"
+        ),
+        "test_inputs_json": [],
+        "strict_match":     True,
         "lore_briefing": (
-            "DAKI — CONTRATO-90: Protocolo Omega de Resiliencia\n\n"
-            "El sistema de inteligencia táctica recibe logs de múltiples fuentes.\n"
-            "Algunos feeds están corrompidos. El analizador nunca debe crashear —\n"
-            "registra los errores y procesa lo que pueda. La misión del sector depende de esto."
+            "DAKI — CONTRATO-80: Eliminación de Unidades Hostiles\n\n"
+            "La simulación de combate requiere una clase `Drone` completamente funcional.\n"
+            "Alpha debe destruir a Beta en 4 ataques. Implementa todos los métodos\n"
+            "y demuestra que dominas el Paradigma de Objetos."
         ),
-        "pedagogical_objective": (
-            "Integrar try/except con acumuladores, parseo de strings y lógica de conteo de errores "
-            "en un programa completo robusto ante entradas malformadas."
-        ),
-        "syntax_hint":           '`clave, valor = linea.split(":")` — falla si no hay ":" → IndexError.',
+        "pedagogical_objective": "Integrar __init__, métodos mutadores, interacción entre objetos y formato condicional de estado.",
+        "syntax_hint":           'En `estado`: `etiqueta = "ACTIVO" if self.hp > 0 else "DESTRUIDO"`.',
         "theory_content": (
-            "## Boss Sector 09: Analizador de Logs resiliente\n\n"
-            "Flujo completo:\n"
+            "## Boss Sector 08: Clase Drone completa\n\n"
+            "Integra todos los conceptos del sector:\n\n"
+            "| Método | Responsabilidad |\n"
+            "|---|---|\n"
+            "| `__init__` | Inicializa nombre, hp, ataque |\n"
+            "| `recibir_dano` | Reduce hp con `max(0, ...)` |\n"
+            "| `atacar` | Llama `recibir_dano` del objetivo e imprime log |\n"
+            "| `estado` | Muestra HP y etiqueta ACTIVO/DESTRUIDO |\n\n"
+            "**Flujo de `atacar`:**\n"
             "```python\n"
-            "n = int(input())\n"
-            "total  = 0\n"
-            "errores = 0\n"
-            "for _ in range(n):\n"
-            "    linea = input()\n"
-            "    try:\n"
-            "        clave, valor = linea.split(\":\")\n"
-            "        total += int(valor)\n"
-            "    except (ValueError, IndexError):\n"
-            "        errores += 1\n"
-            "print(f\"Total: {total}\")\n"
-            "print(f\"Errores: {errores}\")\n"
-            "```\n\n"
-            "**¿Por qué dos tipos de excepción?**\n"
-            "- `IndexError`: `linea.split(\":\")` devuelve solo un elemento → unpacking falla\n"
-            "- `ValueError`: `int(valor)` falla si el valor no es número (p.ej. `\"X\"`)\n\n"
-            "Con `except (ValueError, IndexError):` capturamos ambos casos en una sola línea."
+            "def atacar(self, objetivo):\n"
+            "    objetivo.recibir_dano(self.ataque)\n"
+            "    print(f\"{self.nombre} ataca a {objetivo.nombre} — daño: {self.ataque}\")\n"
+            "```"
         ),
         "hints_json": [
-            '`linea.split(":")` divide en `["CLAVE", "VALOR"]`; `clave, valor = ...` hace unpacking.',
-            'Si la línea no tiene ":", split devuelve un solo elemento y el unpacking lanza `ValueError`.',
-            "Acumula: `total += int(valor)` dentro del `try`.",
-            "En el `except (ValueError, IndexError):`, solo incrementa `errores += 1`.",
+            "Implementa `recibir_dano` primero: `self.hp = max(0, self.hp - dano)`.",
+            "En `atacar`, llama `objetivo.recibir_dano(self.ataque)` y luego imprime el log.",
+            "En `estado`, calcula la etiqueta: `\"ACTIVO\" if self.hp > 0 else \"DESTRUIDO\"`.",
+            "Formato exacto: `f\"{self.nombre}: {self.hp} HP [{etiqueta}]\"`.",
         ],
         "grid_map_json": None,
     },
@@ -772,7 +823,7 @@ SECTOR_09: list[dict] = [
 
 async def seed(dry_run: bool = False) -> None:
     print("\n" + "═" * 60)
-    print("  ⚡ Seed Sector 09 — Resiliencia (try/except)")
+    print("  ⚡ Seed Sector 08 — El Paradigma de Objetos (POO)")
     print("═" * 60)
     if dry_run:
         print("  MODE: DRY-RUN\n")
@@ -811,7 +862,7 @@ async def seed(dry_run: bool = False) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Seed Sector 09 — Resiliencia")
+    p = argparse.ArgumentParser(description="Seed Sector 08 — POO")
     p.add_argument("--dry-run", action="store_true")
     return p.parse_args()
 

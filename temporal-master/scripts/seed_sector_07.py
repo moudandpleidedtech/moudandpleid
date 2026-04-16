@@ -1,25 +1,18 @@
 """
-Seed — SECTOR 07: Motores Lógicos (9 niveles, IDs 61–69).
+Seed — SECTOR 07: Bóvedas de Memoria (9 niveles, IDs 51–59).
 
 Uso (desde la raíz del proyecto):
     python -m scripts.seed_sector_07
 
 Comportamiento:
-    1. Elimina solo los challenges con sector_id=7 y level_order < 70 (preserva CONTRATO-70).
-    2. Inserta los 9 niveles del Sector 07 con curva easy → medium → hard.
-    3. El nivel 70 (Boss) vive en seed_contratos.py — no se toca aquí.
+    1. Elimina solo los challenges con sector_id=6 y level_order < 60 (preserva CONTRATO-60).
+    2. Inserta los 9 niveles del Sector 06 con curva easy → medium → hard.
+    3. El nivel 60 (Boss) vive en seed_contratos.py — no se toca aquí.
 
-Temática técnica: funciones matemáticas de la biblioteca estándar de Python:
-    abs(), round(), pow(), min(), max(), sum(), divmod(), // y %.
-    Operadores de división entera y módulo aplicados a problemas reales.
-    Fórmulas de combate, distribución de recursos, simulación de física.
-
-Narrativa: simulación de físicas de combate, cálculo de rutas de evasión.
-
-NOTA TÉCNICA: El sandbox de GG evalúa código en un entorno aislado que no permite
-    `import X`. En lugar de math/random/datetime, este sector enseña las funciones
-    matemáticas equivalentes que Python expone como built-ins de forma nativa,
-    sin necesidad de importación.
+Temática técnica: tuplas (creación, acceso, desempaquetado), sets (conjuntos,
+                  .add(), operaciones de conjunto), diccionarios anidados,
+                  listas de diccionarios (búsqueda, filtrado, agregación).
+Narrativa: optimización de almacenamiento, mapeo de la base de datos del Nexo.
 """
 
 import asyncio
@@ -38,378 +31,364 @@ from app.models.challenge import Challenge, DifficultyTier
 
 # ─── Contenido teórico por nivel ─────────────────────────────────────────────
 
-THEORY_N61 = """\
-## PROTOCOLO: abs() — Valor Absoluto
+THEORY_N51 = """\
+## PROTOCOLO: Tuplas — Registros Inmutables
 
-`abs(x)` devuelve el valor absoluto de un número: elimina el signo negativo.
+Una **tupla** es una colección ordenada e **inmutable** de valores.
+Se define con paréntesis `()`:
 
 ```python
-print(abs(42))    # 42   (ya era positivo)
-print(abs(-42))   # 42   (negativo → positivo)
-print(abs(-3.7))  # 3.7
+coordenada = (10, 25)
+registro   = ("NEXO-7", 42, "ACTIVO")
+```
+
+Se accede por índice igual que una lista:
+
+```python
+print(coordenada[0])    # 10
+print(coordenada[1])    # 25
+print(registro[-1])     # "ACTIVO"
 ```
 
 ---
 
-## CASO DE USO: Distancia
+## INMUTABILIDAD
 
-La distancia entre dos puntos siempre es positiva, sin importar el orden:
+A diferencia de las listas, las tuplas **no se pueden modificar** después de crearse:
 
 ```python
-punto_a = 87
-punto_b = 52
-distancia = abs(punto_a - punto_b)
-print(distancia)   # 35  (mismo resultado que abs(52 - 87))
+coords = (5, 3)
+coords[0] = 10   # ← TypeError: 'tuple' object does not support item assignment
 ```
 
 ---
 
-## DIFERENCIA vs DISTANCIA
+## ¿CUÁNDO USAR TUPLAS?
+
+- Datos que **no deben cambiar**: coordenadas, RGB, credenciales
+- **Retornar múltiples valores** desde una función
+- Como **claves de diccionario** (las listas no pueden serlo)
+"""
+
+THEORY_N52 = """\
+## PROTOCOLO: Desempaquetado de Tuplas
+
+El **desempaquetado** asigna los elementos de una tupla a variables individuales en una sola línea:
 
 ```python
-# Diferencia — puede ser negativa:
-diferencia = punto_b - punto_a   # -35
+registro = ("NEXO-7", 42, "ACTIVO")
 
-# Distancia — siempre positiva:
-distancia  = abs(punto_b - punto_a)   # 35
+# Sin desempaquetado (tedioso):
+nombre = registro[0]
+nivel  = registro[1]
+estado = registro[2]
+
+# Con desempaquetado (elegante):
+nombre, nivel, estado = registro
+```
+
+El número de variables debe coincidir con el número de elementos de la tupla.
+
+---
+
+## DESEMPAQUETADO EN for
+
+Muy útil al iterar listas de tuplas:
+
+```python
+puntos = [(1, 2), (3, 4), (5, 6)]
+for x, y in puntos:
+    print(f"({x}, {y})")
+```
+
+---
+
+## RETORNO MÚLTIPLE
+
+Las funciones pueden "retornar" múltiples valores empaquetados en una tupla:
+
+```python
+def minmax(lista):
+    return min(lista), max(lista)
+
+minimo, maximo = minmax([3, 1, 4, 1, 5])
 ```
 """
 
-THEORY_N62 = """\
-## PROTOCOLO: round() — Redondeo de Precisión
+THEORY_N53 = """\
+## PROTOCOLO: Sets — Conjuntos Sin Duplicados
 
-`round(numero)` redondea al **entero más cercano**.
-`round(numero, decimales)` redondea a N decimales.
+Un **set** es una colección **desordenada** de elementos **únicos**.
+Se define con llaves `{}` o con `set()`:
 
 ```python
-print(round(87.6543))     # 88    → al entero más cercano
-print(round(87.6543, 2))  # 87.65 → 2 decimales
-print(round(87.6543, 1))  # 87.7  → 1 decimal
-print(round(87.5))        # 88    → el .5 redondea hacia arriba
+accesos = {"Alpha", "Beta", "Gamma"}
+vacío   = set()   # ← set(), no {} (eso crea un dict vacío)
 ```
 
 ---
 
-## REGLA DE ORO
+## OPERACIONES BÁSICAS
 
-Python usa el **redondeo bancario** (round half to even):
-`round(0.5)` → `0`, `round(1.5)` → `2` (redondea al par más cercano).
+```python
+accesos = {"Alpha", "Beta"}
+accesos.add("Gamma")       # agrega un elemento
+accesos.add("Alpha")       # ← ignorado, ya existe
+accesos.remove("Beta")     # elimina (KeyError si no existe)
+accesos.discard("Beta")    # elimina si existe, sin error si no
 
-Para la mayoría de los casos prácticos en GG esto no importa.
+print("Alpha" in accesos)  # True — verificación O(1)
+print(len(accesos))        # 2
+```
 
 ---
 
-## EVITAR SALIDA FLOTANTE INESPERADA
+## IMPORTANTE: Los Sets son Desordenados
+
+El orden de iteración es **impredecible**. Para salida determinista usa `sorted()`:
 
 ```python
-# Sin round:
-print(1 / 3)          # 0.3333333333333333
-
-# Con round:
-print(round(1/3, 4))  # 0.3333
+for elemento in sorted(accesos):
+    print(elemento)
 ```
 """
 
-THEORY_N63 = """\
-## PROTOCOLO: pow() y ** — Potenciación
+THEORY_N54 = """\
+## PROTOCOLO: Operaciones de Conjuntos
 
-Dos formas de calcular potencias en Python:
+Los sets soportan las operaciones matemáticas de la teoría de conjuntos:
+
+| Operación       | Sintaxis Python          | Descripción                          |
+|-----------------|--------------------------|--------------------------------------|
+| Unión           | `a | b` o `a.union(b)`   | Todos los elementos de a y b         |
+| Intersección    | `a & b` o `a.intersection(b)` | Solo los que están en ambos     |
+| Diferencia      | `a - b` o `a.difference(b)` | Los de a que NO están en b        |
+| Dif. simétrica  | `a ^ b`                  | Los que están en uno pero no en ambos|
+
+---
+
+## EJEMPLO
 
 ```python
-# Operador **
-print(2 ** 8)      # 256
-print(3 ** 4)      # 81
+sector_a = {"N1", "N2", "N3"}
+sector_b = {"N2", "N3", "N4"}
 
-# Función pow()
-print(pow(2, 8))   # 256  ← equivalente al operador
-print(pow(3, 4))   # 81
+print(sector_a | sector_b)   # {'N1', 'N2', 'N3', 'N4'}
+print(sector_a & sector_b)   # {'N2', 'N3'}
+print(sector_a - sector_b)   # {'N1'}
 ```
 
 ---
 
-## RAÍCES CON EXPONENTES FRACCIONARIOS
-
-La raíz cuadrada es equivalente a elevar a la potencia 0.5:
+## CASO DE USO: Deduplicación
 
 ```python
-print(pow(16, 0.5))   # 4.0   → raíz cuadrada de 16
-print(pow(27, 1/3))   # 3.0   → raíz cúbica de 27
-```
-
----
-
-## pow() CON TRES ARGUMENTOS — MÓDULO
-
-`pow(base, exp, mod)` calcula `(base ** exp) % mod` de forma eficiente:
-
-```python
-print(pow(2, 10, 1000))   # (2^10) % 1000 = 1024 % 1000 = 24
-```
-
-Útil en criptografía y sistemas de hash tácticos.
-"""
-
-THEORY_N64 = """\
-## PROTOCOLO: min() y max() — Extremos de una Secuencia
-
-`min()` y `max()` devuelven el elemento menor o mayor de una secuencia:
-
-```python
-lecturas = [45, 78, 23, 91, 56]
-
-print(min(lecturas))   # 23  → valor más bajo
-print(max(lecturas))   # 91  → valor más alto
-```
-
-También funcionan con argumentos directos (sin lista):
-
-```python
-print(min(5, 3, 8, 1))   # 1
-print(max(5, 3, 8, 1))   # 8
-```
-
----
-
-## ENCONTRAR EL RANGO
-
-```python
-rango = max(lecturas) - min(lecturas)
-print(rango)   # 91 - 23 = 68
-```
-
----
-
-## CON STRINGS
-
-`min()` y `max()` también funcionan con strings (orden alfabético):
-
-```python
-codigos = ["ALFA", "BETA", "GAMMA", "DELTA"]
-print(min(codigos))   # "ALFA"
-print(max(codigos))   # "GAMMA"
+ids_duplicados = ["A1", "B2", "A1", "C3", "B2"]
+ids_unicos = set(ids_duplicados)   # {'A1', 'B2', 'C3'}
 ```
 """
 
-THEORY_N65 = """\
-## PROTOCOLO: divmod() — División Completa en Una Operación
+THEORY_N55 = """\
+## PROTOCOLO: Diccionarios Anidados
 
-`divmod(a, b)` retorna una **tupla** `(cociente, resto)`:
-Equivale a hacer `a // b` y `a % b` al mismo tiempo.
+Un diccionario puede contener otro diccionario como valor.
+Se accede encadenando corchetes:
 
 ```python
-cociente, resto = divmod(135, 60)
-print(cociente)   # 2   → cuántas veces entra 60 en 135
-print(resto)      # 15  → lo que sobra después de las divisiones
+nexo = {
+    "sector_1": {"nombre": "Alpha", "energia": 85},
+    "sector_2": {"nombre": "Beta",  "energia": 60},
+}
+
+print(nexo["sector_1"]["nombre"])   # "Alpha"
+print(nexo["sector_2"]["energia"])  # 60
 ```
+
+Cada `[]` baja un nivel en la estructura:
+1. `nexo["sector_1"]` → `{"nombre": "Alpha", "energia": 85}`
+2. `...["nombre"]`    → `"Alpha"`
 
 ---
 
-## CASO DE USO: Conversión de Unidades
+## MODIFICAR VALORES ANIDADOS
 
 ```python
-# Convertir 7384 segundos a horas, minutos y segundos
-segundos_totales = 7384
-
-horas,   resto_horas = divmod(segundos_totales, 3600)
-minutos, segundos    = divmod(resto_horas,       60)
-
-print(f"{horas}h {minutos}m {segundos}s")   # 2h 3m 4s
+nexo["sector_1"]["energia"] = 90   # actualiza el valor
+nexo["sector_3"] = {"nombre": "Gamma", "energia": 70}  # agrega nuevo sector
 ```
-
----
-
-## ALTERNATIVA SIN divmod()
-
-```python
-cociente = a // b   # división entera
-resto    = a % b    # módulo (resto)
-```
-
-`divmod()` es más eficiente porque calcula ambos a la vez.
 """
 
-THEORY_N66 = """\
-## PROTOCOLO: sum() — Suma de Iterables
+THEORY_N56 = """\
+## PROTOCOLO: Iterar Estructuras Anidadas
 
-`sum(iterable)` suma todos los elementos de una lista o cualquier secuencia:
-
-```python
-escudos = [80, 65, 90, 75, 60]
-total = sum(escudos)
-print(total)   # 370
-```
-
-También acepta un segundo argumento como valor inicial:
+Para recorrer un diccionario de diccionarios usa `.items()` y accede al
+sub-diccionario dentro del bucle:
 
 ```python
-print(sum([10, 20, 30], 100))   # 160  (100 + 10 + 20 + 30)
-```
+mapa = {
+    "Alpha": {"energia": 85, "estado": "activo"},
+    "Beta":  {"energia": 60, "estado": "inactivo"},
+}
 
----
-
-## PATRÓN: PROMEDIO
-
-```python
-valores = [80, 65, 90, 75, 60]
-promedio = sum(valores) / len(valores)
-print(round(promedio, 1))   # 74.0
+for nombre, datos in mapa.items():
+    print(f"{nombre}: {datos['energia']}%")
+# Alpha: 85%
+# Beta: 60%
 ```
 
 ---
 
-## sum() vs ACUMULADOR MANUAL
+## FILTRADO DURANTE LA ITERACIÓN
 
 ```python
-# Con sum():
-total = sum(valores)
+for nombre, datos in mapa.items():
+    if datos["estado"] == "activo":
+        print(f"{nombre} está operativo")
+# Alpha está operativo
+```
 
-# Sin sum() (equivalente):
+---
+
+## NOTA: Orden de los Dicts
+
+En Python 3.7+, los diccionarios mantienen el **orden de inserción**.
+La salida será siempre en el orden en que se definieron las claves.
+"""
+
+THEORY_N57 = """\
+## PROTOCOLO: Listas de Diccionarios — La Base de Datos del Nexo
+
+Una **lista de diccionarios** es la forma más común de representar registros
+tabulares en Python (equivalente a filas de una tabla):
+
+```python
+agentes = [
+    {"id": "A01", "nombre": "Rex",   "nivel": 5},
+    {"id": "A02", "nombre": "Kira",  "nivel": 8},
+    {"id": "A03", "nombre": "Ghost", "nivel": 3},
+]
+```
+
+---
+
+## BÚSQUEDA POR CLAVE
+
+Para encontrar un registro específico, recorre la lista con `for` y filtra con `if`:
+
+```python
+for agente in agentes:
+    if agente["id"] == "A02":
+        print(agente["nombre"])   # "Kira"
+        print(agente["nivel"])    # 8
+        break   # opcional: detiene la búsqueda al encontrar el primero
+```
+
+---
+
+## ACCESO A CAMPOS
+
+Dentro del bucle, `agente` es un dict normal:
+- `agente["id"]`     → valor de la clave "id"
+- `agente["nombre"]` → valor de la clave "nombre"
+"""
+
+THEORY_N58 = """\
+## PROTOCOLO: Filtrado de Registros
+
+Para obtener un subconjunto de registros que cumplen una condición,
+recorre la lista y usa `if`:
+
+```python
+agentes = [
+    {"nombre": "Rex",   "nivel": 5},
+    {"nombre": "Kira",  "nivel": 8},
+    {"nombre": "Ghost", "nivel": 3},
+]
+
+for agente in agentes:
+    if agente["nivel"] >= 5:
+        print(agente["nombre"])
+# Rex
+# Kira
+```
+
+---
+
+## CONSTRUIR UNA LISTA FILTRADA
+
+Para guardar los resultados (no solo imprimirlos):
+
+```python
+elite = []
+for agente in agentes:
+    if agente["nivel"] >= 5:
+        elite.append(agente)
+# elite contiene los dicts de Rex y Kira
+```
+
+---
+
+## MÚLTIPLES CONDICIONES
+
+```python
+for agente in agentes:
+    if agente["nivel"] >= 5 and agente["estado"] == "activo":
+        print(agente["nombre"])
+```
+"""
+
+THEORY_N59 = """\
+## PROTOCOLO: Agregación sobre Registros
+
+Para calcular el **máximo, mínimo o suma** de un campo en una lista de dicts,
+usa el patrón de acumulador con un bucle:
+
+```python
+sensores = [
+    {"id": "S1", "lectura": 45},
+    {"id": "S2", "lectura": 78},
+    {"id": "S3", "lectura": 91},
+]
+
+# Encontrar el sensor con mayor lectura
+max_lectura = 0
+max_id = ""
+for s in sensores:
+    if s["lectura"] > max_lectura:
+        max_lectura = s["lectura"]
+        max_id = s["id"]
+
+print(max_id)       # "S3"
+print(max_lectura)  # 91
+```
+
+---
+
+## SUMA Y PROMEDIO
+
+```python
 total = 0
-for v in valores:
-    total += v
-```
-
-`sum()` es más conciso y ligeramente más rápido. Úsalo siempre que puedas.
-"""
-
-THEORY_N67 = """\
-## PROTOCOLO: // y % — Aritmética Entera
-
-El operador `//` realiza **división entera** (descarta el decimal):
-
-```python
-print(100 // 7)   # 14  → cuántos grupos completos de 7 caben en 100
-print(7   // 3)   # 2
-print(17  // 5)   # 3
-```
-
-El operador `%` calcula el **módulo** (el resto de la división entera):
-
-```python
-print(100 % 7)    # 2   → lo que sobra después de repartir grupos de 7
-print(7   % 3)    # 1
-print(17  % 5)    # 2
-```
-
----
-
-## RELACIÓN ENTRE // Y %
-
-Siempre se cumple: `a == (a // b) * b + (a % b)`
-
-```python
-a, b = 100, 7
-print((a // b) * b + (a % b))   # 100  ✓
-```
-
----
-
-## USOS FRECUENTES
-
-```python
-# ¿Es par?
-if n % 2 == 0: ...
-
-# Distribución equitativa
-unidades = 100
-grupos = 7
-por_grupo  = unidades // grupos   # 14
-excedente  = unidades % grupos    # 2
-
-# Wrap-around (índice circular)
-i = (i + 1) % len(lista)
+for s in sensores:
+    total += s["lectura"]
+promedio = total / len(sensores)
+print(promedio)   # 71.33...
 ```
 """
 
-THEORY_N68 = """\
-## PROTOCOLO: Fórmulas de Combate
 
-Las funciones matemáticas built-in se combinan para modelar sistemas de combate:
-
-```python
-# Daño neto (no puede ser negativo)
-ataque       = 120
-multiplicador = 1.5
-defensa      = 40
-
-dano = max(0, round(ataque * multiplicador - defensa * 0.5))
-#       ^          ^   180.0              -   20.0
-#     mínimo 0  redondea   └─────────────────────────────────┘
-#                               = 160.0  →  round  →  160
-print(dano)   # 160
-```
-
----
-
-## PATRÓN: CLAMP (ACOTAR VALORES)
-
-`max(0, valor)` garantiza un mínimo de 0.
-`min(100, valor)` garantiza un máximo de 100.
-`max(0, min(100, valor))` acota entre 0 y 100:
-
-```python
-hp = max(0, min(100, hp_actual + curacion))
-```
-
----
-
-## COMPOSICIÓN DE FUNCIONES
-
-Las funciones matemáticas se pueden anidar directamente:
-
-```python
-resultado = round(abs(pow(x, 0.5) - y), 2)
-```
-"""
-
-THEORY_N69 = """\
-## PROTOCOLO: Motor de Cálculo — Simulación Paso a Paso
-
-Un motor de cálculo lee datos, aplica fórmulas iterativamente y acumula resultados:
-
-```python
-# Simulación de combate: N ataques contra un objetivo con defensa fija
-n        = int(input())   # número de ataques
-hp       = 100
-defensa  = 5
-dano_acumulado = 0
-
-for _ in range(n):
-    ataque   = int(input())
-    dano_neto = max(0, ataque - defensa)   # la defensa absorbe parte del daño
-    dano_acumulado += dano_neto
-
-hp_final = max(0, hp - dano_acumulado)
-print(dano_acumulado)
-print(hp_final)
-```
-
----
-
-## PRINCIPIOS DEL MOTOR
-
-1. **Inicializar** el estado antes del bucle (`hp`, acumuladores)
-2. **Leer** los datos de entrada dentro del bucle
-3. **Aplicar** la fórmula por cada entrada
-4. **Acumular** el resultado con `+=`
-5. **Calcular** el estado final fuera del bucle (después del `for`)
-"""
-
-
-# ─── Niveles del Sector 07 ────────────────────────────────────────────────────
+# ─── Niveles del Sector 06 ────────────────────────────────────────────────────
 
 SECTOR_07 = [
-    # ── NIVEL 61 — abs() ─────────────────────────────────────────────────────
+    # ── NIVEL 51 — Tuplas: creación e indexación ──────────────────────────────
     {
-        "title": "Distancia de Señal",
+        "title": "Coordenadas del Nodo",
         "description": (
-            "El sistema de triangulación del Nexo necesita calcular la distancia "
-            "entre dos lecturas de sensor. La distancia siempre es positiva, "
-            "sin importar cuál lectura sea mayor.\n\n"
-            "Dadas `lectura_a = 87` y `lectura_b = 52`, "
-            "calcula e imprime la distancia entre ambas lecturas.\n\n"
+            "El sistema de navegación del Nexo almacena las coordenadas de cada "
+            "nodo como tuplas inmutables de dos valores: columna y fila.\n\n"
+            "Dada la coordenada `pos = (10, 25)`, imprime la columna (primer elemento) "
+            "y la fila (segundo elemento), cada uno en su propia línea.\n\n"
             "Salida esperada:\n"
-            "```\n35\n```"
+            "```\n10\n25\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -419,52 +398,51 @@ SECTOR_07 = [
         "is_project": False,
         "telemetry_goal_time": 90,
         "challenge_type": "python",
-        "phase": "motores",
-        "concepts_taught_json": json.dumps(["abs()", "distancia", "valor absoluto"]),
+        "phase": "boveda",
+        "concepts_taught_json": json.dumps(["tuplas", "indexación", "inmutabilidad"]),
         "initial_code": (
-            "# MISIÓN: Calcula la distancia entre las dos lecturas\n"
+            "# MISIÓN: Accede a los elementos de la coordenada\n"
             "\n"
-            "lectura_a = 87\n"
-            "lectura_b = 52\n"
+            "pos = (10, 25)\n"
             "\n"
-            "# abs() devuelve el valor absoluto (siempre positivo)\n"
-            "distancia = ___(lectura_a - lectura_b)\n"
-            "print(distancia)\n"
+            "# Imprime la columna (índice 0)\n"
+            "print(pos[___])\n"
+            "\n"
+            "# Imprime la fila (índice 1)\n"
+            "print(pos[___])\n"
         ),
-        "expected_output": "35",
+        "expected_output": "10\n25",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "Los dos sensores de triangulación del Sector 07 reportaron lecturas "
-            "en diferentes momentos del ciclo de exploración. "
-            "Para calcular la distancia real entre los puntos de medición, "
-            "DAKI necesita la diferencia absoluta — sin importar el orden de resta, "
-            "la distancia siempre debe ser un número positivo."
+            "El sistema de mapeo del Nexo registra la posición de cada nodo "
+            "como una pareja de coordenadas que no puede ser alterada "
+            "una vez que el nodo se ancla al grid. "
+            "DAKI usa tuplas para garantizar que estas coordenadas son inmutables: "
+            "ningún proceso puede moverlas accidentalmente."
         ),
         "pedagogical_objective": (
-            "Introducir abs() como función para obtener el valor absoluto. "
-            "Aplicar al cálculo de distancias donde el signo no importa."
+            "Introducir tuplas como colecciones inmutables. "
+            "Acceso por índice igual que en listas. "
+            "Diferenciar de listas: no se pueden modificar."
         ),
-        "syntax_hint": "distancia = abs(lectura_a - lectura_b)",
-        "theory_content": THEORY_N61,
+        "syntax_hint": "print(pos[0])\nprint(pos[1])",
+        "theory_content": THEORY_N51,
         "hints_json": json.dumps([
-            "abs() recibe un número y devuelve su valor absoluto: abs(-35) = 35, abs(35) = 35.",
-            "La distancia es la diferencia sin signo: abs(lectura_a - lectura_b) o abs(lectura_b - lectura_a), ambos dan 35.",
-            "Solución: distancia = abs(lectura_a - lectura_b)",
+            "Las tuplas se indexan igual que las listas: pos[0] es el primer elemento.",
+            "pos[0] es 10 (columna) y pos[1] es 25 (fila).",
+            "Solución: print(pos[0]) y print(pos[1]).",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 62 — round() ────────────────────────────────────────────────────
+    # ── NIVEL 52 — Desempaquetado de tuplas ───────────────────────────────────
     {
-        "title": "Calibración de Puntería",
+        "title": "Registro de Nodo",
         "description": (
-            "El sistema de puntería del Nexo calcula ángulos de tiro con alta precisión, "
-            "pero el protocolo de reporte solo acepta valores enteros para el registro "
-            "general y dos decimales para el registro técnico.\n\n"
-            "Dada la lectura `precision = 87.6543`, imprime:\n"
-            "1. El valor redondeado al **entero más cercano**\n"
-            "2. El valor redondeado a **2 decimales**\n\n"
-            "Salida esperada:\n"
-            "```\n88\n87.65\n```"
+            "La bóveda de datos del Sector 06 almacena cada nodo como una tupla "
+            "de tres campos: nombre, nivel y estado.\n\n"
+            "Dada la tupla `registro = (\"NEXO-7\", 42, \"ACTIVO\")`, "
+            "**desempaqueta** los tres valores en variables separadas e imprime:\n\n"
+            "```\nNodo: NEXO-7 | Nivel: 42 | Estado: ACTIVO\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -472,54 +450,57 @@ SECTOR_07 = [
         "level_order": 62,
         "base_xp_reward": 100,
         "is_project": False,
-        "telemetry_goal_time": 90,
+        "telemetry_goal_time": 100,
         "challenge_type": "python",
-        "phase": "motores",
-        "concepts_taught_json": json.dumps(["round()", "redondeo", "decimales"]),
+        "phase": "boveda",
+        "concepts_taught_json": json.dumps(["tuplas", "desempaquetado", "f-strings"]),
         "initial_code": (
-            "# MISIÓN: Redondea la precisión a entero y a 2 decimales\n"
+            "# MISIÓN: Desempaqueta la tupla en tres variables\n"
             "\n"
-            "precision = 87.6543\n"
+            'registro = ("NEXO-7", 42, "ACTIVO")\n'
             "\n"
-            "# Redondea al entero más cercano\n"
-            "print(___(precision))\n"
+            "# Desempaqueta: nombre, nivel, estado = registro\n"
+            "___, ___, ___ = registro\n"
             "\n"
-            "# Redondea a 2 decimales\n"
-            "print(___(precision, ___))\n"
+            "print(f\"Nodo: {nombre} | Nivel: {nivel} | Estado: {estado}\")\n"
         ),
-        "expected_output": "88\n87.65",
+        "expected_output": "Nodo: NEXO-7 | Nivel: 42 | Estado: ACTIVO",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El módulo de calibración del Nexo recibe ángulos de puntería "
-            "con 4 decimales del sensor de física de combate. "
-            "El reporte táctico necesita dos formatos: uno para el display general "
-            "(entero redondeado) y otro para el log técnico detallado (2 decimales). "
-            "DAKI llama al módulo de redondeo antes de transmitir los datos."
+            "La bóveda del Nexo transmite los registros de nodo en formato compacto: "
+            "tres campos en una sola tupla. Para procesar cada campo individualmente, "
+            "DAKI usa el desempaquetado — una forma elegante de asignar los tres "
+            "valores a tres variables en una sola línea de código."
         ),
         "pedagogical_objective": (
-            "Usar round() sin segundo argumento para redondear al entero más cercano. "
-            "Usar round(x, n) con segundo argumento para controlar la cantidad de decimales."
+            "Introducir el desempaquetado de tuplas (tuple unpacking). "
+            "Ver que el número de variables debe coincidir con los elementos. "
+            "Combinar con f-strings para mostrar los valores."
         ),
-        "syntax_hint": "print(round(precision))\nprint(round(precision, 2))",
-        "theory_content": THEORY_N62,
+        "syntax_hint": (
+            "nombre, nivel, estado = registro\n"
+            'print(f"Nodo: {nombre} | Nivel: {nivel} | Estado: {estado}")'
+        ),
+        "theory_content": THEORY_N52,
         "hints_json": json.dumps([
-            "round(precision) sin segundo argumento redondea al entero más cercano. 87.6543 → 88.",
-            "round(precision, 2) redondea a 2 decimales. 87.6543 → 87.65.",
-            "Solución: print(round(precision)) y print(round(precision, 2))",
+            "El desempaquetado asigna cada elemento a una variable: a, b, c = (1, 2, 3) — tres variables para tres elementos.",
+            "Las variables deben llamarse nombre, nivel y estado para que el f-string del print funcione.",
+            "Solución: nombre, nivel, estado = registro (una sola línea).",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 63 — pow() y ** ─────────────────────────────────────────────────
+    # ── NIVEL 53 — Sets: creación y .add() ────────────────────────────────────
     {
-        "title": "Amplificador de Potencia",
+        "title": "Control de Acceso Único",
         "description": (
-            "El reactor del Nexo usa amplificación exponencial para calcular "
-            "la energía de salida: la potencia base se eleva al número de "
-            "ciclos de amplificación.\n\n"
-            "Dada `base = 3` y `exponente = 4`, imprime el resultado de "
-            "elevar la base al exponente usando la función `pow()`.\n\n"
+            "El sistema de control de acceso del Nexo registra los IDs de los "
+            "operadores que entraron al sector. No puede haber duplicados: "
+            "si un operador ya está registrado, el sistema lo ignora.\n\n"
+            "Parte del set `accesos = {\"Alpha\", \"Beta\"}`. "
+            "Agrega `\"Gamma\"` y luego vuelve a agregar `\"Alpha\"` (intento duplicado). "
+            "Imprime los accesos registrados en **orden alfabético**, uno por línea.\n\n"
             "Salida esperada:\n"
-            "```\n81\n```"
+            "```\nAlpha\nBeta\nGamma\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
         "difficulty": "easy",
@@ -527,106 +508,132 @@ SECTOR_07 = [
         "level_order": 63,
         "base_xp_reward": 125,
         "is_project": False,
-        "telemetry_goal_time": 90,
+        "telemetry_goal_time": 120,
         "challenge_type": "python",
-        "phase": "motores",
-        "concepts_taught_json": json.dumps(["pow()", "potenciación", "operador **"]),
+        "phase": "boveda",
+        "concepts_taught_json": json.dumps(["sets", ".add()", "deduplicación", "sorted()"]),
         "initial_code": (
-            "# MISIÓN: Calcula base elevada al exponente con pow()\n"
+            "# MISIÓN: Registra accesos sin duplicados\n"
             "\n"
-            "base = 3\n"
-            "exponente = 4\n"
+            'accesos = {"Alpha", "Beta"}\n'
             "\n"
-            "# pow(base, exponente) es equivalente a base ** exponente\n"
-            "print(___(base, exponente))\n"
+            "# Agrega Gamma\n"
+            'accesos.___(___)\n'
+            "\n"
+            "# Intenta agregar Alpha de nuevo (el set lo ignora)\n"
+            'accesos.___(___)\n'
+            "\n"
+            "# Imprime en orden alfabético\n"
+            "for a in sorted(accesos):\n"
+            "    print(a)\n"
         ),
-        "expected_output": "81",
+        "expected_output": "Alpha\nBeta\nGamma",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El núcleo del reactor del Sector 07 usa amplificación exponencial. "
-            "Con base 3 y 4 ciclos de amplificación, la energía de salida crece "
-            "multiplicando la base por sí misma tantas veces como ciclos haya: "
-            "3 × 3 × 3 × 3 = 81 unidades de energía táctica. "
-            "DAKI necesita este cálculo para el protocolo de sobrecarga controlada."
+            "El portal de entrada del Sector 06 registra cada operador que cruza el umbral. "
+            "Si el mismo operador intenta registrarse dos veces — por un bug o un ataque "
+            "de repetición — el sistema descarta silenciosamente el duplicado. "
+            "DAKI diseñó el registro con un set precisamente por esta propiedad: "
+            "unicidad garantizada sin código adicional."
         ),
         "pedagogical_objective": (
-            "Introducir pow(base, exponente) para cálculos de potencia. "
-            "Mencionar la equivalencia con el operador ** (base ** exponente)."
+            "Introducir sets. Usar .add() para agregar elementos. "
+            "Observar que los duplicados se ignoran automáticamente. "
+            "Usar sorted() para obtener salida determinista (sets son desordenados)."
         ),
-        "syntax_hint": "print(pow(base, exponente))  # equivalente a print(3 ** 4)",
-        "theory_content": THEORY_N63,
+        "syntax_hint": (
+            'accesos.add("Gamma")\n'
+            'accesos.add("Alpha")   # ignorado — ya existe'
+        ),
+        "theory_content": THEORY_N53,
         "hints_json": json.dumps([
-            "pow(base, exponente) calcula base elevada al exponente. pow(3, 4) = 3×3×3×3 = 81.",
-            "También puedes usar el operador **: print(base ** exponente) da el mismo resultado.",
-            "Solución: print(pow(base, exponente))",
+            "Para agregar un elemento a un set usa .add(): accesos.add('Gamma')",
+            'Los sets ignoran los duplicados automáticamente. accesos.add("Alpha") no hace nada si ya existe.',
+            "sorted() devuelve los elementos en orden alfabético para que la salida sea determinista.",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 64 — min() y max() ──────────────────────────────────────────────
+    # ── NIVEL 54 — Operaciones de conjuntos ───────────────────────────────────
     {
-        "title": "Análisis de Amenazas",
+        "title": "Nodos en Conflicto",
         "description": (
-            "El sistema de detección del Nexo recibe múltiples lecturas de amenaza "
-            "y necesita identificar la amenaza mínima y máxima para ajustar "
-            "el nivel de respuesta defensiva.\n\n"
-            "Dada la lista `lecturas = [45, 78, 23, 91, 56]`, "
-            "imprime la lectura **mínima** y luego la **máxima**.\n\n"
+            "Dos sectores del Nexo están reclamando la misma zona de memoria. "
+            "Para resolver el conflicto, necesitas identificar exactamente "
+            "qué nodos están siendo reclamados por **ambos** sectores.\n\n"
+            "Dados los sets:\n"
+            "```\nsector_a = {\"N1\", \"N2\", \"N3\", \"N5\"}\n"
+            "sector_b = {\"N2\", \"N3\", \"N4\", \"N6\"}\n```\n\n"
+            "Calcula la **intersección** (nodos en ambos) e imprime los nodos "
+            "en **orden alfabético**, uno por línea.\n\n"
             "Salida esperada:\n"
-            "```\n23\n91\n```"
+            "```\nN2\nN3\n```"
         ),
         "difficulty_tier": DifficultyTier.BEGINNER,
-        "difficulty": "easy",
+        "difficulty": "medium",
         "sector_id": 7,
         "level_order": 64,
-        "base_xp_reward": 125,
+        "base_xp_reward": 150,
         "is_project": False,
-        "telemetry_goal_time": 100,
+        "telemetry_goal_time": 150,
         "challenge_type": "python",
-        "phase": "motores",
-        "concepts_taught_json": json.dumps(["min()", "max()", "extremos", "análisis de datos"]),
+        "phase": "boveda",
+        "concepts_taught_json": json.dumps([
+            "sets", "intersección (&)", "operaciones de conjuntos", "sorted()"
+        ]),
         "initial_code": (
-            "# MISIÓN: Encuentra la amenaza mínima y máxima\n"
+            "# MISIÓN: Encuentra los nodos reclamados por ambos sectores\n"
             "\n"
-            "lecturas = [45, 78, 23, 91, 56]\n"
+            'sector_a = {"N1", "N2", "N3", "N5"}\n'
+            'sector_b = {"N2", "N3", "N4", "N6"}\n'
             "\n"
-            "# Imprime la lectura mínima\n"
-            "print(___(lecturas))\n"
+            "# Intersección: nodos que están en sector_a Y en sector_b\n"
+            "comunes = sector_a ___ sector_b\n"
             "\n"
-            "# Imprime la lectura máxima\n"
-            "print(___(lecturas))\n"
+            "# Imprime en orden alfabético\n"
+            "for nodo in sorted(comunes):\n"
+            "    print(nodo)\n"
         ),
-        "expected_output": "23\n91",
+        "expected_output": "N2\nN3",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El radar de amenazas del Sector 07 devuelve cinco lecturas de intensidad "
-            "de señales enemigas. El protocolo de respuesta defensiva necesita conocer "
-            "los extremos: la amenaza más débil define el umbral de alerta temprana, "
-            "mientras que la amenaza más fuerte determina el nivel máximo de respuesta. "
-            "DAKI extrae ambos valores en una sola pasada."
+            "El árbitro de conflictos del Nexo necesita identificar los nodos disputados: "
+            "aquellos que dos sectores han marcado como propios simultáneamente. "
+            "Estos nodos deben ser intervenidos por DAKI antes de que el conflicto "
+            "derive en corrupción de datos. La intersección de conjuntos permite "
+            "encontrarlos en una sola operación."
         ),
         "pedagogical_objective": (
-            "Usar min() y max() sobre una lista para obtener el valor extremo. "
-            "No requieren ordenar la lista — funcionan en O(n)."
+            "Usar el operador & para la intersección de sets. "
+            "Aplicar sorted() para salida determinista. "
+            "Introducir las operaciones matemáticas de conjuntos."
         ),
-        "syntax_hint": "print(min(lecturas))\nprint(max(lecturas))",
-        "theory_content": THEORY_N64,
+        "syntax_hint": (
+            "comunes = sector_a & sector_b\n"
+            "for nodo in sorted(comunes):\n"
+            "    print(nodo)"
+        ),
+        "theory_content": THEORY_N54,
         "hints_json": json.dumps([
-            "min(lista) devuelve el elemento más pequeño de la lista, sin necesidad de ordenarla.",
-            "max(lista) devuelve el elemento más grande.",
-            "Solución: print(min(lecturas)) y print(max(lecturas))",
+            "El operador & calcula la intersección: los elementos que están en AMBOS sets.",
+            "sector_a & sector_b devuelve un nuevo set con solo los elementos compartidos.",
+            "Envuelve el resultado en sorted() para imprimirlos en orden: for nodo in sorted(comunes):",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 65 — divmod() ───────────────────────────────────────────────────
+    # ── NIVEL 55 — Diccionario anidado: acceso ─────────────────────────────────
     {
-        "title": "Conversión de Tiempo Táctico",
+        "title": "Base de Datos del Nexo",
         "description": (
-            "El cronómetro táctico del Nexo registra el tiempo en segundos totales. "
-            "Para el reporte de misión necesitas convertirlo a **minutos y segundos**.\n\n"
-            "Dado `segundos = 135`, usa `divmod()` para obtener los minutos y "
-            "el resto en segundos, e imprímelos por separado.\n\n"
+            "La base de datos del Sector 06 almacena la información de cada "
+            "sub-sector como un diccionario anidado dentro de un diccionario principal.\n\n"
+            "Dado el mapa:\n"
+            "```python\n"
+            'nexo = {\n    "sector_1": {"nombre": "Alpha", "energia": 85},\n'
+            '    "sector_2": {"nombre": "Beta",  "energia": 60},\n}\n'
+            "```\n\n"
+            "Imprime el **nombre** del sector_1 y la **energía** del sector_2.\n\n"
             "Salida esperada:\n"
-            "```\n2\n15\n```"
+            "```\nAlpha\n60\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
@@ -636,183 +643,193 @@ SECTOR_07 = [
         "is_project": False,
         "telemetry_goal_time": 120,
         "challenge_type": "python",
-        "phase": "motores",
+        "phase": "boveda",
         "concepts_taught_json": json.dumps([
-            "divmod()", "tuplas", "desempaquetado", "conversión de unidades"
+            "diccionarios", "diccionarios anidados", "acceso multinivel"
         ]),
         "initial_code": (
-            "# MISIÓN: Convierte segundos a minutos y segundos\n"
+            "# MISIÓN: Accede a los campos del diccionario anidado\n"
             "\n"
-            "segundos = 135\n"
+            "nexo = {\n"
+            '    "sector_1": {"nombre": "Alpha", "energia": 85},\n'
+            '    "sector_2": {"nombre": "Beta",  "energia": 60},\n'
+            "}\n"
             "\n"
-            "# divmod(a, b) retorna (cociente, resto) como tupla\n"
-            "minutos, resto = ___(segundos, 60)\n"
+            '# Imprime el nombre del sector_1\n'
+            'print(nexo[___][___])\n'
             "\n"
-            "print(minutos)\n"
-            "print(resto)\n"
+            '# Imprime la energía del sector_2\n'
+            'print(nexo[___][___])\n'
         ),
-        "expected_output": "2\n15",
+        "expected_output": "Alpha\n60",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El sistema de reporte táctico del Nexo registra todas las operaciones "
-            "en segundos totales para facilitar los cálculos internos. "
-            "Sin embargo, el informe final para el comando central debe presentar "
-            "el tiempo en formato legible: minutos y segundos. "
-            "DAKI usa divmod para convertir en una sola operación eficiente."
+            "La base de datos del Nexo usa una estructura de dos niveles: "
+            "el primer nivel identifica el sector, el segundo contiene los datos del sector. "
+            "DAKI necesita que domines el acceso a este tipo de estructura "
+            "para poder consultar cualquier campo de cualquier sector "
+            "sin necesidad de aplanar la base de datos."
         ),
         "pedagogical_objective": (
-            "Usar divmod(a, b) para obtener cociente y resto en un solo paso. "
-            "Practicar el desempaquetado de la tupla resultado. "
-            "Caso real: conversión de unidades de tiempo."
+            "Acceder a diccionarios anidados encadenando corchetes []. "
+            "Entender que cada [] baja un nivel en la jerarquía. "
+            "dict[clave_externa][clave_interna]."
         ),
-        "syntax_hint": "minutos, resto = divmod(segundos, 60)",
-        "theory_content": THEORY_N65,
+        "syntax_hint": 'print(nexo["sector_1"]["nombre"])\nprint(nexo["sector_2"]["energia"])',
+        "theory_content": THEORY_N55,
         "hints_json": json.dumps([
-            "divmod(135, 60) calcula cuántas veces cabe 60 en 135 y cuánto sobra: devuelve (2, 15).",
-            "Desempaqueta la tupla con: minutos, resto = divmod(segundos, 60).",
-            "Solución: minutos, resto = divmod(segundos, 60), luego print(minutos) y print(resto).",
+            "Para acceder a un diccionario anidado encadenas dos []: nexo['sector_1'] te da el dict interno.",
+            'Luego adds otro [] para la clave interna: nexo["sector_1"]["nombre"] da "Alpha".',
+            'Solución: print(nexo["sector_1"]["nombre"]) y print(nexo["sector_2"]["energia"])',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 66 — sum() y promedio ───────────────────────────────────────────
+    # ── NIVEL 56 — Diccionario anidado: iteración ──────────────────────────────
     {
-        "title": "Telemetría del Escuadrón",
+        "title": "Mapa de Sectores",
         "description": (
-            "El módulo de telemetría del Nexo monitorea el nivel de escudo de "
-            "cada agente del escuadrón. El comando necesita el total de energía "
-            "defensiva disponible y el promedio por agente.\n\n"
-            "Dada la lista `escudos = [80, 65, 90, 75, 60]`, imprime:\n"
-            "1. La **suma total** de todos los escudos\n"
-            "2. El **promedio** redondeado a 1 decimal\n\n"
+            "El sistema de monitoreo del Nexo necesita un reporte del estado "
+            "energético de todos los sectores activos.\n\n"
+            "Dado el mapa:\n"
+            "```python\n"
+            "mapa = {\n"
+            '    "Alpha": {"energia": 85, "estado": "activo"},\n'
+            '    "Beta":  {"energia": 60, "estado": "inactivo"},\n'
+            '    "Gamma": {"energia": 92, "estado": "activo"},\n'
+            "}\n```\n\n"
+            "Recorre el mapa e imprime cada sector con su nivel de energía "
+            "en el formato `nombre: energia%`.\n\n"
             "Salida esperada:\n"
-            "```\n370\n74.0\n```"
+            "```\nAlpha: 85%\nBeta: 60%\nGamma: 92%\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
         "sector_id": 7,
         "level_order": 66,
-        "base_xp_reward": 150,
+        "base_xp_reward": 175,
         "is_project": False,
-        "telemetry_goal_time": 130,
+        "telemetry_goal_time": 150,
         "challenge_type": "python",
-        "phase": "motores",
+        "phase": "boveda",
         "concepts_taught_json": json.dumps([
-            "sum()", "promedio", "len()", "round()", "estadísticas básicas"
+            "diccionarios anidados", ".items()", "iteración anidada", "f-strings"
         ]),
         "initial_code": (
-            "# MISIÓN: Calcula la suma total y el promedio de los escudos\n"
+            "# MISIÓN: Genera el reporte energético de todos los sectores\n"
             "\n"
-            "escudos = [80, 65, 90, 75, 60]\n"
+            "mapa = {\n"
+            '    "Alpha": {"energia": 85, "estado": "activo"},\n'
+            '    "Beta":  {"energia": 60, "estado": "inactivo"},\n'
+            '    "Gamma": {"energia": 92, "estado": "activo"},\n'
+            "}\n"
             "\n"
-            "# Suma todos los elementos de la lista\n"
-            "total = ___(escudos)\n"
-            "print(total)\n"
-            "\n"
-            "# Promedio = total / cantidad de elementos, redondeado a 1 decimal\n"
-            "promedio = ___(total / ___(escudos), ___)\n"
-            "print(promedio)\n"
+            "for nombre, datos in mapa.items():\n"
+            "    # Imprime: 'nombre: energia%'\n"
+            "    print(___)\n"
         ),
-        "expected_output": "370\n74.0",
+        "expected_output": "Alpha: 85%\nBeta: 60%\nGamma: 92%",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El sistema de gestión de recursos defensivos del Nexo necesita dos métricas "
-            "para el reporte táctico de cada ciclo: la capacidad total de escudo del "
-            "escuadrón (para calcular cuánto daño puede absorber en conjunto) "
-            "y el promedio por agente (para identificar si alguno está "
-            "significativamente por debajo de la media y necesita reabastecimiento)."
+            "El sistema de monitoreo energético del Nexo necesita un reporte completo "
+            "que muestre el nivel de carga de cada sector registrado en la bóveda. "
+            "El reporte se genera automáticamente en cada ciclo de mantenimiento. "
+            "DAKI necesita que el módulo iterador produzca exactamente "
+            "el formato que espera el sistema de alertas."
         ),
         "pedagogical_objective": (
-            "Usar sum() para sumar una lista sin bucle. "
-            "Calcular el promedio combinando sum() y len(). "
-            "Aplicar round() con 1 decimal al resultado float."
+            "Iterar un diccionario de diccionarios con .items(). "
+            "Acceder a los sub-campos del dict interno (datos) dentro del for. "
+            "Formatear la salida con f-strings."
         ),
         "syntax_hint": (
-            "total = sum(escudos)\n"
-            "promedio = round(total / len(escudos), 1)"
+            "for nombre, datos in mapa.items():\n"
+            "    print(f\"{nombre}: {datos['energia']}%\")"
         ),
-        "theory_content": THEORY_N66,
+        "theory_content": THEORY_N56,
         "hints_json": json.dumps([
-            "sum(escudos) suma todos los elementos de la lista de forma directa.",
-            "El promedio es total dividido entre la cantidad: total / len(escudos).",
-            "Envuelve el resultado en round(..., 1) para 1 decimal: round(total / len(escudos), 1)",
+            ".items() desempaqueta cada par en (nombre, datos). 'datos' es el dict interno.",
+            "Dentro del for, accede a la energía con: datos['energia']",
+            "Usa un f-string: print(f\"{nombre}: {datos['energia']}%\")",
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 67 — // y % ─────────────────────────────────────────────────────
+    # ── NIVEL 57 — Lista de dicts: búsqueda ────────────────────────────────────
     {
-        "title": "Distribución de Munición",
+        "title": "Búsqueda en la Bóveda",
         "description": (
-            "El sistema logístico del Nexo necesita distribuir 100 unidades de munición "
-            "entre 7 tanques de forma equitativa. Cada tanque debe recibir la misma "
-            "cantidad (sin fracciones), y el excedente queda en el depósito central.\n\n"
-            "Imprime cuántas unidades recibe cada tanque y cuántas quedan en el depósito.\n\n"
+            "La bóveda de agentes del Nexo almacena los registros como una "
+            "lista de diccionarios. El sistema de identificación necesita "
+            "localizar un agente específico por su ID.\n\n"
+            "Dado el registro de agentes, encuentra el agente con "
+            "`id == \"A02\"` e imprime su **nombre** y **nivel**.\n\n"
             "Salida esperada:\n"
-            "```\n14\n2\n```"
+            "```\nKira\n8\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "medium",
         "sector_id": 7,
         "level_order": 67,
-        "base_xp_reward": 150,
+        "base_xp_reward": 200,
         "is_project": False,
-        "telemetry_goal_time": 120,
+        "telemetry_goal_time": 180,
         "challenge_type": "python",
-        "phase": "motores",
+        "phase": "boveda",
         "concepts_taught_json": json.dumps([
-            "división entera //", "módulo %", "distribución de recursos", "aritmética entera"
+            "lista de diccionarios", "búsqueda por clave", "for + if"
         ]),
         "initial_code": (
-            "# MISIÓN: Distribuye munición de forma equitativa\n"
+            "# MISIÓN: Encuentra al agente con id='A02'\n"
             "\n"
-            "municion = 100\n"
-            "tanques  = 7\n"
+            "agentes = [\n"
+            '    {"id": "A01", "nombre": "Rex",   "nivel": 5},\n'
+            '    {"id": "A02", "nombre": "Kira",  "nivel": 8},\n'
+            '    {"id": "A03", "nombre": "Ghost", "nivel": 3},\n'
+            "]\n"
             "\n"
-            "# Unidades por tanque (división entera, sin fracciones)\n"
-            "por_tanque = municion ___ tanques\n"
-            "print(por_tanque)\n"
-            "\n"
-            "# Unidades sobrantes (lo que queda después de repartir)\n"
-            "sobrante = municion ___ tanques\n"
-            "print(sobrante)\n"
+            "for agente in agentes:\n"
+            '    if agente[___] == ___:\n'
+            "        print(agente[___])\n"
+            "        print(agente[___])\n"
         ),
-        "expected_output": "14\n2",
+        "expected_output": "Kira\n8",
         "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El comandante del Sector 07 ordenó la redistribución de reservas de munición "
-            "antes del siguiente turno de combate. No pueden darse fracciones de unidad "
-            "— cada tanque recibe un número entero completo. "
-            "El excedente que no puede dividirse equitativamente queda en el depósito "
-            "central de DAKI para reserva estratégica."
+            "El sistema de identificación del Nexo recibe una solicitud urgente: "
+            "localizar al agente con identificador A02 en la bóveda de personal. "
+            "El registro contiene cientos de entradas. El módulo de búsqueda de DAKI "
+            "recorre la lista y extrae solo los datos del agente solicitado "
+            "para el reporte de despliegue táctico."
         ),
         "pedagogical_objective": (
-            "Usar // para división entera (cociente sin decimales). "
-            "Usar % para el módulo (resto de la división). "
-            "Ver la relación: municion == por_tanque * tanques + sobrante."
+            "Buscar un registro específico en una lista de dicts. "
+            "Patrón: for + if para localizar por valor de clave. "
+            "Acceder a múltiples campos del registro encontrado."
         ),
         "syntax_hint": (
-            "por_tanque = municion // tanques   # 100 // 7 = 14\n"
-            "sobrante   = municion % tanques    # 100 % 7  = 2"
+            "for agente in agentes:\n"
+            '    if agente["id"] == "A02":\n'
+            '        print(agente["nombre"])\n'
+            '        print(agente["nivel"])'
         ),
-        "theory_content": THEORY_N67,
+        "theory_content": THEORY_N57,
         "hints_json": json.dumps([
-            "El operador // hace división entera (descarta el decimal): 100 // 7 = 14.",
-            "El operador % da el módulo (el resto): 100 % 7 = 2 (porque 14 × 7 = 98, y 100 - 98 = 2).",
-            "Solución: por_tanque = municion // tanques y sobrante = municion % tanques",
+            'Dentro del for, accede al id con agente["id"]. Compara con "A02".',
+            'Cuando la condición es True, imprime agente["nombre"] y agente["nivel"].',
+            'Solución: if agente["id"] == "A02": print(agente["nombre"]) + print(agente["nivel"])',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 68 — Fórmula de daño con input ─────────────────────────────────
+    # ── NIVEL 58 — Lista de dicts: filtrado ────────────────────────────────────
     {
-        "title": "Cálculo de Impacto",
+        "title": "Élite del Nexo",
         "description": (
-            "El motor de combate del Nexo calcula el daño neto de un ataque "
-            "usando la fórmula:\n\n"
-            "```\ndano = max(0, round(ataque × multiplicador − defensa × 0.5))\n```\n\n"
-            "Lee los tres parámetros de entrada (uno por línea) y aplica la fórmula.\n\n"
-            "**Entradas:** `120`, `1.5`, `40`\n\n"
+            "El comando del Nexo necesita convocar solo a los agentes de alto nivel "
+            "para una misión de infiltración. Solo los agentes con "
+            "`nivel >= 5` califican para la Élite.\n\n"
+            "Filtra la lista e imprime el **nombre** de cada agente élite, "
+            "en el orden en que aparecen en el registro.\n\n"
             "Salida esperada:\n"
-            "```\n160\n```\n\n"
-            "_(120 × 1.5 = 180.0 — 40 × 0.5 = 20.0 → 160.0 → round → 160)_"
+            "```\nRex\nKira\nVex\n```"
         ),
         "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "hard",
@@ -822,121 +839,122 @@ SECTOR_07 = [
         "is_project": False,
         "telemetry_goal_time": 200,
         "challenge_type": "python",
-        "phase": "motores",
+        "phase": "boveda",
         "concepts_taught_json": json.dumps([
-            "max()", "round()", "fórmula de combate", "input()", "float", "composición de funciones"
+            "lista de diccionarios", "filtrado por condición", "for + if"
         ]),
         "initial_code": (
-            "# MISIÓN: Implementa la fórmula de daño neto\n"
+            "# MISIÓN: Imprime solo los agentes con nivel >= 5\n"
             "\n"
-            "ataque        = int(input())\n"
-            "multiplicador = float(input())\n"
-            "defensa       = int(input())\n"
+            "agentes = [\n"
+            '    {"nombre": "Rex",   "nivel": 5},\n'
+            '    {"nombre": "Kira",  "nivel": 8},\n'
+            '    {"nombre": "Ghost", "nivel": 3},\n'
+            '    {"nombre": "Vex",   "nivel": 7},\n'
+            "]\n"
             "\n"
-            "# Fórmula: max(0, round(ataque * multiplicador - defensa * 0.5))\n"
-            "dano = ___(0, ___(ataque * ___ - defensa * 0.5))\n"
-            "print(dano)\n"
+            "for agente in agentes:\n"
+            "    if agente[___] >= ___:\n"
+            "        print(agente[___])\n"
         ),
-        "expected_output": "160",
-        "test_inputs_json": json.dumps(["120", "1.5", "40"]),
+        "expected_output": "Rex\nKira\nVex",
+        "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El motor de física de combate del Nexo usa una fórmula de daño en dos pasos: "
-            "primero multiplica el poder de ataque por el modificador del arma, "
-            "luego resta la absorción de la defensa (50% del valor defensivo). "
-            "round() ajusta al entero operativo y max(0, ...) garantiza que "
-            "la defensa nunca invierte el daño convirtiéndolo en curación."
+            "La misión de infiltración del Nexo es extremadamente peligrosa. "
+            "Solo los agentes con nivel de combate 5 o superior han completado "
+            "el entrenamiento necesario para sobrevivir el sector enemigo. "
+            "DAKI ejecuta el filtro de selección y notifica a los elegidos. "
+            "Ghost se queda en la base — su nivel no es suficiente esta vez."
         ),
         "pedagogical_objective": (
-            "Componer múltiples funciones matemáticas en una sola expresión. "
-            "Usar max(0, x) como patrón de clamping mínimo. "
-            "Combinar int() y float() para leer tipos diferentes con input()."
+            "Filtrar una lista de dicts con una condición numérica. "
+            "Patrón: for + if sobre campo de dict. "
+            "Distinguir búsqueda (un solo resultado) de filtrado (múltiples resultados)."
         ),
         "syntax_hint": (
-            "dano = max(0, round(ataque * multiplicador - defensa * 0.5))"
+            "for agente in agentes:\n"
+            '    if agente["nivel"] >= 5:\n'
+            '        print(agente["nombre"])'
         ),
-        "theory_content": THEORY_N68,
+        "theory_content": THEORY_N58,
         "hints_json": json.dumps([
-            "La fórmula tiene dos capas: primero round() redondea el cálculo, luego max(0, ...) garantiza que no sea negativo.",
-            "El multiplicador se lee como float(input()). ataque * multiplicador da 120 * 1.5 = 180.0.",
-            "Completa los blancos: dano = max(0, round(ataque * multiplicador - defensa * 0.5))",
+            'Dentro del for, accede al nivel con agente["nivel"] y compara con >= 5.',
+            'Si la condición se cumple, imprime agente["nombre"].',
+            'Solución: if agente["nivel"] >= 5: print(agente["nombre"])',
         ]),
         "strict_match": True,
     },
-    # ── NIVEL 69 — Motor de combate con múltiples ataques ────────────────────
+    # ── NIVEL 59 — Lista de dicts: agregación (máximo) ─────────────────────────
     {
-        "title": "Motor de Física",
+        "title": "Sensor Crítico",
         "description": (
-            "El simulador de combate del Nexo procesa una ráfaga de N ataques "
-            "contra un objetivo con 100 HP y defensa fija de 5 puntos. "
-            "Cada ataque reduce el HP por `max(0, ataque - defensa)`.\n\n"
-            "Lee N ataques (uno por línea) y calcula el daño total acumulado "
-            "y el HP final del objetivo.\n\n"
-            "**Entradas:** `3`, `20`, `8`, `35`\n\n"
+            "El sistema de detección del Nexo tiene cuatro sensores activos. "
+            "Un pico de lectura inusualmente alto indica una amenaza inminente. "
+            "El protocolo de alerta necesita identificar qué sensor reportó "
+            "la lectura **más alta** y cuál fue su valor.\n\n"
+            "Imprime el **ID** del sensor con mayor lectura y luego la **lectura** misma.\n\n"
             "Salida esperada:\n"
-            "```\n48\n52\n```\n\n"
-            "_(20−5=15, 8−5=3, 35−5=30 → total=48, HP=100−48=52)_"
+            "```\nS4\n91\n```"
         ),
-        "difficulty_tier": DifficultyTier.ADVANCED,
+        "difficulty_tier": DifficultyTier.INTERMEDIATE,
         "difficulty": "hard",
         "sector_id": 7,
         "level_order": 69,
-        "base_xp_reward": 350,
+        "base_xp_reward": 300,
         "is_project": False,
-        "telemetry_goal_time": 300,
+        "telemetry_goal_time": 240,
         "challenge_type": "python",
-        "phase": "motores",
+        "phase": "boveda",
         "concepts_taught_json": json.dumps([
-            "max()", "acumulador", "input()", "for + range", "simulación",
-            "composición de funciones", "motor de cálculo"
+            "lista de diccionarios", "agregación", "máximo con acumulador",
+            "for sobre lista de dicts"
         ]),
         "initial_code": (
-            "# MISIÓN: Simula N ataques y calcula el daño total y HP final\n"
+            "# MISIÓN: Encuentra el sensor con la lectura más alta\n"
             "\n"
-            "n       = int(input())\n"
-            "hp      = 100\n"
-            "defensa = 5\n"
-            "dano_total = 0\n"
+            "sensores = [\n"
+            '    {"id": "S1", "lectura": 45},\n'
+            '    {"id": "S2", "lectura": 78},\n'
+            '    {"id": "S3", "lectura": 23},\n'
+            '    {"id": "S4", "lectura": 91},\n'
+            "]\n"
             "\n"
-            "for _ in range(n):\n"
-            "    ataque    = int(input())\n"
-            "    # Daño neto: el ataque menos la defensa, mínimo 0\n"
-            "    dano_neto  = ___(0, ataque - defensa)\n"
-            "    dano_total += dano_neto\n"
+            "max_lectura = 0\n"
+            'max_id = ""\n'
             "\n"
-            "# HP final: el HP inicial menos el daño total, mínimo 0\n"
-            "hp_final = ___(0, hp - dano_total)\n"
-            "print(dano_total)\n"
-            "print(hp_final)\n"
+            "for s in sensores:\n"
+            "    if s[___] > max_lectura:\n"
+            "        max_lectura = s[___]\n"
+            "        max_id = s[___]\n"
+            "\n"
+            "print(max_id)\n"
+            "print(max_lectura)\n"
         ),
-        "expected_output": "48\n52",
-        "test_inputs_json": json.dumps(["3", "20", "8", "35"]),
+        "expected_output": "S4\n91",
+        "test_inputs_json": json.dumps([]),
         "lore_briefing": (
-            "El simulador táctico de DAKI necesita predecir el resultado de una ráfaga "
-            "de ataques enemigos antes de que el enfrentamiento ocurra. "
-            "Cada proyectil tiene un poder de ataque diferente, y la defensa del objetivo "
-            "absorbe parte del daño de cada impacto. El motor calcula el HP "
-            "restante después de toda la ráfaga para que el comando pueda "
-            "decidir si el objetivo sobrevivirá o necesita refuerzos urgentes."
+            "La red de sensores del Nexo está en alerta máxima. "
+            "Uno de los cuatro puntos de medición registró una lectura anómala "
+            "que sugiere una brecha en el perímetro de seguridad. "
+            "El sistema de respuesta táctica de DAKI necesita el ID del sensor "
+            "comprometido y el valor exacto de la lectura para priorizar la intervención."
         ),
         "pedagogical_objective": (
-            "Construir un motor de cálculo iterativo: leer N valores, "
-            "aplicar fórmula por cada uno, acumular con +=. "
-            "Usar max() tanto para el daño neto por golpe como para el HP final. "
-            "Integra: for+range, input(), acumulador, max(), composición de funciones."
+            "Encontrar el máximo en una lista de dicts usando acumulador. "
+            "Mantener tanto el valor máximo como el registro completo que lo contiene. "
+            "Patrón clásico de búsqueda de máximo/mínimo sobre registros."
         ),
         "syntax_hint": (
-            "for _ in range(n):\n"
-            "    ataque    = int(input())\n"
-            "    dano_neto  = max(0, ataque - defensa)\n"
-            "    dano_total += dano_neto\n"
-            "\n"
-            "hp_final = max(0, hp - dano_total)"
+            "for s in sensores:\n"
+            '    if s["lectura"] > max_lectura:\n'
+            '        max_lectura = s["lectura"]\n'
+            '        max_id = s["id"]'
         ),
-        "theory_content": THEORY_N69,
+        "theory_content": THEORY_N59,
         "hints_json": json.dumps([
-            "Dentro del for, max(0, ataque - defensa) calcula el daño neto de cada golpe (nunca negativo).",
-            "Acumula el daño neto con: dano_total += dano_neto",
-            "Fuera del for, hp_final = max(0, hp - dano_total) asegura que el HP no baje de 0.",
+            'Accede a la lectura de cada sensor con s["lectura"] dentro del for.',
+            'Si la lectura actual supera max_lectura, actualiza AMBAS variables: max_lectura y max_id.',
+            's["id"] contiene el identificador del sensor. Guárdalo en max_id cuando encuentres un nuevo máximo.',
         ]),
         "strict_match": True,
     },
@@ -950,23 +968,23 @@ async def seed() -> None:
     SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
     async with SessionLocal() as session:
-        # Idempotente: elimina solo niveles 61–69 (preserva el CONTRATO-70)
+        # Idempotente: elimina solo niveles 51–59 (preserva el CONTRATO-60)
         deleted = await session.execute(
             delete(Challenge).where(
                 Challenge.sector_id == 7,
-                Challenge.level_order < 70,
+                Challenge.level_order < 60,
             )
         )
         deleted_count = deleted.rowcount
         await session.flush()
-        print(f"🧹  Sector 07 (61-69) anterior eliminado — {deleted_count} challenge(s) removidos.")
+        print(f"🧹  Sector 06 (51-59) anterior eliminado — {deleted_count} challenge(s) removidos.")
 
-        print(f"\n🌱  Insertando {len(SECTOR_07)} niveles del Sector 07...\n")
+        print(f"\n🌱  Insertando {len(SECTOR_07)} niveles del Sector 06...\n")
         for data in SECTOR_07:
             challenge = Challenge(**data)
             session.add(challenge)
             print(
-                f"    [{data['level_order']:02d}/69] {data['title']:<38} "
+                f"    [{data['level_order']:02d}/59] {data['title']:<38} "
                 f"({data['difficulty'].upper()}, {data['base_xp_reward']} XP, "
                 f"~{data['telemetry_goal_time']}s)"
             )
@@ -974,8 +992,8 @@ async def seed() -> None:
         await session.commit()
 
     await engine.dispose()
-    print(f"\n✅  Sector 07 cargado — {len(SECTOR_07)} niveles listos.")
-    print("    Boss CONTRATO-70 preservado (gestionar con seed_contratos.py)\n")
+    print(f"\n✅  Sector 06 cargado — {len(SECTOR_07)} niveles listos.")
+    print("    Boss CONTRATO-60 preservado (gestionar con seed_contratos.py)\n")
 
 
 if __name__ == "__main__":
