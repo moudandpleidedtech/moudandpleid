@@ -45,8 +45,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["string", "sorted", "lower"]),
         "initial_code": (
             "def son_anagramas(a, b):\n"
-            "    limpiar = lambda s: sorted(s.lower().replace(' ', ''))\n"
-            "    return limpiar(a) == limpiar(b)\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(son_anagramas('Roma', 'Amor'))\n"
             "print(son_anagramas('nexo', 'xeon'))\n"
@@ -93,13 +92,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["dict", "algorithm", "enumerate"]),
         "initial_code": (
             "def two_sum(nums, objetivo):\n"
-            "    vistos = {}\n"
-            "    for i, num in enumerate(nums):\n"
-            "        complemento = objetivo - num\n"
-            "        if complemento in vistos:\n"
-            "            return (vistos[complemento], i)\n"
-            "        vistos[num] = i\n"
-            "    return None\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(two_sum([2,7,11,15], 9))\n"
             "print(two_sum([3,2,4], 6))\n"
@@ -144,7 +137,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["list_comprehension", "nested_list"]),
         "initial_code": (
             "def aplanar(lista):\n"
-            "    return [elem for sublista in lista for elem in sublista]\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(aplanar([[1,2], [3,4], [5]]))\n"
         ),
@@ -188,10 +181,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["dict", "list", "tuple", "setdefault"]),
         "initial_code": (
             "def agrupar(registros):\n"
-            "    grupos = {}\n"
-            "    for nombre, categoria in registros:\n"
-            "        grupos.setdefault(categoria, []).append(nombre)\n"
-            "    return grupos\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "registros = [('Ana','A'),('Bob','B'),('Carl','A'),('Dan','B'),('Eva','C')]\n"
             "grupos = agrupar(registros)\n"
@@ -237,11 +227,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["list", "slice", "round", "range"]),
         "initial_code": (
             "def media_movil(datos, k):\n"
-            "    resultado = []\n"
-            "    for i in range(len(datos) - k + 1):\n"
-            "        ventana = datos[i:i+k]\n"
-            "        resultado.append(round(sum(ventana) / k, 1))\n"
-            "    return resultado\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(media_movil([1,2,3,4,5,6], 3))\n"
         ),
@@ -286,8 +272,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["string", "isalnum", "lower", "slice"]),
         "initial_code": (
             "def es_palindromo(texto):\n"
-            "    limpio = ''.join(c.lower() for c in texto if c.isalnum())\n"
-            "    return limpio == limpio[::-1]\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(es_palindromo('A man a plan a canal Panama'))\n"
             "print(es_palindromo('NEXO'))\n"
@@ -333,14 +318,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["dict", "string", "loop"]),
         "initial_code": (
             "def romano_a_entero(s):\n"
-            "    valores = {'I':1,'V':5,'X':10,'L':50,'C':100,'D':500,'M':1000}\n"
-            "    total = 0\n"
-            "    for i in range(len(s)):\n"
-            "        if i + 1 < len(s) and valores[s[i]] < valores[s[i+1]]:\n"
-            "            total -= valores[s[i]]\n"
-            "        else:\n"
-            "            total += valores[s[i]]\n"
-            "    return total\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(romano_a_entero('III'))\n"
             "print(romano_a_entero('IX'))\n"
@@ -385,12 +363,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["algorithm", "dynamic_programming", "max"]),
         "initial_code": (
             "def max_subarray(nums):\n"
-            "    max_actual = nums[0]\n"
-            "    max_global = nums[0]\n"
-            "    for num in nums[1:]:\n"
-            "        max_actual = max(num, max_actual + num)\n"
-            "        max_global = max(max_global, max_actual)\n"
-            "    return max_global\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(max_subarray([-2,1,-3,4,-1,2,1,-5,4]))\n"
             "print(max_subarray([-1,-2,-3]))\n"
@@ -436,18 +409,7 @@ SECTOR_13 = [
         "concepts_taught_json": json.dumps(["string", "loop", "accumulator"]),
         "initial_code": (
             "def comprimir(s):\n"
-            "    if not s:\n"
-            "        return ''\n"
-            "    resultado = ''\n"
-            "    count = 1\n"
-            "    for i in range(1, len(s)):\n"
-            "        if s[i] == s[i-1]:\n"
-            "            count += 1\n"
-            "        else:\n"
-            "            resultado += s[i-1] + (str(count) if count > 1 else '')\n"
-            "            count = 1\n"
-            "    resultado += s[-1] + (str(count) if count > 1 else '')\n"
-            "    return resultado if len(resultado) < len(s) else s\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(comprimir('aabcccdddd'))\n"
             "print(comprimir('abc'))\n"
@@ -497,24 +459,17 @@ SECTOR_13 = [
         "initial_code": (
             "texto = 'OMEGA:95 ALPHA:78 DELTA:95 BETA:62 GAMMA:78 SIGMA:45'\n"
             "\n"
-            "# 1. Parsear\n"
-            "operadores = {}\n"
-            "for par in texto.split():\n"
-            "    nombre, puntaje = par.split(':')\n"
-            "    operadores[nombre] = int(puntaje)\n"
+            "# 1. Parsear pares nombre:puntaje en un dict\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "# 2. Filtrar >= 70\n"
-            "elite = {k: v for k, v in operadores.items() if v >= 70}\n"
+            "# 2. Filtrar operadores con puntaje >= 70\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "# 3. Agrupar por puntaje\n"
-            "grupos = {}\n"
-            "for nombre, puntaje in elite.items():\n"
-            "    grupos.setdefault(puntaje, []).append(nombre)\n"
+            "# 3. Agrupar por puntaje (dict {puntaje: [nombres]})\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "# 4. Imprimir de mayor a menor\n"
-            "for puntaje in sorted(grupos, reverse=True):\n"
-            "    nombres = ', '.join(sorted(grupos[puntaje]))\n"
-            "    print(f'{puntaje}: {nombres}')\n"
+            "# 4. Imprimir grupos de mayor a menor puntaje, nombres ordenados\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "95: DELTA, OMEGA\n78: ALPHA, GAMMA",
         "test_inputs_json": json.dumps([]),

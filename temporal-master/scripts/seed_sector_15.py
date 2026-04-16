@@ -45,9 +45,7 @@ SECTOR_15 = [
         "initial_code": (
             "import math\n"
             "\n"
-            "print(math.sqrt(144))\n"
-            "print(math.ceil(7.1))\n"
-            "print(round(math.pi, 4))\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "12.0\n8\n3.1416",
         "test_inputs_json": json.dumps([]),
@@ -90,11 +88,11 @@ SECTOR_15 = [
             "import math\n"
             "\n"
             "# Hipotenusa de triángulo 3-4-?\n"
-            "print(math.hypot(3, 4))\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
             "# Área del círculo: pi * r^2\n"
             "radio = 5\n"
-            "print(round(math.pi * radio**2, 2))\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "5.0\n78.54",
         "test_inputs_json": json.dumps([]),
@@ -137,9 +135,7 @@ SECTOR_15 = [
             "import random\n"
             "\n"
             "random.seed(42)\n"
-            "print(random.randint(1, 10))\n"
-            "print(random.choice(['ALFA', 'BETA', 'GAMMA', 'DELTA']))\n"
-            "print(round(random.random(), 2))\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "1\nGAMMA\n0.65",
         "test_inputs_json": json.dumps([]),
@@ -185,11 +181,7 @@ SECTOR_15 = [
             "random.seed(7)\n"
             "datos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\n"
             "\n"
-            "muestra = sorted(random.sample(datos, 4))\n"
-            "print(muestra)\n"
-            "\n"
-            "random.shuffle(datos)\n"
-            "print(datos[:5])\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "[1, 3, 5, 10]\n[2, 9, 6, 4, 7]",
         "test_inputs_json": json.dumps([]),
@@ -233,12 +225,10 @@ SECTOR_15 = [
             "from datetime import date, timedelta\n"
             "\n"
             "hoy = date(2026, 4, 10)\n"
-            "futuro = hoy + timedelta(days=30)\n"
-            "print(futuro)\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
             "inicio = date(2026, 1, 1)\n"
-            "dias = (hoy - inicio).days\n"
-            "print(dias)\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "2026-05-10\n99",
         "test_inputs_json": json.dumps([]),
@@ -287,11 +277,7 @@ SECTOR_15 = [
             "\n"
             "fecha = date(2026, 4, 10)\n"
             "\n"
-            "dia_nombre = DIAS[fecha.weekday()]\n"
-            "mes_nombre = MESES[fecha.month]\n"
-            "print(f'{dia_nombre} {fecha.day} de {mes_nombre} de {fecha.year}')\n"
-            "print(fecha.strftime('%d/%m/%Y'))\n"
-            "print(fecha.isoformat())\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "Viernes 10 de Abril de 2026\n10/04/2026\n2026-04-10",
         "test_inputs_json": json.dumps([]),
@@ -336,12 +322,7 @@ SECTOR_15 = [
             "from collections import Counter\n"
             "\n"
             "misiones = ['ALFA','BETA','ALFA','GAMMA','BETA','ALFA','DELTA','BETA']\n"
-            "c = Counter(misiones)\n"
-            "\n"
-            "for mision, count in c.most_common(2):\n"
-            "    print(f'{mision}: {count}')\n"
-            "\n"
-            "print(f'Unicas: {len(c)}')\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "ALFA: 3\nBETA: 3\nUnicas: 4",
         "test_inputs_json": json.dumps([]),
@@ -389,10 +370,7 @@ SECTOR_15 = [
             "\n"
             "pwd = 'D@ki2026!'\n"
             "\n"
-            "print(any(c in string.ascii_lowercase for c in pwd))\n"
-            "print(any(c in string.ascii_uppercase for c in pwd))\n"
-            "print(any(c in string.digits for c in pwd))\n"
-            "print(any(c in string.punctuation for c in pwd))\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "True\nTrue\nTrue\nTrue",
         "test_inputs_json": json.dumps([]),
@@ -438,12 +416,7 @@ SECTOR_15 = [
             "\n"
             "ruta = '/nexo/datos/operadores/informe.csv'\n"
             "\n"
-            "print(os.path.basename(ruta))\n"
-            "print(os.path.dirname(ruta))\n"
-            "nombre, ext = os.path.splitext(os.path.basename(ruta))\n"
-            "print(nombre)\n"
-            "print(ext)\n"
-            "print(os.path.join(os.path.dirname(ruta), 'backup', os.path.basename(ruta)))\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "informe.csv\n/nexo/datos/operadores\ninforme\n.csv\n/nexo/datos/operadores/backup/informe.csv",
         "test_inputs_json": json.dumps([]),
@@ -491,17 +464,15 @@ SECTOR_15 = [
             "\n"
             "texto = 'nexo alfa nexo beta gamma nexo alfa beta nexo gamma'\n"
             "palabras = texto.split()\n"
-            "c = Counter(palabras)\n"
             "\n"
-            "total = len(palabras)\n"
-            "unicas = len(c)\n"
-            "print(f'Total: {total} | Unicas: {unicas}')\n"
+            "# Paso 1: Contá frecuencias con Counter\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "media = round(total / unicas, 1)\n"
-            "print(f'Media: {media}')\n"
+            "# Paso 2: Imprimí total y únicas\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "sobre = sorted(p for p, freq in c.items() if freq > media)\n"
-            "print(f'Sobre la media: {sobre}')\n"
+            "# Paso 3: Calculá la media y filtrá las palabras sobre la media\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "Total: 10 | Unicas: 4\nMedia: 2.5\nSobre la media: ['nexo']",
         "test_inputs_json": json.dumps([]),

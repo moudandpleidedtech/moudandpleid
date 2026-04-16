@@ -51,13 +51,7 @@ SECTOR_21 = [
         "concepts_taught_json": json.dumps(["two_sum", "dict", "enumerate", "O(n)"]),
         "initial_code": (
             "def dos_suma(numeros, objetivo):\n"
-            "    vistos = {}\n"
-            "    for i, num in enumerate(numeros):\n"
-            "        complemento = objetivo - num\n"
-            "        if complemento in vistos:\n"
-            "            return [vistos[complemento], i]\n"
-            "        vistos[num] = i\n"
-            "    return []\n"
+            "    pass  # TU CÓDIGO AQUÍ (usá un dict para O(n))\n"
             "\n"
             "print(dos_suma([2, 7, 11, 15], 9))\n"
             "print(dos_suma([3, 2, 4], 6))\n"
@@ -101,8 +95,7 @@ SECTOR_21 = [
         "concepts_taught_json": json.dumps(["palindrome", "string_slicing", "lower", "replace"]),
         "initial_code": (
             "def es_palindromo(texto):\n"
-            "    limpio = texto.lower().replace(' ', '')\n"
-            "    return limpio == limpio[::-1]\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(es_palindromo('anita lava la tina'))\n"
             "print(es_palindromo('python'))\n"
@@ -145,7 +138,7 @@ SECTOR_21 = [
         "concepts_taught_json": json.dumps(["anagram", "sorted", "string", "comparison"]),
         "initial_code": (
             "def son_anagramas(palabra1, palabra2):\n"
-            "    return sorted(palabra1.lower()) == sorted(palabra2.lower())\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(son_anagramas('listen', 'silent'))\n"
             "print(son_anagramas('hello', 'world'))\n"
@@ -189,14 +182,7 @@ SECTOR_21 = [
         "concepts_taught_json": json.dumps(["kadane", "dynamic_programming", "max_subarray", "O(n)"]),
         "initial_code": (
             "def max_subarray(numeros):\n"
-            "    max_actual = numeros[0]\n"
-            "    max_global = numeros[0]\n"
-            "\n"
-            "    for num in numeros[1:]:\n"
-            "        max_actual = max(num, max_actual + num)\n"
-            "        max_global = max(max_global, max_actual)\n"
-            "\n"
-            "    return max_global\n"
+            "    pass  # TU CÓDIGO AQUÍ (algoritmo de Kadane)\n"
             "\n"
             "print(max_subarray([-2, 1, -3, 4, -1, 2, 1, -5, 4]))\n"
             "print(max_subarray([1, 2, 3, 4, 5]))\n"
@@ -244,11 +230,7 @@ SECTOR_21 = [
             "from collections import defaultdict\n"
             "\n"
             "def agrupar_anagramas(palabras):\n"
-            "    grupos = defaultdict(list)\n"
-            "    for palabra in palabras:\n"
-            "        clave = tuple(sorted(palabra))\n"
-            "        grupos[clave].append(palabra)\n"
-            "    return list(grupos.values())\n"
+            "    pass  # TU CÓDIGO AQUÍ (usá defaultdict + tuple(sorted()))\n"
             "\n"
             "resultado = agrupar_anagramas(['eat', 'tea', 'tan', 'ate', 'nat', 'bat'])\n"
             "for grupo in sorted(resultado, key=lambda g: g[0]):\n"

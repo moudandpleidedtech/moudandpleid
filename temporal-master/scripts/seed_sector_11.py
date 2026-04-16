@@ -805,8 +805,6 @@ SECTOR_11: list[dict] = [
             '`nombre, puntaje = linea.split(":")` falla si no hay ":" → excepto (ValueError/IndexError).',
             "`sorted(aprobados, key=por_puntaje, reverse=True)` ordena de mayor a menor puntaje.",
             'Dentro del for: `etiqueta = "ÉLITE" if agente["puntaje"] >= 90 else "APROBADO"`.',
-            'Formato exacto: `f\"{agente[\'nombre\']}: {agente[\'puntaje\']} [{etiqueta}]\"`.',
-            "Epsilon (65 < 70) y Gamma (ERROR) suman los 2 rechazados.",
         ],
         "grid_map_json": None,
     },

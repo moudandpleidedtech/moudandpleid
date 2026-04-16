@@ -60,7 +60,6 @@ SECTOR_00 = [
             'print(finalizar_enlace())\n'
         ),
         "hints_json": json.dumps([
-            "Fase 1: ejecuta el código tal como está.",
             "Fase 2: corrige el SyntaxError (faltan comillas o paréntesis).",
             "Fase 3: asigna un valor a la variable antes de hacer print.",
             "Fase 4: define la función con 'def' y usa 'return' para devolver el valor.",

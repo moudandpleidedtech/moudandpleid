@@ -759,7 +759,6 @@ SECTOR_10: list[dict] = [
             '`linea.split(":")` divide en `["CLAVE", "VALOR"]`; `clave, valor = ...` hace unpacking.',
             'Si la línea no tiene ":", split devuelve un solo elemento y el unpacking lanza `ValueError`.',
             "Acumula: `total += int(valor)` dentro del `try`.",
-            "En el `except (ValueError, IndexError):`, solo incrementa `errores += 1`.",
         ],
         "grid_map_json": None,
     },

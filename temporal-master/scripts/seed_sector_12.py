@@ -47,15 +47,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["string", "modulo", "ord", "chr", "loop"]),
         "initial_code": (
             "def cifrar(texto, desplazamiento):\n"
-            "    resultado = ''\n"
-            "    for char in texto:\n"
-            "        if char.isalpha():\n"
-            "            # ord('A') = 65; desplazá dentro del rango A-Z\n"
-            "            nuevo = (ord(char) - 65 + desplazamiento) % 26 + 65\n"
-            "            resultado += chr(nuevo)\n"
-            "        else:\n"
-            "            resultado += char\n"
-            "    return resultado\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(cifrar('HOLA', 3))\n"
             "print(cifrar('NEXO', 13))\n"
@@ -100,12 +92,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["dict", "string", "loop", "lower"]),
         "initial_code": (
             "def contar_vocales(texto):\n"
-            "    vocales = 'aeiou'\n"
-            "    resultado = {}\n"
-            "    for char in texto.lower():\n"
-            "        if char in vocales:\n"
-            "            resultado[char] = resultado.get(char, 0) + 1\n"
-            "    return resultado\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(contar_vocales('Hola Mundo'))\n"
         ),
@@ -147,8 +134,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["string", "split", "join", "slice"]),
         "initial_code": (
             "def invertir_palabras(frase):\n"
-            "    palabras = frase.split()\n"
-            "    return ' '.join(palabras[::-1])\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(invertir_palabras('DAKI protege el Nexo'))\n"
         ),
@@ -192,10 +178,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["list", "sorted", "set", "slice"]),
         "initial_code": (
             "def segundo_maximo(numeros):\n"
-            "    unicos = sorted(set(numeros), reverse=True)\n"
-            "    if len(unicos) < 2:\n"
-            "        return None\n"
-            "    return unicos[1]\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(segundo_maximo([3, 1, 4, 1, 5, 9, 2, 6]))\n"
             "print(segundo_maximo([7, 7, 7]))\n"
@@ -239,12 +222,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["function", "loop", "modulo", "boolean"]),
         "initial_code": (
             "def es_primo(n):\n"
-            "    if n < 2:\n"
-            "        return False\n"
-            "    for i in range(2, int(n**0.5) + 1):\n"
-            "        if n % i == 0:\n"
-            "            return False\n"
-            "    return True\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "primos = [str(n) for n in range(1, 31) if es_primo(n)]\n"
             "print(' '.join(primos))\n"
@@ -288,9 +266,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["recursion", "modulo", "floor_division"]),
         "initial_code": (
             "def suma_digitos(n):\n"
-            "    if n < 10:\n"
-            "        return n\n"
-            "    return n % 10 + suma_digitos(n // 10)\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(suma_digitos(1234))\n"
             "print(suma_digitos(9999))\n"
@@ -336,11 +312,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["dict", "sorted", "lambda", "string"]),
         "initial_code": (
             "def frecuencia(texto):\n"
-            "    palabras = texto.lower().split()\n"
-            "    freq = {}\n"
-            "    for p in palabras:\n"
-            "        freq[p] = freq.get(p, 0) + 1\n"
-            "    return freq\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "texto = 'nexo nexo daki daki daki operador nexo'\n"
             "freq = frecuencia(texto)\n"
@@ -391,21 +363,16 @@ SECTOR_12 = [
         "initial_code": (
             "class CuentaTactica:\n"
             "    def __init__(self, titular, saldo_inicial):\n"
-            "        self.titular = titular\n"
-            "        self._saldo = saldo_inicial\n"
+            "        pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "    def depositar(self, monto):\n"
-            "        if monto > 0:\n"
-            "            self._saldo += monto\n"
+            "        pass\n"
             "\n"
             "    def retirar(self, monto):\n"
-            "        if monto > self._saldo:\n"
-            "            print('FONDOS INSUFICIENTES')\n"
-            "        else:\n"
-            "            self._saldo -= monto\n"
+            "        pass\n"
             "\n"
             "    def saldo(self):\n"
-            "        return self._saldo\n"
+            "        pass\n"
             "\n"
             "cuenta = CuentaTactica('Operador-7', 1000)\n"
             "cuenta.depositar(500)\n"
@@ -454,16 +421,7 @@ SECTOR_12 = [
         "concepts_taught_json": json.dumps(["algorithm", "while", "binary_search", "list"]),
         "initial_code": (
             "def busqueda_binaria(lista, objetivo):\n"
-            "    izq, der = 0, len(lista) - 1\n"
-            "    while izq <= der:\n"
-            "        medio = (izq + der) // 2\n"
-            "        if lista[medio] == objetivo:\n"
-            "            return medio\n"
-            "        elif lista[medio] < objetivo:\n"
-            "            izq = medio + 1\n"
-            "        else:\n"
-            "            der = medio - 1\n"
-            "    return -1\n"
+            "    pass  # TU CÓDIGO AQUÍ\n"
             "\n"
             "print(busqueda_binaria([1,3,5,7,9,11,13], 7))\n"
             "print(busqueda_binaria([1,3,5,7,9,11,13], 6))\n"
@@ -515,21 +473,16 @@ SECTOR_12 = [
             "palabras = texto.split()\n"
             "\n"
             "# 1. Total de palabras\n"
-            "print(f'Palabras: {len(palabras)}')\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
             "# 2. Total de palabras únicas\n"
-            "print(f'Unicas: {len(set(palabras))}')\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "# 3. Palabra más frecuente\n"
-            "freq = {}\n"
-            "for p in palabras:\n"
-            "    freq[p] = freq.get(p, 0) + 1\n"
-            "mas_freq = sorted(freq.items(), key=lambda x: (-x[1], x[0]))[0][0]\n"
-            "print(f'Mas frecuente: {mas_freq}')\n"
+            "# 3. Palabra más frecuente (empate: la primera alfabéticamente)\n"
+            "# TU CÓDIGO AQUÍ\n"
             "\n"
-            "# 4. Longitud promedio\n"
-            "promedio = round(sum(len(p) for p in palabras) / len(palabras), 1)\n"
-            "print(f'Longitud media: {promedio}')\n"
+            "# 4. Longitud promedio redondeada a 1 decimal\n"
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "Palabras: 10\nUnicas: 6\nMas frecuente: el\nLongitud media: 3.5",
         "test_inputs_json": json.dumps([]),

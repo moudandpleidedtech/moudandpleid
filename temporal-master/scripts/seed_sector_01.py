@@ -385,7 +385,7 @@ SECTOR_01 = [
             "# MISIÓN: Lee un nombre e imprime 'Bienvenido, ' + el nombre\n"
             "\n"
             "nombre = input()\n"
-            'print("Bienvenido, " + nombre)\n'
+            "# TU CÓDIGO AQUÍ\n"
         ),
         "expected_output": "Bienvenido, Operador",
         "test_inputs_json": json.dumps(["Operador"]),
