@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import get_current_operator
+from app.core.security import get_current_operator, get_current_operator_optional
 from app.models.challenge import Challenge
 from app.models.user import User
 from app.services.daki_persona import (
