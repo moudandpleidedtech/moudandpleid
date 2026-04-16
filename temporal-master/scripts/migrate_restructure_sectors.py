@@ -1404,6 +1404,7 @@ async def migrate_db(dry_run: bool = False) -> None:
     print("=" * 60)
 
     if dry_run:
+        print(f"  [DRY] DELETE challenges WHERE sector_id=21 AND level_order BETWEEN 180 AND 189")
         print(f"  [DRY] UPDATE level_order +10 WHERE level_order >= 31")
         print(f"  [DRY] UPDATE sector_id   +1  WHERE sector_id  >= 4")
         print(f"  [DRY] INSERT {len(NEW_FUNCTIONS_CHALLENGES)} challenges (Funciones, sector_id=4, L31-40)")
@@ -1418,6 +1419,16 @@ async def migrate_db(dry_run: bool = False) -> None:
 
     async with async_session() as session:
         async with session.begin():
+            # 0. Eliminar challenges experimentales de S21 (PREDICCION 01-10, L180-189)
+            #    Estos eran prototipos sin user_progress. Si no existen, rowcount=0.
+            r = await session.execute(
+                text("DELETE FROM challenges WHERE sector_id = 21 AND level_order BETWEEN 180 AND 189")
+            )
+            if r.rowcount > 0:
+                print(f"  OK  DELETE {r.rowcount} challenges experimentales (S21 L180-189)")
+            else:
+                print(f"  --  No habia challenges experimentales en S21 L180-189")
+
             # 1. Shift level_orders
             r = await session.execute(
                 text("UPDATE challenges SET level_order = level_order + 10 WHERE level_order >= 31")
