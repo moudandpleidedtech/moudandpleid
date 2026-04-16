@@ -28,7 +28,9 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 def _require_admin(x_admin_key: str = Header(..., alias="X-Admin-Key")) -> None:
-    if x_admin_key != settings.SECRET_KEY:
+    import hmac as _hmac
+    valid = settings.ADMIN_API_KEY or ""
+    if not _hmac.compare_digest(x_admin_key, valid):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado.")
 
 

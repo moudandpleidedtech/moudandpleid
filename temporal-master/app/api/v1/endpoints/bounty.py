@@ -8,12 +8,15 @@ GET  /api/v1/bounty/{id}      — recupera los datos de un bounty
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge, DifficultyTier
+from app.models.user import User
 from app.services.dda_service import DDAResult, analyze_player_profile
 from app.services.level_generator import generate_dynamic_bounty
 
@@ -114,10 +117,18 @@ def _build_out(challenge: Challenge, dda: DDAResult) -> BountyOut:
     status_code=status.HTTP_201_CREATED,
     summary="Genera una misión Bounty al vuelo con DDA + IA",
 )
+@limiter.limit("3/minute")
 async def generate_bounty(
+    request: Request,
     payload: BountyGenerateRequest,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> BountyOut:
+    if payload.user_id != operator.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes generar bounties para otro operador.",
+        )
     """
     1. Analiza el perfil del jugador (ConceptMastery + UserProgress) con el DDA.
     2. Ajusta concepto y dificultad óptimamente.

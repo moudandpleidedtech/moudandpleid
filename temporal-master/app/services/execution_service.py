@@ -86,19 +86,24 @@ async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     Returns:
         {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool}
 
-    Uses Piston API (remote sandbox) con fallback a subprocess local
-    cuando Piston no está disponible (timeout, rate limit, etc.).
+    Usa Piston API (sandbox remoto aislado) como único backend.
+    El fallback local fue eliminado por razones de seguridad: un subprocess
+    local hereda todas las variables de entorno del servidor (DATABASE_URL,
+    SECRET_KEY, STRIPE_SECRET_KEY, etc.) y no tiene restricciones de filesystem
+    ni de red, lo que permite exfiltración de credenciales.
     """
-    # Unir inputs con newlines y añadir newline final para que el último input()
-    # no quede esperando EOF en runtimes que requieren \n como terminador.
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
         result = await _execute_via_piston(source_code, stdin)
     except Exception as exc:
-        # Fallback local: Piston timeout, rate limit, respuesta inválida, etc.
         import logging
-        logging.getLogger(__name__).warning("Piston unavailable (%s), using subprocess fallback", type(exc).__name__)
-        result = await _execute_via_subprocess(source_code, stdin)
+        logging.getLogger(__name__).warning("Piston unavailable (%s) — sandbox no disponible", type(exc).__name__)
+        result = {
+            "stdout": "",
+            "stderr": "El sandbox de ejecución no está disponible temporalmente. Intentá de nuevo en unos segundos.",
+            "execution_time_ms": 0.0,
+            "success": False,
+        }
 
     result["error_info"] = _parse_python_error(result.get("stderr", ""))
     return result

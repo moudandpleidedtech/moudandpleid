@@ -4,56 +4,61 @@ import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUserStore } from '@/store/userStore'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+
 function GoogleAuthHandler() {
   const router      = useRouter()
   const params      = useSearchParams()
   const { setUser } = useUserStore()
 
   useEffect(() => {
-    const token = params.get('token')
+    // El token NO viaja en la URL — está en la cookie httpOnly seteada por el backend.
+    // Llamamos a /auth/me con credentials:'include' para obtener el perfil del operador.
     const isNew = params.get('new') === '1'
 
-    if (!token) {
-      router.replace('/login?google_error=missing_token')
-      return
-    }
-
-    try {
-      const payloadB64 = token.split('.')[1]
-      const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')))
-
-      localStorage.setItem('daki_user_id',  payload.sub)
-      localStorage.setItem('daki_callsign', payload.callsign)
-      localStorage.setItem('daki_level',    String(payload.level))
-      localStorage.setItem('daki_licensed', String(payload.is_licensed))
-      localStorage.setItem('daki_token',    token)
-
-      setUser({
-        id:            payload.sub,
-        username:      payload.callsign,
-        current_level: payload.level,
-        total_xp:      0,
-        streak_days:   0,
-        is_paid:       payload.is_licensed,
-        role:          payload.role ?? 'USER',
+    fetch(`${API_BASE}/api/v1/auth/me`, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('auth_failed')
+        return res.json() as Promise<{
+          user_id: string; callsign: string; level: number
+          is_licensed: boolean; role: string
+        }>
       })
+      .then(profile => {
+        // Guardamos perfil (sin token) en localStorage solo para display
+        localStorage.setItem('daki_user_id',  profile.user_id)
+        localStorage.setItem('daki_callsign', profile.callsign)
+        localStorage.setItem('daki_level',    String(profile.level))
+        localStorage.setItem('daki_licensed', String(profile.is_licensed))
+        // NO guardamos daki_token — la autenticación usa la cookie httpOnly
 
-      document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
+        setUser({
+          id:            profile.user_id,
+          username:      profile.callsign,
+          current_level: profile.level,
+          total_xp:      0,
+          streak_days:   0,
+          is_paid:       profile.is_licensed,
+          role:          profile.role ?? 'USER',
+        })
 
-      const onboardingDone = localStorage.getItem('onboarding_done') === 'true'
-      const bootSeen       = !!localStorage.getItem('boot_seen')
+        document.cookie = 'enigma_user=1; path=/; max-age=604800; SameSite=Lax'
 
-      let destination: string
-      if (isNew) {
-        destination = !onboardingDone ? '/onboarding' : bootSeen ? '/hub' : '/boot-sequence'
-      } else {
-        destination = bootSeen ? '/hub' : '/boot-sequence'
-      }
+        const onboardingDone = localStorage.getItem('onboarding_done') === 'true'
+        const bootSeen       = !!localStorage.getItem('boot_seen')
 
-      router.replace(destination)
-    } catch {
-      router.replace('/login?google_error=invalid_token')
-    }
+        let destination: string
+        if (isNew) {
+          destination = !onboardingDone ? '/onboarding' : bootSeen ? '/hub' : '/boot-sequence'
+        } else {
+          destination = bootSeen ? '/hub' : '/boot-sequence'
+        }
+
+        router.replace(destination)
+      })
+      .catch(() => {
+        router.replace('/login?google_error=auth_failed')
+      })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null

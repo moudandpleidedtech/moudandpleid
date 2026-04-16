@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import get_current_operator_optional
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge
 from app.models.user import User
 from app.services.daki_persona import (
@@ -198,8 +198,11 @@ async def _call_haiku(user_msg: str, max_tokens: int = 120) -> str:
 async def operator_stagnation(
     request: Request,
     payload: StagnationRequest,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> StagnationResponse:
+    if payload.user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     challenge = await db.get(Challenge, payload.challenge_id)
     if challenge is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Desafío no encontrado.")
@@ -272,8 +275,11 @@ async def operator_stagnation(
 async def operator_intervene(
     request: Request,
     payload: InterveneRequest,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> InterveneResponse:
+    if payload.user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     challenge = await db.get(Challenge, payload.challenge_id)
     if challenge is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Desafío no encontrado.")
@@ -356,12 +362,15 @@ async def operator_intervene(
         "DAKI responde explicando el concepto sin revelar la solución del reto activo."
     ),
 )
-@limiter.limit("20/minute")
+@limiter.limit("10/minute")
 async def ask_daki(
     request: Request,
     payload: AskRequest,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> AskResponse:
+    if payload.user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     if not payload.question.strip():
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

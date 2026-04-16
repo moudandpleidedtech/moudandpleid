@@ -17,6 +17,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge
 from app.models.duel import Duel
 from app.models.user import User
@@ -322,8 +323,14 @@ def _resolve_winner(duel: Duel) -> Optional[uuid.UUID]:
 )
 async def get_inbox(
     user_id: uuid.UUID = Query(...),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> list[InboxItem]:
+    if user_id != operator.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes ver el inbox de otro operador.",
+        )
     result = await db.execute(
         select(Duel)
         .where(

@@ -330,7 +330,7 @@ async def manual_verify(
     db:          AsyncSession = Depends(get_db),
     x_admin_key: str          = Header(..., alias="X-Admin-Key"),
 ) -> dict:
-    if not hmac.compare_digest(x_admin_key, settings.SECRET_KEY):
+    if not hmac.compare_digest(x_admin_key, settings.ADMIN_API_KEY):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Clave de administrador inválida.",

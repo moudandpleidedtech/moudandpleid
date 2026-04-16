@@ -18,8 +18,7 @@ export default function BootSequencePage() {
 
   const handleComplete = () => {
     localStorage.setItem('boot_seen', '1')
-    // Navega a misiones: el Nivel 01 ("Hola Mundo") es el primero de la lista
-    router.push('/misiones')
+    router.push('/hub')
   }
 
   if (!_hasHydrated || !userId) return null

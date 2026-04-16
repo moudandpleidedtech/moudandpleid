@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limit import limiter
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge
+from app.models.user import User
 from app.models.user_progress import UserProgress
 from app.services.daki_reviewer import CONTRACT_KNOWLEDGE, review_contract
 
@@ -94,8 +96,14 @@ def _parse_inputs(raw: str | None) -> list[str]:
 )
 async def list_contracts(
     user_id: uuid.UUID,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> list[ContractSummary]:
+    if user_id != operator.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes ver los contratos de otro operador.",
+        )
     """
     Devuelve los 3 contratos (L50, L60, L70) con su estado de completado.
     El campo 'unlocked' indica si el operador alcanzó el nivel requerido.

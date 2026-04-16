@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limit import limiter
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge
+from app.models.user import User
 from app.models.user_progress import UserProgress
 from app.services import ai_mentor
 from app.services.mastery_service import get_reinforcement_concepts
@@ -46,12 +48,18 @@ class HintResponse(BaseModel):
         "cuando el usuario lleva 3 o más intentos fallidos en un desafío Python."
     ),
 )
-@limiter.limit("10/minute")
+@limiter.limit("6/minute")
 async def request_hint(
     request: Request,
     payload: HintRequest,
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> HintResponse:
+    if payload.user_id != operator.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes solicitar pistas en nombre de otro operador.",
+        )
     challenge = await db.get(Challenge, payload.challenge_id)
     if challenge is None:
         raise HTTPException(

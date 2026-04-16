@@ -83,12 +83,13 @@ def _verify_state_token(state: str) -> bool:
 
 
 def _set_auth_cookie(response: RedirectResponse, token: str) -> None:
+    in_prod = not settings.DEBUG
     response.set_cookie(
         key="daki_auth",
         value=token,
         httponly=True,
-        secure=not settings.DEBUG,
-        samesite="lax",
+        secure=in_prod,
+        samesite="none" if in_prod else "lax",
         max_age=_COOKIE_MAX_AGE,
         path="/",
     )
@@ -276,10 +277,13 @@ async def google_callback(
     )
 
     # ── 9. Redirigir al frontend ──────────────────────────────────────────────
-    # El token viaja como query param porque backend (daki-api.onrender.com) y
-    # frontend (dakiedtech.com) son dominios distintos — las cookies no cruzan.
-    # La página /auth/google del frontend lee el token, lo persiste en
-    # localStorage + Zustand, setea enigma_user y navega al hub.
+    # El JWT viaja en una cookie httpOnly (SameSite=None; Secure) — no en la URL.
+    # Pasar el token en ?token=... lo expone en logs del servidor, historial del
+    # navegador y Referer headers. La cookie cross-domain con SameSite=None funciona
+    # porque el frontend llama a la API con credentials:'include'.
+    # El frontend lee /auth/me (GET, usa la cookie) para obtener el perfil del usuario.
     new_param = "1" if is_new_user else "0"
-    destination = f"{frontend_base}/auth/google?token={token}&new={new_param}"
-    return RedirectResponse(url=destination, status_code=302)
+    destination = f"{frontend_base}/auth/google?new={new_param}"
+    response = RedirectResponse(url=destination, status_code=302)
+    _set_auth_cookie(response, token)
+    return response

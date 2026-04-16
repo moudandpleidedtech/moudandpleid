@@ -6,6 +6,28 @@ import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+// ─── JWT helpers ──────────────────────────────────────────────────────────────
+
+/** Decodifica el payload del JWT sin verificar firma (solo para leer exp). */
+function jwtExpiry(token: string): number {
+  try {
+    const payload = token.split('.')[1]
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof decoded.exp === 'number' ? decoded.exp : 0
+  } catch {
+    return 0
+  }
+}
+
+/** Retorna el token solo si existe y NO está vencido (con 30s de margen). */
+function getValidToken(): string {
+  if (typeof window === 'undefined') return ''
+  const raw = localStorage.getItem('daki_token') ?? ''
+  if (!raw) return ''
+  const exp = jwtExpiry(raw)
+  return exp > 0 && Date.now() / 1000 < exp - 30 ? raw : ''
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface UserRow {
@@ -74,10 +96,10 @@ export default function FounderPage() {
     setLoading(true); setError('')
     try {
       // Producción: frontend y backend son cross-domain (Vercel ↔ Render).
-      // SameSite=lax bloquea cookies en fetch cross-origin → usar JWT de localStorage.
-      const token = typeof window !== 'undefined'
-        ? (localStorage.getItem('daki_token') ?? '')
-        : ''
+      // Usamos el JWT de localStorage solo si está vigente (SameSite=lax bloquea
+      // la cookie en fetch cross-origin en Firefox/Safari). Si el JWT expiró,
+      // lo omitimos y dejamos que la cookie httpOnly actúe vía el proxy de Next.js.
+      const token = getValidToken()
 
       const res = await fetch(`${API_BASE}/api/v1/admin/users-progress`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},

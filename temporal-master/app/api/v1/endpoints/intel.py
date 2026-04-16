@@ -12,9 +12,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import get_current_operator
+from app.models.user import User
 
 import random
 
@@ -71,8 +74,11 @@ def _classify(concept: str) -> str:
 @router.get("/mastery-radar")
 async def mastery_radar(
     user_id: uuid.UUID = Query(..., description="UUID del Operador"),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    if user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     """
     Retorna la maestría promedio por categoría para renderizar el radar chart.
     Score 0-100 por categoría. Categorías sin datos retornan 0.
@@ -115,8 +121,11 @@ async def mastery_radar(
 @router.get("/weekly-review")
 async def weekly_review(
     user_id: uuid.UUID = Query(..., description="UUID del Operador"),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    if user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     """
     Retorna conceptos que necesitan refuerzo semanal:
     - updated_at < 7 días atrás (no practicado recientemente)
@@ -155,8 +164,11 @@ async def weekly_review(
 @router.get("/error-vault")
 async def error_vault(
     user_id: uuid.UUID = Query(..., description="UUID del Operador"),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    if user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     """
     Agrega errores de syntax_errors_log de todas las misiones del Operador.
     Retorna top 5 errores con frecuencia y estadísticas globales.
@@ -202,8 +214,11 @@ async def error_vault(
 async def pattern_callout(
     user_id: uuid.UUID = Query(...),
     challenge_id: uuid.UUID = Query(...),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    if user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     """
     Busca si el operador ya trabajó algún concepto del challenge actual
     en challenges previos completados. Devuelve el primer match para que
@@ -254,8 +269,11 @@ async def pattern_callout(
 async def retrieval_challenge(
     user_id: uuid.UUID = Query(...),
     concept: str = Query(...),
+    operator: User = Depends(get_current_operator),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    if user_id != operator.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado.")
     """
     Devuelve un challenge completado por el operador que trabaje el concepto dado.
     Usado por la Revisión Semanal para activar el protocolo de recuperación.

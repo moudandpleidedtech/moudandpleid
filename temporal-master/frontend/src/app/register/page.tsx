@@ -18,9 +18,9 @@ import { useUserStore } from '@/store/userStore'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
-// Keys legacy a limpiar tras migración exitosa
+// Keys legacy a limpiar antes de registrar la nueva sesión
 const LEGACY_KEYS = [
-  'beta_token', 'daki_token', 'daki_user_id',
+  'beta_token', 'daki_user_id',
   'daki_callsign', 'daki_level', 'daki_licensed', 'daki_mission_state',
 ]
 
@@ -155,11 +155,12 @@ export default function RegisterPage() {
         // ── Limpiar keys legacy antes de guardar las nuevas ────────────────
         LEGACY_KEYS.forEach(k => localStorage.removeItem(k))
 
-        // ── Guardar perfil (JWT viaja en cookie httpOnly — no se almacena en localStorage) ─
+        // ── Guardar perfil (sin token — la auth usa cookie httpOnly) ─────────
         localStorage.setItem('daki_user_id',  data.user_id)
         localStorage.setItem('daki_callsign', data.callsign)
         localStorage.setItem('daki_level',    String(data.level))
         localStorage.setItem('daki_licensed', String(data.is_licensed))
+        // NO guardar daki_token — es vulnerable a XSS vía localStorage
         setUser({
           id:            data.user_id,
           username:      data.callsign,

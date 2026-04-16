@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limit import limiter
-from app.core.security import get_current_operator_optional
+from app.core.security import get_current_operator
 from app.models.challenge import Challenge
 from app.models.user import User
 from app.models.user_metrics import UserMetric
@@ -169,10 +169,10 @@ async def execute_challenge_code(
     request: Request,
     payload: CodeExecuteRequest,
     db: AsyncSession = Depends(get_db),
-    operator: User | None = Depends(get_current_operator_optional),
+    operator: User = Depends(get_current_operator),
 ) -> CodeExecuteResponse:
-    # Si el request viene autenticado, garantizar que user_id coincide con el JWT
-    if operator is not None and payload.user_id != operator.id:
+    # Garantizar que user_id del payload coincide con el operador del JWT
+    if payload.user_id != operator.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="user_id no coincide con el operador autenticado.",
