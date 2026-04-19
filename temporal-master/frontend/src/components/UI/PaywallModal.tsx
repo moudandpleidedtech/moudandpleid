@@ -19,6 +19,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+function authHeaders(): HeadersInit {
+  if (typeof window === 'undefined') return { 'Content-Type': 'application/json' }
+  const token = localStorage.getItem('daki_token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  }
+}
+
 interface Props {
   visible: boolean
   onClose: () => void
@@ -81,7 +90,7 @@ export default function PaywallModal({
 
       const res = await fetch(`${API_BASE}/api/v1/hotmart/checkout`, {
         method:      'POST',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         credentials: 'include',
         body:        JSON.stringify({ plan: 'lifetime', ...(ref ? { ref } : {}) }),
       })
@@ -107,7 +116,7 @@ export default function PaywallModal({
     try {
       const res = await fetch(`${API_BASE}/api/v1/checkout/redeem`, {
         method:      'POST',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         credentials: 'include',
         body:        JSON.stringify({ code_string: codeInput.trim() }),
       })
