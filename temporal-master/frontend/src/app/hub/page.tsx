@@ -777,9 +777,11 @@ export default function HubPage() {
     setCheckoutLoading(true)
     const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
     try {
-      const res = await fetch(`${API_BASE_LOCAL}/api/v1/payments/create-checkout-session`, {
+      const res = await fetch(`${API_BASE_LOCAL}/api/v1/hotmart/checkout`, {
         method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body:        JSON.stringify({ plan: 'monthly' }),
       })
       if (!res.ok) throw new Error('checkout_failed')
       const data = await res.json() as { checkout_url: string }
