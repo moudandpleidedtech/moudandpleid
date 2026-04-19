@@ -42,6 +42,17 @@ import { useRubberDuck }      from '@/hooks/useRubberDuck'
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 
+// Encabezados de autenticación: cookie httpOnly + Authorization header como fallback
+// para requests cross-origin donde la cookie no se envía automáticamente.
+function authHeaders(): HeadersInit {
+  if (typeof window === 'undefined') return { 'Content-Type': 'application/json' }
+  const token = localStorage.getItem('daki_token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  }
+}
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Challenge {
@@ -621,7 +632,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       const res = await fetch(`${API_BASE}/api/v1/daki/intervene`, {
         method:      'POST',
         credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         body: JSON.stringify({
           user_id: userId,
           challenge_id: challengeId,
@@ -746,7 +757,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       const res = await fetch(`${API_BASE}/api/v1/daki/ask`, {
         method:      'POST',
         credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         body: JSON.stringify({ user_id: userId, challenge_id: challengeId, question: q }),
       })
       const data = await res.json()
@@ -1079,7 +1090,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       const res = await fetch(`${API_BASE}/api/v1/hint`, {
         method:      'POST',
         credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, error_output: errorText,
@@ -1133,7 +1144,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
       const res = await fetch(`${API_BASE}/api/v1/execute`, {
         method:      'POST',
         credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     authHeaders(),
         body: JSON.stringify({
           user_id: userId, challenge_id: challengeId,
           source_code: code, test_inputs: challenge?.test_inputs ?? [],
@@ -2821,7 +2832,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
                       setPredictFeedback('correct')
                       const res = await fetch(`${API_BASE}/api/v1/execute`, {
                         method: 'POST', credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders(),
                         body: JSON.stringify({
                           user_id: userId, challenge_id: challengeId,
                           source_code: challenge.initial_code,
