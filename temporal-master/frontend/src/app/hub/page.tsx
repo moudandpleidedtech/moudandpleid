@@ -776,10 +776,14 @@ export default function HubPage() {
     if (checkoutLoading) return
     setCheckoutLoading(true)
     const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
+    const token = typeof window !== 'undefined' ? localStorage.getItem('daki_token') : null
     try {
       const res = await fetch(`${API_BASE_LOCAL}/api/v1/hotmart/checkout`, {
         method:      'POST',
-        headers:     { 'Content-Type': 'application/json' },
+        headers:     {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         credentials: 'include',
         body:        JSON.stringify({ plan: 'monthly' }),
       })
