@@ -63,61 +63,49 @@ function PackModal({ pack, onClose }: { pack: Pack; onClose: () => void }) {
         {/* Cerrar */}
         <button
           onClick={onClose}
-          className="text-[8px] tracking-[0.5em] uppercase mb-5 inline-block"
-          style={{ color: `${pack.color}60` }}
+          className="text-xs tracking-[0.4em] uppercase mb-6 inline-block"
+          style={{ color: `${pack.color}70` }}
         >
           ← CERRAR
         </button>
 
-        {/* Imagen */}
-        <div
-          className="relative w-full aspect-[16/7] overflow-hidden mb-5"
-          style={{ border: `1px solid ${pack.color}20` }}
-        >
-          <Image src={pack.img} alt={pack.title} fill className="object-cover" sizes="580px" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #020202 0%, transparent 60%)' }} />
-          <div
-            className="absolute top-3 left-3 px-2 py-0.5 text-[7px] tracking-[0.45em] font-bold uppercase"
-            style={{ background: pack.color, color: '#000' }}
-          >
-            {pack.tag}
-          </div>
-        </div>
-
         {/* Título + Hook */}
-        <div className="mb-5">
-          <p className="text-white/90 text-lg font-black uppercase tracking-wide leading-tight mb-1">
+        <div className="mb-6 border-l-2 pl-4" style={{ borderColor: pack.color }}>
+          <p className="text-[10px] tracking-[0.5em] uppercase mb-2" style={{ color: pack.color }}>
+            {pack.tag}
+          </p>
+          <p className="text-white/95 text-2xl font-black uppercase tracking-wide leading-tight mb-2">
             {pack.title}
           </p>
-          <p className="text-[11px] italic leading-relaxed" style={{ color: pack.color }}>
+          <p className="text-base italic leading-relaxed text-white/60">
             {pack.hook}
           </p>
         </div>
 
         {/* Por qué */}
         <div
-          className="mb-5 p-4 border-l-2"
-          style={{ borderColor: pack.color, background: `${pack.color}08` }}
+          className="mb-6 p-5"
+          style={{ background: `${pack.color}08`, border: `1px solid ${pack.color}20` }}
         >
-          <p className="text-[7px] tracking-[0.5em] uppercase mb-3" style={{ color: `${pack.color}70` }}>
+          <p className="text-xs tracking-[0.4em] uppercase mb-3" style={{ color: `${pack.color}80` }}>
             POR QUÉ ESTE PACK
           </p>
-          <p className="text-white/55 text-[10px] leading-relaxed mb-2">{pack.why}</p>
-          <p className="text-[8px] mt-3 pt-3 border-t" style={{ borderColor: `${pack.color}20`, color: `${pack.color}60` }}>
+          <p className="text-white/65 text-sm leading-relaxed mb-3">{pack.why}</p>
+          <p className="text-xs pt-3 border-t" style={{ borderColor: `${pack.color}20`, color: `${pack.color}70` }}>
             Para quién: {pack.para}
           </p>
         </div>
 
         {/* 3 ebooks */}
-        <div className="mb-5">
-          <p className="text-[7px] tracking-[0.5em] uppercase mb-3" style={{ color: `${pack.color}70` }}>
+        <div className="mb-6">
+          <p className="text-xs tracking-[0.4em] uppercase mb-3" style={{ color: `${pack.color}80` }}>
             LO QUE OBTENÉS
           </p>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {pack.items.map((item, i) => (
-              <div key={i} className="p-3 border-l" style={{ borderColor: `${pack.color}30`, background: '#0A0A0A' }}>
-                <p className="text-white/80 text-[10px] font-bold mb-0.5">{item.name}</p>
-                <p className="text-white/35 text-[9px] leading-relaxed">{item.desc}</p>
+              <div key={i} className="p-4 border-l-2" style={{ borderColor: `${pack.color}40`, background: '#0A0A0A' }}>
+                <p className="text-white/90 text-sm font-bold mb-1">{item.name}</p>
+                <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -125,25 +113,25 @@ function PackModal({ pack, onClose }: { pack: Pack; onClose: () => void }) {
 
         {/* CTA */}
         <div
-          className="flex items-center justify-between gap-4 p-4 border"
+          className="flex items-center justify-between gap-4 p-5 border"
           style={{ borderColor: `${pack.color}30`, background: '#0A0A0A' }}
         >
           <div>
-            <p className="text-white/90 text-2xl font-bold tracking-tight">{pack.price}</p>
-            <p className="text-white/25 text-[8px]">pago único · acceso de por vida</p>
+            <p className="text-white/95 text-3xl font-bold tracking-tight">{pack.price}</p>
+            <p className="text-white/35 text-xs mt-0.5">pago único · acceso de por vida</p>
           </div>
           <a
             href={pack.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-3 text-[9px] tracking-[0.4em] font-bold uppercase"
+            className="px-6 py-3 text-xs tracking-[0.4em] font-bold uppercase"
             style={{ background: pack.color, color: '#000' }}
           >
-            OBTENER AHORA →
+            OBTENER →
           </a>
         </div>
 
-        <p className="text-center text-white/15 text-[7px] tracking-[0.35em] uppercase mt-4">
+        <p className="text-center text-white/20 text-xs tracking-[0.3em] uppercase mt-5">
           {'// PAGO SEGURO VÍA HOTMART · ENTREGA INMEDIATA'}
         </p>
       </div>
