@@ -1,5 +1,6 @@
 'use client'
 
+import { use } from 'react'
 import Image from 'next/image'
 import Link  from 'next/link'
 import { notFound } from 'next/navigation'
@@ -72,8 +73,9 @@ const PACKS: Record<string, {
   },
 }
 
-export default function BibliotecaPackPage({ params }: { params: { id: string } }) {
-  const pack = PACKS[params.id]
+export default function BibliotecaPackPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const pack = PACKS[id]
   if (!pack) notFound()
 
   return (
