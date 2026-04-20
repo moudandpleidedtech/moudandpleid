@@ -197,11 +197,10 @@ async def _migrate_v4_access(conn) -> None:
 
 
 async def _migrate_v5_subscriptions(conn) -> None:
-    """Operación Vanguardia (suscripción alpha), Stripe, is_admin."""
+    """Operación Vanguardia (suscripción alpha), is_admin."""
     for stmt in [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end_date TIMESTAMPTZ",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_id VARCHAR(255)",
     ]:
@@ -307,6 +306,21 @@ async def _migrate_v11_updated_at(conn) -> None:
     ))
 
 
+async def _migrate_v12_votes(conn) -> None:
+    """Tabla de votos para próximos ebooks (Negocios vs Tecnología)."""
+    await conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS ebook_votes (
+            category VARCHAR(20) PRIMARY KEY,
+            count    INTEGER NOT NULL DEFAULT 0
+        )
+    """))
+    await conn.execute(text("""
+        INSERT INTO ebook_votes (category, count)
+        VALUES ('negocios', 0), ('tecnologia', 0)
+        ON CONFLICT (category) DO NOTHING
+    """))
+
+
 async def _migrate_v9_pedagogy(conn) -> None:
     """Protocolo Guerrero: Ironman, Edge Cases y marcado de datos iniciales."""
     for stmt in [
@@ -388,3 +402,4 @@ async def init_db() -> None:
         await _migrate_v9_pedagogy(conn)
         await _migrate_v10_pending_activations(conn)
         await _migrate_v11_updated_at(conn)
+        await _migrate_v12_votes(conn)
