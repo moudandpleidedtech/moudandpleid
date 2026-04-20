@@ -2,6 +2,7 @@ import HeroSection        from '@/components/Landing/HeroSection'
 import VideoDemoSection   from '@/components/Landing/VideoDemoSection'
 import SolucionSection    from '@/components/Landing/SolucionSection'
 import ActivacionSection  from '@/components/Landing/ActivacionSection'
+import EbooksSection      from '@/components/Landing/EbooksSection'
 import CircuitBoard       from '@/components/UI/CircuitBoard'
 import LandingSlider      from '@/components/Landing/LandingSlider'
 import HubAudio           from '@/components/UI/HubAudio'
@@ -12,6 +13,7 @@ const SLIDES: Slide[] = [
   { name: 'NEXO CENTRAL',   content: <HeroSection /> },
   { name: 'DEMO EN VIVO',   content: <VideoDemoSection /> },
   { name: 'EL SISTEMA',     content: <SolucionSection /> },
+  { name: 'BIBLIOTECA',     content: <EbooksSection /> },
   { name: 'ACCESO AL NEXO', content: <ActivacionSection /> },
 ]
 
