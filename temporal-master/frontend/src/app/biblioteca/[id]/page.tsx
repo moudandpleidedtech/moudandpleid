@@ -1,24 +1,11 @@
 'use client'
 
-import { use } from 'react'
+import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link  from 'next/link'
-import { notFound } from 'next/navigation'
 import { motion } from 'framer-motion'
 
-const PACKS: Record<string, {
-  title:    string
-  tag:      string
-  hook:     string
-  why:      string[]
-  para:     string
-  items:    { name: string; desc: string }[]
-  bonus:    string[]
-  price:    string
-  img:      string
-  href:     string
-  color:    string
-}> = {
+const PACKS = {
   'el-negocio-solo': {
     title: 'El Negocio Solo',
     tag:   'PACK · 4 EBOOKS',
@@ -30,10 +17,10 @@ const PACKS: Record<string, {
     ],
     para:  'Freelancers, consultores y creadores que quieren escalar sin trabajar más horas.',
     items: [
-      { name: 'El Freelancer de 3K',   desc: 'Cómo posicionarte para cobrar lo que vale tu trabajo y atraer clientes que pagan sin regatear.' },
-      { name: 'Emails que Venden',      desc: 'Secuencias de email reales para nutrir leads y convertirlos sin llamadas de ventas.' },
-      { name: 'La Ventaja Injusta',     desc: 'Diferenciarte cuando todos ofrecen lo mismo. Estrategia de posicionamiento para mercados saturados.' },
-      { name: 'Notion para Humanos',    desc: 'Organizá tu negocio, clientes y proyectos sin perder tiempo en sistemas complicados.' },
+      { name: 'El Freelancer de 3K',  desc: 'Cómo posicionarte para cobrar lo que vale tu trabajo y atraer clientes que pagan sin regatear.' },
+      { name: 'Emails que Venden',     desc: 'Secuencias de email reales para nutrir leads y convertirlos sin llamadas de ventas.' },
+      { name: 'La Ventaja Injusta',    desc: 'Diferenciarte cuando todos ofrecen lo mismo. Estrategia de posicionamiento para mercados saturados.' },
+      { name: 'Notion para Humanos',   desc: 'Organizá tu negocio, clientes y proyectos sin perder tiempo en sistemas complicados.' },
     ],
     bonus: [
       'Plantillas editables para cada sistema',
@@ -56,10 +43,10 @@ const PACKS: Record<string, {
     ],
     para:  'Creadores, emprendedores y profesionales que quieren hacer más en menos tiempo usando IA.',
     items: [
-      { name: '50 Flujos con Claude',   desc: '50 automatizaciones reales con Claude AI organizadas por caso de uso: marketing, ops, atención, contenido.' },
-      { name: 'IA para Creadores',      desc: 'Cómo usar IA para producir contenido en escala sin perder tu voz ni tu estilo.' },
-      { name: 'Make en 5 Días',         desc: 'Construí tus primeras automatizaciones reales con Make (ex-Integromat) en una semana.' },
-      { name: 'Python en 7 Días',       desc: 'Base técnica para entender y modificar scripts de IA sin depender de nadie.' },
+      { name: '50 Flujos con Claude',  desc: '50 automatizaciones reales con Claude AI organizadas por caso de uso: marketing, ops, atención, contenido.' },
+      { name: 'IA para Creadores',     desc: 'Cómo usar IA para producir contenido en escala sin perder tu voz ni tu estilo.' },
+      { name: 'Make en 5 Días',        desc: 'Construí tus primeras automatizaciones reales con Make (ex-Integromat) en una semana.' },
+      { name: 'Python en 7 Días',      desc: 'Base técnica para entender y modificar scripts de IA sin depender de nadie.' },
     ],
     bonus: [
       'Flujos listos para copiar y adaptar',
@@ -71,12 +58,24 @@ const PACKS: Record<string, {
     href:  'https://go.hotmart.com/G105459604D',
     color: '#00CFFF',
   },
-}
+} as const
 
-export default function BibliotecaPackPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const pack = PACKS[id]
-  if (!pack) notFound()
+type PackId = keyof typeof PACKS
+
+export default function BibliotecaPackPage() {
+  const { id } = useParams<{ id: string }>()
+  const pack = PACKS[id as PackId]
+
+  if (!pack) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#020202] font-mono">
+        <div className="text-center">
+          <p className="text-[#FF0033] text-sm mb-4">[ PACK NO ENCONTRADO ]</p>
+          <Link href="/" className="text-[#00FF41]/60 text-[9px] tracking-[0.4em] uppercase">← VOLVER</Link>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main
@@ -96,7 +95,6 @@ export default function BibliotecaPackPage({ params }: { params: Promise<{ id: s
 
       <div className="relative z-10 max-w-xl mx-auto px-5 py-8">
 
-        {/* Volver */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <Link
             href="/"
@@ -107,7 +105,7 @@ export default function BibliotecaPackPage({ params }: { params: Promise<{ id: s
           </Link>
         </motion.div>
 
-        {/* Imagen + Tag */}
+        {/* Imagen */}
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
@@ -138,7 +136,7 @@ export default function BibliotecaPackPage({ params }: { params: Promise<{ id: s
           </p>
         </motion.div>
 
-        {/* Por qué comprarlo */}
+        {/* Por qué */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.14 }}
@@ -167,11 +165,7 @@ export default function BibliotecaPackPage({ params }: { params: Promise<{ id: s
           </p>
           <div className="space-y-2">
             {pack.items.map((item, i) => (
-              <div
-                key={i}
-                className="p-3 border-l"
-                style={{ borderColor: `${pack.color}30`, background: '#0A0A0A' }}
-              >
+              <div key={i} className="p-3 border-l" style={{ borderColor: `${pack.color}30`, background: '#0A0A0A' }}>
                 <p className="text-white/80 text-[10px] font-bold mb-0.5">{item.name}</p>
                 <p className="text-white/35 text-[9px] leading-relaxed">{item.desc}</p>
               </div>
@@ -198,7 +192,7 @@ export default function BibliotecaPackPage({ params }: { params: Promise<{ id: s
           </ul>
         </motion.div>
 
-        {/* CTA sticky-like */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.26 }}
