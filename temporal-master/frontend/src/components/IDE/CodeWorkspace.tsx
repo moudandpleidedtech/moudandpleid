@@ -319,32 +319,28 @@ function AnimatedDots() {
 
 // Overlay de error de red / timeout
 function NetworkErrorFallback({ onRetry }: { onRetry: () => void }) {
+  // Auto-retry after 2s — never block the user with a manual click
+  React.useEffect(() => {
+    const t = setTimeout(onRetry, 2000)
+    return () => clearTimeout(t)
+  }, [onRetry])
+
   return (
     <motion.div
-      className="absolute inset-0 z-[70] bg-[#0A0A0A]/97 flex flex-col items-center justify-center font-mono"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="absolute inset-0 z-[70] bg-[#0A0A0A]/80 flex flex-col items-center justify-center font-mono"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
     >
       <motion.div
-        className="text-center mb-8"
-        animate={{ opacity: [0.55, 1, 0.55] }}
-        transition={{ duration: 2.2, repeat: Infinity }}
+        className="text-center"
+        animate={{ opacity: [0.4, 0.8, 0.4] }}
+        transition={{ duration: 1.8, repeat: Infinity }}
       >
         <div
-          className="text-red-400 font-black text-base tracking-[0.2em] mb-2"
-          style={{ textShadow: '0 0 16px #FF444480' }}
+          className="text-[#00FF41]/60 text-xs tracking-[0.4em] uppercase"
         >
-          CONEXIÓN CON DAKI PERDIDA
-        </div>
-        <div className="text-red-400/45 text-xs tracking-[0.35em]">
-          REINTENTANDO PROTOCOLO...
+          SINCRONIZANDO CON DAKI...
         </div>
       </motion.div>
-      <button
-        onClick={onRetry}
-        className="px-6 py-2.5 border border-red-500/40 text-red-400 text-xs tracking-[0.2em] hover:border-red-500/80 hover:text-red-300 transition-all duration-150"
-      >
-        REINTENTAR CONEXIÓN
-      </button>
     </motion.div>
   )
 }
@@ -1138,7 +1134,7 @@ export default function CodeWorkspace({ challengeId }: Props) {
     playSound(audioRunRef)
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 12_000)
+    const timeoutId = setTimeout(() => controller.abort(), 25_000)
 
     try {
       const res = await fetch(`${API_BASE}/api/v1/execute`, {

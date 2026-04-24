@@ -191,12 +191,28 @@ async def execute_challenge_code(
     else:
         exec_result = await execute_python_code(payload.source_code, payload.test_inputs)
 
-    # Si el sandbox está caído (no es error del código del usuario), retornar sin
-    # contar el intento ni modificar gamificación.
+    # Si el sandbox está caído (no es error del código del usuario), retornar 200
+    # con mensaje neutral — sin contar attempt ni modificar gamificación.
     if exec_result.get("sandbox_unavailable"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="El entorno de ejecución está temporalmente fuera de línea. Tu intento no fue contabilizado — intentá de nuevo en unos segundos.",
+        from app.schemas.gamification import ChallengeAttemptResult
+        return CodeExecuteResponse(
+            stdout="",
+            stderr="",
+            execution_time_ms=0.0,
+            output_matched=False,
+            gamification=ChallengeAttemptResult(
+                user_id=payload.user_id,
+                challenge_id=payload.challenge_id,
+                is_success=False,
+                attempts=0,
+                xp_earned=0,
+                efficiency_bonus_applied=False,
+                already_completed=False,
+                level_up=False,
+                new_level=operator.current_level,
+                new_total_xp=operator.total_xp,
+            ),
+            daki_message="Entorno fuera de línea momentáneamente. Tu intento no fue registrado — ejecutá de nuevo.",
         )
 
     # Cuenta errores de sintaxis detectados en stderr de este intento
