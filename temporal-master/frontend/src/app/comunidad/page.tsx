@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import LeaderboardRow from '@/components/UI/LeaderboardRow'
+import SiteNav from '@/components/Landing/SiteNav'
+import Footer  from '@/components/Landing/Footer'
 
 export const metadata: Metadata = {
   title: 'Comunidad | DAKI EdTech — Operadores de Python en LATAM',
@@ -60,6 +62,8 @@ export default async function ComunidadPage() {
   const totalPlayers = data?.total_players ?? 0
 
   return (
+    <>
+    <SiteNav />
     <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41] pt-14">
 
       <div
@@ -258,16 +262,9 @@ export default async function ComunidadPage() {
           </div>
         </div>
 
-        {/* Footer nav */}
-        <div className="mt-10 pt-6 border-t border-[#00FF41]/8 flex items-center justify-between">
-          <Link href="/" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            ← NEXO CENTRAL
-          </Link>
-          <Link href="/blog" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            INTEL CODEX →
-          </Link>
-        </div>
       </div>
     </main>
+    <Footer />
+    </>
   )
 }

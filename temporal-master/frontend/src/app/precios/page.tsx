@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import SiteNav from '@/components/Landing/SiteNav'
+import Footer  from '@/components/Landing/Footer'
 
 export const metadata: Metadata = {
   title: 'Precios | DAKI EdTech — Aprende Python desde $0',
@@ -46,6 +48,8 @@ const FAQ = [
 
 export default function PreciosPage() {
   return (
+    <>
+    <SiteNav />
     <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41] pt-14">
 
       {/* Scanlines */}
@@ -84,17 +88,17 @@ export default function PreciosPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
 
           {/* Free */}
-          <div className="border border-white/[0.06] bg-[#0A0A0A] p-6 flex flex-col">
-            <p className="text-white/30 text-[9px] tracking-[0.4em] uppercase mb-1 font-bold">EXPLORACIÓN</p>
-            <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase mb-4">Prueba de Lógica</p>
-            <p className="text-white/40 text-3xl font-bold mb-6">GRATIS</p>
+          <div className="border border-[#00FF41]/[0.12] bg-[#0A0A0A] p-6 flex flex-col">
+            <p className="text-[#00FF41]/50 text-[9px] tracking-[0.4em] uppercase mb-1 font-bold">EXPLORACIÓN</p>
+            <p className="text-white/35 text-[9px] tracking-[0.25em] uppercase mb-4">Prueba de Lógica</p>
+            <p className="text-white/65 text-3xl font-bold mb-6">GRATIS</p>
             <ul className="space-y-3 flex-1 mb-6">
               {EXPLORER.map((f, i) => (
                 <li key={i} className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold shrink-0 ${f.included ? 'text-white/35' : 'text-white/12'}`}>
+                  <span className={`text-[10px] font-bold shrink-0 ${f.included ? 'text-[#00FF41]/60' : 'text-white/18'}`}>
                     {f.included ? '✓' : '—'}
                   </span>
-                  <span className={`text-[9px] leading-4 ${f.included ? 'text-white/40' : 'text-white/15 line-through'}`}>
+                  <span className={`text-[9px] leading-4 ${f.included ? 'text-white/55' : 'text-white/20 line-through'}`}>
                     {f.text}
                   </span>
                 </li>
@@ -102,7 +106,7 @@ export default function PreciosPage() {
             </ul>
             <Link
               href="/register"
-              className="block text-center border border-white/15 text-[9px] tracking-[0.4em] uppercase px-5 py-3 text-white/35 hover:border-white/30 hover:text-white/55 transition-all duration-200"
+              className="block text-center border border-[#00FF41]/25 text-[9px] tracking-[0.4em] uppercase px-5 py-3 text-[#00FF41]/55 hover:border-[#00FF41]/50 hover:text-[#00FF41]/85 transition-all duration-200"
             >
               EMPEZAR GRATIS →
             </Link>
@@ -165,16 +169,9 @@ export default function PreciosPage() {
           </div>
         </section>
 
-        {/* Footer nav */}
-        <div className="pt-6 border-t border-[#00FF41]/8 flex items-center justify-between">
-          <Link href="/" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            ← NEXO CENTRAL
-          </Link>
-          <Link href="/register" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            CREAR CUENTA →
-          </Link>
-        </div>
       </div>
     </main>
+    <Footer />
+    </>
   )
 }

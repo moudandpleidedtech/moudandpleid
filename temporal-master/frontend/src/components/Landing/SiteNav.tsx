@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { useUserStore } from '@/store/userStore'
 
 const NAV_LINKS = [
   { href: '/blog',      label: 'Blog'      },
@@ -12,6 +13,9 @@ const NAV_LINKS = [
 
 export default function SiteNav() {
   const [open, setOpen] = useState(false)
+  const { userId } = useUserStore()
+
+  if (userId) return null
 
   return (
     <nav

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getAllPosts, formatDate } from '@/lib/posts'
 import BlogPostCard from '@/components/Landing/BlogPostCard'
+import SiteNav from '@/components/Landing/SiteNav'
+import Footer  from '@/components/Landing/Footer'
 
 export const metadata: Metadata = {
   title: 'Blog | DAKI EdTech — Python, Carrera y Programación en LATAM',
@@ -19,6 +21,8 @@ export default function BlogPage() {
   const posts = getAllPosts()
 
   return (
+    <>
+    <SiteNav />
     <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41] pt-14">
 
       <div
@@ -88,22 +92,9 @@ export default function BlogPage() {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="mt-16 pt-6 border-t border-[#00FF41]/8 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors"
-          >
-            ← Volver al Nexo
-          </Link>
-          <Link
-            href="/register"
-            className="text-[9px] tracking-[0.35em] uppercase border border-[#00FF41]/25 px-4 py-2 text-[#00FF41]/55 hover:text-[#00FF41] hover:border-[#00FF41]/50 transition-all duration-200"
-          >
-            ENTRAR AL NEXO →
-          </Link>
-        </div>
       </div>
     </main>
+    <Footer />
+    </>
   )
 }

@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import SiteNav from '@/components/Landing/SiteNav'
+import Footer  from '@/components/Landing/Footer'
 
 export const metadata: Metadata = {
   title: 'La Plataforma | DAKI EdTech — 195 Misiones de Python',
@@ -48,6 +50,8 @@ const AREAS = [
 
 export default function PlataformaPage() {
   return (
+    <>
+    <SiteNav />
     <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41] pt-14">
 
       <div
@@ -170,16 +174,9 @@ export default function PlataformaPage() {
           </div>
         </div>
 
-        {/* Footer nav */}
-        <div className="pt-6 border-t border-[#00FF41]/8 flex items-center justify-between">
-          <Link href="/" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            ← NEXO CENTRAL
-          </Link>
-          <Link href="/blog" className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors">
-            INTEL CODEX →
-          </Link>
-        </div>
       </div>
     </main>
+    <Footer />
+    </>
   )
 }

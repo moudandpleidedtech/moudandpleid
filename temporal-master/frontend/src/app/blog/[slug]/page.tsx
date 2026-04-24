@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import { getAllPosts, getPostBySlug, formatDate } from '@/lib/posts'
 import GiscusComments from '@/components/UI/GiscusComments'
 import NewsletterForm  from '@/components/UI/NewsletterForm'
+import SiteNav from '@/components/Landing/SiteNav'
+import Footer  from '@/components/Landing/Footer'
 
 interface Props {
   params: { slug: string }
@@ -45,7 +47,9 @@ export default function PostPage({ params }: Props) {
   const color = CATEGORY_COLOR[post.category] ?? '#00FF41'
 
   return (
-    <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41]">
+    <>
+    <SiteNav />
+    <main className="min-h-screen bg-[#020202] font-mono text-[#00FF41] pt-14">
 
       {/* Scanlines */}
       <div
@@ -160,22 +164,9 @@ export default function PostPage({ params }: Props) {
         {/* Comentarios */}
         <GiscusComments term={post.slug} />
 
-        {/* Navegación footer */}
-        <div className="mt-12 pt-6 border-t border-[#00FF41]/8 flex items-center justify-between">
-          <Link
-            href="/blog"
-            className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors"
-          >
-            ← INTEL CODEX
-          </Link>
-          <Link
-            href="/"
-            className="text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors"
-          >
-            NEXO CENTRAL →
-          </Link>
-        </div>
       </div>
     </main>
+    <Footer />
+    </>
   )
 }
