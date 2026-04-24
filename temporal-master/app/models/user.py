@@ -60,9 +60,6 @@ class User(Base):
     role: Mapped[str] = mapped_column(
         String(20), nullable=False, default="USER", server_default="USER", index=True
     )
-    # Stripe Customer ID — persiste entre sesiones de checkout para evitar crear clientes duplicados
-    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
-
     # Google OAuth — ID único de la cuenta de Google del operador (sub claim)
     google_id: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None, index=True)
 

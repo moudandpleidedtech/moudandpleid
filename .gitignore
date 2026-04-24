@@ -1,0 +1,15 @@
+# Assets locales — no van al repo
+recordings/
+ebooks/
+hotmart-imgs/
+"Contenido multimedios/"
+landing-screenshot.png
+linkedin-posts-daki.html
+
+# Backups
+CLAUDE.backup.md
+temporal-master/.env.local.bak
+
+# Claude Code internos
+.claude/settings.local.json
+.claude/worktrees/

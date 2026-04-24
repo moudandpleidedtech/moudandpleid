@@ -39,23 +39,10 @@ class Settings(BaseSettings):
     # Activar SSL para conexión a BD (requerido en Supabase / producción)
     DB_SSL: bool = False
 
-    # Clave de administrador para activación manual de licencias (/payments/verify).
+    # Clave de administrador para activación manual de licencias.
     # DEBE ser diferente a SECRET_KEY.
     # Generar con: python -c "import secrets; print(secrets.token_hex(32))"
     ADMIN_API_KEY: str = "change-me-in-production"
-
-    # Webhook secret compartido con la pasarela de pagos.
-    # Generar con: python -c "import secrets; print(secrets.token_hex(32))"
-    # En Stripe: copiar desde Dashboard → Webhooks → Signing secret
-    PAYMENT_WEBHOOK_SECRET: str = "change-me-in-production"
-
-    # ── Stripe — Pasarela Global (Directiva 011) ──────────────────────────────
-    # sk_test_... (dev) o sk_live_... (producción)
-    STRIPE_SECRET_KEY: str = ""
-    # whsec_... — desde Stripe Dashboard → Developers → Webhooks → Signing secret
-    STRIPE_WEBHOOK_SECRET: str = ""
-    # price_... — ID del precio mensual $25 USD desde Stripe Dashboard → Products
-    STRIPE_PRICE_ID: str = ""
 
     # Precio de la Licencia de Operador en USD (para proyección de ingresos)
     LICENSE_PRICE_USD: float = 49.0
