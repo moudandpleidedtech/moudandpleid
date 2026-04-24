@@ -306,6 +306,14 @@ async def _migrate_v11_updated_at(conn) -> None:
     ))
 
 
+async def _migrate_v13_tactical_key_claimed_by(conn) -> None:
+    """Agrega columna claimed_by a tactical_access_keys (agregada al modelo sin migración)."""
+    await conn.execute(text(
+        "ALTER TABLE tactical_access_keys "
+        "ADD COLUMN IF NOT EXISTS claimed_by UUID REFERENCES users(id) ON DELETE SET NULL"
+    ))
+
+
 async def _migrate_v12_votes(conn) -> None:
     """Tabla de votos para próximos ebooks (Negocios vs Tecnología)."""
     await conn.execute(text("""
@@ -403,3 +411,4 @@ async def init_db() -> None:
         await _migrate_v10_pending_activations(conn)
         await _migrate_v11_updated_at(conn)
         await _migrate_v12_votes(conn)
+        await _migrate_v13_tactical_key_claimed_by(conn)

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.access import check_freemium_access
 from app.core.database import get_db
 from app.core.rate_limit import limiter
 from app.core.security import get_current_operator
@@ -184,6 +185,9 @@ async def execute_challenge_code(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Challenge {payload.challenge_id} not found",
         )
+
+    # Paywall: challenges de pago requieren licencia activa
+    await check_freemium_access(db, payload.challenge_id, payload.user_id)
 
     challenge_type = getattr(challenge, "challenge_type", "python") or "python"
     if challenge_type == "typescript":
