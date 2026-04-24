@@ -171,11 +171,7 @@ async def hotmart_webhook(
             detail="HOTMART_HOTTOK no configurado.",
         )
 
-    valid_hottoks = {settings.HOTMART_HOTTOK}
-    if settings.HOTMART_SUBSCRIPTION_HOTTOK:
-        valid_hottoks.add(settings.HOTMART_SUBSCRIPTION_HOTTOK)
-
-    if hottok_received not in valid_hottoks:
+    if hottok_received != settings.HOTMART_HOTTOK:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Hottok inválido — evento rechazado.",

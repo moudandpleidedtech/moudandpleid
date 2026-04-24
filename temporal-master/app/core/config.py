@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     LICENSE_PRICE_USD: float = 19.0
 
     # ── Hotmart — Pasarela de Pagos ──────────────────────────────────────────
-    # Hottok del producto Mensual
-    HOTMART_SUBSCRIPTION_HOTTOK: str = ""
+    # Hottok del webhook de Hotmart (env var: HOTMART_HOTTOK)
+    HOTMART_HOTTOK: str = ""
 
     # ── Suscripción Mensual ($19/mes recurrente) ──────────────────────────────
     # Product Key del producto de Suscripción en Hotmart
