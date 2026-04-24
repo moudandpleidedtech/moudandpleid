@@ -45,23 +45,14 @@ class Settings(BaseSettings):
     ADMIN_API_KEY: str = "change-me-in-production"
 
     # Precio de la Licencia de Operador en USD (para proyección de ingresos)
-    LICENSE_PRICE_USD: float = 49.0
+    LICENSE_PRICE_USD: float = 19.0
 
     # ── Hotmart — Pasarela de Pagos ──────────────────────────────────────────
-    # Hottok del producto Vitalicio (pago único)
-    HOTMART_HOTTOK: str = ""
-    # Hottok del producto Mensual — puede ser diferente al vitalicio
+    # Hottok del producto Mensual
     HOTMART_SUBSCRIPTION_HOTTOK: str = ""
 
-    # ── Producto 1: Licencia Vitalicia ($97 pago único) ───────────────────────
-    # Product Key: Dashboard → Productos → tu producto → ícono de compartir → clave tipo "A12345678B"
-    HOTMART_PRODUCT_KEY: str = ""
-    # Offer code de la Licencia Vitalicia — Productos → Ofertas → copiar código
-    # Dejar vacío si el producto tiene una sola oferta (Hotmart usará la default)
-    HOTMART_LIFETIME_OFFER: str = ""
-
-    # ── Producto 2: Suscripción Mensual ($29/mes recurrente) ──────────────────
-    # Product Key del segundo producto (Suscripción)
+    # ── Suscripción Mensual ($19/mes recurrente) ──────────────────────────────
+    # Product Key del producto de Suscripción en Hotmart
     HOTMART_SUBSCRIPTION_KEY: str = ""
     # Offer code del plan mensual — Productos → Ofertas → copiar código
     HOTMART_MONTHLY_OFFER: str = ""

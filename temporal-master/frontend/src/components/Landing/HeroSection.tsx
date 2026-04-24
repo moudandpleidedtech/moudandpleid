@@ -197,20 +197,8 @@ export default function HeroSection() {
         style={{ backgroundImage:'linear-gradient(#00FF41 1px,transparent 1px),linear-gradient(90deg,#00FF41 1px,transparent 1px)', backgroundSize:'48px 48px' }}
       />
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5 border-b border-[#00FF41]/10 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="text-[#FF0033] text-xs tracking-[0.3em] opacity-60 hidden sm:block">{'//'}</span>
-          <span className="text-[#00FF41] text-sm md:text-base font-bold tracking-[0.35em] uppercase neon-glow">DAKIedtech</span>
-        </div>
-        <div className="flex items-center gap-2 border border-[#00FF41]/30 px-3 py-1.5 bg-[#00FF41]/5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" />
-          <span className="text-[#00FF41] text-xs tracking-[0.3em] uppercase">STATUS: OPERATIVO</span>
-        </div>
-      </header>
-
       {/* ── Main split ─────────────────────────────────────────────────────── */}
-      <div className="relative z-20 flex-1 flex items-center px-6 md:px-12 py-6 gap-8 min-h-0">
+      <div className="relative z-20 flex-1 flex items-center px-6 md:px-12 pt-24 pb-8 gap-8">
 
         {/* ─── LEFT: copy ─────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -254,8 +242,9 @@ export default function HeroSection() {
 
           <p className="text-sm text-[#00FF41]/55 leading-7 tracking-wide max-w-lg mb-7">
             <span className="text-[#00FF41]/90 font-bold">DAKIedtech:</span>
-            {' '}No somos un curso. Somos tu entorno de despliegue.
-            IA de grado industrial que analiza tu lógica en tiempo real.
+            {' '}Aprende Python desde cero con misiones reales, IA como instructora táctica
+            y 100 niveles de código ejecutable. La plataforma gamificada de Python
+            en español para Latinoamérica.
           </p>
 
           {/* Stat disruptivo */}
@@ -279,15 +268,26 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          {/* CTA */}
+          {/* CTA Principal — Suscripción mensual */}
+          <Link
+            href="https://go.hotmart.com/K105401308T"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-8 py-4 w-full sm:w-auto text-center mb-2"
+          >
+            {`[[ SUSCRIPCIÓN MENSUAL — $19/MES ]]`}
+          </Link>
+
+          {/* CTA Secundario — gratis */}
           <Link
             href="/register"
-            className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-8 py-4 w-full sm:w-auto text-center mb-3"
+            className="block text-[#00FF41]/38 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/65 transition-colors duration-200 mb-3 text-center"
           >
-            {`[[ INICIAR SECUENCIA DE ACCESO ]]`}
+            {'[ O explorar gratis sin tarjeta → ]'}
           </Link>
+
           <p className="text-[#00FF41]/28 text-[10px] tracking-[0.2em]">
-            {'[ Sin tarjeta de crédito · Acceso inmediato · Beta abierta ]'}
+            {'[ $19/mes · cancela cuando quieras ]'}
           </p>
 
           {/* ── Canales de transmisión ───────────────────────────────────── */}
@@ -477,11 +477,6 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="relative z-20 px-6 md:px-12 py-3 border-t border-[#00FF41]/8 flex items-center justify-between shrink-0">
-        <span className="text-[#00FF41]/18 text-[9px] tracking-[0.4em]">{'DAKI EdTech // CANAL SEGURO // CIFRADO AES-256'}</span>
-        <span className="text-[#FF0033]/28 text-[9px] tracking-[0.3em] hidden md:block">{'[ ACCESO RESTRINGIDO — SOLO OPERADORES AUTORIZADOS ]'}</span>
-      </footer>
     </section>
   )
 }

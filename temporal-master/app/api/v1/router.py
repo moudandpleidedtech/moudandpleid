@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import achievements, activity, admin, alpha, analytics, auth, boss, bounty, campaign, certificate, challenges, checkout, compiler, contracts, daki, daily_anomaly, duels, evaluate, gamification, google_auth, health, hint, hotmart, incursions, intel, intercept, knowledge, leaderboard, notifications, reports, sectors, session, simulate, telemetry, users, votes
+from app.api.v1.endpoints import achievements, activity, admin, alpha, analytics, auth, boss, bounty, campaign, certificate, challenges, checkout, compiler, contracts, daki, daily_anomaly, duels, evaluate, gamification, google_auth, health, hint, hotmart, incursions, intel, intercept, knowledge, leaderboard, newsletter, notifications, reports, sectors, session, simulate, telemetry, users, votes
 
 router = APIRouter(prefix="/api/v1")
 
@@ -39,4 +39,5 @@ router.include_router(reports.router)
 router.include_router(daily_anomaly.router, tags=["daily-anomaly"])
 router.include_router(campaign.router)
 router.include_router(notifications.router)
+router.include_router(newsletter.router, tags=["newsletter"])
 router.include_router(votes.router)

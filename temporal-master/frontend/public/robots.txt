@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /hub
+Disallow: /mission
+Disallow: /sector
+Disallow: /admin
+Disallow: /god-mode
+Disallow: /founder
+Disallow: /boot-sequence
+Disallow: /enigma
+Disallow: /bounty
+Disallow: /boss
+
+Sitemap: https://dakiedtech.com/sitemap.xml

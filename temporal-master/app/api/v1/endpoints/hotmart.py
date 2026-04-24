@@ -64,36 +64,24 @@ def _build_checkout_url(plan: str, email: str, ref: str | None = None) -> str:
     Construye la URL de checkout de Hotmart.
     Hotmart pre-llena el email del comprador para reducir fricción.
 
-    - plan "lifetime"  → usa HOTMART_PRODUCT_KEY      (producto pago único $97)
-    - plan "monthly"   → usa HOTMART_SUBSCRIPTION_KEY (producto suscripción $29/mes)
-    - ref              → código de afiliado (se pasa como src= para acreditar comisión)
+    - plan "monthly" → usa HOTMART_SUBSCRIPTION_KEY (suscripción $19/mes)
+    - ref            → código de afiliado (se pasa como src= para acreditar comisión)
     """
     params: dict[str, str] = {
         "buyerEmail": email,
-        "checkoutMode": "2",   # modo checkout moderno de Hotmart
+        "checkoutMode": "2",
     }
     if ref:
         params["src"] = ref
 
-    if plan == "monthly":
-        if not settings.HOTMART_SUBSCRIPTION_KEY:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="HOTMART_SUBSCRIPTION_KEY no configurado.",
-            )
-        product_key = settings.HOTMART_SUBSCRIPTION_KEY
-        if settings.HOTMART_MONTHLY_OFFER:
-            params["off"] = settings.HOTMART_MONTHLY_OFFER
-    else:
-        # "lifetime" es el default
-        if not settings.HOTMART_PRODUCT_KEY:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="HOTMART_PRODUCT_KEY no configurado.",
-            )
-        product_key = settings.HOTMART_PRODUCT_KEY
-        if settings.HOTMART_LIFETIME_OFFER:
-            params["off"] = settings.HOTMART_LIFETIME_OFFER
+    if not settings.HOTMART_SUBSCRIPTION_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="HOTMART_SUBSCRIPTION_KEY no configurado.",
+        )
+    product_key = settings.HOTMART_SUBSCRIPTION_KEY
+    if settings.HOTMART_MONTHLY_OFFER:
+        params["off"] = settings.HOTMART_MONTHLY_OFFER
 
     return f"https://pay.hotmart.com/{product_key}?{urlencode(params)}"
 

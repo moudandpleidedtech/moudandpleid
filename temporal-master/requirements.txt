@@ -32,9 +32,6 @@ reportlab==4.2.5
 # Anthropic AI SDK
 anthropic>=0.50.0
 
-# Stripe — pasarela de pagos global
-stripe>=8.0.0
-
 # Google OAuth 2.0
 authlib>=1.3.0
 

@@ -454,3 +454,134 @@ html, body {
   border-color: rgba(245, 158, 11, 0.40);
   box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.40), 0 0 10px rgba(245, 158, 11, 0.22);
 }
+
+/* ── Blog — .prose-nexo ─────────────────────────────────────────────────────── */
+.prose-nexo h2 {
+  color: #00FF41;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(0,255,65,0.25);
+}
+.prose-nexo h3 {
+  color: rgba(255,255,255,0.78);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.prose-nexo p {
+  color: rgba(255,255,255,0.52);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+}
+.prose-nexo ul {
+  list-style: none;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+.prose-nexo ul li {
+  color: rgba(255,255,255,0.50);
+  padding-left: 1.25rem;
+  position: relative;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.prose-nexo ul li::before {
+  content: '▸';
+  color: #00FF41;
+  position: absolute;
+  left: 0;
+  opacity: 0.55;
+  font-size: 0.75rem;
+}
+.prose-nexo ol {
+  list-style: none;
+  counter-reset: nexo-counter;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+.prose-nexo ol li {
+  counter-increment: nexo-counter;
+  color: rgba(255,255,255,0.50);
+  padding-left: 1.75rem;
+  position: relative;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.prose-nexo ol li::before {
+  content: counter(nexo-counter) '.';
+  color: #00FF41;
+  position: absolute;
+  left: 0;
+  opacity: 0.65;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.prose-nexo strong {
+  color: rgba(0,255,65,0.88);
+  font-weight: 700;
+}
+.prose-nexo em {
+  color: rgba(255,255,255,0.68);
+  font-style: italic;
+}
+.prose-nexo code {
+  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid rgba(0,255,65,0.14);
+  color: #00FF41;
+  padding: 0.1em 0.4em;
+  font-size: 0.82em;
+}
+.prose-nexo pre {
+  background: #020202;
+  border: 1px solid rgba(0,255,65,0.12);
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,255,65,0.25) transparent;
+}
+.prose-nexo pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: rgba(0,255,65,0.82);
+}
+.prose-nexo blockquote {
+  border-left: 2px solid rgba(255,0,51,0.55);
+  padding: 0.75rem 1rem;
+  margin: 1.5rem 0;
+  background: rgba(255,0,51,0.03);
+}
+.prose-nexo blockquote p {
+  color: rgba(255,255,255,0.60);
+  font-style: italic;
+  margin: 0;
+}
+.prose-nexo a {
+  color: #00FF41;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(0,255,65,0.30);
+}
+.prose-nexo a:hover {
+  text-decoration-color: #00FF41;
+}
+.prose-nexo hr {
+  border: none;
+  border-top: 1px solid rgba(0,255,65,0.09);
+  margin: 2rem 0;
+}

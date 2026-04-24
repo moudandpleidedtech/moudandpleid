@@ -1,11 +1,8 @@
 'use client'
 
 /**
- * ActivacionSection — Slide 4 del Landing · Cierre de conversión
- *
- * Estructura: hook de identidad → tabla de precios → CTA dual (gratis / fundador).
- * El precio $97 con ancla $197 aparece aquí, antes del registro, para eliminar
- * la sorpresa del paywall y pre-calificar al visitante.
+ * ActivacionSection — Cierre de conversión
+ * Estructura: hook de identidad → tabla de precios → CTA dual (gratis / $19 mes).
  */
 
 import Link from 'next/link'
@@ -28,7 +25,7 @@ const FOUNDER_FEATURES = [
   'Misiones Clasificadas',
   'Leaderboard + Insignias de Rango',
   'Certificación de Operador',
-  'Acceso de por vida · precio de lanzamiento',
+  'Cancela cuando quieras',
 ]
 
 const VERIFIABLE = [
@@ -37,18 +34,11 @@ const VERIFIABLE = [
   { label: 'Bitácora pública de errores → soluciones', detail: 'Evidencia técnica real, no presentaciones' },
 ]
 
-const FOOTER_LINKS = [
-  { label: 'Login',      href: '/login'      },
-  { label: 'Registro',   href: '/register'   },
-  { label: 'Privacidad', href: '/privacidad' },
-  { label: 'Términos',   href: '/terminos'   },
-]
-
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function ActivacionSection() {
   return (
-    <section className="h-full flex flex-col font-mono bg-[#020202] overflow-hidden relative">
+    <section className="min-h-screen font-mono bg-[#020202] relative">
 
       {/* Scanlines */}
       <div
@@ -56,13 +46,12 @@ export default function ActivacionSection() {
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,#00FF41 3px,#00FF41 4px)' }}
       />
 
-      {/* Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4 min-h-0" style={{ scrollbarWidth: 'none' }}>
+      <div className="px-6 sm:px-10 pt-16 pb-10 max-w-4xl mx-auto w-full">
 
         {/* ── Gancho de identidad ─────────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.3 }}
           className="mb-6"
         >
           <p className="text-[8px] tracking-[0.6em] text-[#FF0033]/40 uppercase mb-3">
@@ -86,7 +75,7 @@ export default function ActivacionSection() {
         {/* ── Tabla de precios ────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.07 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
           className="mb-6"
         >
           <p className="text-[8px] tracking-[0.5em] text-[#00FF41]/25 uppercase mb-3">
@@ -120,40 +109,32 @@ export default function ActivacionSection() {
               </ul>
             </div>
 
-            {/* Fundador — $97 */}
+            {/* Suscripción — $19/mes */}
             <div
               className="border bg-[#0A0A0A] p-4 flex flex-col relative"
               style={{ borderColor: 'rgba(0,255,65,0.30)', background: 'rgba(0,255,65,0.03)' }}
             >
-              {/* Badge escasez */}
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#00FF41] px-3 py-0.5 whitespace-nowrap">
-                <span className="text-[#0A0A0A] text-[7px] tracking-[0.35em] uppercase font-bold">
-                  ⚡ CUPOS BETA
-                </span>
-              </div>
-
               <p
                 className="text-[#00FF41] text-[9px] tracking-[0.4em] uppercase mb-1 font-bold mt-1"
                 style={{ textShadow: '0 0 8px rgba(0,255,65,0.4)' }}
               >
-                LICENCIA FUNDADOR
+                SUSCRIPCIÓN
               </p>
               <p className="text-white/30 text-[9px] tracking-[0.25em] uppercase mb-2">
                 Experiencia Completa
               </p>
 
-              {/* Precio con ancla */}
+              {/* Precio mensual */}
               <div className="mb-4">
-                <span className="text-white/20 text-xs line-through mr-2">$197</span>
                 <span
                   className="text-[#00FF41] text-2xl font-bold"
                   style={{ textShadow: '0 0 16px rgba(0,255,65,0.5)' }}
                 >
-                  $97
+                  $19
                 </span>
-                <span className="text-white/30 text-[9px] ml-1 tracking-wide">USD</span>
+                <span className="text-white/30 text-[9px] ml-1 tracking-wide">USD/mes</span>
                 <p className="text-[#00FF41]/35 text-[8px] tracking-[0.3em] uppercase mt-0.5">
-                  pago único · de por vida
+                  cancela cuando quieras
                 </p>
               </div>
 
@@ -178,16 +159,16 @@ export default function ActivacionSection() {
             className="mt-3 px-4 py-2.5 border flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4"
             style={{ borderColor: 'rgba(0,255,65,0.08)', background: 'rgba(0,255,65,0.02)' }}
           >
-            <span className="text-[#00FF41]/30 text-[8px] tracking-[0.3em] uppercase shrink-0">{'// VS'}</span>
+            <span className="text-[#00FF41]/30 text-[8px] tracking-[0.3em] uppercase shrink-0">{'// DAKI'}</span>
             <div className="flex flex-wrap gap-x-5 gap-y-1">
               {[
-                'Platzi / Coursera: $99/año indefinidamente',
-                'Bootcamp: $3.000+ USD',
-                'DAKI Fundador: $97 una sola vez',
+                'Código real desde el día 1 · sin teoría muerta',
+                'IA táctica que adapta tu entrenamiento',
+                '$19/mes · sin permanencia · cancela cuando quieras',
               ].map((text, i) => (
                 <span
                   key={i}
-                  className={`text-[8px] tracking-wide ${i === 2 ? 'text-[#00FF41]/60 font-bold' : 'text-white/18'}`}
+                  className={`text-[8px] tracking-wide ${i === 2 ? 'text-[#00FF41]/60 font-bold' : 'text-white/35'}`}
                 >
                   {text}
                 </span>
@@ -199,7 +180,7 @@ export default function ActivacionSection() {
         {/* ── Progreso verificable (compacto) ─────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.12 }}
+          transition={{ duration: 0.3, delay: 0.15 }}
           className="mb-6"
         >
           <div
@@ -232,7 +213,7 @@ export default function ActivacionSection() {
         {/* ── CTA dual ────────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.16 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
           className="relative py-6 text-center border border-[#00FF41]/12 mb-6"
           style={{ background: 'rgba(0,255,65,0.015)' }}
         >
@@ -257,9 +238,9 @@ export default function ActivacionSection() {
           </p>
 
           <div className="flex flex-col items-center gap-3">
-            {/* Primario — vitalicia */}
+            {/* Primario — suscripción mensual */}
             <Link
-              href="https://pay.hotmart.com/T105398516G"
+              href="https://go.hotmart.com/K105401308T"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-block border text-[10px] tracking-[0.45em] uppercase px-10 py-4 transition-all duration-200 w-full sm:w-auto"
@@ -282,20 +263,10 @@ export default function ActivacionSection() {
                 el.style.boxShadow   = '0 0 20px rgba(0,255,65,0.08)'
               }}
             >
-              {'[[ OBTENER LICENCIA FUNDADOR — $97 ]]'}
+              {'[[ SUSCRIBIRSE — $19/MES ]]'}
             </Link>
 
-            {/* Secundario — mensual */}
-            <Link
-              href="https://go.hotmart.com/K105401308T"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#00FF41]/40 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/75 transition-colors duration-200"
-            >
-              {'[ Preferís suscripción mensual → ]'}
-            </Link>
-
-            {/* Terciario — gratis */}
+            {/* Secundario — gratis */}
             <Link
               href="/register"
               className="text-white/18 text-[8px] tracking-[0.25em] uppercase hover:text-white/40 transition-colors duration-200"
@@ -304,7 +275,7 @@ export default function ActivacionSection() {
             </Link>
 
             <p className="text-white/12 text-[8px] tracking-[0.3em] mt-1">
-              $97 · pago único · este precio desaparece al cerrar la beta
+              $19/mes · sin permanencia · cancela cuando quieras
             </p>
           </div>
 
@@ -315,35 +286,6 @@ export default function ActivacionSection() {
             transition={{ duration: 3, repeat: Infinity, delay: 1 }}
           />
         </motion.div>
-
-        {/* ── Footer ──────────────────────────────────────────────────────────── */}
-        <div className="border-t border-white/[0.04] pt-4 pb-2">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-4">
-              <p
-                className="text-[#00FF41] text-xs font-black tracking-[0.4em] uppercase"
-                style={{ textShadow: '0 0 8px rgba(0,255,65,0.3)' }}
-              >
-                DAKIedtech
-              </p>
-              <p className="text-[#00FF41]/15 text-[9px] tracking-[0.25em] hidden sm:block">
-                Python. Gamificado. Verificable.
-              </p>
-            </div>
-            <div className="flex items-center gap-5">
-              {FOOTER_LINKS.map(({ label, href }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="text-[#00FF41]/18 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/50 transition-colors duration-200"
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
-            <p className="text-[#00FF41]/12 text-[9px] tracking-[0.25em]">© 2026 DAKIedtech</p>
-          </div>
-        </div>
 
       </div>
     </section>

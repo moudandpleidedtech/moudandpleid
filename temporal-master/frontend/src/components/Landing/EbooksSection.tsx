@@ -143,19 +143,19 @@ export default function EbooksSection() {
   const [activePack, setActivePack] = useState<Pack | null>(null)
 
   return (
-    <section className="h-full flex flex-col font-mono bg-[#020202] overflow-hidden relative">
+    <section className="min-h-screen font-mono bg-[#020202] relative">
 
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.015]"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,#00FF41 3px,#00FF41 4px)' }}
       />
 
-      <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4 min-h-0" style={{ scrollbarWidth: 'none' }}>
+      <div className="px-6 sm:px-10 pt-16 pb-10">
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.3 }}
           className="mb-6"
         >
           <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/40 uppercase mb-3">
@@ -181,7 +181,8 @@ export default function EbooksSection() {
             <motion.div
               key={pack.id}
               initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.3, delay: 0.08 + i * 0.08 }}
               className="border flex flex-col"
               style={{ borderColor: `${pack.color}22`, background: '#0A0A0A' }}
@@ -245,8 +246,8 @@ export default function EbooksSection() {
         </div>
 
         <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.28 }}
+          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.15 }}
           className="text-center text-white/20 text-[9px] tracking-[0.3em] uppercase mt-6"
         >
           {'// ENTREGA INMEDIATA VÍA HOTMART · PAGO SEGURO'}

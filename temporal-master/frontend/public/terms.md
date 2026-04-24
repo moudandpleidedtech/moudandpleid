@@ -62,7 +62,7 @@ Todos los contenidos de DAKI EdTech son propiedad exclusiva del Titular o de sus
 
 ## 4. Licencia de Uso
 
-Al adquirir una Licencia de Fundador, se te concede una licencia **personal, intransferible, no exclusiva y revocable** para acceder a la plataforma únicamente para uso personal y formativo.
+Al activar una suscripción, se te concede una licencia **personal, intransferible, no exclusiva y revocable** para acceder a la plataforma únicamente para uso personal y formativo.
 
 La licencia **no autoriza:** acceso compartido de cuentas, cesión de credenciales a terceros, ni uso comercial del material.
 
@@ -72,19 +72,17 @@ La licencia **no autoriza:** acceso compartido de cuentas, cesión de credencial
 
 ### 5.1 Precio y Acceso Freemium
 
-El acceso completo a DAKI EdTech requiere la adquisición única de una **Licencia de Fundador** (pago único, sin suscripción recurrente). El precio vigente se muestra en la página de compra en el momento de la transacción.
+El acceso completo a DAKI EdTech requiere una **suscripción mensual activa**. El precio vigente se muestra en la página de compra en el momento de la transacción.
 
 El **Sector de Evaluación (Niveles 00 al 10)** es de acceso gratuito e irrestricto, sin necesidad de pago, para que el Operador valide la compatibilidad del Sistema DAKI antes de comprometerse.
 
-### 5.2 Garantía de Sincronización ("Política de Reembolso Condicionada")
+### 5.2 Cancelación y Reembolsos
 
-Para las compras de la Licencia de Fundador, ofrecemos una garantía de devolución de **7 días corridos** desde la fecha de compra, **estrictamente condicionada** al consumo de los recursos de la IA.
+La suscripción puede cancelarse en cualquier momento desde el panel de usuario o escribiendo a **legal@dakiedtech.com**. Al cancelar, el acceso se mantiene activo hasta el final del período ya pagado.
 
-> **⚠ Condición de Anulación del Reembolso:** El reembolso solo será procesado si se solicita dentro de los primeros 7 días corridos posteriores a la compra, **Y** si los registros del sistema indican que el Operador **NO ha superado el Nivel 20** de la incursión.
->
-> Si el Operador completa el Nivel 21 o superior, se considerará que el servicio y la capacidad de procesamiento de DAKI han sido **consumidos de manera efectiva**, inhabilitando cualquier reclamo de reembolso.
+No se ofrecen reembolsos parciales por períodos no utilizados dentro del mes en curso.
 
-Para solicitar el reembolso dentro de las condiciones establecidas, escribe a **legal@dakiedtech.com** con el asunto «GARANTÍA DE SINCRONIZACIÓN» e indicando el email de tu cuenta.
+Para consultas sobre facturación, escribe a **legal@dakiedtech.com** con el asunto «FACTURACIÓN» e indicando el email de tu cuenta.
 
 ### 5.3 Procesamiento del Pago
 

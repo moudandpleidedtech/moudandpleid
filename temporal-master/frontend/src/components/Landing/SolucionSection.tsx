@@ -124,7 +124,7 @@ function Terminal({
 
   return (
     <div
-      className="flex-1 min-h-0 flex flex-col overflow-hidden mt-3"
+      className="h-[180px] flex flex-col overflow-hidden mt-3"
       style={{ border: `1px solid ${color}20`, background: 'rgba(0,0,0,0.45)' }}
     >
       {/* Barra del terminal */}
@@ -170,7 +170,7 @@ function Terminal({
 
 export default function SolucionSection() {
   return (
-    <section className="h-full flex flex-col font-mono bg-[#020202] relative overflow-hidden">
+    <section className="min-h-screen flex flex-col font-mono bg-[#020202] relative overflow-hidden">
 
       <style>{`
         @keyframes tw-blink { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -190,12 +190,12 @@ export default function SolucionSection() {
         }}
       />
 
-      <div className="relative z-10 flex flex-col h-full px-6 sm:px-10 py-7 gap-4">
+      <div className="relative z-10 flex flex-col px-6 sm:px-10 py-16 gap-6">
 
         {/* ── Header ──────────────────────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
+          initial={{ opacity: 0, y: -10 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.35 }}
         >
           <p className="text-[9px] tracking-[0.55em] text-[#00FF41]/25 uppercase mb-2">
             {'// SISTEMA — LO QUE NOS HACE DIFERENTES'}
@@ -209,12 +209,12 @@ export default function SolucionSection() {
         </motion.div>
 
         {/* ── 3 Pilares ───────────────────────────────────────────────────────── */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 min-h-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {PILARES.map(({ glyph, color, title, tagline, body, stat, termTitle, delay, lines }, i) => (
             <motion.div
               key={title}
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.38, delay: 0.10 + i * 0.09 }}
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.38, delay: 0.10 + i * 0.09 }}
               className="flex flex-col border p-4 sm:p-5 relative overflow-hidden cursor-default transition-all duration-300"
               style={{ borderColor: `${color}22`, background: `${color}04` }}
               onMouseEnter={e => {
@@ -271,8 +271,8 @@ export default function SolucionSection() {
 
         {/* ── CTA strip ───────────────────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.38 }}
+          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.15 }}
           className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#00FF41]/10 pt-3"
         >
           <p className="text-[11px] text-white/30 tracking-[0.18em] text-center sm:text-left">
