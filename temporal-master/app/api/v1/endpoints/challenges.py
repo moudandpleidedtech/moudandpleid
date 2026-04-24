@@ -58,6 +58,7 @@ def _build_out(
     completed: bool,
     attempts: int,
     unlocked: bool,
+    expose_expected_output: bool = False,
 ) -> ChallengeOut:
     return ChallengeOut(
         id=challenge.id,
@@ -88,7 +89,7 @@ def _build_out(
         is_free=challenge.is_free,
         is_ironman=challenge.is_ironman if challenge.is_ironman is not None else False,
         edge_cases=json.loads(challenge.edge_cases_json) if challenge.edge_cases_json else [],
-        expected_output=challenge.expected_output,
+        expected_output=challenge.expected_output if expose_expected_output else "",
     )
 
 
@@ -180,4 +181,5 @@ async def get_challenge(
         completed=prog.completed if prog else False,
         attempts=prog.attempts if prog else 0,
         unlocked=unlocked,
+        expose_expected_output=True,
     )

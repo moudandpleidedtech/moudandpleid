@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 import sys
@@ -8,8 +9,23 @@ import time
 import httpx
 
 PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
-PISTON_TIMEOUT_S = 6.0   # reducido de 10s — activa fallback más rápido
-LOCAL_TIMEOUT_S  = 4.0   # subido de 3s — más margen para código legítimo
+PISTON_TIMEOUT_S = 5.0
+LOCAL_TIMEOUT_S  = 5.0
+
+_log = logging.getLogger(__name__)
+
+# Entorno mínimo para subprocess — sin DATABASE_URL, SECRET_KEY ni otras vars del servidor.
+# sys.executable hereda el PATH del sistema; aquí lo declaramos explícito para seguridad.
+_SAFE_ENV: dict[str, str] = {
+    "PATH": "/usr/local/bin:/usr/bin:/bin",
+    "HOME": "/tmp",
+    "TMPDIR": "/tmp",
+    "LANG": "en_US.UTF-8",
+    "LC_ALL": "en_US.UTF-8",
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONDONTWRITEBYTECODE": "1",
+}
 
 # Error types DAKI knows how to identify
 _KNOWN_ERRORS = (
@@ -50,14 +66,7 @@ def _parse_python_error(stderr: str) -> dict | None:
 async def execute_node_code(source_code: str, test_inputs: list[str]) -> dict:
     """
     Ejecuta TypeScript/Node.js via Piston API.
-
-    Usado para desafíos con challenge_type='typescript'.
-    Piston compila y ejecuta TypeScript con ts-node; el output de
-    console.log() se captura en stdout para comparar con expected_output.
-
-    Returns:
-        {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool,
-         'error_info': None}
+    No tiene fallback local (Node.js no está garantizado en el servidor).
     """
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
     try:
@@ -65,48 +74,59 @@ async def execute_node_code(source_code: str, test_inputs: list[str]) -> dict:
             source_code, stdin, language="typescript", version="5.0.4"
         )
     except Exception as exc:
-        # Fallback explícito: Piston no disponible o respuesta inválida
-        import logging
-        logging.getLogger(__name__).warning("Piston TypeScript unavailable: %s", exc)
+        _log.warning("Piston TypeScript unavailable: %s", exc)
         result = {
             "stdout": "",
             "stderr": "TypeScript sandbox temporalmente no disponible. Intenta de nuevo.",
             "execution_time_ms": 0.0,
             "success": False,
         }
-    # TypeScript error_info parsing omitido — stderr ya contiene el mensaje completo
     result["error_info"] = None
+    result.setdefault("sandbox_unavailable", False)
     return result
 
 
 async def execute_python_code(source_code: str, test_inputs: list[str]) -> dict:
     """
-    Execute Python source code with test_inputs joined as stdin.
+    Ejecuta código Python con test_inputs como stdin.
+
+    Flujo:
+      1. Intenta Piston API (sandbox remoto aislado).
+      2. Si Piston no está disponible, usa subprocess local con entorno limpio
+         (_SAFE_ENV) que excluye DATABASE_URL, SECRET_KEY y demás vars del servidor.
 
     Returns:
-        {'stdout': str, 'stderr': str, 'execution_time_ms': float, 'success': bool}
-
-    Usa Piston API (sandbox remoto aislado) como único backend.
-    El fallback local fue eliminado por razones de seguridad: un subprocess
-    local hereda todas las variables de entorno del servidor (DATABASE_URL,
-    SECRET_KEY, STRIPE_SECRET_KEY, etc.) y no tiene restricciones de filesystem
-    ni de red, lo que permite exfiltración de credenciales.
+        {stdout, stderr, execution_time_ms, success, error_info, sandbox_unavailable}
+        sandbox_unavailable=True solo si ambos backends fallan (no contar attempt).
     """
     stdin = "\n".join(test_inputs) + ("\n" if test_inputs else "")
+
+    # ── Intento 1: Piston ────────────────────────────────────────────────────
     try:
         result = await _execute_via_piston(source_code, stdin)
+        result["sandbox_unavailable"] = False
+        result["error_info"] = _parse_python_error(result.get("stderr", ""))
+        return result
     except Exception as exc:
-        import logging
-        logging.getLogger(__name__).warning("Piston unavailable (%s) — sandbox no disponible", type(exc).__name__)
-        result = {
-            "stdout": "",
-            "stderr": "El sandbox de ejecución no está disponible temporalmente. Intentá de nuevo en unos segundos.",
-            "execution_time_ms": 0.0,
-            "success": False,
-        }
+        _log.info("Piston unavailable (%s) — usando ejecutor local", type(exc).__name__)
 
-    result["error_info"] = _parse_python_error(result.get("stderr", ""))
-    return result
+    # ── Intento 2: subprocess local con env limpio ───────────────────────────
+    try:
+        result = await _execute_via_subprocess(source_code, stdin)
+        result["sandbox_unavailable"] = False
+        result["error_info"] = _parse_python_error(result.get("stderr", ""))
+        return result
+    except Exception as exc:
+        _log.error("Ejecutor local también falló: %s", exc)
+
+    return {
+        "stdout": "",
+        "stderr": "El entorno de ejecución no está disponible. Intentá de nuevo.",
+        "execution_time_ms": 0.0,
+        "success": False,
+        "sandbox_unavailable": True,
+        "error_info": None,
+    }
 
 
 async def _execute_via_piston(source_code: str, stdin: str, language: str = "python", version: str = "3.10.0") -> dict:
@@ -153,6 +173,8 @@ async def _execute_via_subprocess(source_code: str, stdin: str) -> dict:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=_SAFE_ENV,  # entorno limpio: sin DATABASE_URL, SECRET_KEY, etc.
+            cwd=tempfile.gettempdir(),
         )
         try:
             stdout_bytes, stderr_bytes = await asyncio.wait_for(

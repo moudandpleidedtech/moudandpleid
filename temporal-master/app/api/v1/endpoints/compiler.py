@@ -191,6 +191,14 @@ async def execute_challenge_code(
     else:
         exec_result = await execute_python_code(payload.source_code, payload.test_inputs)
 
+    # Si el sandbox está caído (no es error del código del usuario), retornar sin
+    # contar el intento ni modificar gamificación.
+    if exec_result.get("sandbox_unavailable"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El entorno de ejecución está temporalmente fuera de línea. Tu intento no fue contabilizado — intentá de nuevo en unos segundos.",
+        )
+
     # Cuenta errores de sintaxis detectados en stderr de este intento
     syntax_errors_count = exec_result["stderr"].count("SyntaxError")
 
