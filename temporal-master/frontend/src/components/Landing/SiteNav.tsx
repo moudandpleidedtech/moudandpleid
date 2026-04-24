@@ -5,10 +5,10 @@ import { useState } from 'react'
 import { useUserStore } from '@/store/userStore'
 
 const NAV_LINKS = [
-  { href: '/blog',      label: 'Blog'      },
-  { href: '/plataforma', label: 'Plataforma' },
-  { href: '/comunidad', label: 'Comunidad' },
-  { href: '/precios',   label: 'Precios'   },
+  { href: '/blog',       label: 'INTEL'   },
+  { href: '/comunidad',  label: 'NEXO'    },
+  { href: '/plataforma', label: 'ARSENAL' },
+  { href: '/precios',    label: 'ACCESO'  },
 ]
 
 export default function SiteNav() {

@@ -241,10 +241,10 @@ export default function HeroSection() {
           </h2>
 
           <p className="text-sm text-[#00FF41]/55 leading-7 tracking-wide max-w-lg mb-7">
-            <span className="text-[#00FF41]/90 font-bold">DAKIedtech:</span>
-            {' '}Aprende Python desde cero con misiones reales, IA como instructora táctica
-            y 100 niveles de código ejecutable. La plataforma gamificada de Python
-            en español para Latinoamérica.
+            <span className="text-[#00FF41]/90 font-bold">El Nexo</span>
+            {' '}es la comunidad de Operadores de Python en Latinoamérica.
+            Transmisiones semanales. Código ejecutable. IA táctica.
+            El lugar donde los que van en serio con Python se encuentran.
           </p>
 
           {/* Stat disruptivo */}
@@ -268,26 +268,24 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          {/* CTA Principal — Suscripción mensual */}
-          <Link
-            href="https://go.hotmart.com/K105401308T"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-8 py-4 w-full sm:w-auto text-center mb-2"
-          >
-            {`[[ SUSCRIPCIÓN MENSUAL — $19/MES ]]`}
-          </Link>
-
-          {/* CTA Secundario — gratis */}
+          {/* CTA Principal — ingresar al Nexo */}
           <Link
             href="/register"
+            className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-8 py-4 w-full sm:w-auto text-center mb-2"
+          >
+            {`[[ INGRESAR AL NEXO — GRATIS ]]`}
+          </Link>
+
+          {/* CTA Secundario — blog */}
+          <Link
+            href="/blog"
             className="block text-[#00FF41]/38 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/65 transition-colors duration-200 mb-3 text-center"
           >
-            {'[ O explorar gratis sin tarjeta → ]'}
+            {'[ Leer las últimas transmisiones → ]'}
           </Link>
 
           <p className="text-[#00FF41]/28 text-[10px] tracking-[0.2em]">
-            {'[ $19/mes · cancela cuando quieras ]'}
+            {'[ 10 misiones gratis · sin tarjeta · siempre ]'}
           </p>
 
           {/* ── Canales de transmisión ───────────────────────────────────── */}
@@ -355,9 +353,9 @@ export default function HeroSection() {
           {/* Stats */}
           <div className="mt-8 pt-5 border-t border-[#00FF41]/8 flex items-center gap-8">
             {[
-              { valor: '100', label: 'NIVELES' },
-              { valor: 'IA',  label: 'INSTRUCTORA' },
-              { valor: '∞',   label: 'DESAFÍOS' },
+              { valor: '195', label: 'MISIONES' },
+              { valor: '5',   label: 'LIGAS'    },
+              { valor: 'IA',  label: 'TÁCTICA'  },
             ].map(({ valor, label }) => (
               <div key={label} className="flex items-center gap-2">
                 <span className="text-base font-bold text-[#00FF41] neon-glow">{valor}</span>
