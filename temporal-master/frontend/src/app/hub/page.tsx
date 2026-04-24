@@ -758,21 +758,19 @@ export default function HubPage() {
       .catch(() => {})
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Retorno desde Checkout exitoso (Hotmart o Stripe) ─────────────────────
+  // ── Retorno desde Checkout exitoso (Hotmart) ──────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     if (params.get('checkout') === 'success') {
-      // Actualización optimista: el webhook de Stripe confirma async,
-      // pero Stripe solo genera este redirect tras pago confirmado.
       setSubscription('ACTIVE', null)
       setIsPaid(true)
       window.history.replaceState({}, '', '/hub')
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Redirección a Stripe Checkout ───────────────────────────────────────────
-  const handleStripeCheckout = async () => {
+  // ── Redirección a Hotmart Checkout ────────────────────────────────────────
+  const handleHotmartCheckout = async () => {
     if (checkoutLoading) return
     setCheckoutLoading(true)
     const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL ?? ''
@@ -899,7 +897,7 @@ export default function HubPage() {
       <TrialCountdownBanner
         subscriptionStatus={subscriptionStatus}
         trialEndDate={useUserStore.getState().trialEndDate}
-        onSubscribe={handleStripeCheckout}
+        onSubscribe={handleHotmartCheckout}
       />
 
       {/* ── Boss Warning Banner ── */}
@@ -1545,7 +1543,7 @@ export default function HubPage() {
             </motion.div>
           )}
 
-          {/* ── Suscripción Stripe — visible si no tiene acceso activo ── */}
+          {/* ── Suscripción Hotmart — visible si no tiene acceso activo ── */}
           {!isPaid && subscriptionStatus !== 'ACTIVE' && (
             <motion.div
               initial={{ opacity: 0, x: 16 }}
@@ -1553,7 +1551,7 @@ export default function HubPage() {
               transition={{ delay: 0.82 }}
             >
               <motion.button
-                onClick={handleStripeCheckout}
+                onClick={handleHotmartCheckout}
                 disabled={checkoutLoading}
                 className="w-full text-left px-5 py-3.5 border font-mono transition-all duration-150 relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
