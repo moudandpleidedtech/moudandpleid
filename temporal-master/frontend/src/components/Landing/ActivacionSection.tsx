@@ -238,44 +238,26 @@ export default function ActivacionSection() {
           </p>
 
           <div className="flex flex-col items-center gap-3">
-            {/* Primario — suscripción mensual */}
+            {/* Primario — sólido, registro gratis */}
+            <Link
+              href="/register"
+              className="inline-block bg-[#00FF41] text-[#020202] text-sm font-black tracking-[0.2em] uppercase px-12 py-4 w-full sm:w-auto text-center hover:bg-[#00FF41]/90 transition-colors duration-150"
+            >
+              ENTRAR AL NEXO — GRATIS
+            </Link>
+
+            {/* Secundario — suscripción */}
             <Link
               href="https://go.hotmart.com/K105401308T"
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-block border text-[10px] tracking-[0.45em] uppercase px-10 py-4 transition-all duration-200 w-full sm:w-auto"
-              style={{
-                borderColor: 'rgba(0,255,65,0.50)',
-                color:       '#00FF41',
-                background:  'rgba(0,255,65,0.07)',
-                boxShadow:   '0 0 20px rgba(0,255,65,0.08)',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.background  = 'rgba(0,255,65,0.14)'
-                el.style.borderColor = '#00FF41'
-                el.style.boxShadow   = '0 0 32px rgba(0,255,65,0.22)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.background  = 'rgba(0,255,65,0.07)'
-                el.style.borderColor = 'rgba(0,255,65,0.50)'
-                el.style.boxShadow   = '0 0 20px rgba(0,255,65,0.08)'
-              }}
+              className="text-[#00FF41]/40 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/70 transition-colors duration-200"
             >
-              {'[[ SUSCRIBIRSE — $19/MES ]]'}
+              O suscribite directamente — $19/mes →
             </Link>
 
-            {/* Secundario — gratis */}
-            <Link
-              href="/register"
-              className="text-white/18 text-[8px] tracking-[0.25em] uppercase hover:text-white/40 transition-colors duration-200"
-            >
-              {'[ Explorar gratis sin tarjeta ]'}
-            </Link>
-
-            <p className="text-white/12 text-[8px] tracking-[0.3em] mt-1">
-              $19/mes · sin permanencia · cancela cuando quieras
+            <p className="text-white/18 text-[8px] tracking-[0.25em] mt-1">
+              Sin tarjeta · 10 misiones gratis · cancela cuando quieras
             </p>
           </div>
 

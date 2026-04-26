@@ -249,9 +249,9 @@ export default async function ComunidadPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               href="/register"
-              className="text-[9px] tracking-[0.4em] uppercase border border-[#00FF41]/40 px-6 py-3 text-[#00FF41] hover:bg-[#00FF41]/08 hover:border-[#00FF41]/70 transition-all duration-200 text-center"
+              className="bg-[#00FF41] text-[#020202] text-[9px] tracking-[0.4em] uppercase font-black px-6 py-3 hover:bg-[#00FF41]/90 transition-colors duration-150 text-center"
             >
-              {'[[ CREAR CUENTA DE OPERADOR ]]'}
+              CREAR CUENTA DE OPERADOR →
             </Link>
             <Link
               href="/precios"

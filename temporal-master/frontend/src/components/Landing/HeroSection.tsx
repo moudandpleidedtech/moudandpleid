@@ -203,6 +203,16 @@ export default function HeroSection() {
         {/* ─── LEFT: copy ─────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
 
+          {/* Status pulse bar */}
+          <div className="flex items-center gap-3 mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse shrink-0" style={{ boxShadow: '0 0 6px #00FF41' }} />
+            <span className="text-[8px] tracking-[0.4em] text-[#00FF41]/55 uppercase">NEXO EN LÍNEA</span>
+            <span className="text-[#00FF41]/15 text-[8px]">·</span>
+            <span className="text-[8px] tracking-[0.35em] text-[#00FF41]/40 uppercase">13 TRANSMISIONES</span>
+            <span className="text-[#00FF41]/15 text-[8px]">·</span>
+            <span className="text-[8px] tracking-[0.35em] text-[#00FF41]/40 uppercase">DAKI ACTIVO</span>
+          </div>
+
           {/* Role ticker */}
           <div className="flex items-center gap-3 mb-6 h-6 overflow-hidden">
             <span className="text-[8px] tracking-[0.45em] text-[#FF0033]/35 uppercase shrink-0">MERCADO HOY</span>
@@ -268,24 +278,32 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          {/* CTA Principal — ingresar al Nexo */}
+          {/* CTA Principal — sólido */}
           <Link
             href="/register"
-            className="hero-btn-pulse inline-block border border-[#00FF41]/50 bg-[#00FF41]/5 text-[#00FF41] text-xs tracking-[0.35em] uppercase px-8 py-4 w-full sm:w-auto text-center mb-2"
+            className="inline-block bg-[#00FF41] text-[#020202] text-sm font-black tracking-[0.2em] uppercase px-10 py-4 w-full sm:w-auto text-center hover:bg-[#00FF41]/90 transition-colors duration-150 mb-3"
           >
-            {`[[ INGRESAR AL NEXO — GRATIS ]]`}
+            PROBAR UNA MISIÓN GRATIS
           </Link>
 
-          {/* CTA Secundario — blog */}
-          <Link
-            href="/blog"
-            className="block text-[#00FF41]/38 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/65 transition-colors duration-200 mb-3 text-center"
-          >
-            {'[ Leer las últimas transmisiones → ]'}
-          </Link>
+          {/* CTA Secundario */}
+          <div className="flex items-center gap-4 mb-3">
+            <Link
+              href="/blog"
+              className="text-[#00FF41]/55 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/85 transition-colors duration-200 border border-[#00FF41]/25 px-5 py-2.5 hover:border-[#00FF41]/55"
+            >
+              Ver las transmisiones →
+            </Link>
+            <Link
+              href="/comunidad"
+              className="text-white/30 text-[9px] tracking-[0.25em] uppercase hover:text-white/55 transition-colors duration-200"
+            >
+              El Nexo →
+            </Link>
+          </div>
 
-          <p className="text-[#00FF41]/28 text-[10px] tracking-[0.2em]">
-            {'[ 10 misiones gratis · sin tarjeta · siempre ]'}
+          <p className="text-[#00FF41]/22 text-[9px] tracking-[0.2em]">
+            Sin tarjeta · 10 misiones gratis · entrás en 60 segundos
           </p>
 
           {/* ── Canales de transmisión ───────────────────────────────────── */}

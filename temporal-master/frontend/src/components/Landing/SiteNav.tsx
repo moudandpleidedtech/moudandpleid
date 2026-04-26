@@ -5,10 +5,10 @@ import { useState } from 'react'
 import { useUserStore } from '@/store/userStore'
 
 const NAV_LINKS = [
-  { href: '/blog',       label: 'INTEL'   },
-  { href: '/comunidad',  label: 'NEXO'    },
-  { href: '/plataforma', label: 'ARSENAL' },
-  { href: '/precios',    label: 'ACCESO'  },
+  { href: '/blog',       label: 'INTEL'    },
+  { href: '/comunidad',  label: 'NEXO'     },
+  { href: '/plataforma', label: 'MISIONES' },
+  { href: '/precios',    label: 'ACCESO'   },
 ]
 
 export default function SiteNav() {
@@ -56,10 +56,7 @@ export default function SiteNav() {
           </Link>
           <Link
             href="/register"
-            className="border border-[#00FF41]/35 text-[10px] tracking-[0.3em] uppercase text-[#00FF41] px-4 py-1.5 transition-all duration-200 hover:border-[#00FF41]/65"
-            style={{ background: 'rgba(0,255,65,0.03)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,255,65,0.07)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,255,65,0.03)' }}
+            className="bg-[#00FF41] text-[#020202] text-[10px] tracking-[0.3em] uppercase font-black px-4 py-1.5 hover:bg-[#00FF41]/85 transition-colors duration-150"
           >
             Ser Operador
           </Link>
@@ -110,7 +107,7 @@ export default function SiteNav() {
             <Link
               href="/register"
               onClick={() => setOpen(false)}
-              className="border border-[#00FF41]/40 text-[11px] tracking-[0.35em] uppercase text-[#00FF41] px-4 py-2 text-center hover:bg-[#00FF41]/07 transition-all"
+              className="bg-[#00FF41] text-[#020202] text-[11px] tracking-[0.35em] uppercase font-black px-4 py-2 text-center hover:bg-[#00FF41]/85 transition-colors"
             >
               Ser Operador
             </Link>

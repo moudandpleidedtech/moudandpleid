@@ -10,222 +10,187 @@ const CATEGORY_COLOR: Record<string, string> = {
 }
 
 export default function BlogPreviewSection() {
-  const all     = getAllPosts()
+  const all      = getAllPosts()
   const featured = all[0]
-  const rest     = all.slice(1, 4)
+  const sidebar  = all.slice(1, 4)
 
   if (!featured) return null
 
-  const featuredColor = CATEGORY_COLOR[featured.category] ?? '#00FF41'
+  const fc = CATEGORY_COLOR[featured.category] ?? '#00FF41'
 
   return (
-    <section className="min-h-screen flex flex-col font-mono bg-[#020202] relative overflow-hidden">
+    <section className="font-mono bg-[#020202] relative overflow-hidden border-t border-[#00FF41]/08">
 
-      {/* Scanlines */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.012]"
+        className="absolute inset-0 pointer-events-none opacity-[0.010]"
         style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,#00FF41 3px,#00FF41 4px)' }}
       />
-      {/* Grid */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(0,255,65,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,0.03) 1px,transparent 1px)',
-          backgroundSize: '72px 72px',
-        }}
-      />
 
-      <div className="relative z-10 flex flex-col px-6 sm:px-10 py-16 gap-6">
+      <div className="relative z-10 px-6 sm:px-10 py-14">
 
-        {/* Header */}
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[8px] tracking-[0.6em] text-[#00FF41]/25 uppercase mb-2">
-              {'// INTEL CODEX — TRANSMISIONES DEL NEXO'}
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-[0.08em] uppercase text-white/85 leading-tight">
-              ÚLTIMAS{' '}
-              <span className="text-[#00FF41]" style={{ textShadow: '0 0 24px rgba(0,255,65,0.4)' }}>
-                TRANSMISIONES
-              </span>
-            </h2>
+        {/* Masthead */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-[7px] tracking-[0.6em] text-[#00FF41]/25 uppercase mb-1">
+                {'// INTEL CODEX'}
+              </p>
+              <h2 className="text-xl sm:text-2xl font-black tracking-[0.1em] uppercase text-white/85">
+                ÚLTIMAS{' '}
+                <span className="text-[#00FF41]" style={{ textShadow: '0 0 20px rgba(0,255,65,0.4)' }}>
+                  TRANSMISIONES
+                </span>
+              </h2>
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5 ml-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF41] animate-pulse" style={{ boxShadow: '0 0 5px #00FF41' }} />
+              <span className="text-[8px] tracking-[0.35em] text-[#00FF41]/45 uppercase">{all.length} transmisiones</span>
+            </div>
           </div>
-          <div className="hidden sm:flex flex-col items-end gap-1 shrink-0">
-            <span className="text-[8px] tracking-[0.3em] text-[#00FF41]/20 uppercase">
-              última transmisión
-            </span>
-            <span className="text-[9px] tracking-[0.2em] text-[#00FF41]/45">
-              {formatDate(featured.publishedAt)}
-            </span>
-          </div>
+          <Link
+            href="/blog"
+            className="hidden sm:block text-[8px] tracking-[0.4em] uppercase text-[#00FF41]/40 hover:text-[#00FF41]/75 transition-colors border border-[#00FF41]/15 px-4 py-1.5 hover:border-[#00FF41]/35"
+          >
+            VER TODAS →
+          </Link>
         </div>
 
-        {/* Featured post — hero card */}
-        <Link href={`/blog/${featured.slug}`} className="group block">
-          <article
-            className="relative border p-6 sm:p-8 overflow-hidden transition-all duration-300 cursor-pointer"
-            style={{ borderColor: `${featuredColor}20`, background: `${featuredColor}04` }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = `${featuredColor}45`
-              el.style.background  = `${featuredColor}07`
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement
-              el.style.borderColor = `${featuredColor}20`
-              el.style.background  = `${featuredColor}04`
-            }}
-          >
-            {/* Accent line */}
-            <div
-              className="absolute top-0 left-0 right-0 h-px"
-              style={{ background: `linear-gradient(90deg,transparent,${featuredColor}60,transparent)` }}
-            />
+        {/* Magazine grid: featured (2/3) + sidebar (1/3) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
 
-            <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-8">
-              <div className="flex-1 min-w-0">
-                {/* Meta */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span
-                    className="text-[7px] tracking-[0.45em] uppercase font-bold px-2 py-0.5 border"
-                    style={{ color: featuredColor, borderColor: `${featuredColor}30`, background: `${featuredColor}08` }}
-                  >
-                    {featured.categoryLabel}
+          {/* Featured — spans 2 cols */}
+          <Link href={`/blog/${featured.slug}`} className="group lg:col-span-2 block">
+            <article
+              className="h-full relative border p-6 sm:p-8 overflow-hidden transition-all duration-300 cursor-pointer flex flex-col"
+              style={{ borderColor: `${fc}25`, background: `${fc}04` }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = `${fc}55`
+                el.style.background  = `${fc}08`
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = `${fc}25`
+                el.style.background  = `${fc}04`
+              }}
+            >
+              {/* Top accent */}
+              <div className="absolute top-0 left-0 right-0 h-[2px]"
+                style={{ background: `linear-gradient(90deg,transparent,${fc},transparent)` }} />
+
+              {/* Left accent bar */}
+              <div className="absolute top-0 left-0 bottom-0 w-[2px]" style={{ background: `${fc}40` }} />
+
+              {/* Label */}
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: fc }} />
+                  <span className="text-[7px] tracking-[0.5em] uppercase font-black" style={{ color: `${fc}80` }}>
+                    ÚLTIMA TRANSMISIÓN
                   </span>
-                  <span className="text-white/25 text-[8px] tracking-wide">{featured.readTime}</span>
-                  <span style={{ color: `${featuredColor}30` }} className="text-[8px]">·</span>
-                  <span className="text-white/22 text-[8px] tracking-[0.2em]">{formatDate(featured.publishedAt)}</span>
                 </div>
-
-                {/* Title */}
-                <h3
-                  className="text-xl sm:text-2xl font-black tracking-[0.04em] uppercase leading-snug mb-3 transition-colors duration-200 group-hover:text-white/95"
-                  style={{ color: 'rgba(255,255,255,0.85)' }}
+                <span className="text-[#00FF41]/15 text-[8px]">·</span>
+                <span
+                  className="text-[7px] tracking-[0.4em] uppercase font-bold px-2 py-0.5 border"
+                  style={{ color: fc, borderColor: `${fc}30`, background: `${fc}08` }}
                 >
-                  {featured.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-[11px] sm:text-xs text-white/38 leading-relaxed max-w-2xl">
-                  {featured.description}
-                </p>
+                  {featured.categoryLabel}
+                </span>
+                <span className="text-white/22 text-[8px] tracking-wide">{featured.readTime}</span>
               </div>
 
-              {/* CTA badge */}
-              <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-2">
+              {/* Title — large */}
+              <h3
+                className="text-2xl sm:text-3xl font-black tracking-[0.03em] uppercase leading-tight mb-4 transition-colors duration-200 group-hover:text-white flex-1"
+                style={{ color: 'rgba(255,255,255,0.90)' }}
+              >
+                {featured.title}
+              </h3>
+
+              <p className="text-sm text-white/40 leading-relaxed mb-6 max-w-xl">
+                {featured.description}
+              </p>
+
+              {/* CTA */}
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] tracking-[0.3em] text-white/20">{formatDate(featured.publishedAt)}</span>
                 <span
-                  className="text-[8px] tracking-[0.4em] uppercase font-bold transition-colors duration-200"
-                  style={{ color: `${featuredColor}50` }}
+                  className="text-[9px] tracking-[0.4em] uppercase font-bold opacity-60 group-hover:opacity-100 transition-opacity"
+                  style={{ color: fc }}
                 >
-                  ÚLTIMA TRANSMISIÓN
-                </span>
-                <span
-                  className="text-[9px] tracking-[0.35em] uppercase transition-colors duration-200 group-hover:opacity-100 opacity-60"
-                  style={{ color: featuredColor }}
-                >
-                  LEER →
+                  LEER TRANSMISIÓN →
                 </span>
               </div>
-            </div>
-          </article>
-        </Link>
+            </article>
+          </Link>
 
-        {/* Secondary posts */}
-        {rest.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {rest.map((post, i) => {
+          {/* Sidebar — 3 cards */}
+          <div className="flex flex-col gap-3">
+            {sidebar.map((post, i) => {
               const color = CATEGORY_COLOR[post.category] ?? '#00FF41'
               return (
-                <Link key={post.slug} href={`/blog/${post.slug}`} className="group">
+                <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex-1">
                   <article
-                    className="h-full flex flex-col border p-4 sm:p-5 relative overflow-hidden transition-all duration-250 cursor-pointer"
+                    className="h-full flex flex-col border p-4 relative overflow-hidden transition-all duration-200 cursor-pointer"
                     style={{ borderColor: `${color}12`, background: `${color}02` }}
-                    onMouseEnter={(e) => {
+                    onMouseEnter={e => {
                       const el = e.currentTarget as HTMLElement
                       el.style.borderColor = `${color}35`
                       el.style.background  = `${color}06`
                     }}
-                    onMouseLeave={(e) => {
+                    onMouseLeave={e => {
                       const el = e.currentTarget as HTMLElement
                       el.style.borderColor = `${color}12`
                       el.style.background  = `${color}02`
                     }}
                   >
-                    <div
-                      className="absolute top-0 left-0 right-0 h-px"
-                      style={{ background: `linear-gradient(90deg,transparent,${color}35,transparent)` }}
-                    />
+                    <div className="absolute top-0 left-0 right-0 h-px"
+                      style={{ background: `linear-gradient(90deg,transparent,${color}30,transparent)` }} />
 
-                    <div className="text-[9px] font-black tracking-[0.3em] mb-3 opacity-15" style={{ color }}>
-                      TRANS-{String(i + 2).padStart(2, '0')}
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <span
-                        className="text-[7px] tracking-[0.4em] uppercase font-bold px-1.5 py-0.5 border"
+                        className="text-[6px] tracking-[0.4em] uppercase font-bold px-1.5 py-0.5 border"
                         style={{ color, borderColor: `${color}25`, background: `${color}06` }}
                       >
                         {post.categoryLabel}
                       </span>
-                      <span className="text-white/20 text-[8px] tracking-wider">{post.readTime}</span>
+                      <span className="text-white/18 text-[7px]">{post.readTime}</span>
                     </div>
 
-                    <h3
-                      className="text-sm font-black tracking-[0.05em] uppercase leading-snug mb-2 transition-colors duration-200"
-                      style={{ color: 'rgba(255,255,255,0.72)' }}
+                    <h4
+                      className="text-[11px] font-black tracking-[0.04em] uppercase leading-snug flex-1 mb-2 group-hover:text-white/90 transition-colors"
+                      style={{ color: 'rgba(255,255,255,0.68)' }}
                     >
                       {post.title}
-                    </h3>
+                    </h4>
 
-                    <p className="text-[10px] text-white/28 leading-relaxed flex-1 mb-4">
-                      {post.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-[7px] tracking-[0.3em] text-white/18">
-                        {formatDate(post.publishedAt)}
-                      </span>
-                      <span
-                        className="text-[7px] tracking-[0.35em] uppercase opacity-50 group-hover:opacity-100 transition-opacity duration-200"
-                        style={{ color }}
-                      >
-                        LEER →
-                      </span>
-                    </div>
+                    <span
+                      className="text-[7px] tracking-[0.3em] uppercase opacity-40 group-hover:opacity-80 transition-opacity"
+                      style={{ color }}
+                    >
+                      LEER →
+                    </span>
                   </article>
                 </Link>
               )
             })}
           </div>
-        )}
+        </div>
 
-        {/* Footer strip */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#00FF41]/10 pt-4">
-          <p className="text-[11px] text-white/22 tracking-[0.18em] text-center sm:text-left">
+        {/* Bottom strip */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#00FF41]/08 pt-5">
+          <p className="text-[10px] text-white/22 tracking-[0.18em]">
             <span style={{ color: 'rgba(0,255,65,0.50)' }}>Python real.</span>
-            {' · '}
+            {'  ·  '}
             <span style={{ color: 'rgba(6,182,212,0.50)' }}>Análisis con código.</span>
-            {' · '}
-            <span className="text-white/28">Para devs de LATAM.</span>
+            {'  ·  '}
+            <span>Para devs de LATAM.</span>
           </p>
           <Link
             href="/blog"
-            className="border text-[9px] tracking-[0.35em] uppercase px-5 py-2.5 whitespace-nowrap transition-all duration-200"
-            style={{ borderColor: 'rgba(0,255,65,0.25)', color: 'rgba(0,255,65,0.60)', background: 'transparent' }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLAnchorElement
-              el.style.borderColor = 'rgba(0,255,65,0.60)'
-              el.style.color       = '#00FF41'
-              el.style.background  = 'rgba(0,255,65,0.05)'
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLAnchorElement
-              el.style.borderColor = 'rgba(0,255,65,0.25)'
-              el.style.color       = 'rgba(0,255,65,0.60)'
-              el.style.background  = 'transparent'
-            }}
+            className="text-[9px] tracking-[0.35em] uppercase px-6 py-2.5 font-bold transition-all duration-200 border border-[#00FF41]/30 text-[#00FF41]/70 hover:bg-[#00FF41] hover:text-[#020202] hover:border-[#00FF41]"
           >
-            {'[[ VER INTEL CODEX COMPLETO ]]'}
+            VER INTEL CODEX COMPLETO →
           </Link>
         </div>
 

@@ -106,7 +106,7 @@ export default function PreciosPage() {
             </ul>
             <Link
               href="/register"
-              className="block text-center border border-[#00FF41]/25 text-[9px] tracking-[0.4em] uppercase px-5 py-3 text-[#00FF41]/55 hover:border-[#00FF41]/50 hover:text-[#00FF41]/85 transition-all duration-200"
+              className="block text-center bg-[#00FF41] text-[#020202] text-[9px] tracking-[0.4em] uppercase font-black px-5 py-3 hover:bg-[#00FF41]/85 transition-colors duration-150"
             >
               EMPEZAR GRATIS →
             </Link>
@@ -147,9 +147,9 @@ export default function PreciosPage() {
               href="https://go.hotmart.com/K105401308T"
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center border border-[#00FF41]/50 text-[9px] tracking-[0.4em] uppercase px-5 py-3 text-[#00FF41] hover:border-[#00FF41] hover:bg-[#00FF41]/08 transition-all duration-200"
+              className="block text-center bg-[#00FF41] text-[#020202] text-[9px] tracking-[0.4em] uppercase font-black px-5 py-3 hover:bg-[#00FF41]/90 transition-colors duration-150"
             >
-              {'[[ SUSCRIBIRSE — $19/MES ]]'}
+              SUSCRIBIRSE — $19/MES →
             </Link>
           </div>
         </div>

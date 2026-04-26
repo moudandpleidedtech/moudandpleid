@@ -170,9 +170,9 @@ export default function BlogPage() {
           </p>
           <Link
             href="/register"
-            className="inline-block text-[9px] tracking-[0.4em] uppercase border border-[#00FF41]/40 px-6 py-3 text-[#00FF41] hover:bg-[#00FF41]/06 hover:border-[#00FF41]/65 transition-all duration-200"
+            className="inline-block bg-[#00FF41] text-[#020202] text-[9px] tracking-[0.4em] uppercase font-black px-6 py-3 hover:bg-[#00FF41]/90 transition-colors duration-150"
           >
-            {'[[ UNIRSE AL NEXO — GRATIS ]]'}
+            UNIRSE AL NEXO — GRATIS →
           </Link>
         </div>
 
