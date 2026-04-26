@@ -1,30 +1,5 @@
 'use client'
 
-/**
- * GlitchTitle.tsx — Aberración cromática sobre el titular · DAKI EdTech
- * ───────────────────────────────────────────────────────────────────────
- * Renderiza el h1 "EL SISTEMA / TIENE FALLOS." con tres capas superpuestas:
- *
- *   Layer R (aria-hidden) — copia del texto en #FF0033, animada con
- *                           clip-path + translateX, mezclada con screen
- *   Layer G (aria-hidden) — copia en #00FF41, desfasada 2 frames
- *                           respecto al canal rojo → aberración real
- *   Main h1               — siempre legible, con flicker de fósforo sutil
- *
- * ── Timing del glitch (ciclo 4 s) ────────────────────────────────────────
- *   0 – 87.9 %  → capas ocultas (clip-path: inset(100% 0 0 0))
- *   88 – 93 %   → burst: 6 frames × 40 ms (1 % × 4 000 ms)
- *   93 – 100 %  → ocultas de nuevo
- *
- *   El truco del 87.9 %: interpolar 0.1 % × 4 s = 4 ms desde oculto
- *   hasta el primer frame de glitch es < 1 frame @ 60 fps → INSTANTE.
- *   La capa verde empieza en 89.9 % → 2 frames de desfase → chromatic.
- *
- * ✓ overflow-x: hidden en wrapper — sin desbordamiento horizontal en móvil
- * ✓ will-change: transform, clip-path, opacity — GPU-accelerated
- * ✓ prefers-reduced-motion: glitch off, flicker off
- */
-
 export default function GlitchTitle() {
   const layerBase =
     'absolute inset-0 text-4xl sm:text-5xl md:text-7xl font-bold ' +
@@ -33,7 +8,6 @@ export default function GlitchTitle() {
   return (
     <div className="relative overflow-x-hidden mb-4">
       <style>{`
-        /* ── Phosphor title flicker (8 s) ───────────────────────────── */
         @keyframes title-flicker {
           0%, 90%, 100% { opacity: 1;    }
           93%           { opacity: 0.80; }
@@ -42,7 +16,6 @@ export default function GlitchTitle() {
         }
         .hero-title { animation: title-flicker 6s ease-in-out infinite; }
 
-        /* ── Canal rojo: ciclo 2.8 s, glitch en 70-82 % ────────────── */
         @keyframes hero-glitch-r {
           0%,   69.9% { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
           70%         { clip-path: inset(38% 0 48% 0); opacity: 1;   transform: translate(-6px, 0);   }
@@ -54,7 +27,6 @@ export default function GlitchTitle() {
           82%, 100%   { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
         }
 
-        /* ── Canal verde: 2 frames detrás ──────────────────────────── */
         @keyframes hero-glitch-g {
           0%,   73.9% { clip-path: inset(100% 0 0 0); opacity: 0;   transform: translate(0);         }
           74%         { clip-path: inset(18% 0 60% 0); opacity: 0.9; transform: translate( 6px, 0);   }
@@ -77,7 +49,6 @@ export default function GlitchTitle() {
           will-change: transform, clip-path, opacity;
         }
 
-        /* ── Accesibilidad ───────────────────────────────────────────── */
         @media (prefers-reduced-motion: reduce) {
           .hero-glitch-r,
           .hero-glitch-g { animation: none; opacity: 0; }
@@ -85,25 +56,22 @@ export default function GlitchTitle() {
         }
       `}</style>
 
-      {/* Capa roja — canal de aberración */}
       <h1 aria-hidden="true" className={`hero-glitch-r ${layerBase}`}>
-        EL SISTEMA<br />TIENE FALLOS.
+        EL NEXO<br />ESTÁ EN LÍNEA.
       </h1>
 
-      {/* Capa verde — canal de aberración desfasado */}
       <h1 aria-hidden="true" className={`hero-glitch-g ${layerBase}`}>
-        EL SISTEMA<br />TIENE FALLOS.
+        EL NEXO<br />ESTÁ EN LÍNEA.
       </h1>
 
-      {/* Texto principal — siempre encima y legible */}
       <h1 className="hero-title text-4xl sm:text-5xl md:text-7xl font-bold tracking-[0.08em] uppercase leading-none text-[#00FF41]">
-        EL SISTEMA
+        EL NEXO
         <br />
         <span
-          className="text-[#FF0033]"
-          style={{ textShadow: '0 0 20px rgba(255,0,51,0.5)' }}
+          className="text-[#00FF41]"
+          style={{ textShadow: '0 0 28px rgba(0,255,65,0.5), 0 0 56px rgba(0,255,65,0.2)' }}
         >
-          TIENE FALLOS.
+          ESTÁ EN LÍNEA.
         </span>
       </h1>
     </div>

@@ -26,7 +26,7 @@ const FOUNDER_FEATURES = [
   { text: 'Leaderboard + Insignias de Rango Operativo'   },
   { text: 'Mentoría directa con los creadores'           },
   { text: 'Sello de Operador Certificado'                },
-  { text: 'Acceso de por vida · precio de lanzamiento'   },
+  { text: 'Cancela cuando quieras'                       },
 ] as const
 
 export default function FounderLicenseSection() {
@@ -77,15 +77,8 @@ export default function FounderLicenseSection() {
         {/* ── Comparativa ───────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* FUNDADOR — primero en DOM = primero en móvil, right en desktop */}
+          {/* SUSCRIPCIÓN — primero en DOM = primero en móvil, right en desktop */}
           <div className="founder-active border bg-[#0A0A0A] p-5 md:p-8 flex flex-col gap-6 md:order-2 relative">
-
-            {/* Badge escasez */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00FF41] px-4 py-1">
-              <span className="text-[#0A0A0A] text-[9px] tracking-[0.4em] uppercase font-bold">
-                ⚡ CUPOS BETA LIMITADOS
-              </span>
-            </div>
 
             {/* Header columna */}
             <div className="pt-2">
@@ -93,7 +86,7 @@ export default function FounderLicenseSection() {
                 className="text-[#00FF41] text-[10px] tracking-[0.5em] uppercase mb-1 font-bold"
                 style={{ textShadow: '0 0 10px rgba(0,255,65,0.5)' }}
               >
-                LICENCIA DE FUNDADOR
+                SUSCRIPCIÓN MENSUAL
               </p>
               <p className="text-white/40 text-[10px] tracking-[0.3em] uppercase">
                 Experiencia Completa
@@ -119,42 +112,28 @@ export default function FounderLicenseSection() {
 
             {/* Precio */}
             <div className="border-t border-[#00FF41]/15 pt-5">
-              <p className="text-[#00FF41]/30 text-[9px] tracking-[0.5em] uppercase mb-1">
-                PRECIO BETA
-              </p>
-              <div className="mb-1">
-                <span className="text-white/20 text-sm line-through mr-2">$197 USD</span>
-              </div>
               <div className="flex items-baseline gap-2 mb-1">
                 <p
                   className="text-[#00FF41] text-3xl font-bold"
                   style={{ textShadow: '0 0 16px rgba(0,255,65,0.5)' }}
                 >
-                  $97
+                  $19
                 </p>
-                <span className="text-white/40 text-sm tracking-wide">USD</span>
+                <span className="text-white/40 text-sm tracking-wide">USD/mes</span>
               </div>
               <p className="text-[#00FF41]/35 text-[9px] tracking-[0.35em] uppercase mb-4">
-                pago único · acceso de por vida
+                cancela cuando quieras · sin permanencia
               </p>
-              <Link
-                href="https://pay.hotmart.com/T105398516G"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cta-primary-btn block text-center border border-[#00FF41]/25 bg-[#00FF41]/[0.07] text-[#00FF41] text-[11px] tracking-[0.4em] uppercase py-4 w-full"
-              >
-                {`[[ OBTENER LICENCIA DE FUNDADOR ]]`}
-              </Link>
               <Link
                 href="https://go.hotmart.com/K105401308T"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center text-[#00FF41]/30 text-[9px] tracking-[0.3em] uppercase hover:text-[#00FF41]/60 transition-colors duration-200 mt-3"
+                className="cta-primary-btn block text-center border border-[#00FF41]/25 bg-[#00FF41]/[0.07] text-[#00FF41] text-[11px] tracking-[0.4em] uppercase py-4 w-full"
               >
-                {'[ O elegir suscripción mensual → ]'}
+                {`[[ SUSCRIBIRSE — $19/MES ]]`}
               </Link>
-              <p className="text-white/12 text-[9px] tracking-[0.2em] text-center mt-2">
-                Este precio no vuelve una vez termine la Beta.
+              <p className="text-white/12 text-[9px] tracking-[0.2em] text-center mt-3">
+                Sin compromisos · acceso completo desde el día 1.
               </p>
             </div>
 

@@ -92,7 +92,7 @@ export default function PaywallModal({
         method:      'POST',
         headers:     authHeaders(),
         credentials: 'include',
-        body:        JSON.stringify({ plan: 'lifetime', ...(ref ? { ref } : {}) }),
+        body:        JSON.stringify({ plan: 'monthly', ...(ref ? { ref } : {}) }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -237,7 +237,7 @@ export default function PaywallModal({
                 className="text-center text-[10px] tracking-[0.25em] mb-5"
                 style={{ color: 'rgba(255,150,80,0.7)' }}
               >
-                REQUIERE LICENCIA DE FUNDADOR
+                REQUIERE SUSCRIPCIÓN ACTIVA
               </p>
 
               {/* Feature 2: Mensaje personalizado DAKI basado en historial del operador */}
@@ -283,15 +283,10 @@ export default function PaywallModal({
 
               {/* Precio */}
               <div className="mb-4 p-4 text-center relative" style={{ border: '1px solid rgba(255,80,30,0.45)', background: 'rgba(255,50,10,0.06)' }}>
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] tracking-[0.3em] px-2 py-0.5 font-black"
-                  style={{ background: 'rgba(255,80,30,0.85)', color: '#fff' }}>
-                  PRECIO FUNDADOR
-                </div>
-                <div className="text-[9px] line-through mb-1" style={{ color: 'rgba(255,150,80,0.35)' }}>$197 USD</div>
                 <div className="text-3xl font-black" style={{ color: '#FF5020', textShadow: '0 0 12px rgba(255,80,30,0.4)' }}>
-                  $97 <span className="text-sm font-normal">USD</span>
+                  $19 <span className="text-sm font-normal">USD/mes</span>
                 </div>
-                <div className="text-[8px] tracking-wider mt-1" style={{ color: 'rgba(255,150,80,0.50)' }}>PAGO ÚNICO · ACCESO DE POR VIDA</div>
+                <div className="text-[8px] tracking-wider mt-1" style={{ color: 'rgba(255,150,80,0.50)' }}>CANCELA CUANDO QUIERAS</div>
               </div>
 
               {/* CTA único */}
@@ -311,7 +306,7 @@ export default function PaywallModal({
                   whileHover={checkoutState !== 'loading' ? { scale: 1.02, boxShadow: '0 0 36px rgba(255,60,10,0.45)' } : {}}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {checkoutState === 'loading' ? '[ CONECTANDO CON HOTMART... ]' : 'OBTENER LICENCIA VITALICIA →'}
+                  {checkoutState === 'loading' ? '[ CONECTANDO CON HOTMART... ]' : 'SUSCRIBIRSE — $19/MES →'}
                 </motion.button>
               </div>
 
@@ -321,12 +316,12 @@ export default function PaywallModal({
                 </p>
               )}
 
-              {/* Feature 3: Framing emocional — comparación de valor */}
+              {/* Framing emocional */}
               <div className="mt-3 mb-1 space-y-1">
                 {[
-                  '▸ Un libro de Python cuesta más y no te da práctica real.',
-                  '▸ Platzi / Coursera cobran mensual. Acá pagás una sola vez.',
-                  '▸ Un bootcamp: $3.000 USD. Nexo: $97 con acceso de por vida.',
+                  '▸ Código real desde el primer día. Sin teoría muerta.',
+                  '▸ IA táctica que aprende tus errores y los convierte en misiones.',
+                  '▸ Cancela cuando quieras. Sin compromisos.',
                 ].map((line, i) => (
                   <p key={i} className="text-[8px] tracking-wider" style={{ color: 'rgba(0,255,65,0.28)' }}>
                     {line}

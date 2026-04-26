@@ -140,18 +140,18 @@ export default function PostPage({ params }: Props) {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
+              href="/register"
+              className="inline-block bg-[#00FF41] text-[#020202] text-[9px] tracking-[0.4em] uppercase font-black px-6 py-3 hover:bg-[#00FF41]/90 transition-colors duration-150 text-center"
+            >
+              EMPEZAR GRATIS — 10 MISIONES →
+            </Link>
+            <Link
               href="https://go.hotmart.com/K105401308T"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[9px] tracking-[0.4em] uppercase border border-[#00FF41]/40 px-5 py-2.5 text-[#00FF41] hover:bg-[#00FF41]/08 hover:border-[#00FF41]/70 transition-all duration-200 text-center"
+              className="text-[9px] tracking-[0.35em] uppercase text-[#00FF41]/35 hover:text-[#00FF41]/65 transition-colors py-3 text-center"
             >
-              SUSCRIPCIÓN MENSUAL — $19/MES →
-            </Link>
-            <Link
-              href="/register"
-              className="text-[9px] tracking-[0.35em] uppercase text-[#00FF41]/35 hover:text-[#00FF41]/65 transition-colors py-2.5 text-center"
-            >
-              O explorar gratis →
+              O suscribirse — $19/mes →
             </Link>
           </div>
         </div>
