@@ -19,10 +19,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = getPostBySlug(params.slug)
   if (!post) return {}
 
+  const keywords = Array.from(new Set([post.categoryLabel, 'Python', 'LATAM', 'programacion', 'DAKI EdTech']))
+
   return {
     title: `${post.title} | DAKI EdTech`,
     description: post.description,
-    keywords: [post.categoryLabel, 'Python', 'LATAM', 'programacion', 'DAKI EdTech'],
+    keywords,
     alternates: { canonical: `https://dakiedtech.com/blog/${post.slug}` },
     openGraph: {
       title: post.title,
@@ -30,6 +32,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       publishedTime: post.publishedAt,
       siteName: 'DAKI EdTech',
+      images: [
+        {
+          url: 'https://dakiedtech.com/assets/demo.png',
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+      images: ['https://dakiedtech.com/assets/demo.png'],
     },
   }
 }
@@ -66,13 +82,39 @@ export default function PostPage({ params }: Props) {
             '@type': 'Article',
             headline: post.title,
             description: post.description,
+            keywords: [post.categoryLabel, 'Python', 'LATAM', 'programacion'].join(', '),
             datePublished: post.publishedAt,
-            publisher: {
+            image: 'https://dakiedtech.com/assets/demo.png',
+            author: {
               '@type': 'Organization',
               name: 'DAKI EdTech',
               url: 'https://dakiedtech.com',
             },
+            publisher: {
+              '@type': 'Organization',
+              name: 'DAKI EdTech',
+              url: 'https://dakiedtech.com',
+              logo: {
+                '@type': 'ImageObject',
+                url: 'https://dakiedtech.com/icon.png',
+              },
+            },
             mainEntityOfPage: `https://dakiedtech.com/blog/${post.slug}`,
+          }),
+        }}
+      />
+      {/* BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'NEXO', item: 'https://dakiedtech.com' },
+              { '@type': 'ListItem', position: 2, name: 'Intel Codex', item: 'https://dakiedtech.com/blog' },
+              { '@type': 'ListItem', position: 3, name: post.title, item: `https://dakiedtech.com/blog/${post.slug}` },
+            ],
           }),
         }}
       />

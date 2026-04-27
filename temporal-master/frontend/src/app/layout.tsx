@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     apple: '/icon.png',
   },
   openGraph: {
-    title: 'Aprende Python jugando | DAKI EdTech',
+    title: 'Aprende Python desde Cero | DAKI EdTech — Gamificado en Español',
     description: 'Domina Python con misiones reales, IA táctica y certificación verificable. Para devs de LATAM que quieren trabajo en tech.',
     siteName: 'DAKI EdTech',
     locale: 'es_419',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Aprende Python jugando | DAKI EdTech',
+    title: 'Aprende Python desde Cero | DAKI EdTech — Gamificado en Español',
     description: 'Domina Python con misiones reales e IA táctica. Para LATAM.',
     images: ['https://dakiedtech.com/assets/demo.png'],
   },
