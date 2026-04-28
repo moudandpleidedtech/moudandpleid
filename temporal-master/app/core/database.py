@@ -364,6 +364,10 @@ async def _migrate_v9_pedagogy(conn) -> None:
         (169, '[{"description": "¿Encontraste todos los bugs? Los bugs silenciosos (sin error pero con resultado incorrecto) son los más peligrosos."}, {"description": "¿Qué herramienta usarías en producción para detectar este bug automáticamente? (pytest, type hints, assertions)"}, {"description": "¿Cómo escribirías un test unitario que hubiera detectado este bug antes de llegar a producción?"}]'),
         (179, '[{"description": "¿Cuál es la complejidad temporal y espacial de tu solución? ¿El entrevistador te preguntaría si podés hacerlo mejor?"}, {"description": "¿Tu solución funciona con inputs vacíos, None, o con un solo elemento? Los entrevistadores siempre prueban edge cases."}, {"description": "¿Podés explicar tu solución en voz alta en 30 segundos? Si no podés explicarla, no la entendés lo suficientemente bien."}]'),
     ]
+    await conn.execute(text(
+        "ALTER TABLE alpha_codes ADD COLUMN IF NOT EXISTS days_granted INTEGER NOT NULL DEFAULT 30"
+    ))
+
     for level_order, edge_json in boss_edge_cases:
         await conn.execute(
             text("UPDATE challenges SET edge_cases_json = :ej WHERE level_order = :lo AND edge_cases_json IS NULL"),

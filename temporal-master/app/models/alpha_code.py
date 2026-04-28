@@ -61,6 +61,11 @@ class AlphaCode(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Días de acceso que otorga este código (default 30, becas usan 90)
+    days_granted: Mapped[int] = mapped_column(
+        default=30, server_default="30", nullable=False
+    )
+
     # Cuándo fue generado — para auditoría y expiración futura
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

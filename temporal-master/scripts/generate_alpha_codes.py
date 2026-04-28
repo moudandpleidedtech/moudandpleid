@@ -67,7 +67,7 @@ def _generate_batch(count: int, prefix: str) -> list[str]:
 
 # ── Lógica principal ──────────────────────────────────────────────────────────
 
-async def _run(count: int, prefix: str) -> None:
+async def _run(count: int, prefix: str, days: int) -> None:
     from sqlalchemy import select
 
     from app.core.database import AsyncSessionLocal, init_db
@@ -108,7 +108,7 @@ async def _run(count: int, prefix: str) -> None:
         async with AsyncSessionLocal() as session:
             async with session.begin():
                 session.add_all([
-                    AlphaCode(code=code, is_used=False)
+                    AlphaCode(code=code, is_used=False, days_granted=days)
                     for code in new_codes
                 ])
     except Exception as exc:
@@ -122,7 +122,7 @@ async def _run(count: int, prefix: str) -> None:
     print(f"  {'#':>3}   {'CÓDIGO':<18}   {'ESTADO'}")
     print("─" * 46)
     for i, code in enumerate(new_codes, 1):
-        print(f"  {i:>3}.  {code:<18}   [ DISPONIBLE ]")
+        print(f"  {i:>3}.  {code:<18}   [ DISPONIBLE — {days}d ]")
     print("─" * 46)
 
     # ── 6. Mensaje de éxito ───────────────────────────────────────────────────
@@ -156,13 +156,19 @@ def main() -> None:
         default="VANG",
         help="Prefijo del token (default: VANG)",
     )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=30,
+        help="Días de acceso que otorga el código (default: 30)",
+    )
     args = parser.parse_args()
 
     if args.count < 1 or args.count > 10_000:
         print("✗  --count debe estar entre 1 y 10.000.")
         sys.exit(1)
 
-    asyncio.run(_run(args.count, args.prefix.upper().strip()))
+    asyncio.run(_run(args.count, args.prefix.upper().strip(), args.days))
 
 
 if __name__ == "__main__":

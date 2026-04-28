@@ -37,7 +37,7 @@ from app.models.user import User
 
 router = APIRouter(prefix="/alpha", tags=["alpha"])
 
-_TRIAL_DAYS = 30  # duración del período TRIAL en días
+_TRIAL_DAYS_DEFAULT = 30  # fallback si days_granted no está seteado
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -114,7 +114,8 @@ async def redeem_alpha_code(
 
     # ── 4. Calcular fecha de expiración del TRIAL ─────────────────────────────
     now           = datetime.now(timezone.utc)
-    trial_end     = now + timedelta(days=_TRIAL_DAYS)
+    days          = alpha.days_granted if alpha.days_granted else _TRIAL_DAYS_DEFAULT
+    trial_end     = now + timedelta(days=days)
 
     # ── 5. Marcar el Alpha Code como consumido ────────────────────────────────
     alpha.is_used          = True
