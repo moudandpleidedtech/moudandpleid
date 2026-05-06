@@ -180,3 +180,52 @@ async def fire_security_alert(
             f"<b>Detección:</b> {detail}"
         ),
     )
+
+
+# ─── Alerta: Anthropic sin créditos / API key inválida ────────────────────────
+# Throttle local para no spamear el webhook si el satélite está caído largo rato.
+_CREDIT_ALERT_THROTTLE_S: float = 600.0   # 10 min entre notificaciones del mismo tipo
+_credit_alert_last_sent: dict[str, float] = {}
+
+
+def _embed_satellite(reason: str, detail: str) -> dict:
+    return {
+        "embeds": [{
+            "title": "🛰️ DAKI · Satélite IA fuera de línea",
+            "description": (
+                f"**Motivo:** {reason}\n"
+                f"**Detalle:** {detail[:500]}\n\n"
+                f"Las consultas a DAKI están degradadas hasta que se restaure el canal."
+            ),
+            "color": 16753920,    # naranja crítico
+            "footer": {"text": "DAKI EdTech · Anthropic API Monitor"},
+            "timestamp": _ts(),
+        }]
+    }
+
+
+async def fire_satellite_alert(reason: str, detail: str = "") -> None:
+    """
+    Alerta de degradación del satélite IA (Anthropic).
+
+    `reason` ∈ {'credit_balance_low', 'auth_failed', 'rate_limited', 'api_error'}
+    Aplica throttle de 10 min por motivo para evitar spam si la condición persiste.
+
+    Uso (fire-and-forget):
+        asyncio.create_task(fire_satellite_alert("credit_balance_low", str(exc)))
+    """
+    import time
+    now = time.monotonic()
+    last = _credit_alert_last_sent.get(reason, 0.0)
+    if now - last < _CREDIT_ALERT_THROTTLE_S:
+        return
+    _credit_alert_last_sent[reason] = now
+
+    await _dispatch(
+        _embed_satellite(reason, detail),
+        (
+            f"🛰️ <b>DAKI · Satélite IA fuera de línea</b>\n"
+            f"<b>Motivo:</b> <code>{reason}</code>\n"
+            f"<b>Detalle:</b> {detail[:300]}"
+        ),
+    )

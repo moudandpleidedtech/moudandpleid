@@ -53,6 +53,18 @@ function authHeaders(): HeadersInit {
   }
 }
 
+// JWT vencido o ausente: limpia toda credencial local y manda al login.
+// El backend devuelve 401 con detail = "Token de operador inválido o expirado."
+function handleAuthExpired(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem('daki_token')
+    localStorage.removeItem('daki_user')
+  } catch {}
+  const next = encodeURIComponent(window.location.pathname + window.location.search)
+  window.location.href = `/login?expired=1&next=${next}`
+}
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Challenge {
@@ -1151,6 +1163,18 @@ export default function CodeWorkspace({ challengeId }: Props) {
       })
 
       if (!res.ok) {
+        // ── 401: JWT vencido/ausente — limpia auth y redirige al login ──────────
+        if (res.status === 401) {
+          setOutput([
+            { text: '━━━ DAKI · SESIÓN EXPIRADA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+            { text: '  Tu credencial de Operador venció.', kind: 'intervention' as const },
+            { text: '  Reconectando con el Nexo…', kind: 'intervention' as const },
+            { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', kind: 'intervention' as const },
+          ])
+          scrollConsole()
+          setTimeout(handleAuthExpired, 900)
+          return
+        }
         // ── 402: sin acceso — Alpha modal (INACTIVE) o Paywall ─────────────────
         if (res.status === 402) {
           // Reveal dramático: DAKI anuncia la zona restringida antes del modal
@@ -2844,6 +2868,8 @@ export default function CodeWorkspace({ challengeId }: Props) {
                         lastWinCodeRef.current = challenge.initial_code
                         debriefAttempts.current = 1
                         setTimeout(() => setShowDebrief(true), 800)
+                      } else if (res.status === 401) {
+                        handleAuthExpired()
                       }
                     } else {
                       setPredictFeedback('wrong')

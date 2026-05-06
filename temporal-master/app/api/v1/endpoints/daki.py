@@ -8,6 +8,7 @@ Ambos son llamados por el frontend cuando el Operador lleva 2+ minutos
 sin actividad semántica (sin cambios de código ni envíos de solución).
 """
 
+import asyncio
 import json as _json
 import uuid
 
@@ -22,6 +23,7 @@ from app.core.rate_limit import limiter
 from app.core.security import get_current_operator, get_current_operator_optional
 from app.models.challenge import Challenge
 from app.models.user import User
+from app.services.alerts import fire_satellite_alert
 from app.services.daki_persona import (
     DAKI_SYSTEM_PROMPT,
     get_concept_intel,
@@ -34,6 +36,12 @@ from app.services.memory_service import (
     get_recent_events,
     record_event,
 )
+
+
+def _is_credit_balance_error(exc: Exception) -> bool:
+    """Detecta el BadRequestError específico de saldo insuficiente en Anthropic."""
+    msg = str(exc).lower()
+    return "credit balance" in msg or "credit_balance" in msg
 
 router = APIRouter()
 
@@ -176,13 +184,21 @@ async def _call_haiku(user_msg: str, max_tokens: int = 120) -> str:
     except anthropic.APITimeoutError:
         return "[DAKI_SYS] Error de conexión con el satélite principal."
 
-    except anthropic.AuthenticationError:
+    except anthropic.AuthenticationError as exc:
+        asyncio.create_task(fire_satellite_alert("auth_failed", str(exc)))
         return "[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno."
 
     except anthropic.RateLimitError:
         return "[DAKI_SYS] Límite de frecuencia alcanzado. Espera un momento, Operador."
 
-    except anthropic.APIError:
+    except anthropic.BadRequestError as exc:
+        if _is_credit_balance_error(exc):
+            asyncio.create_task(fire_satellite_alert("credit_balance_low", str(exc)))
+            return "[DAKI_SYS] Satélite sin créditos. Comando notificado, Operador."
+        return "[DAKI_SYS] Error de conexión con el satélite principal."
+
+    except anthropic.APIError as exc:
+        asyncio.create_task(fire_satellite_alert("api_error", str(exc)))
         return "[DAKI_SYS] Error de conexión con el satélite principal."
 
 
@@ -796,7 +812,8 @@ async def daki_chat(
             persona_used=stance.persona_label,
         )
 
-    except anthropic.AuthenticationError:
+    except anthropic.AuthenticationError as exc:
+        asyncio.create_task(fire_satellite_alert("auth_failed", str(exc)))
         return ChatResponse(
             reply="[DAKI_SYS] Nodos de IA fuera de línea. Revisar variables de entorno.",
         )
@@ -807,7 +824,20 @@ async def daki_chat(
             persona_used=stance.persona_label,
         )
 
-    except anthropic.APIError:
+    except anthropic.BadRequestError as exc:
+        if _is_credit_balance_error(exc):
+            asyncio.create_task(fire_satellite_alert("credit_balance_low", str(exc)))
+            return ChatResponse(
+                reply="[DAKI_SYS] Satélite sin créditos. Comando notificado, Operador.",
+                persona_used=stance.persona_label,
+            )
+        return ChatResponse(
+            reply="[DAKI_SYS] Error de conexión con el satélite principal.",
+            persona_used=stance.persona_label,
+        )
+
+    except anthropic.APIError as exc:
+        asyncio.create_task(fire_satellite_alert("api_error", str(exc)))
         return ChatResponse(
             reply="[DAKI_SYS] Error de conexión con el satélite principal.",
         )

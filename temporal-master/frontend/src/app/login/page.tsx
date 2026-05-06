@@ -52,6 +52,13 @@ export default function LoginPage() {
     if (params.get('google_error') === 'alpha_closed') {
       setAlphaClosed(true)
     }
+    // Sesión expirada: backend devolvió 401, frontend redirigió aquí.
+    if (params.get('expired') === '1') {
+      setConsole({
+        text: 'SESIÓN VENCIDA. RECONECTÁ TU CREDENCIAL DE OPERADOR.',
+        state: 'error',
+      })
+    }
   }, [])
 
   const emailRef    = useRef<HTMLInputElement>(null)
@@ -107,7 +114,11 @@ export default function LoginPage() {
         setConsole({ text: `ACCESO CONCEDIDO. BIENVENIDO, ${data.callsign}.`, state: 'success' })
         const onboardingDone = localStorage.getItem('onboarding_done') === 'true'
         const bootSeen       = !!localStorage.getItem('boot_seen')
-        const destination    = !onboardingDone ? '/onboarding' : bootSeen ? '/hub' : '/boot-sequence'
+        const params         = new URLSearchParams(window.location.search)
+        const next           = params.get('next')
+        const safeNext       = next && next.startsWith('/') && !next.startsWith('//') ? next : null
+        const destination    = safeNext
+          ?? (!onboardingDone ? '/onboarding' : bootSeen ? '/hub' : '/boot-sequence')
         setTimeout(() => router.push(destination), 1000)
         return
       }

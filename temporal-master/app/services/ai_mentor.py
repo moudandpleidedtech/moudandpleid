@@ -18,13 +18,44 @@ Function Calling (Prompt 58):
     Base de Conocimiento local en lugar de inventarla.
 """
 
+import asyncio
 import json
+import logging
 import re
 
 import anthropic
 
 from app.core.config import settings
 from app.services import knowledge_base
+from app.services.alerts import fire_satellite_alert
+
+_logger = logging.getLogger(__name__)
+
+
+def _is_credit_balance_error(exc: BaseException) -> bool:
+    """Detecta el BadRequestError específico de saldo insuficiente en Anthropic."""
+    msg = str(exc).lower()
+    return "credit balance" in msg or "credit_balance" in msg
+
+
+def _notify_satellite_failure(exc: BaseException) -> None:
+    """
+    Dispara alerta a Discord/Telegram según el tipo de fallo de Anthropic.
+    Throttled internamente — no spamea aunque se llame en cada request.
+    """
+    if isinstance(exc, anthropic.BadRequestError) and _is_credit_balance_error(exc):
+        reason = "credit_balance_low"
+    elif isinstance(exc, anthropic.AuthenticationError):
+        reason = "auth_failed"
+    elif isinstance(exc, anthropic.APIError):
+        reason = "api_error"
+    else:
+        return  # excepciones no relacionadas con Anthropic — silencio
+    try:
+        asyncio.create_task(fire_satellite_alert(reason, str(exc)))
+    except RuntimeError:
+        # Sin event loop activo (raro fuera de FastAPI); loguea y sigue.
+        _logger.warning("Satélite degradado (%s): %s", reason, exc)
 from app.services.daki_persona import (
     DAKI_SYSTEM_PROMPT,
     get_concept_intel,
@@ -378,7 +409,8 @@ async def get_execute_feedback(
         await semantic_cache_service.save_to_cache(cache_key, text)
         return text
 
-    except Exception:
+    except Exception as exc:
+        _notify_satellite_failure(exc)
         return "// [DAKI] Anomalía detectada. Revisa el stacktrace."
 
 
@@ -467,7 +499,8 @@ async def get_hint(
             max_tokens=max_tokens,
             fallback_fail_count=fail_count,
         )
-    except Exception:
+    except Exception as exc:
+        _notify_satellite_failure(exc)
         # Fallback a pista pre-escrita de la DB antes del fallback genérico
         db_hint = get_db_fallback_hint(db_hints, fail_count)
         return db_hint or get_offline_response(fail_count)
